@@ -1,4 +1,4 @@
-import { memo, useState } from 'react';
+import { memo, useMemo, useState } from 'react';
 import { Link } from '@tanstack/react-router';
 import { Card, CardContent } from '@/components/ui/card';
 
@@ -25,15 +25,49 @@ import {
   Receipt,
   ArrowUpFromLine,
 } from 'lucide-react';
+import { useGetIncomingGatePasses } from '@/services/store-admin/incoming-gate-pass/useGetIncomingGatePasses';
+import IncomingGatePassVoucher from './incoming-gate-pass-voucher';
+import type { IncomingGatePassWithLink } from '@/types/incoming-gate-pass';
 
 const DaybookPage = memo(function DaybookPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'Date' | 'Voucher Number'>('Date');
 
-  // Placeholder until voucher data/hook is wired
-  const voucherCount: number = 0;
-  const isFetching = false;
-  const refetch = () => {};
+  const {
+    data: vouchers,
+    isLoading,
+    isFetching,
+    refetch,
+  } = useGetIncomingGatePasses();
+
+  const filteredAndSortedVouchers: IncomingGatePassWithLink[] = useMemo(() => {
+    const list = vouchers ?? [];
+
+    const normalizedQuery = searchQuery.trim().toLowerCase();
+    const filtered = normalizedQuery
+      ? list.filter((voucher) => {
+          const farmerName =
+            voucher.farmerStorageLinkId.farmerId.name.toLowerCase();
+          const voucherNo = String(voucher.gatePassNo);
+          const date = new Date(voucher.date).toLocaleDateString('en-IN');
+          return (
+            farmerName.includes(normalizedQuery) ||
+            voucherNo.includes(normalizedQuery) ||
+            date.includes(normalizedQuery)
+          );
+        })
+      : list;
+
+    return [...filtered].sort((a, b) => {
+      if (sortBy === 'Voucher Number') {
+        return b.gatePassNo - a.gatePassNo;
+      }
+
+      return new Date(b.date).getTime() - new Date(a.date).getTime();
+    });
+  }, [vouchers, searchQuery, sortBy]);
+
+  const voucherCount = vouchers?.length ?? 0;
 
   return (
     <main className="mx-auto max-w-7xl p-2 sm:p-4 lg:p-6">
@@ -46,7 +80,7 @@ const DaybookPage = memo(function DaybookPage() {
                 <Receipt className="text-primary h-5 w-5" />
               </ItemMedia>
               <ItemTitle className="font-custom text-sm font-semibold sm:text-base">
-                {voucherCount} voucher{voucherCount !== 1 ? 's' : ''}
+                {voucherCount} {voucherCount === 1 ? 'voucher' : 'vouchers'}
               </ItemTitle>
             </div>
             <ItemActions>
@@ -112,16 +146,32 @@ const DaybookPage = memo(function DaybookPage() {
           </ItemFooter>
         </Item>
 
-        {/* List placeholder */}
-        <Card>
-          <CardContent className="py-8 pt-6 text-center">
-            <p className="font-custom text-muted-foreground">
-              {searchQuery
-                ? 'No vouchers match your search.'
-                : 'No vouchers yet.'}
-            </p>
-          </CardContent>
-        </Card>
+        {/* List */}
+        {isLoading ? (
+          <Card>
+            <CardContent className="py-8 pt-6 text-center">
+              <p className="font-custom text-muted-foreground">
+                Loading vouchers...
+              </p>
+            </CardContent>
+          </Card>
+        ) : filteredAndSortedVouchers.length === 0 ? (
+          <Card>
+            <CardContent className="py-8 pt-6 text-center">
+              <p className="font-custom text-muted-foreground">
+                {searchQuery
+                  ? 'No vouchers match your search.'
+                  : 'No vouchers yet.'}
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid gap-3 sm:gap-4">
+            {filteredAndSortedVouchers.map((voucher) => (
+              <IncomingGatePassVoucher key={voucher._id} voucher={voucher} />
+            ))}
+          </div>
+        )}
       </div>
     </main>
   );
