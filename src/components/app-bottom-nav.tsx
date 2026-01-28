@@ -63,7 +63,7 @@ const AppBottomNav = () => {
   }
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 shadow-sm">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border/50 bg-background/80 backdrop-blur-md shadow-sm">
       <div className="flex h-16 items-center justify-around">
         {navigationItemsWithState.map((item) => {
           const Icon = item.icon;
@@ -74,21 +74,21 @@ const AppBottomNav = () => {
               to={item.href}
               className={cn(
                 'font-custom flex flex-col items-center justify-center gap-1 flex-1 h-full transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-t px-2',
-                item.isActive
-                  ? 'text-primary'
-                  : 'text-gray-600 dark:text-gray-300'
+                item.isActive ? 'text-primary' : 'text-foreground/70'
               )}
             >
               <Icon
                 className={cn(
                   'h-5 w-5 transition-colors duration-200',
-                  item.isActive ? 'text-primary' : 'text-gray-600 dark:text-gray-300'
+                  item.isActive ? 'text-primary' : 'text-foreground/70'
                 )}
               />
               <span
                 className={cn(
                   'text-xs font-medium transition-colors duration-200',
-                  item.isActive ? 'text-primary font-semibold' : 'text-gray-600 dark:text-gray-300'
+                  item.isActive
+                    ? 'text-primary font-semibold'
+                    : 'text-foreground/70'
                 )}
               >
                 {item.name}
