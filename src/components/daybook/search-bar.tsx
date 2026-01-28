@@ -18,12 +18,12 @@ const SearchBar = memo(function SearchBar({
 
   return (
     <div className="relative w-full">
-      <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-600" />
+      <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-600" />
       <Input
         placeholder="Search by receipt number..."
         value={searchQuery}
         onChange={handleSearchChange}
-        className="font-custom pl-10 w-full focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+        className="font-custom focus-visible:ring-primary w-full pl-10 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
       />
     </div>
   );

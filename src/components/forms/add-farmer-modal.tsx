@@ -1,7 +1,7 @@
 import { memo, useState, useMemo, useEffect } from 'react';
 import { useForm } from '@tanstack/react-form';
 import * as z from 'zod';
-import { Info, UserPlus } from 'lucide-react';
+import { Info, Plus } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -32,10 +32,12 @@ import type { FarmerStorageLink } from '@/types/farmer';
 
 interface AddFarmerModalProps {
   links?: FarmerStorageLink[];
+  onFarmerAdded?: () => void;
 }
 
 export const AddFarmerModal = memo(function AddFarmerModal({
   links = [],
+  onFarmerAdded,
 }: AddFarmerModalProps) {
   const { mutate: quickAddFarmer, isPending } = useQuickAddFarmer();
   const { coldStorage, admin } = useStore();
@@ -64,7 +66,20 @@ export const AddFarmerModal = memo(function AddFarmerModal({
   const formSchema = useMemo(
     () =>
       z.object({
-        name: z.string().min(1, 'Name is required'),
+        name: z
+          .string()
+          .transform((val) => {
+            const trimmed = val.trim();
+
+            if (!trimmed) return trimmed;
+
+            return (
+              trimmed.charAt(0).toUpperCase() + trimmed.slice(1).toLowerCase()
+            );
+          })
+          .refine((val) => val.length > 0, {
+            message: 'Name is required',
+          }),
         address: z.string().min(1, 'Address is required'),
         mobileNumber: z
           .string()
@@ -110,6 +125,7 @@ export const AddFarmerModal = memo(function AddFarmerModal({
             form.reset();
             form.setFieldValue('accountNumber', value.accountNumber + 1);
             setIsOpen(false);
+            onFarmerAdded?.();
           },
         }
       );
@@ -131,8 +147,8 @@ export const AddFarmerModal = memo(function AddFarmerModal({
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button className="font-custom h-10 w-full sm:w-auto">
-          <UserPlus className="h-4 w-4 shrink-0" />
-          Add New Farmer
+          <Plus className="h-4 w-4 shrink-0" />
+          New Farmer
         </Button>
       </DialogTrigger>
 
