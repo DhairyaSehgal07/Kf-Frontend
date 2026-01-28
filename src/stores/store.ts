@@ -67,7 +67,7 @@ const expiringStorage = {
 export const useStore = create(
   persist<StoreState, [], [], PersistedState>(
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    (set, get) => ({
+    (set, _get) => ({
       admin: null,
       coldStorage: null,
       token: null,
