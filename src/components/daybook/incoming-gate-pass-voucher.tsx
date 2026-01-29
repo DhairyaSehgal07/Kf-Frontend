@@ -142,9 +142,7 @@ function IncomingGatePassVoucher({
 
   const gradingPassesForThisIncoming = useMemo(() => {
     const list = gradingPasses ?? [];
-    return list.filter(
-      (gp) => gp.incomingGatePassId._id === voucher._id
-    );
+    return list.filter((gp) => gp.incomingGatePassId._id === voucher._id);
   }, [gradingPasses, voucher._id]);
 
   const farmer = voucher.farmerStorageLinkId.farmerId;

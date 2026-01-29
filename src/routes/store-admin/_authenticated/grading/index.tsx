@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
 import { useMemo } from 'react';
-import { GradingGatePassForm } from '@/components/forms/grading-gate-pass';
+import { GradingGatePassForm } from '@/components/forms/grading';
 import { useGetReceiptVoucherNumber } from '@/services/store-admin/functions/useGetVoucherNumber';
 
 export const Route = createFileRoute('/store-admin/_authenticated/grading/')({

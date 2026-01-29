@@ -86,6 +86,22 @@ function GradingGatePassVoucher({ voucher }: GradingGatePassVoucherProps) {
     [voucher.orderDetails]
   );
 
+  const filteredOrderDetails = useMemo(
+    () => voucher.orderDetails.filter((od) => od.currentQuantity > 0),
+    [voucher.orderDetails]
+  );
+
+  const orderDetailsTotals = useMemo(
+    () => ({
+      qty: filteredOrderDetails.reduce((sum, od) => sum + od.currentQuantity, 0),
+      initial: filteredOrderDetails.reduce(
+        (sum, od) => sum + od.initialQuantity,
+        0
+      ),
+    }),
+    [filteredOrderDetails]
+  );
+
   return (
     <Card className="border-border/40 hover:border-primary/30 overflow-hidden pt-0 shadow-sm transition-all duration-200 hover:shadow-md">
       <div className="px-4 pt-2 pb-4">
@@ -226,26 +242,36 @@ function GradingGatePassVoucher({ voucher }: GradingGatePassVoucherProps) {
                       </tr>
                     </thead>
                     <tbody>
-                      {voucher.orderDetails
-                        .filter((od) => od.currentQuantity > 0)
-                        .map((od, idx) => (
-                          <tr
-                            key={`${od.size}-${od.bagType}-${idx}`}
-                            className="border-border/40 border-b last:border-0"
-                          >
-                            <td className="py-2 pr-3 font-medium">{od.size}</td>
-                            <td className="py-2 pr-3">{od.bagType}</td>
-                            <td className="py-2 pr-3 text-right font-medium">
-                              {od.currentQuantity.toLocaleString('en-IN')}
-                            </td>
-                            <td className="py-2 pr-3 text-right">
-                              {od.initialQuantity.toLocaleString('en-IN')}
-                            </td>
-                            <td className="py-2 text-right">
-                              {od.weightPerBagKg.toLocaleString('en-IN')}
-                            </td>
-                          </tr>
-                        ))}
+                      {filteredOrderDetails.map((od, idx) => (
+                        <tr
+                          key={`${od.size}-${od.bagType}-${idx}`}
+                          className="border-border/40 border-b"
+                        >
+                          <td className="py-2 pr-3 font-medium">{od.size}</td>
+                          <td className="py-2 pr-3">{od.bagType}</td>
+                          <td className="py-2 pr-3 text-right font-medium">
+                            {od.currentQuantity.toLocaleString('en-IN')}
+                          </td>
+                          <td className="py-2 pr-3 text-right">
+                            {od.initialQuantity.toLocaleString('en-IN')}
+                          </td>
+                          <td className="py-2 text-right">
+                            {od.weightPerBagKg.toLocaleString('en-IN')}
+                          </td>
+                        </tr>
+                      ))}
+                      <tr className="border-border/60 bg-muted/50 border-t-2 font-semibold text-primary">
+                        <td className="py-2.5 pr-3" colSpan={2}>
+                          Total
+                        </td>
+                        <td className="py-2.5 pr-3 text-right">
+                          {orderDetailsTotals.qty.toLocaleString('en-IN')}
+                        </td>
+                        <td className="py-2.5 pr-3 text-right">
+                          {orderDetailsTotals.initial.toLocaleString('en-IN')}
+                        </td>
+                        <td className="py-2.5 text-right opacity-70">—</td>
+                      </tr>
                     </tbody>
                   </table>
                 </div>

@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as ZustandIndexRouteImport } from './routes/zustand/index'
 import { Route as StoreAdminAuthenticatedRouteImport } from './routes/store-admin/_authenticated'
 import { Route as StoreAdminLoginIndexRouteImport } from './routes/store-admin/login/index'
+import { Route as StoreAdminAuthenticatedStorageIndexRouteImport } from './routes/store-admin/_authenticated/storage/index'
 import { Route as StoreAdminAuthenticatedPeopleIndexRouteImport } from './routes/store-admin/_authenticated/people/index'
 import { Route as StoreAdminAuthenticatedIncomingIndexRouteImport } from './routes/store-admin/_authenticated/incoming/index'
 import { Route as StoreAdminAuthenticatedGradingIndexRouteImport } from './routes/store-admin/_authenticated/grading/index'
@@ -39,6 +40,12 @@ const StoreAdminLoginIndexRoute = StoreAdminLoginIndexRouteImport.update({
   path: '/store-admin/login/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const StoreAdminAuthenticatedStorageIndexRoute =
+  StoreAdminAuthenticatedStorageIndexRouteImport.update({
+    id: '/storage/',
+    path: '/storage/',
+    getParentRoute: () => StoreAdminAuthenticatedRoute,
+  } as any)
 const StoreAdminAuthenticatedPeopleIndexRoute =
   StoreAdminAuthenticatedPeopleIndexRouteImport.update({
     id: '/people/',
@@ -79,6 +86,7 @@ export interface FileRoutesByFullPath {
   '/store-admin/grading/': typeof StoreAdminAuthenticatedGradingIndexRoute
   '/store-admin/incoming/': typeof StoreAdminAuthenticatedIncomingIndexRoute
   '/store-admin/people/': typeof StoreAdminAuthenticatedPeopleIndexRoute
+  '/store-admin/storage/': typeof StoreAdminAuthenticatedStorageIndexRoute
   '/store-admin/people/$farmerStorageLinkId/': typeof StoreAdminAuthenticatedPeopleFarmerStorageLinkIdIndexRoute
 }
 export interface FileRoutesByTo {
@@ -90,6 +98,7 @@ export interface FileRoutesByTo {
   '/store-admin/grading': typeof StoreAdminAuthenticatedGradingIndexRoute
   '/store-admin/incoming': typeof StoreAdminAuthenticatedIncomingIndexRoute
   '/store-admin/people': typeof StoreAdminAuthenticatedPeopleIndexRoute
+  '/store-admin/storage': typeof StoreAdminAuthenticatedStorageIndexRoute
   '/store-admin/people/$farmerStorageLinkId': typeof StoreAdminAuthenticatedPeopleFarmerStorageLinkIdIndexRoute
 }
 export interface FileRoutesById {
@@ -102,6 +111,7 @@ export interface FileRoutesById {
   '/store-admin/_authenticated/grading/': typeof StoreAdminAuthenticatedGradingIndexRoute
   '/store-admin/_authenticated/incoming/': typeof StoreAdminAuthenticatedIncomingIndexRoute
   '/store-admin/_authenticated/people/': typeof StoreAdminAuthenticatedPeopleIndexRoute
+  '/store-admin/_authenticated/storage/': typeof StoreAdminAuthenticatedStorageIndexRoute
   '/store-admin/_authenticated/people/$farmerStorageLinkId/': typeof StoreAdminAuthenticatedPeopleFarmerStorageLinkIdIndexRoute
 }
 export interface FileRouteTypes {
@@ -115,6 +125,7 @@ export interface FileRouteTypes {
     | '/store-admin/grading/'
     | '/store-admin/incoming/'
     | '/store-admin/people/'
+    | '/store-admin/storage/'
     | '/store-admin/people/$farmerStorageLinkId/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -126,6 +137,7 @@ export interface FileRouteTypes {
     | '/store-admin/grading'
     | '/store-admin/incoming'
     | '/store-admin/people'
+    | '/store-admin/storage'
     | '/store-admin/people/$farmerStorageLinkId'
   id:
     | '__root__'
@@ -137,6 +149,7 @@ export interface FileRouteTypes {
     | '/store-admin/_authenticated/grading/'
     | '/store-admin/_authenticated/incoming/'
     | '/store-admin/_authenticated/people/'
+    | '/store-admin/_authenticated/storage/'
     | '/store-admin/_authenticated/people/$farmerStorageLinkId/'
   fileRoutesById: FileRoutesById
 }
@@ -176,6 +189,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/store-admin/login/'
       preLoaderRoute: typeof StoreAdminLoginIndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/store-admin/_authenticated/storage/': {
+      id: '/store-admin/_authenticated/storage/'
+      path: '/storage'
+      fullPath: '/store-admin/storage/'
+      preLoaderRoute: typeof StoreAdminAuthenticatedStorageIndexRouteImport
+      parentRoute: typeof StoreAdminAuthenticatedRoute
     }
     '/store-admin/_authenticated/people/': {
       id: '/store-admin/_authenticated/people/'
@@ -220,6 +240,7 @@ interface StoreAdminAuthenticatedRouteChildren {
   StoreAdminAuthenticatedGradingIndexRoute: typeof StoreAdminAuthenticatedGradingIndexRoute
   StoreAdminAuthenticatedIncomingIndexRoute: typeof StoreAdminAuthenticatedIncomingIndexRoute
   StoreAdminAuthenticatedPeopleIndexRoute: typeof StoreAdminAuthenticatedPeopleIndexRoute
+  StoreAdminAuthenticatedStorageIndexRoute: typeof StoreAdminAuthenticatedStorageIndexRoute
   StoreAdminAuthenticatedPeopleFarmerStorageLinkIdIndexRoute: typeof StoreAdminAuthenticatedPeopleFarmerStorageLinkIdIndexRoute
 }
 
@@ -233,6 +254,8 @@ const StoreAdminAuthenticatedRouteChildren: StoreAdminAuthenticatedRouteChildren
       StoreAdminAuthenticatedIncomingIndexRoute,
     StoreAdminAuthenticatedPeopleIndexRoute:
       StoreAdminAuthenticatedPeopleIndexRoute,
+    StoreAdminAuthenticatedStorageIndexRoute:
+      StoreAdminAuthenticatedStorageIndexRoute,
     StoreAdminAuthenticatedPeopleFarmerStorageLinkIdIndexRoute:
       StoreAdminAuthenticatedPeopleFarmerStorageLinkIdIndexRoute,
   }
