@@ -1,4 +1,5 @@
 import { memo, useCallback, useMemo, useState } from 'react';
+import { useNavigate } from '@tanstack/react-router';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -12,11 +13,23 @@ import {
   User,
   Truck,
   Package,
+  FilePlus,
 } from 'lucide-react';
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty';
 import type { IncomingGatePassWithLink } from '@/types/incoming-gate-pass';
+
+type VoucherTabType = 'grading' | 'storage' | 'nikasi' | 'outgoing';
 
 interface IncomingGatePassVoucherProps {
   voucher: IncomingGatePassWithLink;
+  onCreateVoucher?: (type: VoucherTabType) => void;
 }
 
 const DetailRow = memo(function DetailRow({
@@ -56,7 +69,72 @@ function formatDate(dateString: string): string {
   }
 }
 
-function IncomingGatePassVoucher({ voucher }: IncomingGatePassVoucherProps) {
+const EMPTY_VOUCHER_LABELS: Record<
+  VoucherTabType,
+  { title: string; description: string; buttonText: string }
+> = {
+  grading: {
+    title: 'No Grading vouchers yet',
+    description:
+      "You haven't created any grading vouchers yet. Get started by creating your first grading voucher.",
+    buttonText: 'Create Grading voucher',
+  },
+  storage: {
+    title: 'No Storage vouchers yet',
+    description:
+      "You haven't created any storage vouchers yet. Get started by creating your first storage voucher.",
+    buttonText: 'Create Storage voucher',
+  },
+  nikasi: {
+    title: 'No Nikasi vouchers yet',
+    description:
+      "You haven't created any nikasi vouchers yet. Get started by creating your first nikasi voucher.",
+    buttonText: 'Create Nikasi voucher',
+  },
+  outgoing: {
+    title: 'No Outgoing vouchers yet',
+    description:
+      "You haven't created any outgoing vouchers yet. Get started by creating your first outgoing voucher.",
+    buttonText: 'Create Outgoing voucher',
+  },
+};
+
+function EmptyVoucherState({
+  voucherType,
+  onCreateVoucher,
+}: {
+  voucherType: VoucherTabType;
+  onCreateVoucher?: (type: VoucherTabType) => void;
+}) {
+  const { title, description, buttonText } = EMPTY_VOUCHER_LABELS[voucherType];
+  return (
+    <Empty className="font-custom py-8">
+      <EmptyHeader>
+        <EmptyMedia variant="icon">
+          <FilePlus className="size-6" />
+        </EmptyMedia>
+        <EmptyTitle className="font-semibold">{title}</EmptyTitle>
+        <EmptyDescription>{description}</EmptyDescription>
+      </EmptyHeader>
+      <EmptyContent>
+        <Button
+          variant="default"
+          size="lg"
+          className="font-custom font-bold"
+          onClick={() => onCreateVoucher?.(voucherType)}
+        >
+          {buttonText}
+        </Button>
+      </EmptyContent>
+    </Empty>
+  );
+}
+
+function IncomingGatePassVoucher({
+  voucher,
+  onCreateVoucher,
+}: IncomingGatePassVoucherProps) {
+  const navigate = useNavigate();
   const [isExpanded, setIsExpanded] = useState(false);
 
   const farmer = voucher.farmerStorageLinkId.farmerId;
@@ -317,26 +395,49 @@ function IncomingGatePassVoucher({ voucher }: IncomingGatePassVoucherProps) {
         </TabsContent>
 
         <TabsContent value="grading" className="mt-0 outline-none">
-          <CardContent className="font-custom text-muted-foreground px-4 py-6 text-center text-sm">
-            Grading details will appear here.
+          <CardContent className="px-4 py-6">
+            <EmptyVoucherState
+              voucherType="grading"
+              onCreateVoucher={(type) => {
+                if (type === 'grading') {
+                  navigate({
+                    to: '/store-admin/grading',
+                    search: {
+                      incomingGatePassId: voucher._id,
+                      variety: voucher.variety,
+                    },
+                  });
+                }
+                onCreateVoucher?.(type);
+              }}
+            />
           </CardContent>
         </TabsContent>
 
         <TabsContent value="storage" className="mt-0 outline-none">
-          <CardContent className="font-custom text-muted-foreground px-4 py-6 text-center text-sm">
-            Storage details will appear here.
+          <CardContent className="px-4 py-6">
+            <EmptyVoucherState
+              voucherType="storage"
+              onCreateVoucher={onCreateVoucher}
+            />
           </CardContent>
         </TabsContent>
 
         <TabsContent value="nikasi" className="mt-0 outline-none">
-          <CardContent className="font-custom text-muted-foreground px-4 py-6 text-center text-sm">
-            Nikasi details will appear here.
+          <CardContent className="px-4 py-6">
+            <EmptyVoucherState
+              voucherType="nikasi"
+              onCreateVoucher={onCreateVoucher}
+            />
           </CardContent>
         </TabsContent>
 
         <TabsContent value="outgoing" className="mt-0 outline-none">
-          <CardContent className="font-custom text-muted-foreground px-4 py-6 text-center text-sm">
-            Outgoing details will appear here.
+          <CardContent className="px-4 py-6">
+            <EmptyVoucherState
+              voucherType="outgoing"
+              onCreateVoucher={onCreateVoucher}
+            />
           </CardContent>
         </TabsContent>
       </Tabs>

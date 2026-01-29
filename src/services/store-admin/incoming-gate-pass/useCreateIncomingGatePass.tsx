@@ -13,6 +13,22 @@ export const incomingGatePassKeys = {
   all: ['store-admin', 'incoming-gate-pass'] as const,
 };
 
+/** API error shape (400, 404, 409): { success, error: { code, message } } */
+type IncomingGatePassApiError = {
+  message?: string;
+  error?: { code?: string; message?: string };
+};
+
+function getIncomingGatePassErrorMessage(
+  data: IncomingGatePassApiError | undefined
+): string {
+  return (
+    data?.error?.message ??
+    data?.message ??
+    'Failed to create incoming gate pass'
+  );
+}
+
 /**
  * Hook to create an incoming gate pass.
  * POST /incoming-gate-pass
@@ -20,7 +36,7 @@ export const incomingGatePassKeys = {
 export function useCreateIncomingGatePass() {
   return useMutation<
     CreateIncomingGatePassApiResponse,
-    AxiosError<{ message?: string }>,
+    AxiosError<IncomingGatePassApiError>,
     CreateIncomingGatePassInput
   >({
     mutationKey: [...incomingGatePassKeys.all, 'create'],
@@ -46,10 +62,9 @@ export function useCreateIncomingGatePass() {
     },
 
     onError: (error) => {
-      const errMsg =
-        error.response?.data?.message ??
-        error.message ??
-        'Failed to create incoming gate pass';
+      const errMsg = error.response?.data
+        ? getIncomingGatePassErrorMessage(error.response.data)
+        : error.message || 'Failed to create incoming gate pass';
       toast.error(errMsg);
     },
   });

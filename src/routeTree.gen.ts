@@ -15,6 +15,7 @@ import { Route as StoreAdminAuthenticatedRouteImport } from './routes/store-admi
 import { Route as StoreAdminLoginIndexRouteImport } from './routes/store-admin/login/index'
 import { Route as StoreAdminAuthenticatedPeopleIndexRouteImport } from './routes/store-admin/_authenticated/people/index'
 import { Route as StoreAdminAuthenticatedIncomingIndexRouteImport } from './routes/store-admin/_authenticated/incoming/index'
+import { Route as StoreAdminAuthenticatedGradingIndexRouteImport } from './routes/store-admin/_authenticated/grading/index'
 import { Route as StoreAdminAuthenticatedDaybookIndexRouteImport } from './routes/store-admin/_authenticated/daybook/index'
 import { Route as StoreAdminAuthenticatedPeopleFarmerStorageLinkIdIndexRouteImport } from './routes/store-admin/_authenticated/people/$farmerStorageLinkId/index'
 
@@ -50,6 +51,12 @@ const StoreAdminAuthenticatedIncomingIndexRoute =
     path: '/incoming/',
     getParentRoute: () => StoreAdminAuthenticatedRoute,
   } as any)
+const StoreAdminAuthenticatedGradingIndexRoute =
+  StoreAdminAuthenticatedGradingIndexRouteImport.update({
+    id: '/grading/',
+    path: '/grading/',
+    getParentRoute: () => StoreAdminAuthenticatedRoute,
+  } as any)
 const StoreAdminAuthenticatedDaybookIndexRoute =
   StoreAdminAuthenticatedDaybookIndexRouteImport.update({
     id: '/daybook/',
@@ -69,6 +76,7 @@ export interface FileRoutesByFullPath {
   '/zustand/': typeof ZustandIndexRoute
   '/store-admin/login/': typeof StoreAdminLoginIndexRoute
   '/store-admin/daybook/': typeof StoreAdminAuthenticatedDaybookIndexRoute
+  '/store-admin/grading/': typeof StoreAdminAuthenticatedGradingIndexRoute
   '/store-admin/incoming/': typeof StoreAdminAuthenticatedIncomingIndexRoute
   '/store-admin/people/': typeof StoreAdminAuthenticatedPeopleIndexRoute
   '/store-admin/people/$farmerStorageLinkId/': typeof StoreAdminAuthenticatedPeopleFarmerStorageLinkIdIndexRoute
@@ -79,6 +87,7 @@ export interface FileRoutesByTo {
   '/zustand': typeof ZustandIndexRoute
   '/store-admin/login': typeof StoreAdminLoginIndexRoute
   '/store-admin/daybook': typeof StoreAdminAuthenticatedDaybookIndexRoute
+  '/store-admin/grading': typeof StoreAdminAuthenticatedGradingIndexRoute
   '/store-admin/incoming': typeof StoreAdminAuthenticatedIncomingIndexRoute
   '/store-admin/people': typeof StoreAdminAuthenticatedPeopleIndexRoute
   '/store-admin/people/$farmerStorageLinkId': typeof StoreAdminAuthenticatedPeopleFarmerStorageLinkIdIndexRoute
@@ -90,6 +99,7 @@ export interface FileRoutesById {
   '/zustand/': typeof ZustandIndexRoute
   '/store-admin/login/': typeof StoreAdminLoginIndexRoute
   '/store-admin/_authenticated/daybook/': typeof StoreAdminAuthenticatedDaybookIndexRoute
+  '/store-admin/_authenticated/grading/': typeof StoreAdminAuthenticatedGradingIndexRoute
   '/store-admin/_authenticated/incoming/': typeof StoreAdminAuthenticatedIncomingIndexRoute
   '/store-admin/_authenticated/people/': typeof StoreAdminAuthenticatedPeopleIndexRoute
   '/store-admin/_authenticated/people/$farmerStorageLinkId/': typeof StoreAdminAuthenticatedPeopleFarmerStorageLinkIdIndexRoute
@@ -102,6 +112,7 @@ export interface FileRouteTypes {
     | '/zustand/'
     | '/store-admin/login/'
     | '/store-admin/daybook/'
+    | '/store-admin/grading/'
     | '/store-admin/incoming/'
     | '/store-admin/people/'
     | '/store-admin/people/$farmerStorageLinkId/'
@@ -112,6 +123,7 @@ export interface FileRouteTypes {
     | '/zustand'
     | '/store-admin/login'
     | '/store-admin/daybook'
+    | '/store-admin/grading'
     | '/store-admin/incoming'
     | '/store-admin/people'
     | '/store-admin/people/$farmerStorageLinkId'
@@ -122,6 +134,7 @@ export interface FileRouteTypes {
     | '/zustand/'
     | '/store-admin/login/'
     | '/store-admin/_authenticated/daybook/'
+    | '/store-admin/_authenticated/grading/'
     | '/store-admin/_authenticated/incoming/'
     | '/store-admin/_authenticated/people/'
     | '/store-admin/_authenticated/people/$farmerStorageLinkId/'
@@ -178,6 +191,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StoreAdminAuthenticatedIncomingIndexRouteImport
       parentRoute: typeof StoreAdminAuthenticatedRoute
     }
+    '/store-admin/_authenticated/grading/': {
+      id: '/store-admin/_authenticated/grading/'
+      path: '/grading'
+      fullPath: '/store-admin/grading/'
+      preLoaderRoute: typeof StoreAdminAuthenticatedGradingIndexRouteImport
+      parentRoute: typeof StoreAdminAuthenticatedRoute
+    }
     '/store-admin/_authenticated/daybook/': {
       id: '/store-admin/_authenticated/daybook/'
       path: '/daybook'
@@ -197,6 +217,7 @@ declare module '@tanstack/react-router' {
 
 interface StoreAdminAuthenticatedRouteChildren {
   StoreAdminAuthenticatedDaybookIndexRoute: typeof StoreAdminAuthenticatedDaybookIndexRoute
+  StoreAdminAuthenticatedGradingIndexRoute: typeof StoreAdminAuthenticatedGradingIndexRoute
   StoreAdminAuthenticatedIncomingIndexRoute: typeof StoreAdminAuthenticatedIncomingIndexRoute
   StoreAdminAuthenticatedPeopleIndexRoute: typeof StoreAdminAuthenticatedPeopleIndexRoute
   StoreAdminAuthenticatedPeopleFarmerStorageLinkIdIndexRoute: typeof StoreAdminAuthenticatedPeopleFarmerStorageLinkIdIndexRoute
@@ -206,6 +227,8 @@ const StoreAdminAuthenticatedRouteChildren: StoreAdminAuthenticatedRouteChildren
   {
     StoreAdminAuthenticatedDaybookIndexRoute:
       StoreAdminAuthenticatedDaybookIndexRoute,
+    StoreAdminAuthenticatedGradingIndexRoute:
+      StoreAdminAuthenticatedGradingIndexRoute,
     StoreAdminAuthenticatedIncomingIndexRoute:
       StoreAdminAuthenticatedIncomingIndexRoute,
     StoreAdminAuthenticatedPeopleIndexRoute:
