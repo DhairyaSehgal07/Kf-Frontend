@@ -83,11 +83,19 @@ export const IncomingForm = memo(function IncomingForm() {
           .refine((val) => val.length > 0, {
             message: 'Truck number is required',
           }),
-
         bagsReceived: z
           .number()
-          .positive('Bags received must be a positive number')
+          .min(0, 'Bags received must be non-negative')
           .int('Bags received must be a whole number'),
+        weightSlip: z.object({
+          slipNumber: z.string().trim(),
+          grossWeightKg: z.number().min(0, 'Gross weight must be non-negative'),
+          tareWeightKg: z.number().min(0, 'Tare weight must be non-negative'),
+        }),
+        remarks: z
+          .string()
+          .trim()
+          .max(500, 'Remarks must not exceed 500 characters'),
       }),
     []
   );
@@ -99,6 +107,8 @@ export const IncomingForm = memo(function IncomingForm() {
       variety: '',
       truckNumber: '',
       bagsReceived: 0,
+      weightSlip: { slipNumber: '', grossWeightKg: 0, tareWeightKg: 0 },
+      remarks: '',
     },
     validators: {
       onChange: formSchema,
@@ -110,24 +120,35 @@ export const IncomingForm = memo(function IncomingForm() {
         return;
       }
 
-      createIncomingGatePass(
-        {
-          farmerStorageLinkId: value.farmerStorageLinkId,
-          gatePassNo,
-          date: formatDateToISO(value.date),
-          variety: value.variety,
-          truckNumber: value.truckNumber,
-          bagsReceived: value.bagsReceived,
+      const payload: Parameters<typeof createIncomingGatePass>[0] = {
+        farmerStorageLinkId: value.farmerStorageLinkId,
+        gatePassNo,
+        date: formatDateToISO(value.date),
+        variety: value.variety,
+        truckNumber: value.truckNumber,
+        bagsReceived: value.bagsReceived,
+        status: 'OPEN',
+      };
+      if (
+        value.weightSlip?.slipNumber?.trim() !== undefined &&
+        value.weightSlip.slipNumber.trim() !== ''
+      ) {
+        payload.weightSlip = {
+          slipNumber: value.weightSlip.slipNumber.trim(),
+          grossWeightKg: value.weightSlip.grossWeightKg,
+          tareWeightKg: value.weightSlip.tareWeightKg,
+        };
+      }
+      if (value.remarks?.trim()) payload.remarks = value.remarks.trim();
+
+      createIncomingGatePass(payload, {
+        onSuccess: () => {
+          form.reset();
+          setSelectedFarmerId('');
+          setIsSummarySheetOpen(false);
+          navigate({ to: '/store-admin/daybook' });
         },
-        {
-          onSuccess: () => {
-            form.reset();
-            setSelectedFarmerId('');
-            setIsSummarySheetOpen(false);
-            navigate({ to: '/store-admin/daybook' });
-          },
-        }
-      );
+      });
     },
   });
 
@@ -370,20 +391,27 @@ export const IncomingForm = memo(function IncomingForm() {
                     id={field.name}
                     name={field.name}
                     type="number"
-                    min="1"
+                    min="0"
                     step="1"
-                    value={field.state.value || ''}
-                    onBlur={field.handleBlur}
-                    onChange={(e) =>
-                      field.handleChange(
-                        e.target.value === ''
-                          ? 0
-                          : parseInt(e.target.value, 10) || 0
-                      )
+                    value={
+                      field.state.value === 0 ? '' : (field.state.value ?? '')
                     }
+                    onBlur={field.handleBlur}
+                    onFocus={(e) => {
+                      if (field.state.value === 0) e.target.select();
+                    }}
+                    onChange={(e) => {
+                      const raw = e.target.value;
+                      if (raw === '' || raw === '-') {
+                        field.handleChange(0);
+                        return;
+                      }
+                      const parsed = parseInt(raw, 10);
+                      field.handleChange(Number.isNaN(parsed) ? 0 : parsed);
+                    }}
                     aria-invalid={isInvalid}
-                    placeholder="Enter number of bags"
-                    className="font-custom"
+                    placeholder="0"
+                    className="font-custom [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                   />
                   {isInvalid && (
                     <FieldError
@@ -397,6 +425,142 @@ export const IncomingForm = memo(function IncomingForm() {
                 </Field>
               );
             }}
+          />
+
+          {/* Weight Slip (optional) */}
+          <div className="border-primary/30 bg-primary/5 space-y-3 rounded-lg border p-4">
+            <p className="font-custom text-base font-semibold">Weight Slip</p>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <form.Field
+                name="weightSlip.slipNumber"
+                children={(field) => (
+                  <Field>
+                    <FieldLabel
+                      htmlFor="weight-slip-number"
+                      className="font-custom text-sm font-medium"
+                    >
+                      Slip Number
+                    </FieldLabel>
+                    <Input
+                      id="weight-slip-number"
+                      value={field.state.value ?? ''}
+                      onBlur={field.handleBlur}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      placeholder="Enter slip number"
+                      className="font-custom"
+                    />
+                  </Field>
+                )}
+              />
+              <form.Field
+                name="weightSlip.grossWeightKg"
+                children={(field) => (
+                  <Field>
+                    <FieldLabel
+                      htmlFor="weight-gross"
+                      className="font-custom text-sm font-medium"
+                    >
+                      Gross (kg)
+                    </FieldLabel>
+                    <Input
+                      id="weight-gross"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={
+                        field.state.value === undefined ||
+                        field.state.value === null ||
+                        field.state.value === 0
+                          ? ''
+                          : field.state.value
+                      }
+                      onBlur={field.handleBlur}
+                      onFocus={(e) => {
+                        if (field.state.value === 0) e.target.select();
+                      }}
+                      onChange={(e) => {
+                        const raw = e.target.value;
+                        if (raw === '' || raw === '-') {
+                          field.handleChange(0);
+                          return;
+                        }
+                        const parsed = parseFloat(raw);
+                        field.handleChange(Number.isNaN(parsed) ? 0 : parsed);
+                      }}
+                      placeholder="0"
+                      className="font-custom [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                    />
+                  </Field>
+                )}
+              />
+              <form.Field
+                name="weightSlip.tareWeightKg"
+                children={(field) => (
+                  <Field>
+                    <FieldLabel
+                      htmlFor="weight-tare"
+                      className="font-custom text-sm font-medium"
+                    >
+                      Tare (kg)
+                    </FieldLabel>
+                    <Input
+                      id="weight-tare"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={
+                        field.state.value === undefined ||
+                        field.state.value === null ||
+                        field.state.value === 0
+                          ? ''
+                          : field.state.value
+                      }
+                      onBlur={field.handleBlur}
+                      onFocus={(e) => {
+                        if (field.state.value === 0) e.target.select();
+                      }}
+                      onChange={(e) => {
+                        const raw = e.target.value;
+                        if (raw === '' || raw === '-') {
+                          field.handleChange(0);
+                          return;
+                        }
+                        const parsed = parseFloat(raw);
+                        field.handleChange(Number.isNaN(parsed) ? 0 : parsed);
+                      }}
+                      placeholder="0"
+                      className="font-custom [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                    />
+                  </Field>
+                )}
+              />
+            </div>
+          </div>
+
+          {/* Remarks (optional) */}
+          <form.Field
+            name="remarks"
+            children={(field) => (
+              <Field>
+                <FieldLabel
+                  htmlFor="remarks"
+                  className="font-custom text-base font-semibold"
+                >
+                  Remarks (optional)
+                </FieldLabel>
+                <textarea
+                  id="remarks"
+                  name={field.name}
+                  value={field.state.value ?? ''}
+                  onBlur={field.handleBlur}
+                  onChange={(e) => field.handleChange(e.target.value)}
+                  placeholder="Max 500 characters"
+                  maxLength={500}
+                  rows={3}
+                  className="border-input bg-background ring-offset-background focus-visible:ring-primary font-custom flex w-full rounded-md border px-3 py-2 text-base focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                />
+              </Field>
+            )}
           />
         </FieldGroup>
 
@@ -438,6 +602,8 @@ export const IncomingForm = memo(function IncomingForm() {
           variety: form.state.values.variety,
           truckNumber: form.state.values.truckNumber,
           bagsReceived: form.state.values.bagsReceived,
+          weightSlip: form.state.values.weightSlip,
+          remarks: form.state.values.remarks,
         }}
         isPending={isPending}
         isLoadingVoucher={isLoadingVoucher}

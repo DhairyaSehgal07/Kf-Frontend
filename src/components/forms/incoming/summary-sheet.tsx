@@ -35,6 +35,12 @@ interface SummarySheetProps {
     variety: string;
     truckNumber: string;
     bagsReceived: number;
+    weightSlip?: {
+      slipNumber: string;
+      grossWeightKg: number;
+      tareWeightKg: number;
+    };
+    remarks?: string;
   };
   isPending: boolean;
   isLoadingVoucher: boolean;
@@ -156,6 +162,18 @@ export const SummarySheet = memo(function SummarySheet({
               value={formValues.bagsReceived}
               icon={Layers}
             />
+
+            {formValues.weightSlip?.slipNumber && (
+              <SummaryRow
+                label="Weight Slip"
+                value={formValues.weightSlip.slipNumber}
+                subValue={`Gross: ${formValues.weightSlip.grossWeightKg} kg, Tare: ${formValues.weightSlip.tareWeightKg} kg`}
+              />
+            )}
+
+            {formValues.remarks && (
+              <SummaryRow label="Remarks" value={formValues.remarks} />
+            )}
           </div>
 
           {/* Highlight Metric */}

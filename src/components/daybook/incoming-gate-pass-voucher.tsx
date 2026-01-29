@@ -158,7 +158,7 @@ function IncomingGatePassVoucher({ voucher }: IncomingGatePassVoucherProps) {
               </div>
             </CardHeader>
 
-            {/* Compact Grid */}
+            {/* Compact Grid - no weight slip or remarks here */}
             <div className="mb-3 grid grid-cols-2 gap-3 lg:grid-cols-4">
               <DetailRow label="Farmer" value={farmer.name} icon={User} />
               <DetailRow
@@ -258,6 +258,57 @@ function IncomingGatePassVoucher({ voucher }: IncomingGatePassVoucherProps) {
                       />
                       <DetailRow label="Created By" value={linkedBy.name} />
                     </div>
+
+                    {/* Weight Slip - last, with focus on weights */}
+                    {voucher.weightSlip && (
+                      <div className="border-primary/20 bg-primary/5 mt-4 rounded-lg border p-3">
+                        <h4 className="text-muted-foreground/70 mb-2.5 text-xs font-semibold tracking-wider uppercase">
+                          Weight Slip
+                        </h4>
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                          <DetailRow
+                            label="Slip No"
+                            value={voucher.weightSlip.slipNumber}
+                          />
+                          <DetailRow
+                            label="Gross (kg)"
+                            value={voucher.weightSlip.grossWeightKg.toLocaleString(
+                              'en-IN'
+                            )}
+                          />
+                          <DetailRow
+                            label="Tare (kg)"
+                            value={voucher.weightSlip.tareWeightKg.toLocaleString(
+                              'en-IN'
+                            )}
+                          />
+                        </div>
+                        <p className="text-muted-foreground mt-2 text-xs">
+                          Net weight:{' '}
+                          <span className="text-foreground font-semibold">
+                            {(
+                              voucher.weightSlip.grossWeightKg -
+                              voucher.weightSlip.tareWeightKg
+                            ).toLocaleString('en-IN')}{' '}
+                            kg
+                          </span>
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Remarks - last */}
+                    {voucher.remarks && (
+                      <div className="mt-4">
+                        <h4 className="text-muted-foreground/70 mb-2.5 text-xs font-semibold tracking-wider uppercase">
+                          Remarks
+                        </h4>
+                        <div className="bg-muted/30 rounded-lg p-3">
+                          <p className="text-foreground text-sm font-medium">
+                            {voucher.remarks}
+                          </p>
+                        </div>
+                      </div>
+                    )}
                   </section>
                 </div>
               </>

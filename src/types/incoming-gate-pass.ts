@@ -1,13 +1,30 @@
 import type { FarmerStorageLinkFarmer } from './farmer';
 
+/** Weight slip sub-object for incoming gate pass */
+export interface IncomingGatePassWeightSlip {
+  slipNumber: string;
+  grossWeightKg: number;
+  tareWeightKg: number;
+}
+
+/** Grading summary for create/update payload */
+export interface CreateIncomingGatePassGradingSummary {
+  totalGradedBags: number;
+}
+
 /** Request body for POST /incoming-gate-pass */
 export interface CreateIncomingGatePassInput {
   farmerStorageLinkId: string;
+  receivedById?: string;
   gatePassNo: number;
   date: string; // ISO date string
   variety: string;
   truckNumber: string;
   bagsReceived: number;
+  weightSlip?: IncomingGatePassWeightSlip;
+  status?: 'OPEN' | 'CLOSED';
+  gradingSummary?: CreateIncomingGatePassGradingSummary;
+  remarks?: string;
 }
 
 /** Grading summary on an incoming gate pass */
@@ -67,8 +84,10 @@ export interface IncomingGatePassWithLink {
   variety: string;
   truckNumber: string;
   bagsReceived: number;
+  weightSlip?: IncomingGatePassWeightSlip;
   status: string;
   gradingSummary: IncomingGatePassGradingSummary;
+  remarks?: string;
   createdAt: string;
   updatedAt: string;
   __v: number;
