@@ -2,7 +2,16 @@ import { memo, useCallback, useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { ChevronDown, ChevronUp, Printer } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import {
+  ChevronDown,
+  ChevronUp,
+  Printer,
+  MapPin,
+  User,
+  Truck,
+  Package,
+} from 'lucide-react';
 import type { IncomingGatePassWithLink } from '@/types/incoming-gate-pass';
 
 interface IncomingGatePassVoucherProps {
@@ -12,15 +21,22 @@ interface IncomingGatePassVoucherProps {
 const DetailRow = memo(function DetailRow({
   label,
   value,
+  icon: Icon,
 }: {
   label: string;
   value: string;
+  icon?: React.ElementType;
 }) {
   return (
-    <div>
-      <div className="text-muted-foreground mb-1 text-xs">{label}</div>
-      <div className="font-custom text-foreground text-sm font-semibold lg:text-base">
-        {value}
+    <div className="flex items-start gap-2">
+      {Icon && <Icon className="text-muted-foreground/60 mt-0.5 h-3.5 w-3.5" />}
+      <div className="min-w-0 flex-1">
+        <div className="text-muted-foreground/70 mb-0.5 text-[10px] font-medium tracking-wider uppercase">
+          {label}
+        </div>
+        <div className="text-foreground truncate text-sm font-semibold">
+          {value}
+        </div>
       </div>
     </div>
   );
@@ -52,7 +68,6 @@ function IncomingGatePassVoucher({ voucher }: IncomingGatePassVoucherProps) {
   }, []);
 
   const handlePrint = useCallback(() => {
-    // Placeholder – can be wired to a nicer print layout later
     window.print();
   }, []);
 
@@ -62,124 +77,134 @@ function IncomingGatePassVoucher({ voucher }: IncomingGatePassVoucherProps) {
   );
 
   return (
-    <Card className="hover:border-primary/40 overflow-hidden rounded-xl transition-all duration-200 ease-in-out hover:shadow-md">
-      <CardHeader className="pb-4 sm:pb-5">
-        {/* Header */}
-        <div className="mb-4 flex flex-col gap-3 sm:mb-5 sm:flex-row sm:items-start sm:justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="bg-primary mt-0.5 h-2 w-2 shrink-0 rounded-full" />
-            <div>
-              <h2 className="font-custom text-foreground text-base font-bold sm:text-lg lg:text-xl">
-                Incoming Gate Pass{' '}
-                <span className="text-primary">#{voucher.gatePassNo}</span>
-              </h2>
-              <p className="font-custom text-muted-foreground text-xs sm:text-sm">
-                {formattedDate}
-              </p>
+    <Card className="border-border/40 hover:border-primary/30 overflow-hidden shadow-sm transition-all duration-200 hover:shadow-md">
+      <CardHeader className="px-4 pb-3">
+        {/* Compact Header */}
+        <div className="mb-3 flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <div className="flex min-w-0 items-center gap-2">
+              <div className="bg-primary h-1.5 w-1.5 shrink-0 rounded-full" />
+              <h3 className="text-foreground font-custom text-base font-bold tracking-tight">
+                IGP <span className="text-primary">#{voucher.gatePassNo}</span>
+              </h3>
             </div>
+            <p className="text-muted-foreground mt-2 text-xs">
+              {formattedDate}
+            </p>
           </div>
 
-          <div className="flex flex-wrap gap-2 sm:gap-2.5">
-            <div className="bg-muted text-muted-foreground rounded-full px-3 py-1.5 text-xs sm:text-sm">
-              Status:{' '}
-              <span className="text-foreground font-semibold">
-                {readableStatus}
-              </span>
-            </div>
-            <div className="bg-secondary rounded-full px-3 py-1.5 text-xs sm:text-sm">
-              <span className="text-muted-foreground">Bags:</span>{' '}
-              <span className="font-custom text-foreground text-sm font-semibold">
-                {voucher.bagsReceived.toLocaleString('en-IN')}
-              </span>
-            </div>
+          <div className="flex shrink-0 items-center gap-1.5">
+            <Badge
+              variant="secondary"
+              className="px-2 py-0.5 text-[10px] font-medium"
+            >
+              {voucher.bagsReceived.toLocaleString('en-IN')} bags
+            </Badge>
+            <Badge
+              variant="outline"
+              className="px-2 py-0.5 text-[10px] font-medium capitalize"
+            >
+              {readableStatus}
+            </Badge>
           </div>
         </div>
 
-        {/* Key details */}
-        <div className="mb-4 grid grid-cols-2 gap-4 sm:mb-5 sm:gap-5 lg:grid-cols-4 lg:gap-6">
-          <DetailRow label="Farmer" value={farmer.name} />
+        {/* Compact Grid */}
+        <div className="mb-3 grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <DetailRow label="Farmer" value={farmer.name} icon={User} />
           <DetailRow
-            label="Farmer A/c"
+            label="Account"
             value={`#${voucher.farmerStorageLinkId.accountNumber}`}
           />
-          <DetailRow label="Truck Number" value={voucher.truckNumber} />
-          <DetailRow label="Variety" value={voucher.variety} />
+          <DetailRow label="Truck" value={voucher.truckNumber} icon={Truck} />
+          <DetailRow label="Variety" value={voucher.variety} icon={Package} />
         </div>
 
-        {/* Header actions */}
-        <div className="flex flex-col gap-3 pt-1 sm:flex-row sm:items-center sm:justify-between">
+        {/* Compact Actions */}
+        <div className="flex items-center justify-between pt-1">
           <Button
             variant="ghost"
             size="sm"
             onClick={handleToggleExpanded}
-            className="w-full sm:w-auto"
+            className="hover:bg-accent h-8 px-3 text-xs"
           >
-            <span>{isExpanded ? 'Less details' : 'More details'}</span>
             {isExpanded ? (
-              <ChevronUp className="ml-2 h-4 w-4" />
+              <>
+                <ChevronUp className="mr-1.5 h-3.5 w-3.5" />
+                Less
+              </>
             ) : (
-              <ChevronDown className="ml-2 h-4 w-4" />
+              <>
+                <ChevronDown className="mr-1.5 h-3.5 w-3.5" />
+                More
+              </>
             )}
           </Button>
 
-          <div className="flex w-full justify-end gap-2 sm:w-auto sm:justify-start">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handlePrint}
-              aria-label="Print gate pass"
-            >
-              <Printer className="text-muted-foreground h-4 w-4" />
-            </Button>
-          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handlePrint}
+            className="h-8 w-8 p-0"
+            aria-label="Print gate pass"
+          >
+            <Printer className="h-3.5 w-3.5" />
+          </Button>
         </div>
       </CardHeader>
 
       {isExpanded && (
-        <CardContent className="pt-0 pb-5 sm:pb-6">
-          {/* Farmer details */}
-          <section className="mb-5 sm:mb-6">
-            <h3 className="font-custom text-foreground mb-3 text-base font-semibold sm:text-lg">
-              Farmer details
-            </h3>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              <DetailRow label="Name" value={farmer.name} />
-              <DetailRow label="Mobile" value={farmer.mobileNumber} />
-              <DetailRow
-                label="Account number"
-                value={`${voucher.farmerStorageLinkId.accountNumber}`}
-              />
-              <DetailRow label="Address" value={farmer.address} />
-            </div>
-          </section>
+        <>
+          <Separator className="mx-4" />
+          <CardContent className="space-y-4 px-4 pt-4 pb-4">
+            {/* Farmer Details */}
+            <section>
+              <h4 className="text-muted-foreground/70 mb-2.5 text-xs font-semibold tracking-wider uppercase">
+                Farmer Details
+              </h4>
+              <div className="bg-muted/30 grid grid-cols-1 gap-3 rounded-lg p-3 sm:grid-cols-2 lg:grid-cols-3">
+                <DetailRow label="Name" value={farmer.name} />
+                <DetailRow label="Mobile" value={farmer.mobileNumber} />
+                <DetailRow
+                  label="Account"
+                  value={`${voucher.farmerStorageLinkId.accountNumber}`}
+                />
+                <DetailRow
+                  label="Address"
+                  value={farmer.address}
+                  icon={MapPin}
+                />
+              </div>
+            </section>
 
-          <Separator className="my-4 sm:my-5" />
+            <Separator />
 
-          {/* Gate pass info */}
-          <section className="mb-4 sm:mb-5">
-            <h3 className="font-custom text-foreground mb-3 text-base font-semibold sm:text-lg">
-              Gate pass info
-            </h3>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              <DetailRow
-                label="Gate pass number"
-                value={`#${voucher.gatePassNo}`}
-              />
-              <DetailRow label="Status" value={readableStatus} />
-              <DetailRow
-                label="Total bags received"
-                value={voucher.bagsReceived.toLocaleString('en-IN')}
-              />
-              <DetailRow
-                label="Total graded bags"
-                value={voucher.gradingSummary.totalGradedBags.toLocaleString(
-                  'en-IN'
-                )}
-              />
-              <DetailRow label="Linked by" value={linkedBy.name} />
-            </div>
-          </section>
-        </CardContent>
+            {/* Gate Pass Info */}
+            <section>
+              <h4 className="text-muted-foreground/70 mb-2.5 text-xs font-semibold tracking-wider uppercase">
+                Gate Pass Details
+              </h4>
+              <div className="bg-muted/30 grid grid-cols-1 gap-3 rounded-lg p-3 sm:grid-cols-2 lg:grid-cols-3">
+                <DetailRow
+                  label="Pass Number"
+                  value={`#${voucher.gatePassNo}`}
+                />
+                <DetailRow label="Status" value={readableStatus} />
+                <DetailRow
+                  label="Bags Received"
+                  value={voucher.bagsReceived.toLocaleString('en-IN')}
+                />
+                <DetailRow
+                  label="Graded Bags"
+                  value={voucher.gradingSummary.totalGradedBags.toLocaleString(
+                    'en-IN'
+                  )}
+                />
+                <DetailRow label="Created By" value={linkedBy.name} />
+              </div>
+            </section>
+          </CardContent>
+        </>
       )}
     </Card>
   );
