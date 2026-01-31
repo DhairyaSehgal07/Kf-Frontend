@@ -17,6 +17,7 @@ export interface CreateStorageGatePassGradingEntry {
 
 /** Request body for POST /storage-gate-pass */
 export interface CreateStorageGatePassInput {
+  farmerStorageLinkId: string;
   gatePassNo: number;
   date: string;
   variety: string;

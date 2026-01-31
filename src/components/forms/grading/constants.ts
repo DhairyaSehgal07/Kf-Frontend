@@ -1,3 +1,11 @@
+/** Common potato varieties (shared by incoming, grading, etc.) */
+/** Common potato varieties (shared by incoming, grading, etc.) */
+export const POTATO_VARIETIES: { label: string; value: string }[] = [
+  { label: 'Himalini', value: 'Himalini' },
+  { label: 'B101', value: 'B101' },
+  { label: 'Jyoti', value: 'Jyoti' },
+];
+
 /** Size-wise entry labels for grading gate pass (field order as per spec) */
 export const GRADING_SIZES = [
   'Below 25',
@@ -11,6 +19,7 @@ export const GRADING_SIZES = [
   '50–55',
   'Above 50',
   'Above 55',
+  'Cut',
 ] as const;
 
 export type GradingSize = (typeof GRADING_SIZES)[number];

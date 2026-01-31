@@ -251,7 +251,7 @@ function IncomingGatePassVoucher({
         </div>
 
         {/* Voucher stage progress */}
-        <div className="border-border/40 px-4 pb-2 pt-1 sm:px-4">
+        <div className="border-border/40 px-4 pt-1 pb-2 sm:px-4">
           <div className="flex items-center justify-between gap-2">
             <span className="text-muted-foreground font-custom text-xs font-medium">
               Stage
@@ -490,6 +490,7 @@ function IncomingGatePassVoucher({
                     navigate({
                       to: '/store-admin/grading',
                       search: {
+                        farmerStorageLinkId: voucher.farmerStorageLinkId._id,
                         incomingGatePassId: voucher._id,
                         variety: voucher.variety,
                       },
@@ -515,7 +516,12 @@ function IncomingGatePassVoucher({
                 voucherType="storage"
                 onCreateVoucher={(type) => {
                   if (type === 'storage') {
-                    navigate({ to: '/store-admin/storage' });
+                    navigate({
+                      to: '/store-admin/storage',
+                      search: {
+                        farmerStorageLinkId: voucher.farmerStorageLinkId._id,
+                      },
+                    });
                   }
                   onCreateVoucher?.(type);
                 }}
@@ -537,7 +543,12 @@ function IncomingGatePassVoucher({
                 voucherType="nikasi"
                 onCreateVoucher={(type) => {
                   if (type === 'nikasi') {
-                    navigate({ to: '/store-admin/nikasi' });
+                    navigate({
+                      to: '/store-admin/nikasi',
+                      search: {
+                        farmerStorageLinkId: voucher.farmerStorageLinkId._id,
+                      },
+                    });
                   }
                   onCreateVoucher?.(type);
                 }}

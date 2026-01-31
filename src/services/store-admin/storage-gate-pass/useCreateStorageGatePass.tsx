@@ -11,18 +11,30 @@ import { storageGatePassKeys } from './useGetStorageGatePasses';
 
 /** API error shape (400, 404, 409): { success, error: { code, message } } */
 type StorageGatePassApiError = {
+  success?: boolean;
   message?: string;
   error?: { code?: string; message?: string };
 };
 
+const DEFAULT_ERROR_MESSAGE = 'Failed to create storage gate pass';
+
+const STATUS_ERROR_MESSAGES: Record<number, string> = {
+  400: 'Bad request',
+  404: 'Grading gate pass not found',
+  409: 'Gate pass number already exists',
+};
+
 function getStorageGatePassErrorMessage(
-  data: StorageGatePassApiError | undefined
+  data: StorageGatePassApiError | undefined,
+  status?: number
 ): string {
-  return (
+  const fromBody =
     data?.error?.message ??
     data?.message ??
-    'Failed to create storage gate pass'
-  );
+    (status !== undefined && status in STATUS_ERROR_MESSAGES
+      ? STATUS_ERROR_MESSAGES[status]
+      : null);
+  return fromBody ?? DEFAULT_ERROR_MESSAGE;
 }
 
 /**
@@ -51,14 +63,21 @@ export function useCreateStorageGatePass() {
         toast.success(data.message ?? 'Storage gate pass created successfully');
         queryClient.invalidateQueries({ queryKey: storageGatePassKeys.all });
       } else {
-        toast.error(data.message ?? 'Failed to create storage gate pass');
+        toast.error(data.message ?? DEFAULT_ERROR_MESSAGE);
       }
     },
 
     onError: (error) => {
-      const errMsg = error.response?.data
-        ? getStorageGatePassErrorMessage(error.response.data)
-        : error.message || 'Failed to create storage gate pass';
+      const status = error.response?.status;
+      const errMsg =
+        error.response?.data !== undefined
+          ? getStorageGatePassErrorMessage(
+              error.response.data as StorageGatePassApiError,
+              status
+            )
+          : status !== undefined && status in STATUS_ERROR_MESSAGES
+            ? STATUS_ERROR_MESSAGES[status]
+            : error.message || DEFAULT_ERROR_MESSAGE;
       toast.error(errMsg);
     },
   });

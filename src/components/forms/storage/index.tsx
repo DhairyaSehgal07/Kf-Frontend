@@ -38,7 +38,7 @@ import {
 import { DatePicker } from '@/components/forms/date-picker';
 import { SearchSelector } from '@/components/forms/search-selector';
 import { useGetReceiptVoucherNumber } from '@/services/store-admin/functions/useGetVoucherNumber';
-import { useGetGradingGatePasses } from '@/services/store-admin/grading-gate-pass/useGetGradingGatePasses';
+import { useGetGradingPassesOfSingleFarmer } from '@/services/store-admin/grading-gate-pass/useGetGradingPassesOfSingleFarmer';
 import { useCreateStorageGatePass } from '@/services/store-admin/storage-gate-pass/useCreateStorageGatePass';
 import { toast } from 'sonner';
 import {
@@ -110,11 +110,17 @@ type RemovedQuantities = Record<string, Record<string, number>>;
 
 export type SizeLocation = { chamber: string; floor: string; row: string };
 
-const StorageGatePassForm = memo(function StorageGatePassForm() {
+export interface StorageGatePassFormProps {
+  farmerStorageLinkId: string;
+}
+
+const StorageGatePassForm = memo(function StorageGatePassForm({
+  farmerStorageLinkId,
+}: StorageGatePassFormProps) {
   const { data: voucherNumber, isLoading: isLoadingVoucher } =
     useGetReceiptVoucherNumber('storage-gate-pass');
   const { data: gradingPasses = [], isLoading: isLoadingPasses } =
-    useGetGradingGatePasses();
+    useGetGradingPassesOfSingleFarmer(farmerStorageLinkId);
   const navigate = useNavigate();
   const { mutate: createStorageGatePass, isPending } =
     useCreateStorageGatePass();
@@ -240,6 +246,7 @@ const StorageGatePassForm = memo(function StorageGatePassForm() {
       if (!voucherNumber) return;
       createStorageGatePass(
         {
+          farmerStorageLinkId,
           gatePassNo: voucherNumber,
           date: formatDateToISO(value.date),
           variety,
@@ -537,9 +544,43 @@ const StorageGatePassForm = memo(function StorageGatePassForm() {
         </div>
 
         <FieldGroup className="space-y-6">
-          {/* Step 1: Date + Grading gate passes table */}
+          {/* Step 1: Manual Gate Pass + Date + Grading gate passes table */}
           {formStep === 1 && (
             <>
+              <form.Field
+                name="manualGatePassNumber"
+                children={(field) => (
+                  <Field>
+                    <FieldLabel
+                      htmlFor="storage-manualGatePassNumber"
+                      className="font-custom text-base font-semibold"
+                    >
+                      Manual Gate Pass Number
+                    </FieldLabel>
+                    <Input
+                      id="storage-manualGatePassNumber"
+                      type="number"
+                      min={0}
+                      value={field.state.value ?? ''}
+                      onBlur={field.handleBlur}
+                      onChange={(e) => {
+                        const raw = e.target.value;
+                        if (raw === '') {
+                          field.handleChange(undefined);
+                          return;
+                        }
+                        const parsed = parseInt(raw, 10);
+                        field.handleChange(
+                          Number.isNaN(parsed) ? undefined : parsed
+                        );
+                      }}
+                      placeholder=""
+                      className="font-custom [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                    />
+                  </Field>
+                )}
+              />
+
               <form.Field
                 name="date"
                 children={(field) => {
@@ -910,41 +951,6 @@ const StorageGatePassForm = memo(function StorageGatePassForm() {
                   })}
                 </CardContent>
               </Card>
-
-              {/* Manual Gate Pass Number */}
-              <form.Field
-                name="manualGatePassNumber"
-                children={(field) => (
-                  <Field>
-                    <FieldLabel
-                      htmlFor="storage-manualGatePassNumber"
-                      className="font-custom text-base font-semibold"
-                    >
-                      Manual Gate Pass Number
-                    </FieldLabel>
-                    <Input
-                      id="storage-manualGatePassNumber"
-                      type="number"
-                      min={0}
-                      value={field.state.value ?? ''}
-                      onBlur={field.handleBlur}
-                      onChange={(e) => {
-                        const raw = e.target.value;
-                        if (raw === '') {
-                          field.handleChange(undefined);
-                          return;
-                        }
-                        const parsed = parseInt(raw, 10);
-                        field.handleChange(
-                          Number.isNaN(parsed) ? undefined : parsed
-                        );
-                      }}
-                      placeholder="Optional"
-                      className="font-custom [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-                    />
-                  </Field>
-                )}
-              />
 
               <form.Field
                 name="remarks"

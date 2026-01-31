@@ -23,18 +23,7 @@ import { useGetAllFarmers } from '@/services/store-admin/functions/useGetAllFarm
 import { useCreateIncomingGatePass } from '@/services/store-admin/incoming-gate-pass/useCreateIncomingGatePass';
 import { toast } from 'sonner';
 import { formatDate, formatDateToISO } from '@/lib/helpers';
-
-// Common potato varieties
-const POTATO_VARIETIES: Option<string>[] = [
-  { label: 'Lady Rosetta', value: 'Lady Rosetta' },
-  { label: 'Sante', value: 'Sante' },
-  { label: 'Frito Lay', value: 'Frito Lay' },
-  { label: 'Diamond', value: 'Diamond' },
-  { label: 'Kufri Pukhraj', value: 'Kufri Pukhraj' },
-  { label: 'Kufri Jyoti', value: 'Kufri Jyoti' },
-  { label: 'Kufri Bahar', value: 'Kufri Bahar' },
-  { label: 'Other', value: 'Other' },
-];
+import { POTATO_VARIETIES } from '@/components/forms/grading/constants';
 
 export const IncomingForm = memo(function IncomingForm() {
   const navigate = useNavigate();
@@ -220,6 +209,79 @@ export const IncomingForm = memo(function IncomingForm() {
         className="space-y-6"
       >
         <FieldGroup className="space-y-6">
+          {/* Truck Number */}
+          <form.Field
+            name="truckNumber"
+            children={(field) => {
+              const isInvalid =
+                field.state.meta.isTouched && !field.state.meta.isValid;
+              return (
+                <Field data-invalid={isInvalid}>
+                  <FieldLabel
+                    htmlFor={field.name}
+                    className="font-custom text-base font-semibold"
+                  >
+                    Truck Number
+                  </FieldLabel>
+                  <Input
+                    id={field.name}
+                    name={field.name}
+                    value={field.state.value}
+                    onBlur={field.handleBlur}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    aria-invalid={isInvalid}
+                    placeholder="Enter truck number"
+                    className="font-custom"
+                  />
+                  {isInvalid && (
+                    <FieldError
+                      errors={
+                        field.state.meta.errors as Array<
+                          { message?: string } | undefined
+                        >
+                      }
+                    />
+                  )}
+                </Field>
+              );
+            }}
+          />
+
+          {/* Manual Gate Pass Number */}
+          <form.Field
+            name="manualGatePassNumber"
+            children={(field) => (
+              <Field>
+                <FieldLabel
+                  htmlFor="manualGatePassNumber"
+                  className="font-custom text-base font-semibold"
+                >
+                  Manual Gate Pass Number
+                </FieldLabel>
+                <Input
+                  id="manualGatePassNumber"
+                  type="number"
+                  min={0}
+                  value={field.state.value ?? ''}
+                  onBlur={field.handleBlur}
+                  onChange={(e) => {
+                    const raw = e.target.value;
+                    if (raw === '') {
+                      field.handleChange(undefined);
+                      return;
+                    }
+                    const parsed = parseInt(raw, 10);
+                    field.handleChange(
+                      Number.isNaN(parsed) ? undefined : parsed
+                    );
+                  }}
+                  placeholder=""
+                  className="font-custom [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                />
+              </Field>
+            )}
+          />
+
           {/* Farmer Selection */}
           <form.Field
             name="farmerStorageLinkId"
@@ -325,44 +387,6 @@ export const IncomingForm = memo(function IncomingForm() {
                     onChange={(value) => field.handleChange(value)}
                     label="Date of Submission"
                     id="date-of-submission"
-                  />
-                  {isInvalid && (
-                    <FieldError
-                      errors={
-                        field.state.meta.errors as Array<
-                          { message?: string } | undefined
-                        >
-                      }
-                    />
-                  )}
-                </Field>
-              );
-            }}
-          />
-
-          {/* Truck Number */}
-          <form.Field
-            name="truckNumber"
-            children={(field) => {
-              const isInvalid =
-                field.state.meta.isTouched && !field.state.meta.isValid;
-              return (
-                <Field data-invalid={isInvalid}>
-                  <FieldLabel
-                    htmlFor={field.name}
-                    className="font-custom text-base font-semibold"
-                  >
-                    Truck Number
-                  </FieldLabel>
-                  <Input
-                    id={field.name}
-                    name={field.name}
-                    value={field.state.value}
-                    onBlur={field.handleBlur}
-                    onChange={(e) => field.handleChange(e.target.value)}
-                    aria-invalid={isInvalid}
-                    placeholder="Enter truck number"
-                    className="font-custom"
                   />
                   {isInvalid && (
                     <FieldError
@@ -541,41 +565,6 @@ export const IncomingForm = memo(function IncomingForm() {
               />
             </div>
           </div>
-
-          {/* Manual Gate Pass Number */}
-          <form.Field
-            name="manualGatePassNumber"
-            children={(field) => (
-              <Field>
-                <FieldLabel
-                  htmlFor="manualGatePassNumber"
-                  className="font-custom text-base font-semibold"
-                >
-                  Manual Gate Pass Number
-                </FieldLabel>
-                <Input
-                  id="manualGatePassNumber"
-                  type="number"
-                  min={0}
-                  value={field.state.value ?? ''}
-                  onBlur={field.handleBlur}
-                  onChange={(e) => {
-                    const raw = e.target.value;
-                    if (raw === '') {
-                      field.handleChange(undefined);
-                      return;
-                    }
-                    const parsed = parseInt(raw, 10);
-                    field.handleChange(
-                      Number.isNaN(parsed) ? undefined : parsed
-                    );
-                  }}
-                  placeholder="Optional"
-                  className="font-custom [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-                />
-              </Field>
-            )}
-          />
 
           {/* Remarks */}
           <form.Field

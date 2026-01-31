@@ -38,7 +38,7 @@ import {
 import { DatePicker } from '@/components/forms/date-picker';
 import { SearchSelector } from '@/components/forms/search-selector';
 import { useGetReceiptVoucherNumber } from '@/services/store-admin/functions/useGetVoucherNumber';
-import { useGetGradingGatePasses } from '@/services/store-admin/grading-gate-pass/useGetGradingGatePasses';
+import { useGetGradingPassesOfSingleFarmer } from '@/services/store-admin/grading-gate-pass/useGetGradingPassesOfSingleFarmer';
 import { useCreateNikasiGatePass } from '@/services/store-admin/nikasi-gate-pass/useCreateNikasiGatePass';
 import { toast } from 'sonner';
 import {
@@ -105,11 +105,17 @@ function getOrderDetailForSize(
 
 type RemovedQuantities = Record<string, Record<string, number>>;
 
-const NikasiGatePassForm = memo(function NikasiGatePassForm() {
+export interface NikasiGatePassFormProps {
+  farmerStorageLinkId: string;
+}
+
+const NikasiGatePassForm = memo(function NikasiGatePassForm({
+  farmerStorageLinkId,
+}: NikasiGatePassFormProps) {
   const { data: voucherNumber, isLoading: isLoadingVoucher } =
     useGetReceiptVoucherNumber('nikasi-gate-pass');
   const { data: gradingPasses = [], isLoading: isLoadingPasses } =
-    useGetGradingGatePasses();
+    useGetGradingPassesOfSingleFarmer(farmerStorageLinkId);
   const navigate = useNavigate();
   const { mutate: createNikasiGatePass, isPending } = useCreateNikasiGatePass();
 
@@ -212,6 +218,7 @@ const NikasiGatePassForm = memo(function NikasiGatePassForm() {
       if (!voucherNumber) return;
       createNikasiGatePass(
         {
+          farmerStorageLinkId,
           gatePassNo: voucherNumber,
           date: formatDateToISO(value.date),
           variety,
@@ -447,6 +454,41 @@ const NikasiGatePassForm = memo(function NikasiGatePassForm() {
         className="space-y-6"
       >
         <FieldGroup className="space-y-6">
+          {/* Manual Gate Pass Number */}
+          <form.Field
+            name="manualGatePassNumber"
+            children={(field) => (
+              <Field>
+                <FieldLabel
+                  htmlFor="nikasi-manualGatePassNumber"
+                  className="font-custom text-base font-semibold"
+                >
+                  Manual Gate Pass Number
+                </FieldLabel>
+                <Input
+                  id="nikasi-manualGatePassNumber"
+                  type="number"
+                  min={0}
+                  value={field.state.value ?? ''}
+                  onBlur={field.handleBlur}
+                  onChange={(e) => {
+                    const raw = e.target.value;
+                    if (raw === '') {
+                      field.handleChange(undefined);
+                      return;
+                    }
+                    const parsed = parseInt(raw, 10);
+                    field.handleChange(
+                      Number.isNaN(parsed) ? undefined : parsed
+                    );
+                  }}
+                  placeholder=""
+                  className="font-custom [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                />
+              </Field>
+            )}
+          />
+
           {/* From, To, Date */}
           <Card>
             <CardHeader>
@@ -787,41 +829,6 @@ const NikasiGatePassForm = memo(function NikasiGatePassForm() {
                 ))}
             </CardContent>
           </Card>
-
-          {/* Manual Gate Pass Number */}
-          <form.Field
-            name="manualGatePassNumber"
-            children={(field) => (
-              <Field>
-                <FieldLabel
-                  htmlFor="nikasi-manualGatePassNumber"
-                  className="font-custom text-base font-semibold"
-                >
-                  Manual Gate Pass Number
-                </FieldLabel>
-                <Input
-                  id="nikasi-manualGatePassNumber"
-                  type="number"
-                  min={0}
-                  value={field.state.value ?? ''}
-                  onBlur={field.handleBlur}
-                  onChange={(e) => {
-                    const raw = e.target.value;
-                    if (raw === '') {
-                      field.handleChange(undefined);
-                      return;
-                    }
-                    const parsed = parseInt(raw, 10);
-                    field.handleChange(
-                      Number.isNaN(parsed) ? undefined : parsed
-                    );
-                  }}
-                  placeholder="Optional"
-                  className="font-custom [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-                />
-              </Field>
-            )}
-          />
 
           {/* Remarks */}
           <form.Field

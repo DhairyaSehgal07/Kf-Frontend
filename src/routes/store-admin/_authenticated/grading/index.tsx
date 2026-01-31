@@ -6,7 +6,15 @@ import { useGetReceiptVoucherNumber } from '@/services/store-admin/functions/use
 export const Route = createFileRoute('/store-admin/_authenticated/grading/')({
   validateSearch: (
     search: Record<string, unknown>
-  ): { incomingGatePassId?: string; variety?: string } => ({
+  ): {
+    farmerStorageLinkId?: string;
+    incomingGatePassId?: string;
+    variety?: string;
+  } => ({
+    farmerStorageLinkId:
+      typeof search.farmerStorageLinkId === 'string'
+        ? search.farmerStorageLinkId
+        : undefined,
     incomingGatePassId:
       typeof search.incomingGatePassId === 'string'
         ? search.incomingGatePassId
@@ -18,7 +26,8 @@ export const Route = createFileRoute('/store-admin/_authenticated/grading/')({
 
 function GradingFormPage() {
   const navigate = useNavigate();
-  const { incomingGatePassId, variety } = Route.useSearch();
+  const { farmerStorageLinkId, incomingGatePassId, variety } =
+    Route.useSearch();
   const { data: voucherNumber, isLoading: isLoadingVoucher } =
     useGetReceiptVoucherNumber('grading-gate-pass');
 
@@ -31,7 +40,7 @@ function GradingFormPage() {
     navigate({ to: '/store-admin/daybook' });
   };
 
-  if (!incomingGatePassId || !variety) {
+  if (!farmerStorageLinkId || !incomingGatePassId || !variety) {
     return (
       <main className="font-custom mx-auto max-w-2xl px-4 py-6 sm:px-8 sm:py-12">
         <div className="mb-8 space-y-4">
@@ -81,6 +90,7 @@ function GradingFormPage() {
       </div>
 
       <GradingGatePassForm
+        farmerStorageLinkId={farmerStorageLinkId}
         incomingGatePassId={incomingGatePassId}
         variety={variety}
         onSuccess={handleSuccess}

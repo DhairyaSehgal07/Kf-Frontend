@@ -29,6 +29,7 @@ export interface SizeEntry {
 }
 
 export interface GradingGatePassFormProps {
+  farmerStorageLinkId: string;
   incomingGatePassId: string;
   variety: string;
   onSuccess?: () => void;
@@ -61,6 +62,7 @@ function buildFormSchema() {
 }
 
 export const GradingGatePassForm = memo(function GradingGatePassForm({
+  farmerStorageLinkId,
   incomingGatePassId,
   variety,
   onSuccess,
@@ -102,6 +104,7 @@ export const GradingGatePassForm = memo(function GradingGatePassForm({
 
       createGradingGatePass(
         {
+          farmerStorageLinkId,
           incomingGatePassId,
           gradedById: admin._id,
           gatePassNo: voucherNumber,
@@ -147,6 +150,41 @@ export const GradingGatePassForm = memo(function GradingGatePassForm({
         className="space-y-6"
       >
         <FieldGroup className="space-y-6">
+          {/* Manual Gate Pass Number */}
+          <form.Field
+            name="manualGatePassNumber"
+            children={(field) => (
+              <Field>
+                <FieldLabel
+                  htmlFor="grading-manualGatePassNumber"
+                  className="font-custom text-base font-semibold"
+                >
+                  Manual Gate Pass Number
+                </FieldLabel>
+                <Input
+                  id="grading-manualGatePassNumber"
+                  type="number"
+                  min={0}
+                  value={field.state.value ?? ''}
+                  onBlur={field.handleBlur}
+                  onChange={(e) => {
+                    const raw = e.target.value;
+                    if (raw === '') {
+                      field.handleChange(undefined);
+                      return;
+                    }
+                    const parsed = parseInt(raw, 10);
+                    field.handleChange(
+                      Number.isNaN(parsed) ? undefined : parsed
+                    );
+                  }}
+                  placeholder=""
+                  className="font-custom [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                />
+              </Field>
+            )}
+          />
+
           {/* Date */}
           <form.Field
             name="date"
@@ -416,41 +454,6 @@ export const GradingGatePassForm = memo(function GradingGatePassForm({
               Quantity / Approx Weight (kg)
             </span>
           </div>
-
-          {/* Manual Gate Pass Number */}
-          <form.Field
-            name="manualGatePassNumber"
-            children={(field) => (
-              <Field>
-                <FieldLabel
-                  htmlFor="grading-manualGatePassNumber"
-                  className="font-custom text-base font-semibold"
-                >
-                  Manual Gate Pass Number
-                </FieldLabel>
-                <Input
-                  id="grading-manualGatePassNumber"
-                  type="number"
-                  min={0}
-                  value={field.state.value ?? ''}
-                  onBlur={field.handleBlur}
-                  onChange={(e) => {
-                    const raw = e.target.value;
-                    if (raw === '') {
-                      field.handleChange(undefined);
-                      return;
-                    }
-                    const parsed = parseInt(raw, 10);
-                    field.handleChange(
-                      Number.isNaN(parsed) ? undefined : parsed
-                    );
-                  }}
-                  placeholder="Optional"
-                  className="font-custom [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-                />
-              </Field>
-            )}
-          />
 
           {/* Remarks */}
           <form.Field

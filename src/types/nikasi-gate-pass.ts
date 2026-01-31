@@ -17,6 +17,7 @@ export interface CreateNikasiGatePassGradingEntry {
 
 /** Request body for POST /nikasi-gate-pass */
 export interface CreateNikasiGatePassInput {
+  farmerStorageLinkId: string;
   gatePassNo: number;
   date: string;
   variety: string;

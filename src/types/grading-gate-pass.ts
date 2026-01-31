@@ -60,6 +60,8 @@ export interface GradingGatePassOrderDetail {
 /** Grading gate pass as returned by GET /grading-gate-pass */
 export interface GradingGatePass {
   _id: string;
+  /** Present when fetched via GET /grading-gate-pass/farmer-storage-link/:id */
+  farmerStorageLinkId?: string;
   incomingGatePassId: GradingGatePassIncomingGatePass;
   gradedById: GradingGatePassGradedBy;
   gatePassNo: number;
@@ -91,6 +93,7 @@ export interface CreateGradingGatePassOrderDetail {
 
 /** Request body for POST /grading-gate-pass */
 export interface CreateGradingGatePassInput {
+  farmerStorageLinkId: string;
   incomingGatePassId: string;
   gradedById: string;
   gatePassNo: number;
