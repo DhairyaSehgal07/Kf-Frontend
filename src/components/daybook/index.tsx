@@ -38,6 +38,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import { useGetDaybook } from '@/services/store-admin/grading-gate-pass/useGetDaybook';
 import type { DaybookEntry, DaybookGatePassType } from '@/types/daybook';
+import EntrySummariesBar from './EntrySummariesBar';
 import {
   IncomingVoucher,
   GradingVoucher,
@@ -87,6 +88,7 @@ const DaybookEntryCard = memo(function DaybookEntryCard({
         </div>
         <Progress value={progressValue} className="mt-1.5 h-2" />
       </div>
+      <EntrySummariesBar summaries={entry.summaries} />
       <Tabs defaultValue="incoming" className="w-full">
         <TabsList className="font-custom flex h-auto w-full flex-nowrap overflow-x-auto">
           <TabsTrigger
@@ -115,7 +117,7 @@ const DaybookEntryCard = memo(function DaybookEntryCard({
             className="min-w-0 flex-1 shrink-0 px-3 sm:px-4"
           >
             <span className="sm:hidden">Dis</span>
-            <span className="hidden sm:inline">Nikasi</span>
+            <span className="hidden sm:inline">Dispatch</span>
           </TabsTrigger>
           <TabsTrigger
             value="outgoing"
@@ -219,6 +221,8 @@ const DaybookEntryCard = memo(function DaybookEntryCard({
   );
 });
 
+export { DaybookEntryCard };
+
 const LIMIT_OPTIONS = [10, 25, 50, 100] as const;
 
 const GATE_PASS_TYPE_OPTIONS: {
@@ -229,7 +233,7 @@ const GATE_PASS_TYPE_OPTIONS: {
   { value: 'incoming', label: 'Incoming', shortLabel: 'Inc' },
   { value: 'grading', label: 'Grading', shortLabel: 'Gra' },
   { value: 'storage', label: 'Storage', shortLabel: 'Sto' },
-  { value: 'nikasi', label: 'Nikasi', shortLabel: 'Dis' },
+  { value: 'nikasi', label: 'Dispatch', shortLabel: 'Dis' },
   { value: 'outgoing', label: 'Outgoing', shortLabel: 'Out' },
 ];
 
