@@ -4,9 +4,9 @@ import { Card, CardContent } from '@/components/ui/card';
 
 import {
   Item,
+  ItemHeader,
   ItemMedia,
   ItemTitle,
-  ItemHeader,
   ItemActions,
   ItemFooter,
 } from '@/components/ui/item';
@@ -15,9 +15,9 @@ import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuCheckboxItem,
   DropdownMenuItem,
   DropdownMenuTrigger,
-  DropdownMenuCheckboxItem,
 } from '@/components/ui/dropdown-menu';
 import {
   Pagination,
@@ -33,9 +33,9 @@ import {
   RefreshCw,
   Receipt,
   ArrowUpFromLine,
-  Filter,
 } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Progress } from '@/components/ui/progress';
 import { useGetDaybook } from '@/services/store-admin/grading-gate-pass/useGetDaybook';
 import type { DaybookEntry, DaybookGatePassType } from '@/types/daybook';
 import {
@@ -52,6 +52,17 @@ interface DaybookEntryCardProps {
   entry: DaybookEntry;
 }
 
+const PIPELINE_STAGES = 5; // Incoming → Grading → Storage → Nikasi → Outgoing
+
+function getPipelineProgress(entry: DaybookEntry): number {
+  let completedStages = 1; // Incoming is always present when we have an entry
+  if ((entry.gradingPasses?.length ?? 0) > 0) completedStages = 2;
+  if ((entry.storagePasses?.length ?? 0) > 0) completedStages = 3;
+  if ((entry.nikasiPasses?.length ?? 0) > 0) completedStages = 4;
+  if ((entry.outgoingPasses?.length ?? 0) > 0) completedStages = 5;
+  return Math.round((completedStages / PIPELINE_STAGES) * 100);
+}
+
 const DaybookEntryCard = memo(function DaybookEntryCard({
   entry,
 }: DaybookEntryCardProps) {
@@ -61,51 +72,63 @@ const DaybookEntryCard = memo(function DaybookEntryCard({
   const farmerAccount = farmer?.accountNumber;
   const farmerAddress = farmer?.address;
   const farmerMobile = farmer?.mobileNumber;
+  const progressValue = getPipelineProgress(entry);
 
   return (
-    <Card className="overflow-hidden">
+    <Card className="overflow-hidden p-0">
+      <div className="border-border bg-muted/30 px-3 py-2 sm:px-4 sm:py-2.5">
+        <div className="flex items-center justify-between gap-2">
+          <span className="font-custom text-muted-foreground text-xs font-medium sm:text-sm">
+            Pipeline
+          </span>
+          <span className="font-custom text-muted-foreground text-xs sm:text-sm">
+            {progressValue}%
+          </span>
+        </div>
+        <Progress value={progressValue} className="mt-1.5 h-2" />
+      </div>
       <Tabs defaultValue="incoming" className="w-full">
         <TabsList
           variant="line"
-          className="border-border bg-muted/50 flex h-auto w-full flex-nowrap justify-start gap-1 overflow-x-auto rounded-lg border px-1 pt-0.5 pb-1"
+          className="border-border bg-muted/50 dark:bg-muted/30 flex h-auto w-full flex-nowrap justify-start gap-0.5 overflow-x-auto rounded-t-lg border border-b-0 px-1 pt-1 pb-0"
         >
           <TabsTrigger
             value="incoming"
-            className="font-custom text-muted-foreground data-[state=active]:border-primary data-[state=active]:bg-muted data-[state=active]:text-foreground data-[state=active]:after:bg-primary min-w-0 shrink-0 rounded-md px-2 py-1.5 transition-colors data-[state=active]:font-medium sm:px-4 sm:py-2"
+            className="font-custom text-muted-foreground data-[state=active]:border-primary data-[state=active]:bg-primary/10 data-[state=active]:text-primary dark:data-[state=active]:bg-primary/20 dark:data-[state=active]:text-primary min-w-0 shrink-0 rounded-t-md border-b-2 border-transparent px-2 py-1.5 transition-all duration-200 data-[state=active]:font-semibold data-[state=active]:after:opacity-0 sm:px-4 sm:py-2"
           >
             <span className="sm:hidden">Inc</span>
             <span className="hidden sm:inline">Incoming</span>
           </TabsTrigger>
           <TabsTrigger
             value="grading"
-            className="font-custom text-muted-foreground data-[state=active]:border-primary data-[state=active]:bg-muted data-[state=active]:text-foreground data-[state=active]:after:bg-primary min-w-0 shrink-0 rounded-md px-2 py-1.5 transition-colors data-[state=active]:font-medium sm:px-4 sm:py-2"
+            className="font-custom text-muted-foreground data-[state=active]:border-primary data-[state=active]:bg-primary/10 data-[state=active]:text-primary dark:data-[state=active]:bg-primary/20 dark:data-[state=active]:text-primary min-w-0 shrink-0 rounded-t-md border-b-2 border-transparent px-2 py-1.5 transition-all duration-200 data-[state=active]:font-semibold data-[state=active]:after:opacity-0 sm:px-4 sm:py-2"
           >
             <span className="sm:hidden">Gra</span>
             <span className="hidden sm:inline">Grading</span>
           </TabsTrigger>
           <TabsTrigger
             value="storage"
-            className="font-custom text-muted-foreground data-[state=active]:border-primary data-[state=active]:bg-muted data-[state=active]:text-foreground data-[state=active]:after:bg-primary min-w-0 shrink-0 rounded-md px-2 py-1.5 transition-colors data-[state=active]:font-medium sm:px-4 sm:py-2"
+            className="font-custom text-muted-foreground data-[state=active]:border-primary data-[state=active]:bg-primary/10 data-[state=active]:text-primary dark:data-[state=active]:bg-primary/20 dark:data-[state=active]:text-primary min-w-0 shrink-0 rounded-t-md border-b-2 border-transparent px-2 py-1.5 transition-all duration-200 data-[state=active]:font-semibold data-[state=active]:after:opacity-0 sm:px-4 sm:py-2"
           >
             <span className="sm:hidden">Sto</span>
             <span className="hidden sm:inline">Storage</span>
           </TabsTrigger>
           <TabsTrigger
             value="nikasi"
-            className="font-custom text-muted-foreground data-[state=active]:border-primary data-[state=active]:bg-muted data-[state=active]:text-foreground data-[state=active]:after:bg-primary min-w-0 shrink-0 rounded-md px-2 py-1.5 transition-colors data-[state=active]:font-medium sm:px-4 sm:py-2"
+            className="font-custom text-muted-foreground data-[state=active]:border-primary data-[state=active]:bg-primary/10 data-[state=active]:text-primary dark:data-[state=active]:bg-primary/20 dark:data-[state=active]:text-primary min-w-0 shrink-0 rounded-t-md border-b-2 border-transparent px-2 py-1.5 transition-all duration-200 data-[state=active]:font-semibold data-[state=active]:after:opacity-0 sm:px-4 sm:py-2"
           >
             <span className="sm:hidden">Dis</span>
             <span className="hidden sm:inline">Nikasi</span>
           </TabsTrigger>
           <TabsTrigger
             value="outgoing"
-            className="font-custom text-muted-foreground data-[state=active]:border-primary data-[state=active]:bg-muted data-[state=active]:text-foreground data-[state=active]:after:bg-primary min-w-0 shrink-0 rounded-md px-2 py-1.5 transition-colors data-[state=active]:font-medium sm:px-4 sm:py-2"
+            className="font-custom text-muted-foreground data-[state=active]:border-primary data-[state=active]:bg-primary/10 data-[state=active]:text-primary dark:data-[state=active]:bg-primary/20 dark:data-[state=active]:text-primary min-w-0 shrink-0 rounded-t-md border-b-2 border-transparent px-2 py-1.5 transition-all duration-200 data-[state=active]:font-semibold data-[state=active]:after:opacity-0 sm:px-4 sm:py-2"
           >
             <span className="sm:hidden">Out</span>
             <span className="hidden sm:inline">Outgoing</span>
           </TabsTrigger>
         </TabsList>
-        <div className="px-3 pt-2 pb-3 sm:p-4">
+        <div className="p-0">
           <TabsContent value="incoming" className="mt-0 outline-none">
             {incoming ? (
               <IncomingVoucher
@@ -199,22 +222,41 @@ const DaybookEntryCard = memo(function DaybookEntryCard({
   );
 });
 
-const GATE_PASS_TYPE_LABELS: Record<DaybookGatePassType, string> = {
-  incoming: 'Incoming',
-  grading: 'Grading',
-  storage: 'Storage',
-  nikasi: 'Dispatch',
-  outgoing: 'Outgoing',
-};
-
 const LIMIT_OPTIONS = [10, 25, 50, 100] as const;
+
+const GATE_PASS_TYPE_OPTIONS: {
+  value: DaybookGatePassType;
+  label: string;
+  shortLabel: string;
+}[] = [
+  { value: 'incoming', label: 'Incoming', shortLabel: 'Inc' },
+  { value: 'grading', label: 'Grading', shortLabel: 'Gra' },
+  { value: 'storage', label: 'Storage', shortLabel: 'Sto' },
+  { value: 'nikasi', label: 'Nikasi', shortLabel: 'Dis' },
+  { value: 'outgoing', label: 'Outgoing', shortLabel: 'Out' },
+];
 
 const DaybookPage = memo(function DaybookPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [sortBy, setSortBy] = useState<'Date' | 'Voucher Number'>('Date');
   const [gatePassType, setGatePassType] = useState<DaybookGatePassType[]>([]);
+
+  const toggleGatePassType = useCallback((type: DaybookGatePassType) => {
+    setGatePassType((prev) => {
+      const next = prev.includes(type)
+        ? prev.filter((t) => t !== type)
+        : [...prev, type].sort(
+            (a, b) =>
+              GATE_PASS_TYPE_OPTIONS.findIndex((o) => o.value === a) -
+              GATE_PASS_TYPE_OPTIONS.findIndex((o) => o.value === b)
+          );
+      return next;
+    });
+    setPage(1);
+  }, []);
 
   const queryParams = useMemo(
     () => ({
@@ -241,18 +283,6 @@ const DaybookPage = memo(function DaybookPage() {
 
   const setLimitAndResetPage = useCallback((newLimit: number) => {
     setLimit(newLimit);
-    setPage(1);
-  }, []);
-
-  const setSortOrderAndResetPage = useCallback((order: 'asc' | 'desc') => {
-    setSortOrder(order);
-    setPage(1);
-  }, []);
-
-  const toggleGatePassType = useCallback((type: DaybookGatePassType) => {
-    setGatePassType((prev) =>
-      prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type]
-    );
     setPage(1);
   }, []);
 
@@ -287,86 +317,98 @@ const DaybookPage = memo(function DaybookPage() {
   return (
     <main className="mx-auto max-w-7xl p-3 sm:p-4 lg:p-6">
       <div className="space-y-4 sm:space-y-6">
-        {/* Header: count + page info + refresh */}
-        <Item
-          variant="outline"
-          size="sm"
-          className="rounded-xl px-3 shadow-sm sm:px-4"
-        >
-          <ItemHeader className="h-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2 sm:gap-3">
-              <ItemMedia variant="icon" className="shrink-0 rounded-lg">
-                <Receipt className="text-primary h-5 w-5" />
-              </ItemMedia>
-              <ItemTitle className="font-custom min-w-0 text-sm font-semibold sm:text-base">
-                {totalCount} {totalCount === 1 ? 'voucher' : 'vouchers'}
-                {totalPages > 1 && (
-                  <span className="font-custom text-muted-foreground font-normal">
-                    {' '}
-                    · Page {page} of {totalPages}
-                  </span>
-                )}
-              </ItemTitle>
-            </div>
-            <ItemActions className="w-full shrink-0 sm:w-auto">
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={isFetching}
-                onClick={() => refetch()}
-                className="font-custom h-10 min-h-10 w-full gap-2 rounded-lg px-3 sm:h-8 sm:min-h-0 sm:w-auto"
-              >
-                <RefreshCw
-                  className={`h-4 w-4 shrink-0 ${
-                    isFetching ? 'animate-spin' : ''
-                  }`}
-                />
-                <span className="hidden sm:inline">Refresh</span>
-              </Button>
-            </ItemActions>
-          </ItemHeader>
-        </Item>
+        {/* Header: voucher count + refresh, then search + sort + add */}
+        <div className="flex flex-col gap-4">
+          <Item variant="outline" size="sm" className="rounded-xl shadow-sm">
+            <ItemHeader className="h-full">
+              <div className="flex items-center gap-3">
+                <ItemMedia variant="icon" className="rounded-lg">
+                  <Receipt className="text-primary h-5 w-5" />
+                </ItemMedia>
+                <ItemTitle className="font-custom text-sm font-semibold sm:text-base">
+                  {totalCount} {totalCount === 1 ? 'voucher' : 'vouchers'}
+                </ItemTitle>
+              </div>
+              <ItemActions>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={isFetching}
+                  onClick={() => refetch()}
+                  className="font-custom h-8 gap-2 rounded-lg px-3"
+                >
+                  <RefreshCw
+                    className={`h-4 w-4 shrink-0 ${
+                      isFetching ? 'animate-spin' : ''
+                    }`}
+                  />
+                  <span className="hidden sm:inline">Refresh</span>
+                </Button>
+              </ItemActions>
+            </ItemHeader>
+          </Item>
 
-        {/* Search + filters row + Add Incoming */}
-        <Item
-          variant="outline"
-          size="sm"
-          className="flex-col items-stretch gap-4 rounded-xl px-3 sm:px-4"
-        >
-          <div className="relative w-full">
-            <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-            <Input
-              placeholder="Search by voucher number, date..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="font-custom focus-visible:ring-primary min-h-10 w-full pl-10 focus-visible:ring-2 focus-visible:ring-offset-2 sm:min-h-9"
-            />
-          </div>
-          <ItemFooter className="flex flex-col gap-3">
-            <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+          {/* Search + sort + add */}
+          <Item
+            variant="outline"
+            size="sm"
+            className="flex-col items-stretch gap-4 rounded-xl"
+          >
+            <div className="relative w-full">
+              <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+              <Input
+                placeholder="Search by voucher number, date..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="font-custom focus-visible:ring-primary w-full pl-10 focus-visible:ring-2 focus-visible:ring-offset-2"
+              />
+            </div>
+            <ItemFooter className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex w-full flex-col gap-3 sm:flex-1 sm:flex-row sm:flex-nowrap sm:items-center sm:gap-4">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button
                       variant="outline"
-                      size="sm"
-                      className="font-custom focus-visible:ring-primary h-10 min-h-10 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 sm:h-8 sm:min-h-0"
+                      className="font-custom focus-visible:ring-primary w-full min-w-0 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 sm:w-auto sm:min-w-40"
                     >
-                      <span className="hidden sm:inline">Date: </span>
-                      {sortOrder === 'desc' ? 'Newest first' : 'Oldest first'}
-                      <ChevronDown className="ml-1.5 h-4 w-4 shrink-0" />
+                      <span className="hidden sm:inline">Sort by: </span>
+                      <span className="sm:hidden">Sort: </span>
+                      {sortBy === 'Voucher Number' ? (
+                        <span className="truncate">Voucher No.</span>
+                      ) : (
+                        sortBy
+                      )}
+                      <span className="font-custom text-muted-foreground hidden sm:inline">
+                        {' '}
+                        · {sortOrder === 'asc' ? 'Ascending' : 'Descending'}
+                      </span>
+                      <ChevronDown className="ml-2 h-4 w-4 shrink-0" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start">
-                    <DropdownMenuItem
-                      onClick={() => setSortOrderAndResetPage('desc')}
-                    >
-                      Newest first
+                  <DropdownMenuContent align="start" className="font-custom">
+                    <DropdownMenuItem onClick={() => setSortBy('Date')}>
+                      Date
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      onClick={() => setSortOrderAndResetPage('asc')}
+                      onClick={() => setSortBy('Voucher Number')}
                     >
-                      Oldest first
+                      Voucher Number
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => {
+                        setSortOrder('asc');
+                        setPage(1);
+                      }}
+                    >
+                      Ascending
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => {
+                        setSortOrder('desc');
+                        setPage(1);
+                      }}
+                    >
+                      Descending
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -374,47 +416,49 @@ const DaybookPage = memo(function DaybookPage() {
                   <DropdownMenuTrigger asChild>
                     <Button
                       variant="outline"
-                      size="sm"
-                      className="font-custom focus-visible:ring-primary h-10 min-h-10 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 sm:h-8 sm:min-h-0"
+                      className="font-custom focus-visible:ring-primary w-full min-w-0 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 sm:w-auto sm:min-w-40"
                     >
-                      <Filter className="mr-1.5 h-4 w-4 shrink-0" />
-                      <span className="hidden sm:inline">
-                        {gatePassType.length > 0
-                          ? `Filter: ${gatePassType.length} type(s)`
-                          : 'Filter by type'}
-                      </span>
-                      <ChevronDown className="ml-1.5 h-4 w-4 shrink-0" />
+                      <span className="hidden sm:inline">Filter: </span>
+                      <span className="sm:hidden">Type: </span>
+                      {gatePassType.length === 0 ? (
+                        'All'
+                      ) : gatePassType.length === 1 ? (
+                        (GATE_PASS_TYPE_OPTIONS.find(
+                          (o) => o.value === gatePassType[0]
+                        )?.label ?? 'All')
+                      ) : (
+                        <span className="truncate">
+                          {gatePassType.length} types
+                        </span>
+                      )}
+                      <ChevronDown className="ml-2 h-4 w-4 shrink-0" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start" className="min-w-40">
-                    {(
-                      Object.keys(
-                        GATE_PASS_TYPE_LABELS
-                      ) as DaybookGatePassType[]
-                    ).map((type) => (
+                  <DropdownMenuContent align="start" className="font-custom">
+                    {GATE_PASS_TYPE_OPTIONS.map((opt) => (
                       <DropdownMenuCheckboxItem
-                        key={type}
-                        checked={gatePassType.includes(type)}
-                        onCheckedChange={() => toggleGatePassType(type)}
+                        key={opt.value}
+                        checked={gatePassType.includes(opt.value)}
+                        onCheckedChange={() => toggleGatePassType(opt.value)}
                       >
-                        {GATE_PASS_TYPE_LABELS[type]}
+                        {opt.label}
                       </DropdownMenuCheckboxItem>
                     ))}
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
               <Button
-                className="font-custom h-10 min-h-10 w-full shrink-0 rounded-lg sm:h-9 sm:min-h-0 sm:w-auto"
+                className="font-custom h-10 w-full shrink-0 sm:w-auto"
                 asChild
               >
-                <Link to="/store-admin/incoming" className="justify-center">
+                <Link to="/store-admin/incoming">
                   <ArrowUpFromLine className="h-4 w-4 shrink-0" />
                   Add Incoming
                 </Link>
               </Button>
-            </div>
-          </ItemFooter>
-        </Item>
+            </ItemFooter>
+          </Item>
+        </div>
 
         {/* List: one tabbed card per daybook entry */}
         {isLoading ? (
