@@ -156,10 +156,14 @@ const DaybookEntryCard = memo(function DaybookEntryCard({
           variety,
         }
       : undefined;
-  const storageSearch = farmerStorageLinkId
-    ? { farmerStorageLinkId }
-    : undefined;
   const firstGradingPass = entry.gradingPasses?.[0] as PassVoucherData | undefined;
+  const storageSearch =
+    farmerStorageLinkId
+      ? {
+          farmerStorageLinkId,
+          ...(firstGradingPass?._id && { gradingPassId: firstGradingPass._id }),
+        }
+      : undefined;
   const nikasiSearch =
     farmerStorageLinkId
       ? {
