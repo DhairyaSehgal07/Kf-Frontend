@@ -159,9 +159,14 @@ const DaybookEntryCard = memo(function DaybookEntryCard({
   const storageSearch = farmerStorageLinkId
     ? { farmerStorageLinkId }
     : undefined;
-  const nikasiSearch = farmerStorageLinkId
-    ? { farmerStorageLinkId }
-    : undefined;
+  const firstGradingPass = entry.gradingPasses?.[0] as PassVoucherData | undefined;
+  const nikasiSearch =
+    farmerStorageLinkId
+      ? {
+          farmerStorageLinkId,
+          ...(firstGradingPass?._id && { gradingPassId: firstGradingPass._id }),
+        }
+      : undefined;
 
   return (
     <Card className="overflow-hidden p-0">

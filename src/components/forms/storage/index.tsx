@@ -881,13 +881,21 @@ const StorageGatePassForm = memo(function StorageGatePassForm({
                       row: '',
                     };
                     const error = step2LocationErrors[size];
+                    const bagsForSize = Object.entries(removedQuantities).reduce(
+                      (sum, [, sizes]) => sum + (sizes[size] ?? 0),
+                      0
+                    );
                     return (
                       <div
                         key={size}
                         className="border-border/60 bg-muted/20 rounded-lg border p-4"
                       >
                         <p className="font-custom text-foreground mb-3 font-semibold">
-                          Size: {size}
+                          {size}
+                          <span className="font-custom text-muted-foreground ml-2 font-normal">
+                            — {bagsForSize.toLocaleString('en-IN')} bag
+                            {bagsForSize !== 1 ? 's' : ''} selected
+                          </span>
                         </p>
                         <div className="grid gap-4 sm:grid-cols-3">
                           <Field data-invalid={!!error}>
