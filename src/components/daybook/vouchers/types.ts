@@ -9,6 +9,7 @@ export interface WeightSlipData {
 export interface IncomingVoucherData {
   _id?: string;
   gatePassNo?: number;
+  manualGatePassNumber?: number;
   date?: string;
   variety?: string;
   truckNumber?: string;
@@ -76,6 +77,7 @@ export interface OrderDetailRow {
 export interface PassVoucherData {
   _id?: string;
   gatePassNo?: number;
+  manualGatePassNumber?: number;
   date?: string;
   variety?: string;
   orderDetails?: OrderDetailRow[];

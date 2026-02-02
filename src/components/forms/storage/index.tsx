@@ -112,15 +112,24 @@ export type SizeLocation = { chamber: string; floor: string; row: string };
 
 export interface StorageGatePassFormProps {
   farmerStorageLinkId: string;
+  /** When set, show only this grading pass in the form (from daybook Grading tab) */
+  gradingPassId?: string;
 }
 
 const StorageGatePassForm = memo(function StorageGatePassForm({
   farmerStorageLinkId,
+  gradingPassId,
 }: StorageGatePassFormProps) {
   const { data: voucherNumber, isLoading: isLoadingVoucher } =
     useGetReceiptVoucherNumber('storage-gate-pass');
-  const { data: gradingPasses = [], isLoading: isLoadingPasses } =
+  const { data: allGradingPasses = [], isLoading: isLoadingPasses } =
     useGetGradingPassesOfSingleFarmer(farmerStorageLinkId);
+
+  const gradingPasses = useMemo(() => {
+    if (!gradingPassId) return allGradingPasses;
+    const single = allGradingPasses.find((p) => p._id === gradingPassId);
+    return single ? [single] : [];
+  }, [allGradingPasses, gradingPassId]);
   const navigate = useNavigate();
   const { mutate: createStorageGatePass, isPending } =
     useCreateStorageGatePass();
@@ -656,7 +665,7 @@ const StorageGatePassForm = memo(function StorageGatePassForm({
                       )}
                     </div>
 
-                    {hasGradingData && (
+                    {hasGradingData && !gradingPassId && (
                       <div className="border-border/60 bg-muted/30 flex flex-wrap items-end gap-3 rounded-lg border px-3 py-3 sm:gap-4">
                         <div className="flex flex-col gap-1.5">
                           <label

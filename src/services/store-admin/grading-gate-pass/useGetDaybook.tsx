@@ -32,13 +32,10 @@ async function fetchDaybook(
   const url = queryString
     ? `/store-admin/daybook?${queryString}`
     : '/store-admin/daybook';
-
   const { data } = await storeAdminAxiosClient.get<GetDaybookApiResponse>(url);
-
   if (!data.success || data.data == null) {
     throw new Error(data.message ?? 'Failed to fetch daybook');
   }
-
   return data.data;
 }
 
@@ -46,6 +43,8 @@ export const daybookQueryOptions = (params: GetDaybookParams = {}) =>
   queryOptions({
     queryKey: daybookKeys.list(params),
     queryFn: () => fetchDaybook(params),
+    refetchOnMount: 'always', // Always refetch when component mounts
+    refetchOnWindowFocus: true, // Refetch when window regains focus
   });
 
 export function useGetDaybook(params: GetDaybookParams = {}) {

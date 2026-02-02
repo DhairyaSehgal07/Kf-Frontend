@@ -8,6 +8,7 @@ import type {
   CreateStorageGatePassApiResponse,
 } from '@/types/storage-gate-pass';
 import { storageGatePassKeys } from './useGetStorageGatePasses';
+import { daybookKeys } from '../grading-gate-pass/useGetDaybook';
 
 /** API error shape (400, 404, 409): { success, error: { code, message } } */
 type StorageGatePassApiError = {
@@ -40,6 +41,7 @@ function getStorageGatePassErrorMessage(
 /**
  * Hook to create a storage gate pass.
  * POST /storage-gate-pass
+ * Payload may include optional manualGatePassNumber (number).
  */
 export function useCreateStorageGatePass() {
   return useMutation<
@@ -61,6 +63,7 @@ export function useCreateStorageGatePass() {
     onSuccess: (data) => {
       if (data.success) {
         toast.success(data.message ?? 'Storage gate pass created successfully');
+        queryClient.invalidateQueries({ queryKey: daybookKeys.all });
         queryClient.invalidateQueries({ queryKey: storageGatePassKeys.all });
       } else {
         toast.error(data.message ?? DEFAULT_ERROR_MESSAGE);

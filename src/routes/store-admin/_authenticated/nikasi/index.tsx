@@ -4,17 +4,19 @@ import NikasiGatePassForm from '@/components/forms/nikasi';
 export const Route = createFileRoute('/store-admin/_authenticated/nikasi/')({
   validateSearch: (
     search: Record<string, unknown>
-  ): { farmerStorageLinkId?: string } => ({
+  ): { farmerStorageLinkId?: string; gradingPassId?: string } => ({
     farmerStorageLinkId:
       typeof search.farmerStorageLinkId === 'string'
         ? search.farmerStorageLinkId
         : undefined,
+    gradingPassId:
+      typeof search.gradingPassId === 'string' ? search.gradingPassId : undefined,
   }),
   component: NikasiFormPage,
 });
 
 function NikasiFormPage() {
-  const { farmerStorageLinkId } = Route.useSearch();
+  const { farmerStorageLinkId, gradingPassId } = Route.useSearch();
 
   if (!farmerStorageLinkId) {
     return (
@@ -38,5 +40,10 @@ function NikasiFormPage() {
     );
   }
 
-  return <NikasiGatePassForm farmerStorageLinkId={farmerStorageLinkId} />;
+  return (
+    <NikasiGatePassForm
+      farmerStorageLinkId={farmerStorageLinkId}
+      gradingPassId={gradingPassId}
+    />
+  );
 }

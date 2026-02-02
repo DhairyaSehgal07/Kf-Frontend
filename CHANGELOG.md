@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.3] - 2026-02-02
+
+### Changed
+- Daybook: voucher components (grading, incoming, nikasi, outgoing, storage) and types
+- Daybook index and filter integration
+- Nikasi and storage forms and routes
+- Gate pass services: grading, incoming, nikasi, storage create hooks and daybook fetch
+- Daybook types updates
+
 ## [0.9.2] - 2026-02-02
 
 ### Changed

@@ -1,4 +1,5 @@
 import { memo, useMemo, useState } from 'react';
+import { Link } from '@tanstack/react-router';
 import { Card, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -10,6 +11,9 @@ import {
   User,
   Package,
   Layers,
+  PackagePlus,
+  Truck,
+  AlertTriangle,
 } from 'lucide-react';
 import { DetailRow } from './detail-row';
 import { formatVoucherDate } from './format-date';
@@ -19,12 +23,18 @@ import { totalBagsFromOrderDetails, type VoucherFarmerInfo } from './types';
 
 export interface GradingVoucherProps extends VoucherFarmerInfo {
   voucher: PassVoucherData;
+  /** When set, show Add Storage / Add Nikasi links for this grading pass */
+  farmerStorageLinkId?: string;
+  /** Entry-level wastage (kg): incoming net weight − sum(grading bags × weight per bag). Shown in More details when defined. */
+  wastageKg?: number;
 }
 
 const GradingVoucher = memo(function GradingVoucher({
   voucher,
   farmerName,
   farmerAccount,
+  farmerStorageLinkId,
+  wastageKg,
 }: GradingVoucherProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -32,24 +42,18 @@ const GradingVoucher = memo(function GradingVoucher({
   const allocationStatus = voucher.allocationStatus ?? '';
   const gradedBy = voucher.createdBy;
 
-  const { totalQty, totalInitial, filteredOrderDetails } = useMemo(() => {
+  const { totalQty, totalInitial, allOrderDetails } = useMemo(() => {
     const details = (voucher.orderDetails ?? []) as GradingOrderDetailRow[];
     let qty = 0;
     let initial = 0;
-    const filtered: GradingOrderDetailRow[] = [];
     for (const od of details) {
-      const curr = od.currentQuantity ?? 0;
-      const init = od.initialQuantity ?? 0;
-      qty += curr;
-      initial += init;
-      if (curr > 0) {
-        filtered.push(od);
-      }
+      qty += od.currentQuantity ?? 0;
+      initial += od.initialQuantity ?? 0;
     }
     return {
       totalQty: qty,
       totalInitial: initial,
-      filteredOrderDetails: filtered,
+      allOrderDetails: details,
     };
   }, [voucher.orderDetails]);
 
@@ -107,26 +111,65 @@ const GradingVoucher = memo(function GradingVoucher({
           />
         </div>
 
-        <div className="flex items-center justify-between pt-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setIsExpanded((p) => !p)}
-            className="hover:bg-accent h-8 px-3 text-xs"
-          >
-            {isExpanded ? (
+        <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+          <div className="flex items-center gap-1.5">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsExpanded((p) => !p)}
+              className="hover:bg-accent h-8 px-3 text-xs"
+            >
+              {isExpanded ? (
+                <>
+                  <ChevronUp className="mr-1.5 h-3.5 w-3.5" />
+                  Less
+                </>
+              ) : (
+                <>
+                  <ChevronDown className="mr-1.5 h-3.5 w-3.5" />
+                  More
+                </>
+              )}
+            </Button>
+            {farmerStorageLinkId && voucher._id && (
               <>
-                <ChevronUp className="mr-1.5 h-3.5 w-3.5" />
-                Less
-              </>
-            ) : (
-              <>
-                <ChevronDown className="mr-1.5 h-3.5 w-3.5" />
-                More
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="font-custom h-8 gap-1.5 px-3 text-xs"
+                  asChild
+                >
+                  <Link
+                    to="/store-admin/storage"
+                    search={{
+                      farmerStorageLinkId,
+                      gradingPassId: voucher._id,
+                    }}
+                  >
+                    <PackagePlus className="h-3.5 w-3.5" />
+                    Store
+                  </Link>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="font-custom h-8 gap-1.5 px-3 text-xs"
+                  asChild
+                >
+                  <Link
+                    to="/store-admin/nikasi"
+                    search={{
+                      farmerStorageLinkId,
+                      gradingPassId: voucher._id,
+                    }}
+                  >
+                    <Truck className="h-3.5 w-3.5" />
+                    Dispatch
+                  </Link>
+                </Button>
               </>
             )}
-          </Button>
-
+          </div>
           <Button
             variant="outline"
             size="sm"
@@ -158,6 +201,49 @@ const GradingVoucher = memo(function GradingVoucher({
               <Separator />
 
               <section>
+                <h4 className="text-muted-foreground/70 mb-2 text-xs font-semibold tracking-wider uppercase">
+                  Gate Pass Details
+                </h4>
+                <div className="bg-muted/30 grid grid-cols-1 gap-2 rounded-lg p-2 sm:grid-cols-2 lg:grid-cols-3">
+                  <DetailRow
+                    label="Pass Number"
+                    value={`#${voucher.gatePassNo ?? '—'}`}
+                  />
+                  {voucher.manualGatePassNumber != null && (
+                    <DetailRow
+                      label="Manual Gate Pass No"
+                      value={`#${voucher.manualGatePassNumber}`}
+                    />
+                  )}
+                </div>
+              </section>
+
+              {wastageKg !== undefined && (
+                <>
+                  <Separator />
+                  <section>
+                    <h4 className="text-muted-foreground/70 mb-2 text-xs font-semibold tracking-wider uppercase">
+                      Wastage
+                    </h4>
+                    <div className="border-destructive/30 bg-destructive/5 flex items-center gap-2 rounded-lg border px-3 py-2.5">
+                      <AlertTriangle
+                        className="text-destructive h-4 w-4 shrink-0"
+                        aria-hidden
+                      />
+                      <span className="text-destructive font-custom text-sm font-medium tabular-nums">
+                        {wastageKg.toLocaleString('en-IN')} kg
+                      </span>
+                      <span className="text-muted-foreground font-custom text-xs">
+                        (Incoming net weight − graded weight)
+                      </span>
+                    </div>
+                  </section>
+                </>
+              )}
+
+              <Separator />
+
+              <section>
                 <h4 className="text-muted-foreground/70 mb-2.5 text-xs font-semibold tracking-wider uppercase">
                   Order Details
                 </h4>
@@ -173,7 +259,7 @@ const GradingVoucher = memo(function GradingVoucher({
                       </tr>
                     </thead>
                     <tbody>
-                      {filteredOrderDetails.map((od, idx) => (
+                      {allOrderDetails.map((od, idx) => (
                         <tr
                           key={`${od.size}-${od.bagType}-${idx}`}
                           className="border-border/40 border-b"

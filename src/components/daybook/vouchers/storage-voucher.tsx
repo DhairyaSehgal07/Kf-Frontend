@@ -60,6 +60,12 @@ const StorageVoucher = memo(function StorageVoucher({
                   <span className="text-primary">
                     #{voucher.gatePassNo ?? '—'}
                   </span>
+                  {voucher.manualGatePassNumber != null && (
+                    <span className="text-muted-foreground font-normal">
+                      {' '}
+                      · Manual #{voucher.manualGatePassNumber}
+                    </span>
+                  )}
                 </h3>
               </div>
               <p className="text-muted-foreground mt-2 text-xs">

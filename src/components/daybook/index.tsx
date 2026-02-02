@@ -57,6 +57,7 @@ import {
   StorageVoucher,
   NikasiVoucher,
   OutgoingVoucher,
+  totalBagsFromOrderDetails,
   type IncomingVoucherData,
   type PassVoucherData,
 } from './vouchers';
@@ -98,6 +99,51 @@ const DaybookEntryCard = memo(function DaybookEntryCard({
   const farmerMobile = farmer?.mobileNumber;
   const progressValue = getPipelineProgress(entry);
 
+  const summariesWithNikasi = useMemo(() => {
+    const base = entry.summaries ?? {
+      totalBagsIncoming: 0,
+      totalBagsGraded: 0,
+      totalBagsStored: 0,
+      totalBagsNikasi: 0,
+      totalBagsOutgoing: 0,
+    };
+    const nikasiTotal = (entry.nikasiPasses ?? []).reduce<number>(
+      (sum, pass) =>
+        sum + totalBagsFromOrderDetails((pass as PassVoucherData).orderDetails),
+      0
+    );
+
+    // Wastage (kg) = incoming net weight − sum(grading bags × weight per bag)
+    let wastageKg: number | undefined;
+    const slip = incoming?.weightSlip;
+    if (slip && typeof slip === 'object') {
+      const gross = Number((slip as { grossWeightKg?: number }).grossWeightKg) || 0;
+      const tare = Number((slip as { tareWeightKg?: number }).tareWeightKg) || 0;
+      const incomingNetKg = gross - tare;
+      const gradingWeightKg = (entry.gradingPasses ?? []).reduce<number>(
+        (sum, pass) => {
+          const details = (pass as PassVoucherData).orderDetails ?? [];
+          const passWeight = details.reduce(
+            (s, od) =>
+              s +
+              ((od as { currentQuantity?: number }).currentQuantity ?? 0) *
+                ((od as { weightPerBagKg?: number }).weightPerBagKg ?? 0),
+            0
+          );
+          return sum + passWeight;
+        },
+        0
+      );
+      wastageKg = incomingNetKg - gradingWeightKg;
+    }
+
+    return {
+      ...base,
+      totalBagsNikasi: nikasiTotal,
+      ...(wastageKg !== undefined && { wastageKg }),
+    };
+  }, [entry.summaries, entry.nikasiPasses, entry.gradingPasses, entry.incoming, incoming?.weightSlip]);
+
   const farmerStorageLinkId = getFarmerStorageLinkId(entry.incoming);
   const incomingGatePassId = incoming?._id;
   const variety = incoming?.variety;
@@ -130,7 +176,7 @@ const DaybookEntryCard = memo(function DaybookEntryCard({
         </div>
         <Progress value={progressValue} className="mt-1.5 h-2" />
       </div>
-      <EntrySummariesBar summaries={entry.summaries} />
+      <EntrySummariesBar summaries={summariesWithNikasi} />
       <Tabs defaultValue="incoming" className="w-full">
         <TabsList className="font-custom flex h-auto w-full flex-nowrap overflow-x-auto">
           <TabsTrigger
@@ -194,6 +240,8 @@ const DaybookEntryCard = memo(function DaybookEntryCard({
                     voucher={pass}
                     farmerName={farmerName}
                     farmerAccount={farmerAccount}
+                    farmerStorageLinkId={farmerStorageLinkId}
+                    wastageKg={summariesWithNikasi.wastageKg}
                   />
                 ))}
               </div>

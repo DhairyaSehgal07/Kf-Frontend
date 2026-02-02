@@ -8,6 +8,7 @@ import type {
   CreateNikasiGatePassApiResponse,
 } from '@/types/nikasi-gate-pass';
 import { nikasiGatePassKeys } from './useGetNikasiGatePasses';
+import { daybookKeys } from '../grading-gate-pass/useGetDaybook';
 
 /** API error shape (400, 404, 409): { success, error: { code, message } } */
 type NikasiGatePassApiError = {
@@ -26,6 +27,7 @@ function getNikasiGatePassErrorMessage(
 /**
  * Hook to create a nikasi gate pass.
  * POST /nikasi-gate-pass
+ * Payload may include optional manualGatePassNumber (number).
  */
 export function useCreateNikasiGatePass() {
   return useMutation<
@@ -47,6 +49,7 @@ export function useCreateNikasiGatePass() {
     onSuccess: (data) => {
       if (data.status === 'Success') {
         toast.success(data.message ?? 'Nikasi gate pass created successfully');
+        queryClient.invalidateQueries({ queryKey: daybookKeys.all });
         queryClient.invalidateQueries({ queryKey: nikasiGatePassKeys.all });
       } else {
         toast.error(data.message ?? 'Failed to create nikasi gate pass');

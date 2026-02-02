@@ -5,6 +5,8 @@ export interface DaybookEntrySummaries {
   totalBagsStored: number;
   totalBagsNikasi: number;
   totalBagsOutgoing: number;
+  /** Weight wastage (kg): incoming net weight − sum(grading bags × weight per bag). Optional when not computable. */
+  wastageKg?: number;
 }
 
 /** Farmer in a daybook entry (from API) */

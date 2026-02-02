@@ -4,17 +4,19 @@ import StorageGatePassForm from '@/components/forms/storage';
 export const Route = createFileRoute('/store-admin/_authenticated/storage/')({
   validateSearch: (
     search: Record<string, unknown>
-  ): { farmerStorageLinkId?: string } => ({
+  ): { farmerStorageLinkId?: string; gradingPassId?: string } => ({
     farmerStorageLinkId:
       typeof search.farmerStorageLinkId === 'string'
         ? search.farmerStorageLinkId
         : undefined,
+    gradingPassId:
+      typeof search.gradingPassId === 'string' ? search.gradingPassId : undefined,
   }),
   component: StorageFormPage,
 });
 
 function StorageFormPage() {
-  const { farmerStorageLinkId } = Route.useSearch();
+  const { farmerStorageLinkId, gradingPassId } = Route.useSearch();
 
   if (!farmerStorageLinkId) {
     return (
@@ -38,5 +40,10 @@ function StorageFormPage() {
     );
   }
 
-  return <StorageGatePassForm farmerStorageLinkId={farmerStorageLinkId} />;
+  return (
+    <StorageGatePassForm
+      farmerStorageLinkId={farmerStorageLinkId}
+      gradingPassId={gradingPassId}
+    />
+  );
 }
