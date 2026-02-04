@@ -11,6 +11,35 @@ import { useNavigate, useSearch } from '@tanstack/react-router';
 import { useStore } from '@/stores/store';
 import type { ColdStorage } from '@/types/cold-storage';
 
+/** API error shape (400, 401, 429, 500): { success, error: { code, message } } */
+type StoreAdminLoginApiError = {
+  success?: boolean;
+  message?: string;
+  error?: { code?: string; message?: string };
+};
+
+const DEFAULT_ERROR_MESSAGE = 'Login failed. Please try again.';
+
+const STATUS_ERROR_MESSAGES: Record<number, string> = {
+  400: 'Invalid request. Please check mobile number and password.',
+  401: 'Invalid mobile number or password.',
+  429: 'Too many login attempts. Please try again later.',
+  500: 'Something went wrong. Please try again later.',
+};
+
+function getStoreAdminLoginErrorMessage(
+  data: StoreAdminLoginApiError | undefined,
+  status?: number
+): string {
+  const fromBody =
+    data?.error?.message ??
+    data?.message ??
+    (status !== undefined && status in STATUS_ERROR_MESSAGES
+      ? STATUS_ERROR_MESSAGES[status]
+      : null);
+  return fromBody ?? DEFAULT_ERROR_MESSAGE;
+}
+
 export const useStoreAdminLogin = () => {
   const navigate = useNavigate();
   const search = useSearch({ from: '/store-admin/login/' });
@@ -18,7 +47,7 @@ export const useStoreAdminLogin = () => {
 
   return useMutation<
     StoreAdminLoginApiResponse,
-    AxiosError<{ message?: string }>,
+    AxiosError<StoreAdminLoginApiError>,
     StoreAdminLoginInput
   >({
     mutationKey: ['store-admin', 'login'],
@@ -104,8 +133,16 @@ export const useStoreAdminLogin = () => {
     onError: (error) => {
       setLoading(false);
 
+      const status = error.response?.status;
       const errMsg =
-        error.response?.data?.message || error.message || 'Login failed';
+        error.response?.data !== undefined
+          ? getStoreAdminLoginErrorMessage(
+              error.response.data as StoreAdminLoginApiError,
+              status
+            )
+          : status !== undefined && status in STATUS_ERROR_MESSAGES
+            ? STATUS_ERROR_MESSAGES[status]
+            : error.message || DEFAULT_ERROR_MESSAGE;
 
       toast.error(errMsg);
     },
