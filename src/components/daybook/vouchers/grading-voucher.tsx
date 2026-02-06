@@ -27,6 +27,7 @@ import {
   computeTotalGradedWeightPercent,
   computeWastagePercentOfNetProduct,
   computeDiscrepancy,
+  getBagWeightKg,
 } from './grading-voucher-calculations';
 import { GradingVoucherCalculationsDialog } from './grading-voucher-calculations-dialog';
 import { useStore } from '@/stores/store';
@@ -307,61 +308,83 @@ const GradingVoucher = memo(function GradingVoucher({
                       </tr>
                     </thead>
                     <tbody>
-                      {allOrderDetails.map((od, idx) => {
-                        const qty = od.initialQuantity ?? 0;
-                        const wt = od.weightPerBagKg ?? 0;
-                        const lineGross = qty * wt;
-                        const weightPct =
-                          totalGradedWeightGrossKg > 0
-                            ? (lineGross / totalGradedWeightGrossKg) * 100
-                            : 0;
+                      {(() => {
+                        const weightDenominator =
+                          totalGradedWeightKg + (wastageKg ?? 0);
                         return (
-                          <tr
-                            key={`${od.size}-${od.bagType}-${idx}`}
-                            className="border-border/40 border-b"
-                          >
-                            <td className="py-2 pr-3 font-medium">
-                              {od.size ?? '—'}
-                            </td>
-                            <td className="py-2 pr-3">{od.bagType ?? '—'}</td>
-                            <td className="py-2 pr-3 text-right font-medium">
-                              {(od.currentQuantity ?? 0).toLocaleString(
-                                'en-IN'
-                              )}
-                            </td>
-                            <td className="py-2 pr-3 text-right">
-                              {qty.toLocaleString('en-IN')}
-                            </td>
-                            <td className="py-2 pr-3 text-right tabular-nums">
-                              {weightPct.toLocaleString('en-IN', {
-                                minimumFractionDigits: 1,
-                                maximumFractionDigits: 1,
-                              })}
-                              %
-                            </td>
-                            <td className="py-2 text-right">
-                              {wt.toLocaleString('en-IN')}
-                            </td>
-                          </tr>
+                          <>
+                            {allOrderDetails.map((od, idx) => {
+                              const qty = od.initialQuantity ?? 0;
+                              const wt = od.weightPerBagKg ?? 0;
+                              const lineGross = qty * wt;
+                              const lineProduct =
+                                lineGross -
+                                qty * getBagWeightKg(od.bagType);
+                              const weightPct =
+                                weightDenominator > 0
+                                  ? (lineProduct / weightDenominator) * 100
+                                  : 0;
+                              return (
+                                <tr
+                                  key={`${od.size}-${od.bagType}-${idx}`}
+                                  className="border-border/40 border-b"
+                                >
+                                  <td className="py-2 pr-3 font-medium">
+                                    {od.size ?? '—'}
+                                  </td>
+                                  <td className="py-2 pr-3">
+                                    {od.bagType ?? '—'}
+                                  </td>
+                                  <td className="py-2 pr-3 text-right font-medium">
+                                    {(od.currentQuantity ?? 0).toLocaleString(
+                                      'en-IN'
+                                    )}
+                                  </td>
+                                  <td className="py-2 pr-3 text-right">
+                                    {qty.toLocaleString('en-IN')}
+                                  </td>
+                                  <td className="py-2 pr-3 text-right tabular-nums">
+                                    {weightPct.toLocaleString('en-IN', {
+                                      minimumFractionDigits: 1,
+                                      maximumFractionDigits: 1,
+                                    })}
+                                    %
+                                  </td>
+                                  <td className="py-2 text-right">
+                                    {wt.toLocaleString('en-IN')}
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                            <tr className="border-border/60 bg-muted/50 text-primary border-t-2 font-semibold">
+                              <td className="py-2.5 pr-3" colSpan={2}>
+                                Total
+                              </td>
+                              <td className="py-2.5 pr-3 text-right">
+                                {totalQty.toLocaleString('en-IN')}
+                              </td>
+                              <td className="py-2.5 pr-3 text-right">
+                                {totalInitial.toLocaleString('en-IN')}
+                              </td>
+                              <td className="py-2.5 pr-3 text-right tabular-nums">
+                                {weightDenominator > 0
+                                  ? (
+                                      (totalGradedWeightKg /
+                                        weightDenominator) *
+                                      100
+                                    ).toLocaleString('en-IN', {
+                                      minimumFractionDigits: 1,
+                                      maximumFractionDigits: 1,
+                                    }) + '%'
+                                  : '—'}
+                              </td>
+                              <td className="py-2.5 text-right font-medium">
+                                {totalGradedWeightKg.toLocaleString('en-IN')}
+                              </td>
+                            </tr>
+                          </>
                         );
-                      })}
-                      <tr className="border-border/60 bg-muted/50 text-primary border-t-2 font-semibold">
-                        <td className="py-2.5 pr-3" colSpan={2}>
-                          Total
-                        </td>
-                        <td className="py-2.5 pr-3 text-right">
-                          {totalQty.toLocaleString('en-IN')}
-                        </td>
-                        <td className="py-2.5 pr-3 text-right">
-                          {totalInitial.toLocaleString('en-IN')}
-                        </td>
-                        <td className="py-2.5 pr-3 text-right tabular-nums">
-                          100%
-                        </td>
-                        <td className="py-2.5 text-right font-medium">
-                          {totalGradedWeightKg.toLocaleString('en-IN')}
-                        </td>
-                      </tr>
+                      })()}
                     </tbody>
                   </table>
                 </div>
