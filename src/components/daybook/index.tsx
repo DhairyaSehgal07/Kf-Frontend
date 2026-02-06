@@ -162,6 +162,7 @@ const DaybookEntryCard = memo(function DaybookEntryCard({
       ...(wastageKg !== undefined && { wastageKg }),
       ...(wastagePercent !== undefined && { wastagePercent }),
       ...(incomingNetKg !== undefined && { incomingNetKg }),
+      incomingBagsCount: incomingBags,
     };
   }, [
     entry.summaries,
@@ -280,6 +281,7 @@ const DaybookEntryCard = memo(function DaybookEntryCard({
                     wastageKg={summariesWithNikasi.wastageKg}
                     wastagePercent={summariesWithNikasi.wastagePercent}
                     incomingNetKg={summariesWithNikasi.incomingNetKg}
+                    incomingBagsCount={summariesWithNikasi.incomingBagsCount}
                   />
                 ))}
               </div>

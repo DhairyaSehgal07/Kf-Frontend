@@ -23,7 +23,9 @@ import type { GradingOrderDetailRow } from './types';
 import { totalBagsFromOrderDetails, type VoucherFarmerInfo } from './types';
 import {
   computeGradingOrderTotals,
+  computeIncomingNetProductKg,
   computeTotalGradedWeightPercent,
+  computeWastagePercentOfNetProduct,
   computeDiscrepancy,
 } from './grading-voucher-calculations';
 import { GradingVoucherCalculationsDialog } from './grading-voucher-calculations-dialog';
@@ -39,6 +41,8 @@ export interface GradingVoucherProps extends VoucherFarmerInfo {
   wastagePercent?: number;
   /** Net incoming weight (kg) from weight slip. Used to show total graded weight % of net. */
   incomingNetKg?: number;
+  /** Total incoming bags (from incoming gate pass). Used to compute net product (net − bags × 700 g). */
+  incomingBagsCount?: number;
 }
 
 const GradingVoucher = memo(function GradingVoucher({
@@ -49,6 +53,7 @@ const GradingVoucher = memo(function GradingVoucher({
   wastageKg,
   wastagePercent,
   incomingNetKg,
+  incomingBagsCount,
 }: GradingVoucherProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [calculationsOpen, setCalculationsOpen] = useState(false);
@@ -60,20 +65,33 @@ const GradingVoucher = memo(function GradingVoucher({
   const gradedBy = voucher.createdBy;
 
   const details = (voucher.orderDetails ?? []) as GradingOrderDetailRow[];
-  const { totalQty, totalInitial, totalGradedWeightKg } = useMemo(
+  const {
+    totalQty,
+    totalInitial,
+    totalGradedWeightKg,
+    totalGradedWeightGrossKg,
+    totalBagWeightDeductionKg,
+  } = useMemo(
     () => computeGradingOrderTotals(voucher.orderDetails),
     [voucher.orderDetails]
   );
   const allOrderDetails = details;
 
+  const incomingNetProductKg = computeIncomingNetProductKg(
+    incomingNetKg,
+    incomingBagsCount
+  );
   const totalGradedWeightPercent = computeTotalGradedWeightPercent(
     totalGradedWeightKg,
-    incomingNetKg
+    incomingNetProductKg
   );
-
+  const wastagePercentOfNetProduct = computeWastagePercentOfNetProduct(
+    wastageKg,
+    incomingNetProductKg
+  );
   const { percentSum, hasDiscrepancy, discrepancyValue } = computeDiscrepancy(
     totalGradedWeightPercent,
-    wastagePercent
+    wastagePercentOfNetProduct
   );
 
   return (
@@ -220,10 +238,14 @@ const GradingVoucher = memo(function GradingVoucher({
           totalQty={totalQty}
           totalInitial={totalInitial}
           totalGradedWeightKg={totalGradedWeightKg}
+          totalGradedWeightGrossKg={totalGradedWeightGrossKg}
+          totalBagWeightDeductionKg={totalBagWeightDeductionKg}
           incomingNetKg={incomingNetKg}
+          incomingBagsCount={incomingBagsCount}
+          incomingNetProductKg={incomingNetProductKg}
           totalGradedWeightPercent={totalGradedWeightPercent}
           wastageKg={wastageKg}
-          wastagePercent={wastagePercent}
+          wastagePercent={wastagePercentOfNetProduct}
           percentSum={percentSum}
           hasDiscrepancy={hasDiscrepancy}
           discrepancyValue={discrepancyValue}
@@ -280,30 +302,49 @@ const GradingVoucher = memo(function GradingVoucher({
                         <th className="pr-3 pb-2">Bag Type</th>
                         <th className="pr-3 pb-2 text-right">Qty</th>
                         <th className="pr-3 pb-2 text-right">Initial</th>
+                        <th className="pr-3 pb-2 text-right">Weight %</th>
                         <th className="pb-2 text-right">Wt/Bag (kg)</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {allOrderDetails.map((od, idx) => (
-                        <tr
-                          key={`${od.size}-${od.bagType}-${idx}`}
-                          className="border-border/40 border-b"
-                        >
-                          <td className="py-2 pr-3 font-medium">
-                            {od.size ?? '—'}
-                          </td>
-                          <td className="py-2 pr-3">{od.bagType ?? '—'}</td>
-                          <td className="py-2 pr-3 text-right font-medium">
-                            {(od.currentQuantity ?? 0).toLocaleString('en-IN')}
-                          </td>
-                          <td className="py-2 pr-3 text-right">
-                            {(od.initialQuantity ?? 0).toLocaleString('en-IN')}
-                          </td>
-                          <td className="py-2 text-right">
-                            {(od.weightPerBagKg ?? 0).toLocaleString('en-IN')}
-                          </td>
-                        </tr>
-                      ))}
+                      {allOrderDetails.map((od, idx) => {
+                        const qty = od.initialQuantity ?? 0;
+                        const wt = od.weightPerBagKg ?? 0;
+                        const lineGross = qty * wt;
+                        const weightPct =
+                          totalGradedWeightGrossKg > 0
+                            ? (lineGross / totalGradedWeightGrossKg) * 100
+                            : 0;
+                        return (
+                          <tr
+                            key={`${od.size}-${od.bagType}-${idx}`}
+                            className="border-border/40 border-b"
+                          >
+                            <td className="py-2 pr-3 font-medium">
+                              {od.size ?? '—'}
+                            </td>
+                            <td className="py-2 pr-3">{od.bagType ?? '—'}</td>
+                            <td className="py-2 pr-3 text-right font-medium">
+                              {(od.currentQuantity ?? 0).toLocaleString(
+                                'en-IN'
+                              )}
+                            </td>
+                            <td className="py-2 pr-3 text-right">
+                              {qty.toLocaleString('en-IN')}
+                            </td>
+                            <td className="py-2 pr-3 text-right tabular-nums">
+                              {weightPct.toLocaleString('en-IN', {
+                                minimumFractionDigits: 1,
+                                maximumFractionDigits: 1,
+                              })}
+                              %
+                            </td>
+                            <td className="py-2 text-right">
+                              {wt.toLocaleString('en-IN')}
+                            </td>
+                          </tr>
+                        );
+                      })}
                       <tr className="border-border/60 bg-muted/50 text-primary border-t-2 font-semibold">
                         <td className="py-2.5 pr-3" colSpan={2}>
                           Total
@@ -313,6 +354,9 @@ const GradingVoucher = memo(function GradingVoucher({
                         </td>
                         <td className="py-2.5 pr-3 text-right">
                           {totalInitial.toLocaleString('en-IN')}
+                        </td>
+                        <td className="py-2.5 pr-3 text-right tabular-nums">
+                          100%
                         </td>
                         <td className="py-2.5 text-right font-medium">
                           {totalGradedWeightKg.toLocaleString('en-IN')}
