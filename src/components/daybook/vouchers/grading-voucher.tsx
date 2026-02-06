@@ -25,8 +25,10 @@ export interface GradingVoucherProps extends VoucherFarmerInfo {
   voucher: PassVoucherData;
   /** When set, show Add Storage / Add Nikasi links for this grading pass */
   farmerStorageLinkId?: string;
-  /** Entry-level wastage (kg): incoming net weight − sum(grading bags × weight per bag). Shown in More details when defined. */
+  /** Entry-level wastage (kg): [Net weight − (incoming bags × 700 g)] − [graded weight − (60 g × graded bags)]. Shown in More details when defined. */
   wastageKg?: number;
+  /** Wastage as % of net incoming weight. Shown in More details when defined. */
+  wastagePercent?: number;
 }
 
 const GradingVoucher = memo(function GradingVoucher({
@@ -35,6 +37,7 @@ const GradingVoucher = memo(function GradingVoucher({
   farmerAccount,
   farmerStorageLinkId,
   wastageKg,
+  wastagePercent,
 }: GradingVoucherProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -232,9 +235,19 @@ const GradingVoucher = memo(function GradingVoucher({
                       />
                       <span className="text-destructive font-custom text-sm font-medium tabular-nums">
                         {wastageKg.toLocaleString('en-IN')} kg
-                      </span>
-                      <span className="text-muted-foreground font-custom text-xs">
-                        (Incoming net weight − graded weight)
+                        {wastagePercent !== undefined && (
+                          <>
+                            {' '}
+                            <span className="text-destructive/90">
+                              (
+                              {wastagePercent.toLocaleString('en-IN', {
+                                minimumFractionDigits: 1,
+                                maximumFractionDigits: 1,
+                              })}
+                              % of net)
+                            </span>
+                          </>
+                        )}
                       </span>
                     </div>
                   </section>

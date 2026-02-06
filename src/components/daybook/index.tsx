@@ -50,6 +50,10 @@ import {
 } from '@/components/ui/empty';
 import { useGetDaybook } from '@/services/store-admin/grading-gate-pass/useGetDaybook';
 import type { DaybookEntry, DaybookGatePassType } from '@/types/daybook';
+import {
+  JUTE_BAG_WEIGHT,
+  LENO_BAG_WEIGHT,
+} from '@/components/forms/grading/constants';
 import EntrySummariesBar from './EntrySummariesBar';
 import {
   IncomingVoucher,
@@ -113,36 +117,57 @@ const DaybookEntryCard = memo(function DaybookEntryCard({
       0
     );
 
-    // Wastage (kg) = incoming net weight − sum(grading bags × weight per bag)
+    // Wastage (kg) = [Net − (incoming bags × 700 g)] − [graded weight − (per row: bags × JUTE/LENO bag weight)]
     let wastageKg: number | undefined;
     const slip = incoming?.weightSlip;
+    const incomingBags =
+      (incoming as { bagsReceived?: number })?.bagsReceived ?? 0;
     if (slip && typeof slip === 'object') {
-      const gross = Number((slip as { grossWeightKg?: number }).grossWeightKg) || 0;
-      const tare = Number((slip as { tareWeightKg?: number }).tareWeightKg) || 0;
+      const gross =
+        Number((slip as { grossWeightKg?: number }).grossWeightKg) || 0;
+      const tare =
+        Number((slip as { tareWeightKg?: number }).tareWeightKg) || 0;
       const incomingNetKg = gross - tare;
-      const gradingWeightKg = (entry.gradingPasses ?? []).reduce<number>(
-        (sum, pass) => {
-          const details = (pass as PassVoucherData).orderDetails ?? [];
-          const passWeight = details.reduce(
-            (s, od) =>
-              s +
-              ((od as { initialQuantity?: number }).initialQuantity ?? 0) *
-                ((od as { weightPerBagKg?: number }).weightPerBagKg ?? 0),
-            0
-          );
-          return sum + passWeight;
-        },
-        0
-      );
-      wastageKg = incomingNetKg - gradingWeightKg;
+      let gradingWeightKg = 0;
+      let bagWeightDeductionKg = 0;
+      for (const pass of entry.gradingPasses ?? []) {
+        const details = (pass as PassVoucherData).orderDetails ?? [];
+        for (const od of details) {
+          const qty = (od as { initialQuantity?: number }).initialQuantity ?? 0;
+          const wt = (od as { weightPerBagKg?: number }).weightPerBagKg ?? 0;
+          const bagType = (od as { bagType?: string }).bagType?.toUpperCase();
+          gradingWeightKg += qty * wt;
+          const bagWt = bagType === 'JUTE' ? JUTE_BAG_WEIGHT : LENO_BAG_WEIGHT;
+          bagWeightDeductionKg += qty * bagWt;
+        }
+      }
+      const part1 = incomingNetKg - incomingBags * JUTE_BAG_WEIGHT;
+      const part2 = gradingWeightKg - bagWeightDeductionKg;
+      wastageKg = part1 - part2;
+    }
+    let wastagePercent: number | undefined;
+    if (wastageKg !== undefined && slip && typeof slip === 'object') {
+      const gross =
+        Number((slip as { grossWeightKg?: number }).grossWeightKg) || 0;
+      const tare =
+        Number((slip as { tareWeightKg?: number }).tareWeightKg) || 0;
+      const netKg = gross - tare;
+      wastagePercent = netKg > 0 ? (wastageKg / netKg) * 100 : undefined;
     }
 
     return {
       ...base,
       totalBagsNikasi: nikasiTotal,
       ...(wastageKg !== undefined && { wastageKg }),
+      ...(wastagePercent !== undefined && { wastagePercent }),
     };
-  }, [entry.summaries, entry.nikasiPasses, entry.gradingPasses, entry.incoming, incoming?.weightSlip]);
+  }, [
+    entry.summaries,
+    entry.nikasiPasses,
+    entry.gradingPasses,
+    entry.incoming,
+    incoming?.weightSlip,
+  ]);
 
   const farmerStorageLinkId = getFarmerStorageLinkId(entry.incoming);
   const incomingGatePassId = incoming?._id;
@@ -156,21 +181,21 @@ const DaybookEntryCard = memo(function DaybookEntryCard({
           variety,
         }
       : undefined;
-  const firstGradingPass = entry.gradingPasses?.[0] as PassVoucherData | undefined;
-  const storageSearch =
-    farmerStorageLinkId
-      ? {
-          farmerStorageLinkId,
-          ...(firstGradingPass?._id && { gradingPassId: firstGradingPass._id }),
-        }
-      : undefined;
-  const nikasiSearch =
-    farmerStorageLinkId
-      ? {
-          farmerStorageLinkId,
-          ...(firstGradingPass?._id && { gradingPassId: firstGradingPass._id }),
-        }
-      : undefined;
+  const firstGradingPass = entry.gradingPasses?.[0] as
+    | PassVoucherData
+    | undefined;
+  const storageSearch = farmerStorageLinkId
+    ? {
+        farmerStorageLinkId,
+        ...(firstGradingPass?._id && { gradingPassId: firstGradingPass._id }),
+      }
+    : undefined;
+  const nikasiSearch = farmerStorageLinkId
+    ? {
+        farmerStorageLinkId,
+        ...(firstGradingPass?._id && { gradingPassId: firstGradingPass._id }),
+      }
+    : undefined;
 
   return (
     <Card className="overflow-hidden p-0">
@@ -251,6 +276,7 @@ const DaybookEntryCard = memo(function DaybookEntryCard({
                     farmerAccount={farmerAccount}
                     farmerStorageLinkId={farmerStorageLinkId}
                     wastageKg={summariesWithNikasi.wastageKg}
+                    wastagePercent={summariesWithNikasi.wastagePercent}
                   />
                 ))}
               </div>

@@ -288,10 +288,13 @@ export const IncomingForm = memo(function IncomingForm() {
             name="farmerStorageLinkId"
             children={(field) => {
               const hasSubmitError = Boolean(
-                field.state.meta.errorMap && 'onSubmit' in field.state.meta.errorMap && field.state.meta.errorMap.onSubmit
+                field.state.meta.errorMap &&
+                'onSubmit' in field.state.meta.errorMap &&
+                field.state.meta.errorMap.onSubmit
               );
               const invalidFromValidation =
-                hasSubmitError || (field.state.meta.isTouched && !field.state.meta.isValid);
+                hasSubmitError ||
+                (field.state.meta.isTouched && !field.state.meta.isValid);
               // Only show "please select" when invalid and value is actually empty (avoids stale validation state)
               const isInvalid = invalidFromValidation && !field.state.value;
               return (
@@ -342,10 +345,13 @@ export const IncomingForm = memo(function IncomingForm() {
             name="variety"
             children={(field) => {
               const hasSubmitError = Boolean(
-                field.state.meta.errorMap && 'onSubmit' in field.state.meta.errorMap && field.state.meta.errorMap.onSubmit
+                field.state.meta.errorMap &&
+                'onSubmit' in field.state.meta.errorMap &&
+                field.state.meta.errorMap.onSubmit
               );
               const invalidFromValidation =
-                hasSubmitError || (field.state.meta.isTouched && !field.state.meta.isValid);
+                hasSubmitError ||
+                (field.state.meta.isTouched && !field.state.meta.isValid);
               // Only show "please select" when invalid and value is actually empty (avoids stale validation state)
               const isInvalid = invalidFromValidation && !field.state.value;
               return (

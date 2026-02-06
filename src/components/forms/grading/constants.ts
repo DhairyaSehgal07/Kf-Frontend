@@ -22,6 +22,9 @@ export const GRADING_SIZES = [
   'Cut',
 ] as const;
 
+export const JUTE_BAG_WEIGHT = 0.7;
+export const LENO_BAG_WEIGHT = 0.06;
+
 export type GradingSize = (typeof GRADING_SIZES)[number];
 
 export const BAG_TYPES = ['JUTE', 'LENO'] as const;
