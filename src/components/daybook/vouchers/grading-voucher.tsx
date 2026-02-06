@@ -14,12 +14,20 @@ import {
   PackagePlus,
   Truck,
   AlertTriangle,
+  Calculator,
 } from 'lucide-react';
 import { DetailRow } from './detail-row';
 import { formatVoucherDate } from './format-date';
 import type { PassVoucherData } from './types';
 import type { GradingOrderDetailRow } from './types';
 import { totalBagsFromOrderDetails, type VoucherFarmerInfo } from './types';
+import {
+  computeGradingOrderTotals,
+  computeTotalGradedWeightPercent,
+  computeDiscrepancy,
+} from './grading-voucher-calculations';
+import { GradingVoucherCalculationsDialog } from './grading-voucher-calculations-dialog';
+import { useStore } from '@/stores/store';
 
 export interface GradingVoucherProps extends VoucherFarmerInfo {
   voucher: PassVoucherData;
@@ -43,44 +51,30 @@ const GradingVoucher = memo(function GradingVoucher({
   incomingNetKg,
 }: GradingVoucherProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [calculationsOpen, setCalculationsOpen] = useState(false);
+  const admin = useStore((s) => s.admin);
+  const isAdmin = admin?.role === 'Admin';
 
   const bags = totalBagsFromOrderDetails(voucher.orderDetails);
   const allocationStatus = voucher.allocationStatus ?? '';
   const gradedBy = voucher.createdBy;
 
-  const { totalQty, totalInitial, totalGradedWeightKg, allOrderDetails } =
-    useMemo(() => {
-      const details = (voucher.orderDetails ?? []) as GradingOrderDetailRow[];
-      let qty = 0;
-      let initial = 0;
-      let weightKg = 0;
-      for (const od of details) {
-        qty += od.currentQuantity ?? 0;
-        initial += od.initialQuantity ?? 0;
-        weightKg += (od.initialQuantity ?? 0) * (od.weightPerBagKg ?? 0);
-      }
-      return {
-        totalQty: qty,
-        totalInitial: initial,
-        totalGradedWeightKg: weightKg,
-        allOrderDetails: details,
-      };
-    }, [voucher.orderDetails]);
+  const details = (voucher.orderDetails ?? []) as GradingOrderDetailRow[];
+  const { totalQty, totalInitial, totalGradedWeightKg } = useMemo(
+    () => computeGradingOrderTotals(voucher.orderDetails),
+    [voucher.orderDetails]
+  );
+  const allOrderDetails = details;
 
-  const totalGradedWeightPercent =
-    incomingNetKg != null && incomingNetKg > 0 && totalGradedWeightKg > 0
-      ? (totalGradedWeightKg / incomingNetKg) * 100
-      : undefined;
+  const totalGradedWeightPercent = computeTotalGradedWeightPercent(
+    totalGradedWeightKg,
+    incomingNetKg
+  );
 
-  const PERCENT_TOLERANCE = 0.1;
-  const percentSum =
-    totalGradedWeightPercent != null && wastagePercent != null
-      ? totalGradedWeightPercent + wastagePercent
-      : undefined;
-  const hasDiscrepancy =
-    percentSum != null && Math.abs(percentSum - 100) > PERCENT_TOLERANCE;
-  const discrepancyValue =
-    hasDiscrepancy && percentSum != null ? 100 - percentSum : undefined;
+  const { percentSum, hasDiscrepancy, discrepancyValue } = computeDiscrepancy(
+    totalGradedWeightPercent,
+    wastagePercent
+  );
 
   return (
     <Card className="border-border/40 hover:border-primary/30 overflow-hidden pt-0 shadow-sm transition-all duration-200 hover:shadow-md">
@@ -194,6 +188,18 @@ const GradingVoucher = memo(function GradingVoucher({
                 </Button>
               </>
             )}
+            {isAdmin && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCalculationsOpen(true)}
+                className="font-custom h-8 gap-1.5 px-3 text-xs"
+                aria-label="Show calculations"
+              >
+                <Calculator className="h-3.5 w-3.5" />
+                Show calculations
+              </Button>
+            )}
           </div>
           <Button
             variant="outline"
@@ -205,6 +211,23 @@ const GradingVoucher = memo(function GradingVoucher({
             <Printer className="h-3.5 w-3.5" />
           </Button>
         </div>
+
+        <GradingVoucherCalculationsDialog
+          open={calculationsOpen}
+          onOpenChange={setCalculationsOpen}
+          gatePassNo={voucher.gatePassNo}
+          allOrderDetails={allOrderDetails}
+          totalQty={totalQty}
+          totalInitial={totalInitial}
+          totalGradedWeightKg={totalGradedWeightKg}
+          incomingNetKg={incomingNetKg}
+          totalGradedWeightPercent={totalGradedWeightPercent}
+          wastageKg={wastageKg}
+          wastagePercent={wastagePercent}
+          percentSum={percentSum}
+          hasDiscrepancy={hasDiscrepancy}
+          discrepancyValue={discrepancyValue}
+        />
 
         {isExpanded && (
           <>
