@@ -12,6 +12,7 @@ import {
   Truck,
   Package,
 } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 import { DetailRow } from './detail-row';
 import { formatVoucherDate } from './format-date';
 import type { IncomingVoucherData } from './types';
@@ -31,23 +32,29 @@ const IncomingVoucher = memo(function IncomingVoucher({
   farmerMobile,
 }: IncomingVoucherProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isPrinting, setIsPrinting] = useState(false);
 
   const bags = voucher.bagsReceived ?? 0;
 
   const handlePrint = async () => {
-    const [{ pdf }, { IncomingVoucherPdf }] = await Promise.all([
-      import('@react-pdf/renderer'),
-      import('@/components/pdf/IncomingVoucherPdf'),
-    ]);
-    const blob = await pdf(
-      <IncomingVoucherPdf
-        voucher={voucher}
-        farmerName={farmerName}
-        farmerAccount={farmerAccount}
-      />
-    ).toBlob();
-    const url = URL.createObjectURL(blob);
-    window.open(url, '_blank');
+    setIsPrinting(true);
+    try {
+      const [{ pdf }, { IncomingVoucherPdf }] = await Promise.all([
+        import('@react-pdf/renderer'),
+        import('@/components/pdf/IncomingVoucherPdf'),
+      ]);
+      const blob = await pdf(
+        <IncomingVoucherPdf
+          voucher={voucher}
+          farmerName={farmerName}
+          farmerAccount={farmerAccount}
+        />
+      ).toBlob();
+      const url = URL.createObjectURL(blob);
+      window.open(url, '_blank');
+    } finally {
+      setIsPrinting(false);
+    }
   };
   const status = voucher.status ?? '—';
   const linkedBy = voucher.createdBy;
@@ -134,10 +141,15 @@ const IncomingVoucher = memo(function IncomingVoucher({
             variant="outline"
             size="sm"
             onClick={handlePrint}
+            disabled={isPrinting}
             className="h-8 w-8 p-0"
-            aria-label="Print gate pass"
+            aria-label={isPrinting ? 'Generating PDF…' : 'Print gate pass'}
           >
-            <Printer className="h-3.5 w-3.5" />
+            {isPrinting ? (
+              <Spinner className="h-3.5 w-3.5" />
+            ) : (
+              <Printer className="h-3.5 w-3.5" />
+            )}
           </Button>
         </div>
 

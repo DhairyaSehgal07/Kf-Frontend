@@ -28,6 +28,7 @@ import {
   computeWastagePercentOfNetProduct,
   computeDiscrepancy,
 } from './grading-voucher-calculations';
+import { Spinner } from '@/components/ui/spinner';
 import { GradingVoucherCalculationsDialog } from './grading-voucher-calculations-dialog';
 import { useStore } from '@/stores/store';
 
@@ -52,6 +53,7 @@ const GradingVoucher = memo(function GradingVoucher({
 }: GradingVoucherProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [calculationsOpen, setCalculationsOpen] = useState(false);
+  const [isPrinting, setIsPrinting] = useState(false);
   const admin = useStore((s) => s.admin);
   const isAdmin = admin?.role === 'Admin';
 
@@ -90,36 +92,41 @@ const GradingVoucher = memo(function GradingVoucher({
   );
 
   const handlePrint = async () => {
-    const [{ pdf }, { GradingVoucherPdf }] = await Promise.all([
-      import('@react-pdf/renderer'),
-      import('@/components/pdf/GradingVoucherPdf'),
-    ]);
+    setIsPrinting(true);
+    try {
+      const [{ pdf }, { GradingVoucherPdf }] = await Promise.all([
+        import('@react-pdf/renderer'),
+        import('@/components/pdf/GradingVoucherPdf'),
+      ]);
 
-    const blob = await pdf(
-      <GradingVoucherPdf
-        voucher={voucher}
-        farmerName={farmerName}
-        farmerAccount={farmerAccount}
-        orderDetails={allOrderDetails}
-        totals={{
-          totalQty,
-          totalInitial,
-          totalGradedWeightKg,
-          totalGradedWeightGrossKg,
-          totalBagWeightDeductionKg,
-        }}
-        totalGradedWeightPercent={totalGradedWeightPercent}
-        wastageKg={wastageKg}
-        wastagePercentOfNetProduct={wastagePercentOfNetProduct}
-        hasDiscrepancy={hasDiscrepancy}
-        discrepancyValue={discrepancyValue}
-        percentSum={percentSum}
-      />
-    ).toBlob();
+      const blob = await pdf(
+        <GradingVoucherPdf
+          voucher={voucher}
+          farmerName={farmerName}
+          farmerAccount={farmerAccount}
+          orderDetails={allOrderDetails}
+          totals={{
+            totalQty,
+            totalInitial,
+            totalGradedWeightKg,
+            totalGradedWeightGrossKg,
+            totalBagWeightDeductionKg,
+          }}
+          totalGradedWeightPercent={totalGradedWeightPercent}
+          wastageKg={wastageKg}
+          wastagePercentOfNetProduct={wastagePercentOfNetProduct}
+          hasDiscrepancy={hasDiscrepancy}
+          discrepancyValue={discrepancyValue}
+          percentSum={percentSum}
+        />
+      ).toBlob();
 
-    const url = URL.createObjectURL(blob);
+      const url = URL.createObjectURL(blob);
 
-    window.open(url, '_blank');
+      window.open(url, '_blank');
+    } finally {
+      setIsPrinting(false);
+    }
   };
 
   return (
@@ -251,10 +258,15 @@ const GradingVoucher = memo(function GradingVoucher({
             variant="outline"
             size="sm"
             onClick={() => handlePrint()}
+            disabled={isPrinting}
             className="h-8 w-8 p-0"
-            aria-label="Print gate pass"
+            aria-label={isPrinting ? 'Generating PDF…' : 'Print gate pass'}
           >
-            <Printer className="h-3.5 w-3.5" />
+            {isPrinting ? (
+              <Spinner className="h-3.5 w-3.5" />
+            ) : (
+              <Printer className="h-3.5 w-3.5" />
+            )}
           </Button>
         </div>
 
@@ -283,41 +295,6 @@ const GradingVoucher = memo(function GradingVoucher({
           <>
             <Separator className="my-4" />
             <div className="space-y-4">
-              <section>
-                <h4 className="text-muted-foreground/70 mb-2 text-xs font-semibold tracking-wider uppercase">
-                  Farmer Details
-                </h4>
-                <div className="bg-muted/30 grid grid-cols-1 gap-2 rounded-lg p-2 sm:grid-cols-2 lg:grid-cols-3">
-                  <DetailRow label="Name" value={farmerName ?? '—'} />
-                  <DetailRow
-                    label="Account"
-                    value={`#${farmerAccount ?? '—'}`}
-                  />
-                </div>
-              </section>
-
-              <Separator />
-
-              <section>
-                <h4 className="text-muted-foreground/70 mb-2 text-xs font-semibold tracking-wider uppercase">
-                  Gate Pass Details
-                </h4>
-                <div className="bg-muted/30 grid grid-cols-1 gap-2 rounded-lg p-2 sm:grid-cols-2 lg:grid-cols-3">
-                  <DetailRow
-                    label="Pass Number"
-                    value={`#${voucher.gatePassNo ?? '—'}`}
-                  />
-                  {voucher.manualGatePassNumber != null && (
-                    <DetailRow
-                      label="Manual Gate Pass No"
-                      value={`#${voucher.manualGatePassNumber}`}
-                    />
-                  )}
-                </div>
-              </section>
-
-              <Separator />
-
               <section>
                 <h4 className="text-muted-foreground/70 mb-2.5 text-xs font-semibold tracking-wider uppercase">
                   Order Details
