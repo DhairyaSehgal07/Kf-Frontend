@@ -6,6 +6,10 @@ import tailwindcss from '@tailwindcss/vite';
 
 // https://vite.dev/config/
 export default defineConfig({
+  build: {
+    // PDF lib is lazy-loaded on print; its chunk is large but acceptable
+    chunkSizeWarningLimit: 1600,
+  },
   plugins: [
     tailwindcss(),
     // Please make sure that '@tanstack/router-plugin' is passed before '@vitejs/plugin-react'

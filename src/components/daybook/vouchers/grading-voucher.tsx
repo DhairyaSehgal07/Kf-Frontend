@@ -30,8 +30,6 @@ import {
 } from './grading-voucher-calculations';
 import { GradingVoucherCalculationsDialog } from './grading-voucher-calculations-dialog';
 import { useStore } from '@/stores/store';
-import { pdf } from '@react-pdf/renderer';
-import { GradingVoucherPdf } from '@/components/pdf/GradingVoucherPdf';
 
 export interface GradingVoucherProps extends VoucherFarmerInfo {
   voucher: PassVoucherData;
@@ -92,6 +90,11 @@ const GradingVoucher = memo(function GradingVoucher({
   );
 
   const handlePrint = async () => {
+    const [{ pdf }, { GradingVoucherPdf }] = await Promise.all([
+      import('@react-pdf/renderer'),
+      import('@/components/pdf/GradingVoucherPdf'),
+    ]);
+
     const blob = await pdf(
       <GradingVoucherPdf
         voucher={voucher}
