@@ -28,6 +28,15 @@ export const GradingGatePassCell = memo(function GradingGatePassCell({
   const hasQuantity = quantity !== undefined && quantity > 0;
   const isActive = hasQuantity;
 
+  const percentage =
+    initialQuantity > 0 ? (currentQuantity / initialQuantity) * 100 : 100;
+  const borderByPercentage =
+    percentage < 10
+      ? 'border-destructive/50 border'
+      : percentage < 100
+        ? 'border-amber-500/50 border dark:border-amber-400/50'
+        : '';
+
   return (
     <Item
       variant="outline"
@@ -46,7 +55,10 @@ export const GradingGatePassCell = memo(function GradingGatePassCell({
         'focus-visible:ring-primary hover:bg-muted/50 hover:border-muted-foreground/20 relative cursor-pointer transition-all duration-200 outline-none hover:shadow-sm focus-visible:ring-2 focus-visible:ring-offset-2',
         isActive
           ? 'bg-primary/5 border-primary/30 shadow-sm'
-          : 'bg-card/50 border-border/60'
+          : 'bg-card/50 border-border/60',
+        borderByPercentage,
+        disabled &&
+          'cursor-not-allowed opacity-60 hover:bg-transparent hover:border-border/60 pointer-events-none'
       )}
     >
       {hasQuantity && (

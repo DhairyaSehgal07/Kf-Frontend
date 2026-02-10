@@ -19,14 +19,15 @@ import type {
 /* -------------------------------------------------------------------------- */
 
 /** Allocation with display-only available quantity (current quantity in that cell) */
-export interface StorageSummaryAllocation
-  extends CreateStorageGatePassAllocation {
+export interface StorageSummaryAllocation extends CreateStorageGatePassAllocation {
   availableQuantity?: number;
 }
 
 /** Extended entry for summary display (gatePassNo + date per grading pass) */
-export interface StorageSummaryGradingEntry
-  extends Omit<CreateStorageGatePassGradingEntry, 'allocations'> {
+export interface StorageSummaryGradingEntry extends Omit<
+  CreateStorageGatePassGradingEntry,
+  'allocations'
+> {
   allocations: StorageSummaryAllocation[];
   gatePassNo?: number;
   date?: string;
@@ -92,11 +93,9 @@ const SummaryMetaRow = memo(function SummaryMetaRow({
 }) {
   return (
     <div className="flex items-center gap-3">
-      {Icon && (
-        <Icon className="text-zinc-400 h-4 w-4 shrink-0" aria-hidden />
-      )}
+      {Icon && <Icon className="h-4 w-4 shrink-0 text-zinc-400" aria-hidden />}
       <div className="min-w-0">
-        <p className="text-zinc-400 text-[11px] font-medium uppercase tracking-wide">
+        <p className="text-[11px] font-medium tracking-wide text-zinc-400 uppercase">
           {label}
         </p>
         <p className="font-custom truncate text-sm font-medium text-white">
@@ -124,8 +123,7 @@ export const StorageSummarySheet = memo(function StorageSummarySheet({
   const { date, remarks, gradingGatePasses, variety } = formValues;
   const totalBags = gradingGatePasses.reduce(
     (sum, entry) =>
-      sum +
-      entry.allocations.reduce((a, b) => a + b.quantityToAllocate, 0),
+      sum + entry.allocations.reduce((a, b) => a + b.quantityToAllocate, 0),
     0
   );
 
@@ -145,7 +143,7 @@ export const StorageSummarySheet = memo(function StorageSummarySheet({
             </SheetDescription>
           </SheetHeader>
 
-          <div className="border-zinc-700/60 flex flex-wrap gap-x-6 gap-y-3 border-b px-4 py-3 sm:px-6">
+          <div className="flex flex-wrap gap-x-6 gap-y-3 border-b border-zinc-700/60 px-4 py-3 sm:px-6">
             {voucherNumberDisplay && (
               <SummaryMetaRow
                 label="Voucher"
@@ -167,14 +165,16 @@ export const StorageSummarySheet = memo(function StorageSummarySheet({
             </h2>
 
             {gradingGatePasses.map((entry) => {
-              const displayDate = entry.date ? formatDateLong(entry.date) : formatDateLong(date);
+              const displayDate = entry.date
+                ? formatDateLong(entry.date)
+                : formatDateLong(date);
               return (
                 <div
                   key={entry.gradingGatePassId}
-                  className="mb-5 rounded-xl bg-zinc-800/80 shadow-lg overflow-hidden"
+                  className="mb-5 overflow-hidden rounded-xl bg-zinc-800/80 shadow-lg"
                 >
                   {/* Gate Pass details: left = Gate Pass # + date, right = Commodity (variety) */}
-                  <div className="border-zinc-600/50 flex flex-wrap items-start justify-between gap-4 border-b px-4 py-4 sm:px-5">
+                  <div className="flex flex-wrap items-start justify-between gap-4 border-b border-zinc-600/50 px-4 py-4 sm:px-5">
                     <div>
                       <p className="font-custom text-lg font-bold text-white sm:text-xl">
                         Gate Pass #{entry.gatePassNo ?? '—'}
@@ -184,7 +184,7 @@ export const StorageSummarySheet = memo(function StorageSummarySheet({
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="font-custom text-xs font-medium uppercase tracking-wide text-zinc-400">
+                      <p className="font-custom text-xs font-medium tracking-wide text-zinc-400 uppercase">
                         Commodity
                       </p>
                       <p className="font-custom mt-0.5 text-lg font-bold text-white sm:text-xl">
@@ -194,7 +194,7 @@ export const StorageSummarySheet = memo(function StorageSummarySheet({
                   </div>
 
                   {/* Variety in rounded box */}
-                  <div className="border-zinc-600/40 bg-zinc-700/40 mx-4 mt-3 rounded-lg border px-4 py-2.5 sm:mx-5 sm:px-5">
+                  <div className="mx-4 mt-3 rounded-lg border border-zinc-600/40 bg-zinc-700/40 px-4 py-2.5 sm:mx-5 sm:px-5">
                     <p className="font-custom text-sm text-white">
                       Variety: {variety || '—'}
                     </p>
@@ -205,19 +205,19 @@ export const StorageSummarySheet = memo(function StorageSummarySheet({
                     <table className="font-custom w-full border-collapse text-sm">
                       <thead>
                         <tr>
-                          <th className="border-zinc-600/50 border-b py-2.5 pr-3 text-left text-[10px] font-medium uppercase tracking-wide text-zinc-400">
+                          <th className="border-b border-zinc-600/50 py-2.5 pr-3 text-left text-[10px] font-medium tracking-wide text-zinc-400 uppercase">
                             Size
                           </th>
-                          <th className="border-zinc-600/50 border-b py-2.5 px-2 text-left text-[10px] font-medium uppercase tracking-wide text-zinc-400">
+                          <th className="border-b border-zinc-600/50 px-2 py-2.5 text-left text-[10px] font-medium tracking-wide text-zinc-400 uppercase">
                             Location
                           </th>
-                          <th className="border-zinc-600/50 border-b py-2.5 px-2 text-right text-[10px] font-medium uppercase tracking-wide text-zinc-400">
+                          <th className="border-b border-zinc-600/50 px-2 py-2.5 text-right text-[10px] font-medium tracking-wide text-zinc-400 uppercase">
                             Avail
                           </th>
-                          <th className="border-zinc-600/50 border-b py-2.5 px-2 text-right text-[10px] font-medium uppercase tracking-wide text-zinc-400">
+                          <th className="border-b border-zinc-600/50 px-2 py-2.5 text-right text-[10px] font-medium tracking-wide text-zinc-400 uppercase">
                             Sel
                           </th>
-                          <th className="border-zinc-600/50 border-b py-2.5 pl-2 text-right text-[10px] font-medium uppercase tracking-wide text-zinc-400">
+                          <th className="border-b border-zinc-600/50 py-2.5 pl-2 text-right text-[10px] font-medium tracking-wide text-zinc-400 uppercase">
                             Rem
                           </th>
                         </tr>
@@ -231,23 +231,21 @@ export const StorageSummarySheet = memo(function StorageSummarySheet({
                               : null;
                           return (
                             <tr key={alloc.size}>
-                              <td className="border-zinc-600/40 border-b py-2.5 pr-3 font-medium text-white">
+                              <td className="border-b border-zinc-600/40 py-2.5 pr-3 font-medium text-white">
                                 {alloc.size}
                               </td>
-                              <td className="border-zinc-600/40 border-b py-2.5 px-2 text-white">
+                              <td className="border-b border-zinc-600/40 px-2 py-2.5 text-white">
                                 {[alloc.chamber, alloc.floor, alloc.row].join(
                                   '/'
                                 )}
                               </td>
-                              <td className="border-zinc-600/40 border-b py-2.5 px-2 text-right text-white">
-                                {avail != null
-                                  ? Number(avail).toFixed(1)
-                                  : '—'}
+                              <td className="border-b border-zinc-600/40 px-2 py-2.5 text-right text-white">
+                                {avail != null ? Number(avail).toFixed(1) : '—'}
                               </td>
-                              <td className="border-zinc-600/40 border-b py-2.5 px-2 text-right font-medium text-primary">
+                              <td className="text-primary border-b border-zinc-600/40 px-2 py-2.5 text-right font-medium">
                                 {Number(alloc.quantityToAllocate).toFixed(1)}
                               </td>
-                              <td className="border-zinc-600/40 border-b py-2.5 pl-2 text-right text-white">
+                              <td className="border-b border-zinc-600/40 py-2.5 pl-2 text-right text-white">
                                 {rem != null ? Number(rem).toFixed(1) : '—'}
                               </td>
                             </tr>
@@ -265,7 +263,7 @@ export const StorageSummarySheet = memo(function StorageSummarySheet({
                 <span className="font-custom text-base font-bold text-white sm:text-lg">
                   Grand Total
                 </span>
-                <span className="font-custom text-xl font-bold text-primary sm:text-2xl">
+                <span className="font-custom text-primary text-xl font-bold sm:text-2xl">
                   {totalBags}
                 </span>
               </div>
@@ -273,7 +271,7 @@ export const StorageSummarySheet = memo(function StorageSummarySheet({
 
             {remarks?.trim() && (
               <div className="mt-4 rounded-lg bg-zinc-800/60 px-4 py-3 sm:px-5">
-                <p className="text-zinc-400 text-xs font-medium uppercase tracking-wide">
+                <p className="text-xs font-medium tracking-wide text-zinc-400 uppercase">
                   Remarks
                 </p>
                 <p className="font-custom mt-1 text-sm text-zinc-300">
@@ -283,7 +281,7 @@ export const StorageSummarySheet = memo(function StorageSummarySheet({
             )}
           </div>
 
-          <SheetFooter className="border-zinc-700/60 bg-zinc-800/90 border-t px-4 py-4 sm:px-6">
+          <SheetFooter className="border-t border-zinc-700/60 bg-zinc-800/90 px-4 py-4 sm:px-6">
             <div className="flex w-full flex-col gap-3 sm:flex-row">
               <Button
                 type="button"

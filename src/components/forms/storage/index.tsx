@@ -1,4 +1,4 @@
-import { memo, useMemo, useState, useCallback } from 'react';
+import { Fragment, memo, useMemo, useState, useCallback } from 'react';
 import { useForm } from '@tanstack/react-form';
 import { useNavigate } from '@tanstack/react-router';
 import * as z from 'zod';
@@ -38,7 +38,7 @@ import {
 import { DatePicker } from '@/components/forms/date-picker';
 import { SearchSelector } from '@/components/forms/search-selector';
 import { useGetReceiptVoucherNumber } from '@/services/store-admin/functions/useGetVoucherNumber';
-import { useGetGradingPassesOfSingleFarmer } from '@/services/store-admin/grading-gate-pass/useGetGradingPassesOfSingleFarmer';
+import { useGetGradingGatePasses } from '@/services/store-admin/grading-gate-pass/useGetGradingGatePasses';
 import { useCreateStorageGatePass } from '@/services/store-admin/storage-gate-pass/useCreateStorageGatePass';
 import { toast } from 'sonner';
 import {
@@ -106,6 +106,62 @@ function getOrderDetailForSize(
   };
 }
 
+/** Get farmer storage link ID from a pass (string) */
+function getFarmerStorageLinkId(pass: GradingGatePass): string {
+  if (typeof pass.farmerStorageLinkId === 'string')
+    return pass.farmerStorageLinkId;
+  const nested = pass.incomingGatePassId?.farmerStorageLinkId;
+  if (nested && typeof nested === 'object' && '_id' in nested)
+    return (nested as { _id: string })._id;
+  return pass._id;
+}
+
+/** Get farmer name from a pass (when incoming ref is populated) */
+function getFarmerName(pass: GradingGatePass): string {
+  const nested = pass.incomingGatePassId?.farmerStorageLinkId;
+  if (nested && typeof nested === 'object' && 'farmerId' in nested) {
+    const farmer = (nested as { farmerId?: { name?: string } }).farmerId;
+    if (farmer?.name) return farmer.name;
+  }
+  return 'Unknown farmer';
+}
+
+export interface GroupedByFarmer {
+  farmerStorageLinkId: string;
+  farmerName: string;
+  passes: GradingGatePass[];
+}
+
+/** Group passes by farmer and sort within each group by date (asc = oldest first, desc = newest first) */
+function groupPassesByFarmer(
+  passes: GradingGatePass[],
+  dateSort: 'asc' | 'desc'
+): GroupedByFarmer[] {
+  const byLink = Object.groupBy(passes, (pass) =>
+    getFarmerStorageLinkId(pass)
+  ) as Partial<Record<string, GradingGatePass[]>>;
+  const groups: GroupedByFarmer[] = Object.entries(byLink).map(
+    ([linkId, passList]) => {
+      const list = passList ?? [];
+      const farmerName = list[0] ? getFarmerName(list[0]) : 'Unknown farmer';
+      const sorted = [...list].sort((a, b) => {
+        const ta = parseDateToTimestamp(a.date);
+        const tb = parseDateToTimestamp(b.date);
+        if (Number.isNaN(ta) || Number.isNaN(tb)) return 0;
+        return dateSort === 'asc' ? ta - tb : tb - ta;
+      });
+      return { farmerStorageLinkId: linkId, farmerName, passes: sorted };
+    }
+  );
+  groups.sort((a, b) => {
+    const dateA = a.passes[0] ? parseDateToTimestamp(a.passes[0].date) : 0;
+    const dateB = b.passes[0] ? parseDateToTimestamp(b.passes[0].date) : 0;
+    if (Number.isNaN(dateA) || Number.isNaN(dateB)) return 0;
+    return dateSort === 'asc' ? dateA - dateB : dateB - dateA;
+  });
+  return groups;
+}
+
 type RemovedQuantities = Record<string, Record<string, number>>;
 
 export type SizeLocation = { chamber: string; floor: string; row: string };
@@ -123,7 +179,7 @@ const StorageGatePassForm = memo(function StorageGatePassForm({
   const { data: voucherNumber, isLoading: isLoadingVoucher } =
     useGetReceiptVoucherNumber('storage-gate-pass');
   const { data: allGradingPasses = [], isLoading: isLoadingPasses } =
-    useGetGradingPassesOfSingleFarmer(farmerStorageLinkId);
+    useGetGradingGatePasses();
 
   const gradingPasses = useMemo(() => {
     if (!gradingPassId) return allGradingPasses;
@@ -142,7 +198,7 @@ const StorageGatePassForm = memo(function StorageGatePassForm({
   const [varietyFilter, setVarietyFilter] = useState<string>('');
   const [dateFilterFrom, setDateFilterFrom] = useState<string>('');
   const [dateFilterTo, setDateFilterTo] = useState<string>('');
-  const [dateSort, setDateSort] = useState<'asc' | 'desc'>('desc');
+  const [dateSort, setDateSort] = useState<'asc' | 'desc'>('asc');
 
   const [formStep, setFormStep] = useState<1 | 2>(1);
   const [sizeLocations, setSizeLocations] = useState<
@@ -173,6 +229,11 @@ const StorageGatePassForm = memo(function StorageGatePassForm({
       return dateSort === 'asc' ? ta - tb : tb - ta;
     });
   }, [gradingPasses, varietyFilter, dateFilterFrom, dateFilterTo, dateSort]);
+
+  const groupedByFarmer = useMemo(
+    () => groupPassesByFarmer(filteredAndSortedPasses, dateSort),
+    [filteredAndSortedPasses, dateSort]
+  );
 
   const [removedQuantities, setRemovedQuantities] = useState<RemovedQuantities>(
     () => ({})
@@ -665,7 +726,7 @@ const StorageGatePassForm = memo(function StorageGatePassForm({
                       )}
                     </div>
 
-                    {hasGradingData && !gradingPassId && (
+                    {hasGradingData && (
                       <div className="border-border/60 bg-muted/30 flex flex-wrap items-end gap-3 rounded-lg border px-3 py-3 sm:gap-4">
                         <div className="flex flex-col gap-1.5">
                           <label
@@ -800,56 +861,93 @@ const StorageGatePassForm = memo(function StorageGatePassForm({
                             </TableRow>
                           </TableHeader>
                           <TableBody>
-                            {filteredAndSortedPasses.map((pass) => (
-                              <TableRow
-                                key={pass._id}
-                                className="border-border/40 hover:bg-transparent"
-                              >
-                                <TableCell className="py-3">
-                                  <div className="flex items-center gap-2.5">
-                                    <Checkbox
-                                      checked={selectedOrders.has(pass._id)}
-                                      onCheckedChange={() =>
-                                        handleOrderToggle(pass._id)
-                                      }
-                                      className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-                                    />
-                                    <span className="font-custom text-foreground/90 font-medium">
-                                      #{pass.gatePassNo}
-                                    </span>
-                                  </div>
-                                </TableCell>
-                                {visibleSizes.map((size) => {
-                                  const detail = getOrderDetailForSize(
-                                    pass,
-                                    size
-                                  );
-                                  const removed =
-                                    removedQuantities[pass._id]?.[size] ?? 0;
-                                  if (!detail) {
-                                    return (
-                                      <TableCell key={size} className="py-1">
-                                        <div className="bg-muted/30 border-border/40 h-[58px] w-[70px] rounded-md border" />
-                                      </TableCell>
-                                    );
-                                  }
-                                  return (
-                                    <TableCell key={size} className="py-1">
-                                      <GradingGatePassCell
-                                        variety={pass.variety}
-                                        currentQuantity={detail.currentQuantity}
-                                        initialQuantity={detail.initialQuantity}
-                                        removedQuantity={removed}
-                                        onClick={() => openDialog(pass, size)}
-                                        onQuickRemove={() => {
-                                          setRemoved(pass._id, size, 0);
-                                        }}
-                                        disabled={detail.currentQuantity <= 0}
-                                      />
+                            {groupedByFarmer.map((group) => (
+                              <Fragment key={group.farmerStorageLinkId}>
+                                <TableRow className="border-border/60 bg-muted/40 hover:bg-muted/40">
+                                  <TableCell
+                                    colSpan={visibleSizes.length + 1}
+                                    className="font-custom text-primary py-2.5 font-semibold"
+                                  >
+                                    {group.farmerName}
+                                  </TableCell>
+                                </TableRow>
+                                {group.passes.map((pass) => (
+                                  <TableRow
+                                    key={pass._id}
+                                    className="border-border/40 hover:bg-transparent"
+                                  >
+                                    <TableCell className="py-3">
+                                      <div className="flex flex-col gap-0.5">
+                                        <div className="flex items-center gap-2.5">
+                                          <Checkbox
+                                            checked={selectedOrders.has(
+                                              pass._id
+                                            )}
+                                            onCheckedChange={() =>
+                                              handleOrderToggle(pass._id)
+                                            }
+                                            className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                                          />
+                                          <span className="font-custom text-foreground/90 font-medium">
+                                            #{pass.gatePassNo}
+                                          </span>
+                                        </div>
+                                        {pass.incomingGatePassId
+                                          ?.truckNumber && (
+                                          <span className="font-custom text-muted-foreground pl-7 text-xs">
+                                            {
+                                              pass.incomingGatePassId
+                                                .truckNumber
+                                            }
+                                          </span>
+                                        )}
+                                      </div>
                                     </TableCell>
-                                  );
-                                })}
-                              </TableRow>
+                                    {visibleSizes.map((size) => {
+                                      const detail = getOrderDetailForSize(
+                                        pass,
+                                        size
+                                      );
+                                      const removed =
+                                        removedQuantities[pass._id]?.[size] ??
+                                        0;
+                                      if (!detail) {
+                                        return (
+                                          <TableCell
+                                            key={size}
+                                            className="py-1"
+                                          >
+                                            <div className="bg-muted/30 border-border/40 h-[58px] w-[70px] rounded-md border" />
+                                          </TableCell>
+                                        );
+                                      }
+                                      return (
+                                        <TableCell key={size} className="py-1">
+                                          <GradingGatePassCell
+                                            variety={pass.variety}
+                                            currentQuantity={
+                                              detail.currentQuantity
+                                            }
+                                            initialQuantity={
+                                              detail.initialQuantity
+                                            }
+                                            removedQuantity={removed}
+                                            onClick={() =>
+                                              openDialog(pass, size)
+                                            }
+                                            onQuickRemove={() => {
+                                              setRemoved(pass._id, size, 0);
+                                            }}
+                                            disabled={
+                                              detail.currentQuantity <= 0
+                                            }
+                                          />
+                                        </TableCell>
+                                      );
+                                    })}
+                                  </TableRow>
+                                ))}
+                              </Fragment>
                             ))}
                           </TableBody>
                         </Table>
@@ -881,10 +979,9 @@ const StorageGatePassForm = memo(function StorageGatePassForm({
                       row: '',
                     };
                     const error = step2LocationErrors[size];
-                    const bagsForSize = Object.entries(removedQuantities).reduce(
-                      (sum, [, sizes]) => sum + (sizes[size] ?? 0),
-                      0
-                    );
+                    const bagsForSize = Object.entries(
+                      removedQuantities
+                    ).reduce((sum, [, sizes]) => sum + (sizes[size] ?? 0), 0);
                     return (
                       <div
                         key={size}

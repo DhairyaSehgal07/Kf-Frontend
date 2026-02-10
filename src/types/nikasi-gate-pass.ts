@@ -74,6 +74,18 @@ export interface CreateNikasiGatePassApiResponse {
   data: CreatedNikasiGatePass;
 }
 
+/** Request body for POST /nikasi-gate-pass/bulk */
+export interface CreateBulkNikasiGatePassInput {
+  passes: CreateNikasiGatePassInput[];
+}
+
+/** API response for POST /nikasi-gate-pass/bulk */
+export interface CreateBulkNikasiGatePassApiResponse {
+  status: string;
+  message: string;
+  data: CreatedNikasiGatePass[];
+}
+
 /** Grading gate pass as returned in GET /nikasi-gate-pass (gradedById may be unpopulated) */
 export interface NikasiGradingGatePassInList {
   _id: string;

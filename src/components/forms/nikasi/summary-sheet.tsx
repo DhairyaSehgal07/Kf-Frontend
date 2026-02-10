@@ -32,14 +32,19 @@ export interface NikasiSummaryGradingEntry
   date?: string;
 }
 
-export interface NikasiSummaryFormValues {
+/** One pass in the summary (single-pass shape for backward compatibility) */
+export interface NikasiSummaryPassValues {
   date: string;
   from: string;
   toField: string;
   remarks: string;
   gradingGatePasses: NikasiSummaryGradingEntry[];
   variety: string;
-  manualGatePassNumber?: number;
+}
+
+/** Multi-pass summary: list of passes to create in one bulk request */
+export interface NikasiSummaryFormValues {
+  passes: NikasiSummaryPassValues[];
 }
 
 /** Format dd.mm.yyyy or ISO to "Jan 18, 2026" */
@@ -123,12 +128,16 @@ export const NikasiSummarySheet = memo(function NikasiSummarySheet({
   gatePassNo,
   onSubmit,
 }: NikasiSummarySheetProps) {
-  const { date, from, toField, remarks, gradingGatePasses, variety } =
-    formValues;
-  const totalBags = gradingGatePasses.reduce(
-    (sum, entry) =>
+  const { passes: passList } = formValues;
+  const totalBags = passList.reduce(
+    (sum, pass) =>
       sum +
-      entry.allocations.reduce((a, b) => a + b.quantityToAllocate, 0),
+      pass.gradingGatePasses.reduce(
+        (a, entry) =>
+          a +
+          entry.allocations.reduce((b, alloc) => b + alloc.quantityToAllocate, 0),
+        0
+      ),
     0
   );
 
@@ -144,116 +153,132 @@ export const NikasiSummarySheet = memo(function NikasiSummarySheet({
               Nikasi Gate Pass Summary
             </SheetTitle>
             <SheetDescription className="font-custom text-sm text-zinc-400">
-              Review before creating the nikasi gate pass
+              Review before creating {passList.length} nikasi gate pass
+              {passList.length !== 1 ? 'es' : ''}
             </SheetDescription>
           </SheetHeader>
 
-          <div className="border-zinc-700/60 flex flex-wrap gap-x-6 gap-y-3 border-b px-4 py-3 sm:px-6">
-            {voucherNumberDisplay && (
+          {voucherNumberDisplay && (
+            <div className="border-zinc-700/60 flex flex-wrap gap-x-6 gap-y-3 border-b px-4 py-3 sm:px-6">
               <SummaryMetaRow
-                label="Voucher"
+                label="Voucher(s)"
                 value={voucherNumberDisplay}
                 icon={FileText}
               />
-            )}
-            <SummaryMetaRow label="Date" value={date} icon={Calendar} />
-            <SummaryMetaRow
-              label="From"
-              value={from || '—'}
-              icon={MapPin}
-            />
-            <SummaryMetaRow
-              label="To"
-              value={toField || '—'}
-              icon={MapPin}
-            />
-            <SummaryMetaRow
-              label="Variety"
-              value={variety || '—'}
-              icon={Package}
-            />
-          </div>
+            </div>
+          )}
 
           <div className="flex-1 overflow-y-auto px-4 py-5 sm:px-6">
-            <h2 className="font-custom mb-4 text-xl font-bold text-white sm:text-2xl">
-              Selected Bags
-            </h2>
-
-            {gradingGatePasses.map((entry) => {
-              const displayDate = entry.date
-                ? formatDateLong(entry.date)
-                : formatDateLong(date);
+            {passList.map((pass, passIndex) => {
+              const { date, from, toField, remarks, gradingGatePasses, variety } =
+                pass;
+              const passBags = gradingGatePasses.reduce(
+                (sum, entry) =>
+                  sum +
+                  entry.allocations.reduce(
+                    (a, b) => a + b.quantityToAllocate,
+                    0
+                  ),
+                0
+              );
               return (
                 <div
-                  key={entry.gradingGatePassId}
-                  className="mb-5 rounded-xl bg-zinc-800/80 shadow-lg overflow-hidden"
+                  key={passIndex}
+                  className="mb-6 rounded-xl border border-zinc-600/50 bg-zinc-800/60 overflow-hidden"
                 >
-                  <div className="border-zinc-600/50 flex flex-wrap items-start justify-between gap-4 border-b px-4 py-4 sm:px-5">
-                    <div>
-                      <p className="font-custom text-lg font-bold text-white sm:text-xl">
-                        Gate Pass #{entry.gatePassNo ?? '—'}
-                      </p>
-                      <p className="font-custom mt-0.5 text-sm text-zinc-400">
-                        {displayDate}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-custom text-xs font-medium uppercase tracking-wide text-zinc-400">
-                        Commodity
-                      </p>
-                      <p className="font-custom mt-0.5 text-lg font-bold text-white sm:text-xl">
-                        {variety || '—'}
-                      </p>
-                    </div>
+                  <div className="border-zinc-600/50 flex flex-wrap gap-x-6 gap-y-3 border-b px-4 py-3 sm:px-5">
+                    <SummaryMetaRow label="Date" value={date} icon={Calendar} />
+                    <SummaryMetaRow label="From" value={from || '—'} icon={MapPin} />
+                    <SummaryMetaRow label="To" value={toField || '—'} icon={MapPin} />
+                    <SummaryMetaRow label="Variety" value={variety || '—'} icon={Package} />
+                    <span className="font-custom text-primary text-sm font-semibold">
+                      {passBags} bags
+                    </span>
                   </div>
 
-                  <div className="px-4 py-3 sm:px-5">
-                    <table className="font-custom w-full border-collapse text-sm">
-                      <thead>
-                        <tr>
-                          <th className="border-zinc-600/50 border-b py-2.5 pr-3 text-left text-[10px] font-medium uppercase tracking-wide text-zinc-400">
-                            Size
-                          </th>
-                          <th className="border-zinc-600/50 border-b py-2.5 px-2 text-right text-[10px] font-medium uppercase tracking-wide text-zinc-400">
-                            Avail
-                          </th>
-                          <th className="border-zinc-600/50 border-b py-2.5 px-2 text-right text-[10px] font-medium uppercase tracking-wide text-zinc-400">
-                            Sel
-                          </th>
-                          <th className="border-zinc-600/50 border-b py-2.5 pl-2 text-right text-[10px] font-medium uppercase tracking-wide text-zinc-400">
-                            Rem
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {entry.allocations.map((alloc) => {
-                          const avail = alloc.availableQuantity;
-                          const rem =
-                            avail != null
-                              ? avail - alloc.quantityToAllocate
-                              : null;
-                          return (
-                            <tr key={alloc.size}>
-                              <td className="border-zinc-600/40 border-b py-2.5 pr-3 font-medium text-white">
-                                {alloc.size}
-                              </td>
-                              <td className="border-zinc-600/40 border-b py-2.5 px-2 text-right text-white">
-                                {avail != null
-                                  ? Number(avail).toFixed(1)
-                                  : '—'}
-                              </td>
-                              <td className="border-zinc-600/40 border-b py-2.5 px-2 text-right font-medium text-primary">
-                                {Number(alloc.quantityToAllocate).toFixed(1)}
-                              </td>
-                              <td className="border-zinc-600/40 border-b py-2.5 pl-2 text-right text-white">
-                                {rem != null ? Number(rem).toFixed(1) : '—'}
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
+                  <h3 className="font-custom mt-3 mb-2 px-4 text-sm font-semibold text-zinc-300">
+                    Grading gate passes
+                  </h3>
+                  {gradingGatePasses.map((entry) => {
+                    const displayDate = entry.date
+                      ? formatDateLong(entry.date)
+                      : formatDateLong(date);
+                    return (
+                      <div
+                        key={entry.gradingGatePassId}
+                        className="mb-4 mx-4 rounded-lg bg-zinc-800/80 overflow-hidden"
+                      >
+                        <div className="border-zinc-600/50 flex flex-wrap items-start justify-between gap-4 border-b px-3 py-3 sm:px-4">
+                          <div>
+                            <p className="font-custom text-base font-bold text-white">
+                              Gate Pass #{entry.gatePassNo ?? '—'}
+                            </p>
+                            <p className="font-custom mt-0.5 text-xs text-zinc-400">
+                              {displayDate}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="px-3 py-2 sm:px-4">
+                          <table className="font-custom w-full border-collapse text-sm">
+                            <thead>
+                              <tr>
+                                <th className="border-zinc-600/50 border-b py-2 pr-3 text-left text-[10px] font-medium uppercase tracking-wide text-zinc-400">
+                                  Size
+                                </th>
+                                <th className="border-zinc-600/50 border-b py-2 px-2 text-right text-[10px] font-medium uppercase tracking-wide text-zinc-400">
+                                  Avail
+                                </th>
+                                <th className="border-zinc-600/50 border-b py-2 px-2 text-right text-[10px] font-medium uppercase tracking-wide text-zinc-400">
+                                  Sel
+                                </th>
+                                <th className="border-zinc-600/50 border-b py-2 pl-2 text-right text-[10px] font-medium uppercase tracking-wide text-zinc-400">
+                                  Rem
+                                </th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {entry.allocations.map((alloc) => {
+                                const avail = alloc.availableQuantity;
+                                const rem =
+                                  avail != null
+                                    ? avail - alloc.quantityToAllocate
+                                    : null;
+                                return (
+                                  <tr key={alloc.size}>
+                                    <td className="border-zinc-600/40 border-b py-2 pr-3 font-medium text-white">
+                                      {alloc.size}
+                                    </td>
+                                    <td className="border-zinc-600/40 border-b py-2 px-2 text-right text-white">
+                                      {avail != null
+                                        ? Number(avail).toFixed(1)
+                                        : '—'}
+                                    </td>
+                                    <td className="border-zinc-600/40 border-b py-2 px-2 text-right font-medium text-primary">
+                                      {Number(alloc.quantityToAllocate).toFixed(1)}
+                                    </td>
+                                    <td className="border-zinc-600/40 border-b py-2 pl-2 text-right text-white">
+                                      {rem != null ? Number(rem).toFixed(1) : '—'}
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    );
+                  })}
+
+                  {remarks?.trim() && (
+                    <div className="mx-4 mb-4 rounded-lg bg-zinc-800/60 px-3 py-2 sm:px-4">
+                      <p className="text-zinc-400 text-[10px] font-medium uppercase tracking-wide">
+                        Remarks
+                      </p>
+                      <p className="font-custom mt-1 text-xs text-zinc-300">
+                        {remarks}
+                      </p>
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -268,17 +293,6 @@ export const NikasiSummarySheet = memo(function NikasiSummarySheet({
                 </span>
               </div>
             </div>
-
-            {remarks?.trim() && (
-              <div className="mt-4 rounded-lg bg-zinc-800/60 px-4 py-3 sm:px-5">
-                <p className="text-zinc-400 text-xs font-medium uppercase tracking-wide">
-                  Remarks
-                </p>
-                <p className="font-custom mt-1 text-sm text-zinc-300">
-                  {remarks}
-                </p>
-              </div>
-            )}
           </div>
 
           <SheetFooter className="border-zinc-700/60 bg-zinc-800/90 border-t px-4 py-4 sm:px-6">
@@ -305,7 +319,7 @@ export const NikasiSummarySheet = memo(function NikasiSummarySheet({
                     Creating...
                   </span>
                 ) : (
-                  'Create Nikasi Gate Pass'
+                  `Create ${passList.length} Nikasi Gate Pass${passList.length !== 1 ? 'es' : ''}`
                 )}
               </Button>
             </div>

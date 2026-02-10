@@ -57,8 +57,9 @@ export function SearchSelector<T extends string>({
   value: controlledValue,
 }: SearchSelectorProps<T>) {
   const [open, setOpen] = React.useState(false);
-  const [uncontrolledValue, setUncontrolledValue] =
-    React.useState<T | ''>(defaultValue);
+  const [uncontrolledValue, setUncontrolledValue] = React.useState<T | ''>(
+    defaultValue
+  );
 
   const isControlled = controlledValue !== undefined;
   const displayValue = isControlled ? controlledValue : uncontrolledValue;
@@ -137,7 +138,9 @@ export function SearchSelector<T extends string>({
                       <Check
                         className={cn(
                           'ml-auto',
-                          displayValue === opt.value ? 'opacity-100' : 'opacity-0'
+                          displayValue === opt.value
+                            ? 'opacity-100'
+                            : 'opacity-0'
                         )}
                       />
                     </CommandItem>

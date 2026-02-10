@@ -87,8 +87,8 @@ export interface PassVoucherData {
   remarks?: string;
   /** Grading: createdBy/gradedBy */
   createdBy?: { name?: string };
-  /** Storage/Nikasi: linked grading pass refs (legacy) */
-  gradingGatePassIds?: Array<{ _id?: string; gatePassNo?: number }>;
+  /** Storage/Nikasi: linked grading pass refs (IDs as string[] from bulk API or objects from list API) */
+  gradingGatePassIds?: Array<string | { _id?: string; gatePassNo?: number }>;
   /** Storage/Nikasi: full snapshots of grading passes material was taken from */
   gradingGatePassSnapshots?: GradingGatePassSnapshot[];
 }

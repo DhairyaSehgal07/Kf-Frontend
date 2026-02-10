@@ -146,123 +146,97 @@ const NikasiVoucher = memo(function NikasiVoucher({
           <>
             <Separator className="my-4" />
             <div className="space-y-4">
-              {(farmerName != null ||
-                farmerAccount != null ||
-                voucher.from != null ||
-                voucher.toField != null) && (
-                <section>
-                  <h4 className="text-muted-foreground/70 mb-2 text-xs font-semibold tracking-wider uppercase">
-                    Farmer Details
-                  </h4>
-                  <div className="bg-muted/30 grid grid-cols-1 gap-2 rounded-lg p-2 sm:grid-cols-2 lg:grid-cols-3">
-                    {farmerName != null && (
-                      <DetailRow label="Name" value={farmerName} />
-                    )}
-                    {farmerAccount != null && (
-                      <DetailRow label="Account" value={`${farmerAccount}`} />
-                    )}
-                    {(voucher.from != null || voucher.toField != null) && (
-                      <DetailRow
-                        label="From → To"
-                        value={`${voucher.from ?? '—'} → ${voucher.toField ?? '—'}`}
-                        icon={MapPin}
-                      />
-                    )}
-                  </div>
-                </section>
-              )}
-
-              {gradingCount > 0 && (
-                <>
-                  <Separator />
-                  <section>
-                    <h4 className="text-muted-foreground/70 mb-2.5 text-xs font-semibold tracking-wider uppercase">
-                      Grading Gate Passes
-                    </h4>
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                      {snapshots.length > 0
-                        ? snapshots.map((gp) => {
-                            const totalBags = (
-                              gp.incomingBagSizes ?? []
-                            ).reduce((s, b) => s + (b.currentQuantity ?? 0), 0);
-                            return (
-                              <div
-                                key={gp._id ?? gp.gatePassNo ?? ''}
-                                className="bg-muted/30 border-border/50 rounded-lg border p-3"
-                              >
-                                <p className="text-muted-foreground font-custom text-xs font-medium">
-                                  GGP #{gp.gatePassNo ?? '—'}
-                                </p>
-                                <p className="text-foreground font-custom mt-1 text-sm font-semibold">
-                                  #{gp.gatePassNo ?? '—'}
-                                </p>
-                                {totalBags > 0 && (
-                                  <p className="text-muted-foreground font-custom mt-1 text-[10px]">
-                                    {totalBags.toLocaleString('en-IN')} bags
-                                  </p>
-                                )}
-                              </div>
-                            );
-                          })
-                        : fallbackIds.map((gp) => (
-                            <div
-                              key={gp._id ?? gp.gatePassNo ?? ''}
-                              className="bg-muted/30 border-border/50 rounded-lg border p-3"
-                            >
-                              <p className="text-muted-foreground font-custom text-xs font-medium">
-                                GGP #{gp.gatePassNo ?? '—'}
-                              </p>
-                              <p className="text-foreground font-custom mt-1 text-sm font-semibold">
-                                #{gp.gatePassNo ?? '—'}
-                              </p>
-                            </div>
-                          ))}
-                    </div>
-                  </section>
-                </>
-              )}
-
-              <Separator />
-
               <section>
                 <h4 className="text-muted-foreground/70 mb-2.5 text-xs font-semibold tracking-wider uppercase">
-                  Order Details
+                  Detailed Breakdown
                 </h4>
                 <div className="bg-muted/30 overflow-x-auto rounded-lg p-3">
-                  <table className="font-custom w-full min-w-[320px] text-sm">
+                  <table className="font-custom w-full min-w-0 table-fixed text-sm">
                     <thead>
                       <tr className="text-muted-foreground/70 border-b text-left text-[10px] font-medium tracking-wider uppercase">
-                        <th className="pr-3 pb-2">Size</th>
-                        <th className="pr-3 pb-2 text-right">Qty Available</th>
-                        <th className="pb-2 text-right">Qty Issued</th>
+                        <th
+                          className="w-[20%] px-1 pb-2 sm:px-1 sm:pr-3"
+                          title="Bag type / size"
+                        >
+                          Type
+                        </th>
+                        <th
+                          className="w-[18%] px-1 pb-2 sm:px-1 sm:pr-3"
+                          title="Receipt / reference voucher"
+                        >
+                          Ref
+                        </th>
+                        <th
+                          className="w-[18%] px-1 pb-2 text-right sm:px-1 sm:pr-3"
+                          title="Initial quantity"
+                        >
+                          Init
+                        </th>
+                        <th
+                          className="w-[22%] px-1 pb-2 text-right sm:px-1 sm:pr-3"
+                          title="Quantity issued"
+                        >
+                          Issued
+                        </th>
+                        <th
+                          className="w-[22%] px-1 pb-2 text-right sm:px-1 sm:pr-2"
+                          title="Available"
+                        >
+                          Avail
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
-                      {orderDetails.map((od, idx) => (
-                        <tr
-                          key={`${od.size}-${od.gradingGatePassId}-${idx}`}
-                          className="border-border/40 border-b"
-                        >
-                          <td className="py-2 pr-3 font-medium">
-                            {od.size ?? '—'}
-                          </td>
-                          <td className="py-2 pr-3 text-right">
-                            {(od.quantityAvailable ?? 0).toLocaleString(
-                              'en-IN'
-                            )}
-                          </td>
-                          <td className="py-2 text-right font-medium">
-                            {(od.quantityIssued ?? 0).toLocaleString('en-IN')}
-                          </td>
-                        </tr>
-                      ))}
+                      {orderDetails.map((od, idx) => {
+                        const initialQty =
+                          (od.quantityAvailable ?? 0) +
+                          (od.quantityIssued ?? 0);
+                        const snapshot = snapshots.find(
+                          (gp) => gp._id === od.gradingGatePassId
+                        );
+                        const rVoucher = snapshot?.gatePassNo ?? '—';
+                        return (
+                          <tr
+                            key={`${od.size}-${od.gradingGatePassId}-${idx}`}
+                            className="border-border/40 border-b"
+                          >
+                            <td className="px-1 py-2 font-medium sm:pr-3">
+                              {od.size ?? '—'}
+                            </td>
+                            <td className="px-1 py-2 sm:pr-3">
+                              <span className="inline-flex items-center gap-1 sm:gap-1.5">
+                                <span className="bg-primary h-1.5 w-1.5 shrink-0 rounded-full" />
+                                {rVoucher}
+                              </span>
+                            </td>
+                            <td className="px-1 py-2 text-right sm:pr-3">
+                              {initialQty.toLocaleString('en-IN')}
+                            </td>
+                            <td className="text-destructive px-1 py-2 text-right font-medium sm:pr-3">
+                              {(od.quantityIssued ?? 0).toLocaleString('en-IN')}
+                            </td>
+                            <td className="text-primary px-1 py-2 text-right font-medium sm:px-1 sm:pr-2">
+                              {(od.quantityAvailable ?? 0).toLocaleString(
+                                'en-IN'
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
                       <tr className="border-border/60 bg-muted/50 text-primary border-t-2 font-semibold">
-                        <td className="py-2.5 pr-3">Total</td>
-                        <td className="py-2.5 pr-3 text-right">
-                          {totalAvailable.toLocaleString('en-IN')}
+                        <td className="px-1 py-2.5 sm:pr-3" colSpan={2}>
+                          Total
                         </td>
-                        <td className="py-2.5 text-right">
+                        <td className="px-1 py-2.5 text-right sm:pr-3">
+                          {(totalAvailable + totalIssued).toLocaleString(
+                            'en-IN'
+                          )}
+                        </td>
+                        <td className="text-destructive px-1 py-2.5 text-right sm:pr-3">
                           {totalIssued.toLocaleString('en-IN')}
+                        </td>
+                        <td className="text-primary px-1 py-2.5 text-right sm:pr-2">
+                          {totalAvailable.toLocaleString('en-IN')}
                         </td>
                       </tr>
                     </tbody>
