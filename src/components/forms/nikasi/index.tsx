@@ -46,7 +46,6 @@ import {
   ArrowUp,
   ChevronRight,
   Columns,
-  Plus,
   Trash2,
 } from 'lucide-react';
 import { QuantityRemoveDialog } from '@/components/forms/storage/quantity-remove-dialog';
@@ -262,13 +261,6 @@ const NikasiGatePassForm = memo(function NikasiGatePassForm({
     },
     []
   );
-
-  const addPass = useCallback(() => {
-    setPasses((prev) => [
-      ...prev,
-      createDefaultPass(`pass-${Date.now()}-${prev.length}`),
-    ]);
-  }, []);
 
   const removePass = useCallback((passId: string) => {
     setPasses((prev) =>
@@ -572,135 +564,6 @@ const NikasiGatePassForm = memo(function NikasiGatePassForm({
         className="space-y-6"
       >
         <FieldGroup className="space-y-6">
-          {/* Shared filters for grading passes — apply to all pass tables below */}
-          <Card>
-            <CardHeader>
-              <div className="flex flex-col gap-4">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1">
-                    <CardTitle className="font-custom text-xl">
-                      Grading Gate Passes
-                    </CardTitle>
-                    <CardDescription className="font-custom text-muted-foreground text-sm">
-                      {hasGradingData
-                        ? 'Filter list and choose columns. Allocate quantities in each pass card below.'
-                        : 'Load grading gate passes to see orders.'}
-                    </CardDescription>
-                  </div>
-                  {hasGradingData && tableSizes.length > 0 && (
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          className="font-custom gap-2"
-                        >
-                          <Columns className="h-4 w-4" />
-                          Columns
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-48">
-                        <DropdownMenuLabel className="font-custom">
-                          Toggle Columns
-                        </DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        {tableSizes.map((size) => (
-                          <DropdownMenuCheckboxItem
-                            key={size}
-                            checked={visibleColumns.has(size)}
-                            onCheckedChange={() => handleColumnToggle(size)}
-                            className="font-custom"
-                          >
-                            {size}
-                          </DropdownMenuCheckboxItem>
-                        ))}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  )}
-                </div>
-                {hasGradingData && (
-                  <div className="border-border/60 bg-muted/30 flex flex-wrap items-end gap-3 rounded-lg border px-3 py-3 sm:gap-4">
-                    <div className="flex flex-col gap-1.5">
-                      <label
-                        htmlFor="nikasi-grading-variety-filter"
-                        className="font-custom text-muted-foreground text-xs font-medium"
-                      >
-                        Variety
-                      </label>
-                      <SearchSelector
-                        id="nikasi-grading-variety-filter"
-                        options={[
-                          { value: '', label: 'All varieties' },
-                          ...varieties.map((v) => ({ value: v, label: v })),
-                        ]}
-                        placeholder="All varieties"
-                        onSelect={(value) => setVarietyFilter(value ?? '')}
-                        defaultValue={varietyFilter || ''}
-                        buttonClassName="font-custom w-[160px] sm:w-[180px]"
-                      />
-                    </div>
-                    <div className="flex flex-col gap-1.5">
-                      <span className="font-custom text-muted-foreground text-xs font-medium">
-                        Date from
-                      </span>
-                      <DatePicker
-                        value={dateFilterFrom}
-                        onChange={(v) => setDateFilterFrom(v ?? '')}
-                        id="nikasi-grading-date-from"
-                        label=""
-                      />
-                    </div>
-                    <div className="flex flex-col gap-1.5">
-                      <span className="font-custom text-muted-foreground text-xs font-medium">
-                        Date to
-                      </span>
-                      <DatePicker
-                        value={dateFilterTo}
-                        onChange={(v) => setDateFilterTo(v ?? '')}
-                        id="nikasi-grading-date-to"
-                        label=""
-                      />
-                    </div>
-                    <div className="flex flex-col gap-1.5">
-                      <span className="font-custom text-muted-foreground text-xs font-medium">
-                        Sort by date
-                      </span>
-                      <div className="flex gap-1">
-                        <Button
-                          type="button"
-                          variant={dateSort === 'desc' ? 'default' : 'outline'}
-                          size="sm"
-                          className="font-custom gap-1.5"
-                          onClick={() => setDateSort('desc')}
-                        >
-                          <ArrowDown className="h-4 w-4" />
-                          Newest first
-                        </Button>
-                        <Button
-                          type="button"
-                          variant={dateSort === 'asc' ? 'default' : 'outline'}
-                          size="sm"
-                          className="font-custom gap-1.5"
-                          onClick={() => setDateSort('asc')}
-                        >
-                          <ArrowUp className="h-4 w-4" />
-                          Oldest first
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </CardHeader>
-            <CardContent>
-              <p className="font-custom text-muted-foreground text-sm">
-                Filter and column options apply to the allocation tables in each
-                pass below.
-              </p>
-            </CardContent>
-          </Card>
-
           {passes.map((pass, passIndex) => (
             <Card key={pass.id} className="relative">
               <CardHeader className="flex flex-row items-start justify-between gap-4">
@@ -791,6 +654,135 @@ const NikasiGatePassForm = memo(function NikasiGatePassForm({
                     className="border-input bg-background ring-offset-background focus-visible:ring-primary font-custom flex w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                   />
                 </Field>
+
+                {/* Grading gate passes filters — above the table (once, in first pass) */}
+                {passIndex === 0 && (
+                  <div className="space-y-3">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                      <div>
+                        <h3 className="font-custom text-foreground text-lg font-semibold">
+                          Grading Gate Passes
+                        </h3>
+                        <p className="font-custom text-muted-foreground text-sm">
+                          {hasGradingData
+                            ? 'Filter list and choose columns. Allocate quantities in each pass card below.'
+                            : 'Load grading gate passes to see orders.'}
+                        </p>
+                      </div>
+                      {hasGradingData && tableSizes.length > 0 && (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="font-custom gap-2"
+                            >
+                              <Columns className="h-4 w-4" />
+                              Columns
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-48">
+                            <DropdownMenuLabel className="font-custom">
+                              Toggle Columns
+                            </DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            {tableSizes.map((size) => (
+                              <DropdownMenuCheckboxItem
+                                key={size}
+                                checked={visibleColumns.has(size)}
+                                onCheckedChange={() => handleColumnToggle(size)}
+                                className="font-custom"
+                              >
+                                {size}
+                              </DropdownMenuCheckboxItem>
+                            ))}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
+                    </div>
+                    {hasGradingData && (
+                      <div className="border-border/60 bg-muted/30 flex flex-wrap items-end gap-3 rounded-lg border px-3 py-3 sm:gap-4">
+                        <div className="flex flex-col gap-1.5">
+                          <label
+                            htmlFor="nikasi-grading-variety-filter"
+                            className="font-custom text-muted-foreground text-xs font-medium"
+                          >
+                            Variety
+                          </label>
+                          <SearchSelector
+                            id="nikasi-grading-variety-filter"
+                            options={[
+                              { value: '', label: 'All varieties' },
+                              ...varieties.map((v) => ({ value: v, label: v })),
+                            ]}
+                            placeholder="All varieties"
+                            onSelect={(value) => setVarietyFilter(value ?? '')}
+                            defaultValue={varietyFilter || ''}
+                            buttonClassName="font-custom w-[160px] sm:w-[180px]"
+                          />
+                        </div>
+                        <div className="flex flex-col gap-1.5">
+                          <span className="font-custom text-muted-foreground text-xs font-medium">
+                            Date from
+                          </span>
+                          <DatePicker
+                            value={dateFilterFrom}
+                            onChange={(v) => setDateFilterFrom(v ?? '')}
+                            id="nikasi-grading-date-from"
+                            label=""
+                          />
+                        </div>
+                        <div className="flex flex-col gap-1.5">
+                          <span className="font-custom text-muted-foreground text-xs font-medium">
+                            Date to
+                          </span>
+                          <DatePicker
+                            value={dateFilterTo}
+                            onChange={(v) => setDateFilterTo(v ?? '')}
+                            id="nikasi-grading-date-to"
+                            label=""
+                          />
+                        </div>
+                        <div className="flex flex-col gap-1.5">
+                          <span className="font-custom text-muted-foreground text-xs font-medium">
+                            Sort by date
+                          </span>
+                          <div className="flex gap-1">
+                            <Button
+                              type="button"
+                              variant={
+                                dateSort === 'desc' ? 'default' : 'outline'
+                              }
+                              size="sm"
+                              className="font-custom gap-1.5"
+                              onClick={() => setDateSort('desc')}
+                            >
+                              <ArrowDown className="h-4 w-4" />
+                              Newest first
+                            </Button>
+                            <Button
+                              type="button"
+                              variant={
+                                dateSort === 'asc' ? 'default' : 'outline'
+                              }
+                              size="sm"
+                              className="font-custom gap-1.5"
+                              onClick={() => setDateSort('asc')}
+                            >
+                              <ArrowUp className="h-4 w-4" />
+                              Oldest first
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    <p className="font-custom text-muted-foreground text-sm">
+                      Filter and column options apply to the allocation tables
+                      in each pass below.
+                    </p>
+                  </div>
+                )}
 
                 {/* Grading table for this pass */}
                 <div className="border-border/40 rounded-md border pt-2">
@@ -930,18 +922,6 @@ const NikasiGatePassForm = memo(function NikasiGatePassForm({
               </CardContent>
             </Card>
           ))}
-
-          <div className="flex flex-wrap items-center gap-3">
-            <Button
-              type="button"
-              variant="outline"
-              className="font-custom gap-2"
-              onClick={addPass}
-            >
-              <Plus className="h-4 w-4" />
-              Add another pass
-            </Button>
-          </div>
         </FieldGroup>
 
         <div className="flex flex-col gap-3 pt-4 sm:flex-row sm:justify-end sm:gap-4">
