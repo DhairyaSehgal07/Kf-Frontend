@@ -8,7 +8,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
-import { FileText, Calendar, Package, MapPin, Loader2 } from 'lucide-react';
+import { FileText, Calendar, MapPin, Loader2 } from 'lucide-react';
 import type {
   CreateNikasiGatePassAllocation,
   CreateNikasiGatePassGradingEntry,
@@ -40,7 +40,6 @@ export interface NikasiSummaryPassValues {
   toField: string;
   remarks: string;
   gradingGatePasses: NikasiSummaryGradingEntry[];
-  variety: string;
 }
 
 /** Multi-pass summary: list of passes to create in one bulk request */
@@ -178,7 +177,6 @@ export const NikasiSummarySheet = memo(function NikasiSummarySheet({
                 toField,
                 remarks,
                 gradingGatePasses,
-                variety,
               } = pass;
               const passBags = gradingGatePasses.reduce(
                 (sum, entry) =>
@@ -206,11 +204,6 @@ export const NikasiSummarySheet = memo(function NikasiSummarySheet({
                       value={toField || '—'}
                       icon={MapPin}
                     />
-                    <SummaryMetaRow
-                      label="Variety"
-                      value={variety || '—'}
-                      icon={Package}
-                    />
                     <span className="font-custom text-primary text-sm font-semibold">
                       {passBags} bags
                     </span>
@@ -235,6 +228,7 @@ export const NikasiSummarySheet = memo(function NikasiSummarySheet({
                             </p>
                             <p className="font-custom mt-0.5 text-xs text-zinc-400">
                               {displayDate}
+                              {entry.variety ? ` · ${entry.variety}` : ''}
                             </p>
                           </div>
                         </div>

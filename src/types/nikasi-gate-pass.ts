@@ -12,6 +12,7 @@ export interface CreateNikasiGatePassAllocation {
 /** Grading gate pass entry in the create nikasi request */
 export interface CreateNikasiGatePassGradingEntry {
   gradingGatePassId: string;
+  variety: string;
   allocations: CreateNikasiGatePassAllocation[];
 }
 
@@ -20,7 +21,6 @@ export interface CreateNikasiGatePassInput {
   farmerStorageLinkId: string;
   gatePassNo: number;
   date: string;
-  variety: string;
   from: string;
   toField: string;
   gradingGatePasses: CreateNikasiGatePassGradingEntry[];

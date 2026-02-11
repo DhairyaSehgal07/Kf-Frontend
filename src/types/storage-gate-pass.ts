@@ -98,3 +98,15 @@ export interface CreateStorageGatePassApiResponse {
   data: CreatedStorageGatePass | null;
   message?: string;
 }
+
+/** Request body for POST /storage-gate-pass/bulk */
+export interface CreateBulkStorageGatePassInput {
+  passes: CreateStorageGatePassInput[];
+}
+
+/** API response for POST /storage-gate-pass/bulk */
+export interface CreateBulkStorageGatePassApiResponse {
+  status: string;
+  message: string;
+  data: CreatedStorageGatePass[];
+}

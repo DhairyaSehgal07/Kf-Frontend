@@ -77,12 +77,16 @@ export const DatePicker: React.FC<DatePickerProps> = ({
     }
   };
 
+  const hasLabel = label != null && label !== '';
+
   return (
-    <div className="space-y-3">
-      <Label htmlFor={id} className="text-base font-medium">
-        {label}
-      </Label>
-      <div className="flex items-center gap-3">
+    <div className={hasLabel ? 'space-y-3' : undefined}>
+      {hasLabel && (
+        <Label htmlFor={id} className="text-base font-medium">
+          {label}
+        </Label>
+      )}
+      <div className="flex h-10 items-center gap-2">
         {/* Manual input field */}
         <input
           id={id}
@@ -91,14 +95,14 @@ export const DatePicker: React.FC<DatePickerProps> = ({
           value={inputValue}
           onChange={handleInputChange}
           className={cn(
-            'border-input bg-background w-44 rounded-md border px-4 py-2.5 text-sm shadow-sm transition-colors',
+            'border-input bg-background h-10 w-44 shrink-0 rounded-md border px-3 py-2 text-sm shadow-sm transition-colors',
             'focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none'
           )}
         />
         {/* Calendar popover */}
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild>
-            <Button variant="outline" size="icon" className="h-10 w-10">
+            <Button variant="outline" size="icon" className="h-10 w-10 shrink-0">
               <CalendarIcon className="h-4 w-4" />
             </Button>
           </PopoverTrigger>

@@ -34,116 +34,34 @@ import { useGetReceiptVoucherNumber } from '@/services/store-admin/functions/use
 import { useGetGradingGatePasses } from '@/services/store-admin/grading-gate-pass/useGetGradingGatePasses';
 import { useCreateBulkNikasiGatePasses } from '@/services/store-admin/nikasi-gate-pass/useCreateBulkNikasiGatePasses';
 import { toast } from 'sonner';
-import {
-  formatDate,
-  formatDateToISO,
-  parseDateToTimestamp,
-} from '@/lib/helpers';
+import { formatDate, formatDateToISO } from '@/lib/helpers';
 import type { GradingGatePass } from '@/types/grading-gate-pass';
 import type { CreateNikasiGatePassGradingEntry } from '@/types/nikasi-gate-pass';
 import {
   ArrowDown,
   ArrowUp,
+  Calendar,
   ChevronRight,
   Columns,
   Trash2,
+  User,
 } from 'lucide-react';
 import { QuantityRemoveDialog } from '@/components/forms/storage/quantity-remove-dialog';
 import { GradingGatePassCell } from '@/components/forms/storage/grading-gate-pass-cell';
+import {
+  getUniqueSizes,
+  getUniqueVarieties,
+  getOrderDetailForSize,
+  groupPassesByFarmer,
+  groupPassesByDate,
+  toDisplayGroups,
+  toDisplayGroupsFromDate,
+} from '@/components/forms/storage/storage-form-utils';
 import {
   NikasiSummarySheet,
   type NikasiSummaryGradingEntry,
   type NikasiSummaryFormValues,
 } from './summary-sheet';
-
-/** Collect unique sizes from all grading passes, sorted */
-function getUniqueSizes(passes: GradingGatePass[]): string[] {
-  const set = new Set<string>();
-  for (const pass of passes) {
-    for (const detail of pass.orderDetails ?? []) {
-      if (detail.size) set.add(detail.size);
-    }
-  }
-  return Array.from(set).sort();
-}
-
-/** Collect unique varieties from all grading passes, sorted */
-function getUniqueVarieties(passes: GradingGatePass[]): string[] {
-  const set = new Set<string>();
-  for (const pass of passes) {
-    if (pass.variety?.trim()) set.add(pass.variety.trim());
-  }
-  return Array.from(set).sort();
-}
-
-/** Get order detail for a given size from a grading pass */
-function getOrderDetailForSize(
-  pass: GradingGatePass,
-  size: string
-): { currentQuantity: number; initialQuantity: number } | null {
-  const detail = pass.orderDetails?.find((d) => d.size === size);
-  if (!detail) return null;
-  return {
-    currentQuantity: detail.currentQuantity ?? 0,
-    initialQuantity: detail.initialQuantity ?? 0,
-  };
-}
-
-/** Get farmer storage link ID from a pass (string) */
-function getFarmerStorageLinkId(pass: GradingGatePass): string {
-  if (typeof pass.farmerStorageLinkId === 'string')
-    return pass.farmerStorageLinkId;
-  const nested = pass.incomingGatePassId?.farmerStorageLinkId;
-  if (nested && typeof nested === 'object' && '_id' in nested)
-    return (nested as { _id: string })._id;
-  return pass._id;
-}
-
-/** Get farmer name from a pass (when incoming ref is populated) */
-function getFarmerName(pass: GradingGatePass): string {
-  const nested = pass.incomingGatePassId?.farmerStorageLinkId;
-  if (nested && typeof nested === 'object' && 'farmerId' in nested) {
-    const farmer = (nested as { farmerId?: { name?: string } }).farmerId;
-    if (farmer?.name) return farmer.name;
-  }
-  return 'Unknown farmer';
-}
-
-export interface GroupedByFarmer {
-  farmerStorageLinkId: string;
-  farmerName: string;
-  passes: GradingGatePass[];
-}
-
-/** Group passes by farmer and sort within each group by date (asc = oldest first, desc = newest first) */
-function groupPassesByFarmer(
-  passes: GradingGatePass[],
-  dateSort: 'asc' | 'desc'
-): GroupedByFarmer[] {
-  const byLink = Object.groupBy(passes, (pass) =>
-    getFarmerStorageLinkId(pass)
-  ) as Partial<Record<string, GradingGatePass[]>>;
-  const groups: GroupedByFarmer[] = Object.entries(byLink).map(
-    ([linkId, passList]) => {
-      const list = passList ?? [];
-      const farmerName = list[0] ? getFarmerName(list[0]) : 'Unknown farmer';
-      const sorted = [...list].sort((a, b) => {
-        const ta = parseDateToTimestamp(a.date);
-        const tb = parseDateToTimestamp(b.date);
-        if (Number.isNaN(ta) || Number.isNaN(tb)) return 0;
-        return dateSort === 'asc' ? ta - tb : tb - ta;
-      });
-      return { farmerStorageLinkId: linkId, farmerName, passes: sorted };
-    }
-  );
-  groups.sort((a, b) => {
-    const dateA = a.passes[0] ? parseDateToTimestamp(a.passes[0].date) : 0;
-    const dateB = b.passes[0] ? parseDateToTimestamp(b.passes[0].date) : 0;
-    if (Number.isNaN(dateA) || Number.isNaN(dateB)) return 0;
-    return dateSort === 'asc' ? dateA - dateB : dateB - dateA;
-  });
-  return groups;
-}
 
 type RemovedQuantities = Record<string, Record<string, number>>;
 
@@ -192,36 +110,32 @@ const NikasiGatePassForm = memo(function NikasiGatePassForm({
   );
 
   const [varietyFilter, setVarietyFilter] = useState<string>('');
-  const [dateFilterFrom, setDateFilterFrom] = useState<string>('');
-  const [dateFilterTo, setDateFilterTo] = useState<string>('');
-  const [dateSort, setDateSort] = useState<'asc' | 'desc'>('asc');
+  const [voucherSort, setVoucherSort] = useState<'asc' | 'desc'>('asc');
+  const [groupBy, setGroupBy] = useState<'farmer' | 'date'>('farmer');
   const [isSummarySheetOpen, setIsSummarySheetOpen] = useState(false);
 
   const filteredAndSortedPasses = useMemo(() => {
     let list = allGradingPasses;
-    if (varietyFilter) {
+    if (varietyFilter.trim()) {
       list = list.filter((p) => p.variety?.trim() === varietyFilter);
     }
-    const fromTs = dateFilterFrom ? parseDateToTimestamp(dateFilterFrom) : null;
-    const toTs = dateFilterTo ? parseDateToTimestamp(dateFilterTo) : null;
-    if (fromTs != null && !Number.isNaN(fromTs)) {
-      list = list.filter((p) => parseDateToTimestamp(p.date) >= fromTs);
-    }
-    if (toTs != null && !Number.isNaN(toTs)) {
-      list = list.filter((p) => parseDateToTimestamp(p.date) <= toTs);
-    }
     return [...list].sort((a, b) => {
-      const ta = parseDateToTimestamp(a.date);
-      const tb = parseDateToTimestamp(b.date);
-      if (Number.isNaN(ta) || Number.isNaN(tb)) return 0;
-      return dateSort === 'asc' ? ta - tb : tb - ta;
+      const na = a.gatePassNo ?? 0;
+      const nb = b.gatePassNo ?? 0;
+      return voucherSort === 'asc' ? na - nb : nb - na;
     });
-  }, [allGradingPasses, varietyFilter, dateFilterFrom, dateFilterTo, dateSort]);
+  }, [allGradingPasses, varietyFilter, voucherSort]);
 
-  const groupedByFarmer = useMemo(
-    () => groupPassesByFarmer(filteredAndSortedPasses, dateSort),
-    [filteredAndSortedPasses, dateSort]
-  );
+  const displayGroups = useMemo(() => {
+    if (groupBy === 'farmer') {
+      return toDisplayGroups(
+        groupPassesByFarmer(filteredAndSortedPasses, voucherSort)
+      );
+    }
+    return toDisplayGroupsFromDate(
+      groupPassesByDate(filteredAndSortedPasses, voucherSort)
+    );
+  }, [filteredAndSortedPasses, voucherSort, groupBy]);
 
   const [passes, setPasses] = useState<NikasiPassState[]>(() => [
     createDefaultPass(`pass-${Date.now()}`),
@@ -424,6 +338,7 @@ const NikasiGatePassForm = memo(function NikasiGatePassForm({
             );
             return {
               gradingGatePassId,
+              variety: gp?.variety?.trim() ?? '',
               gatePassNo: gp?.gatePassNo,
               date: gp?.date,
               allocations: Object.entries(sizes)
@@ -438,20 +353,12 @@ const NikasiGatePassForm = memo(function NikasiGatePassForm({
                 }),
             };
           });
-        const firstPassId = Object.keys(pass.removedQuantities).find((id) =>
-          Object.values(pass.removedQuantities[id] ?? {}).some((q) => q > 0)
-        );
-        const firstPass = filteredAndSortedPasses.find(
-          (p) => p._id === firstPassId
-        );
-        const variety = firstPass?.variety?.trim() ?? '';
         return {
           date: pass.date,
           from: pass.from,
           toField: pass.toField,
           remarks: pass.remarks,
           gradingGatePasses,
-          variety,
         };
       }
     );
@@ -464,27 +371,25 @@ const NikasiGatePassForm = memo(function NikasiGatePassForm({
       const gradingGatePasses: CreateNikasiGatePassGradingEntry[] =
         Object.entries(pass.removedQuantities)
           .filter(([_, sizes]) => Object.values(sizes).some((q) => q > 0))
-          .map(([gradingGatePassId, sizes]) => ({
-            gradingGatePassId,
-            allocations: Object.entries(sizes)
-              .filter(([_, qty]) => qty > 0)
-              .map(([size, quantityToAllocate]) => ({
-                size,
-                quantityToAllocate,
-              })),
-          }));
-      const firstPassId = Object.keys(pass.removedQuantities).find((id) =>
-        Object.values(pass.removedQuantities[id] ?? {}).some((q) => q > 0)
-      );
-      const firstPass = filteredAndSortedPasses.find(
-        (p) => p._id === firstPassId
-      );
-      const variety = firstPass?.variety?.trim() ?? '';
+          .map(([gradingGatePassId, sizes]) => {
+            const gp = filteredAndSortedPasses.find(
+              (p) => p._id === gradingGatePassId
+            );
+            return {
+              gradingGatePassId,
+              variety: gp?.variety?.trim() ?? '',
+              allocations: Object.entries(sizes)
+                .filter(([_, qty]) => qty > 0)
+                .map(([size, quantityToAllocate]) => ({
+                  size,
+                  quantityToAllocate,
+                })),
+            };
+          });
       return {
         farmerStorageLinkId,
         gatePassNo: voucherNumber + index,
         date: formatDateToISO(pass.date),
-        variety,
         from: pass.from.trim(),
         toField: pass.toField.trim(),
         gradingGatePasses,
@@ -665,7 +570,7 @@ const NikasiGatePassForm = memo(function NikasiGatePassForm({
                         </h3>
                         <p className="font-custom text-muted-foreground text-sm">
                           {hasGradingData
-                            ? 'Filter list and choose columns. Allocate quantities in each pass card below.'
+                            ? 'Select variety (or All Varieties), then sort and group vouchers. Allocate quantities in each pass card below.'
                             : 'Load grading gate passes to see orders.'}
                         </p>
                       </div>
@@ -702,76 +607,85 @@ const NikasiGatePassForm = memo(function NikasiGatePassForm({
                       )}
                     </div>
                     {hasGradingData && (
-                      <div className="border-border/60 bg-muted/30 flex flex-wrap items-end gap-3 rounded-lg border px-3 py-3 sm:gap-4">
-                        <div className="flex flex-col gap-1.5">
+                      <div className="border-border/60 bg-muted/30 flex flex-wrap items-end gap-x-5 gap-y-4 rounded-xl border px-4 py-4 shadow-sm">
+                        <div className="flex flex-col gap-2">
                           <label
                             htmlFor="nikasi-grading-variety-filter"
-                            className="font-custom text-muted-foreground text-xs font-medium"
+                            className="font-custom text-muted-foreground text-xs leading-none font-medium"
                           >
                             Variety
                           </label>
                           <SearchSelector
                             id="nikasi-grading-variety-filter"
                             options={[
-                              { value: '', label: 'All varieties' },
+                              { value: '', label: 'All Varieties' },
                               ...varieties.map((v) => ({ value: v, label: v })),
                             ]}
-                            placeholder="All varieties"
+                            placeholder="All Varieties"
                             onSelect={(value) => setVarietyFilter(value ?? '')}
-                            defaultValue={varietyFilter || ''}
-                            buttonClassName="font-custom w-[160px] sm:w-[180px]"
+                            value={varietyFilter}
+                            buttonClassName="font-custom h-10 w-[160px] sm:w-[180px]"
                           />
                         </div>
-                        <div className="flex flex-col gap-1.5">
-                          <span className="font-custom text-muted-foreground text-xs font-medium">
-                            Date from
+                        <div className="flex flex-col gap-2">
+                          <span className="font-custom text-muted-foreground text-xs leading-none font-medium">
+                            Sort by voucher
                           </span>
-                          <DatePicker
-                            value={dateFilterFrom}
-                            onChange={(v) => setDateFilterFrom(v ?? '')}
-                            id="nikasi-grading-date-from"
-                            label=""
-                          />
-                        </div>
-                        <div className="flex flex-col gap-1.5">
-                          <span className="font-custom text-muted-foreground text-xs font-medium">
-                            Date to
-                          </span>
-                          <DatePicker
-                            value={dateFilterTo}
-                            onChange={(v) => setDateFilterTo(v ?? '')}
-                            id="nikasi-grading-date-to"
-                            label=""
-                          />
-                        </div>
-                        <div className="flex flex-col gap-1.5">
-                          <span className="font-custom text-muted-foreground text-xs font-medium">
-                            Sort by date
-                          </span>
-                          <div className="flex gap-1">
+                          <div className="flex h-10 items-center gap-1.5">
                             <Button
                               type="button"
                               variant={
-                                dateSort === 'desc' ? 'default' : 'outline'
+                                voucherSort === 'asc' ? 'default' : 'outline'
                               }
                               size="sm"
-                              className="font-custom gap-1.5"
-                              onClick={() => setDateSort('desc')}
+                              className="font-custom h-10 gap-1.5 px-3"
+                              onClick={() => setVoucherSort('asc')}
                             >
-                              <ArrowDown className="h-4 w-4" />
-                              Newest first
+                              <ArrowUp className="h-4 w-4" />
+                              Ascending
                             </Button>
                             <Button
                               type="button"
                               variant={
-                                dateSort === 'asc' ? 'default' : 'outline'
+                                voucherSort === 'desc' ? 'default' : 'outline'
                               }
                               size="sm"
-                              className="font-custom gap-1.5"
-                              onClick={() => setDateSort('asc')}
+                              className="font-custom h-10 gap-1.5 px-3"
+                              onClick={() => setVoucherSort('desc')}
                             >
-                              <ArrowUp className="h-4 w-4" />
-                              Oldest first
+                              <ArrowDown className="h-4 w-4" />
+                              Descending
+                            </Button>
+                          </div>
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <span className="font-custom text-muted-foreground text-xs leading-none font-medium">
+                            Group by
+                          </span>
+                          <div className="flex h-10 items-center gap-1.5">
+                            <Button
+                              type="button"
+                              variant={
+                                groupBy === 'farmer' ? 'default' : 'outline'
+                              }
+                              size="sm"
+                              className="font-custom h-10 gap-1.5 px-3"
+                              onClick={() => setGroupBy('farmer')}
+                            >
+                              <User className="h-4 w-4" />
+                              Farmer
+                            </Button>
+                            <Button
+                              type="button"
+                              variant={
+                                groupBy === 'date' ? 'default' : 'outline'
+                              }
+                              size="sm"
+                              className="font-custom h-10 gap-1.5 px-3"
+                              onClick={() => setGroupBy('date')}
+                            >
+                              <Calendar className="h-4 w-4" />
+                              Date
                             </Button>
                           </div>
                         </div>
@@ -811,14 +725,14 @@ const NikasiGatePassForm = memo(function NikasiGatePassForm({
                             </TableRow>
                           </TableHeader>
                           <TableBody>
-                            {groupedByFarmer.map((group) => (
-                              <Fragment key={group.farmerStorageLinkId}>
+                            {displayGroups.map((group) => (
+                              <Fragment key={group.groupKey}>
                                 <TableRow className="border-border/60 bg-muted/40 hover:bg-muted/40">
                                   <TableCell
                                     colSpan={visibleSizes.length + 1}
                                     className="font-custom text-primary py-2.5 font-semibold"
                                   >
-                                    {group.farmerName}
+                                    {group.groupLabel}
                                   </TableCell>
                                 </TableRow>
                                 {group.passes.map((gp) => (
@@ -903,11 +817,19 @@ const NikasiGatePassForm = memo(function NikasiGatePassForm({
                         </Table>
                       </div>
                     )}
-                  {!isLoadingPasses && hasGradingData && !hasFilteredData && (
-                    <p className="font-custom text-muted-foreground py-4 text-center text-sm">
-                      No passes match filters or no order details.
-                    </p>
-                  )}
+                  {!isLoadingPasses &&
+                    hasGradingData &&
+                    !hasFilteredData &&
+                    (varietyFilter.trim() === '' ? (
+                      <p className="font-custom text-muted-foreground py-4 text-center text-sm">
+                        No grading gate passes available.
+                      </p>
+                    ) : (
+                      <p className="font-custom text-muted-foreground py-4 text-center text-sm">
+                        No passes match the selected variety or no order
+                        details.
+                      </p>
+                    ))}
                   {!isLoadingPasses && !hasGradingData && (
                     <p className="font-custom text-muted-foreground py-4 text-center text-sm">
                       No grading gate passes available.

@@ -25,6 +25,7 @@ const HEADER_BG = '#f9fafb';
 const styles = StyleSheet.create({
   page: {
     padding: 36,
+    paddingBottom: 56,
     fontSize: 10,
     fontFamily: 'Helvetica',
   },
@@ -47,6 +48,25 @@ const styles = StyleSheet.create({
     fontSize: 9,
     color: MUTED,
     marginTop: 4,
+    textAlign: 'center',
+  },
+  footer: {
+    position: 'absolute',
+    bottom: 36,
+    left: 36,
+    right: 36,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  footerLogo: {
+    width: 24,
+    height: 24,
+    marginRight: 6,
+  },
+  poweredBy: {
+    fontSize: 8,
+    color: MUTED,
     textAlign: 'center',
   },
   header: {
@@ -181,7 +201,10 @@ export function IncomingVoucherPdf({
       <Page size="A4" style={styles.page}>
         <View style={styles.header}>
           <View>
-            <Image src="/coldop-logo.png" style={styles.logo} />
+            <Image
+              src={coldStorage?.imageUrl ?? '/coldop-logo.png'}
+              style={styles.logo}
+            />
           </View>
           {coldStorage && (
             <View style={styles.letterhead}>
@@ -308,6 +331,12 @@ export function IncomingVoucherPdf({
             </View>
           </>
         )}
+
+        {/* Footer */}
+        <View style={styles.footer}>
+          <Image src="/coldop-logo.png" style={styles.footerLogo} />
+          <Text style={styles.poweredBy}>Powered By Coldop</Text>
+        </View>
       </Page>
     </Document>
   );
