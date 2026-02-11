@@ -83,12 +83,15 @@ function getFarmerStorageLinkId(
   return undefined;
 }
 
+/** Progress = (number of steps achieved / total steps) * 100. Counts only steps that actually have vouchers (e.g. Incoming + Grading + Nikasi with no Storage = 3 steps = 60%). */
 function getPipelineProgress(entry: DaybookEntry): number {
-  let completedStages = 1; // Incoming is always present when we have an entry
-  if ((entry.gradingPasses?.length ?? 0) > 0) completedStages = 2;
-  if ((entry.storagePasses?.length ?? 0) > 0) completedStages = 3;
-  if ((entry.nikasiPasses?.length ?? 0) > 0) completedStages = 4;
-  if ((entry.outgoingPasses?.length ?? 0) > 0) completedStages = 5;
+  const hasIncoming = 1; // Incoming is always present when we have an entry
+  const hasGrading = (entry.gradingPasses?.length ?? 0) > 0 ? 1 : 0;
+  const hasStorage = (entry.storagePasses?.length ?? 0) > 0 ? 1 : 0;
+  const hasNikasi = (entry.nikasiPasses?.length ?? 0) > 0 ? 1 : 0;
+  const hasOutgoing = (entry.outgoingPasses?.length ?? 0) > 0 ? 1 : 0;
+  const completedStages =
+    hasIncoming + hasGrading + hasStorage + hasNikasi + hasOutgoing;
   return Math.round((completedStages / PIPELINE_STAGES) * 100);
 }
 
