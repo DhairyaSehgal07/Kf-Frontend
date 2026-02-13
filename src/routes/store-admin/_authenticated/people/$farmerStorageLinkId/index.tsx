@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
+import type { IncomingVoucherData } from '@/components/daybook/vouchers/types';
 import {
   createFileRoute,
   useParams,
@@ -52,6 +53,8 @@ import {
   totalBagsFromOrderDetails,
   type PassVoucherData,
 } from '@/components/daybook/vouchers';
+import type { StockLedgerRow } from '@/components/pdf/StockLedgerPdf';
+import { Spinner } from '@/components/ui/spinner';
 
 export const Route = createFileRoute(
   '/store-admin/_authenticated/people/$farmerStorageLinkId/'
@@ -178,6 +181,52 @@ function PeopleDetailPage() {
 
   const totalCount = filteredAndSortedEntries.length;
 
+  const stockLedgerRows: StockLedgerRow[] = useMemo(() => {
+    return daybook.map((entry, index) => {
+      const inc = entry.incoming as IncomingVoucherData & { date?: string };
+      const bags = entry.summaries?.totalBagsIncoming ?? inc.bagsReceived ?? 0;
+      return {
+        serialNo: index + 1,
+        date: inc.date,
+        incomingGatePassNo: inc.gatePassNo ?? '—',
+        truckNumber: inc.truckNumber,
+        bagsReceived: bags,
+      };
+    });
+  }, [daybook]);
+
+  const [isPdfOpening, setIsPdfOpening] = useState(false);
+  const openStockLedgerPdf = useCallback(() => {
+    if (!link) return;
+    const win = window.open('', '_blank');
+    if (win) {
+      win.document.write(
+        '<html><body style="font-family:sans-serif;padding:2rem;text-align:center;color:#666;">Generating PDF…</body></html>'
+      );
+    }
+    setIsPdfOpening(true);
+    const farmerName = link.farmerId.name;
+    Promise.all([
+      import('@react-pdf/renderer'),
+      import('@/components/pdf/StockLedgerPdf'),
+    ])
+      .then(([{ pdf }, { StockLedgerPdf: StockLedgerPdfComponent }]) => {
+        return pdf(
+          <StockLedgerPdfComponent
+            farmerName={farmerName}
+            rows={stockLedgerRows}
+          />
+        ).toBlob();
+      })
+      .then((blob) => {
+        const url = URL.createObjectURL(blob);
+        if (win) win.location.href = url;
+        else window.location.href = url;
+        setTimeout(() => URL.revokeObjectURL(url), 60_000);
+      })
+      .finally(() => setIsPdfOpening(false));
+  }, [link, stockLedgerRows]);
+
   const aggregateBags = useMemo(() => {
     const acc: DaybookEntrySummaries = {
       totalBagsIncoming: 0,
@@ -270,9 +319,23 @@ function PeopleDetailPage() {
 
               {/* Action Buttons */}
               <div className="flex flex-wrap gap-3">
-                <Button variant="default" className="gap-2 rounded-xl">
-                  <Package className="h-4 w-4" />
-                  View Stock Ledger
+                <Button
+                  variant="default"
+                  className="gap-2 rounded-xl"
+                  disabled={isPdfOpening}
+                  onClick={openStockLedgerPdf}
+                >
+                  {isPdfOpening ? (
+                    <>
+                      <Spinner className="h-4 w-4" />
+                      Generating PDF…
+                    </>
+                  ) : (
+                    <>
+                      <Package className="h-4 w-4" />
+                      View Stock Ledger
+                    </>
+                  )}
                 </Button>
               </div>
 
