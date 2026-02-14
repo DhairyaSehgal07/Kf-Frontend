@@ -1,12 +1,17 @@
-/** Common potato varieties (shared by incoming, grading, etc.) */
-/** Common potato varieties (shared by incoming, grading, etc.) */
+/** =====================================================
+ *  POTATO VARIETIES
+ *  ===================================================== */
+
 export const POTATO_VARIETIES: { label: string; value: string }[] = [
   { label: 'Himalini', value: 'Himalini' },
   { label: 'B101', value: 'B101' },
   { label: 'Jyoti', value: 'Jyoti' },
 ];
 
-/** Size-wise entry labels for grading gate pass (field order as per spec) */
+/** =====================================================
+ *  GRADING SIZES (Field order as per spec)
+ *  ===================================================== */
+
 export const GRADING_SIZES = [
   'Below 25',
   '25–30',
@@ -22,10 +27,63 @@ export const GRADING_SIZES = [
   'Cut',
 ] as const;
 
+export type GradingSize = (typeof GRADING_SIZES)[number];
+
+/** =====================================================
+ *  BAG CONFIG
+ *  ===================================================== */
+
 export const JUTE_BAG_WEIGHT = 0.7;
 export const LENO_BAG_WEIGHT = 0.06;
 
-export type GradingSize = (typeof GRADING_SIZES)[number];
-
 export const BAG_TYPES = ['JUTE', 'LENO'] as const;
 export type BagType = (typeof BAG_TYPES)[number];
+
+/** =====================================================
+ *  BUY BACK COST CONFIGURATION
+ *  ===================================================== */
+
+export type Variety = (typeof POTATO_VARIETIES)[number]['value'];
+
+export type BuyBackCost = {
+  variety: Variety;
+  sizeRates: Record<GradingSize, number>;
+};
+
+export const BUY_BACK_COST: BuyBackCost[] = [
+  {
+    variety: 'Himalini',
+    sizeRates: {
+      'Below 25': 15.25,
+      '25–30': 15.25,
+      'Below 30': 15.25,
+      '30–35': 15.25,
+      '35–40': 15.25,
+      '30–40': 15.25,
+      '40–45': 12.25,
+      '45–50': 10.25,
+      '50–55': 8.75,
+      'Above 50': 8.75,
+      'Above 55': 8.75,
+      Cut: 3.0,
+    },
+  },
+
+  {
+    variety: 'B101',
+    sizeRates: {
+      'Below 25': 19.25,
+      '25–30': 19.25,
+      'Below 30': 19.25,
+      '30–35': 19.25,
+      '35–40': 19.25,
+      '30–40': 19.25,
+      '40–45': 16.25,
+      '45–50': 13.25,
+      '50–55': 8.25,
+      'Above 50': 8.25,
+      'Above 55': 8.25,
+      Cut: 3.0,
+    },
+  },
+];

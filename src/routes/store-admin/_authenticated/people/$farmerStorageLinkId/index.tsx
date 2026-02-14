@@ -195,14 +195,20 @@ function PeopleDetailPage() {
           : undefined;
 
       const gradingPasses = (entry.gradingPasses ?? []) as PassVoucherData[];
+      /** Use initial quantity for report (at time of grading), not current quantity. */
       const postGradingBags = gradingPasses.reduce(
-        (sum, pass) => sum + totalBagsFromOrderDetails(pass.orderDetails),
+        (sum, pass) =>
+          sum +
+          (pass.orderDetails ?? []).reduce(
+            (s, o) => s + (o.initialQuantity ?? 0),
+            0
+          ),
         0
       );
       const bagType = (() => {
         for (const pass of gradingPasses) {
           const details = (pass.orderDetails ?? []) as GradingOrderDetailRow[];
-          const withQty = details.find((d) => (d.currentQuantity ?? 0) > 0);
+          const withQty = details.find((d) => (d.initialQuantity ?? 0) > 0);
           if (withQty?.bagType) return withQty.bagType;
           if (details[0]?.bagType) return details[0].bagType;
         }
@@ -216,9 +222,9 @@ function PeopleDetailPage() {
       for (const pass of gradingPasses) {
         const details = (pass.orderDetails ?? []) as GradingOrderDetailRow[];
         for (const d of details) {
-          if (d.size == null || (d.currentQuantity ?? 0) <= 0) continue;
+          if (d.size == null || (d.initialQuantity ?? 0) <= 0) continue;
           const typeKey = d.bagType?.toUpperCase();
-          const qty = d.currentQuantity ?? 0;
+          const qty = d.initialQuantity ?? 0;
           const weightKg = d.weightPerBagKg;
           if (typeKey === 'JUTE') {
             sizeBagsJute[d.size] = (sizeBagsJute[d.size] ?? 0) + qty;
@@ -245,6 +251,11 @@ function PeopleDetailPage() {
       const hasJute = Object.keys(sizeBagsJute).length > 0;
       const hasLeno = Object.keys(sizeBagsLeno).length > 0;
 
+      /** Variety from first grading pass (for Amount Payable buy-back rate). */
+      const variety = gradingPasses
+        .find((p) => p.variety?.trim())
+        ?.variety?.trim();
+
       return {
         serialNo: index + 1,
         date: inc.date,
@@ -268,6 +279,7 @@ function PeopleDetailPage() {
           hasLeno && Object.keys(sizeWeightPerBagLeno).length > 0
             ? sizeWeightPerBagLeno
             : undefined,
+        variety,
       };
     });
   }, [daybook]);
