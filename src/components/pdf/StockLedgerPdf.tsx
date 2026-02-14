@@ -2,6 +2,7 @@ import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer';
 import { formatVoucherDate } from '@/components/daybook/vouchers/format-date';
 import {
   JUTE_BAG_WEIGHT,
+  LENO_BAG_WEIGHT,
   GRADING_SIZES,
 } from '@/components/forms/grading/constants';
 
@@ -27,6 +28,12 @@ export interface StockLedgerRow {
   sizeBagsJute?: Record<string, number>;
   /** Per-size bag counts for LENO bags (used for TYPE column bifurcation). */
   sizeBagsLeno?: Record<string, number>;
+  /** Per-size weight per bag (kg) for JUTE. Shown in brackets below quantity. */
+  sizeWeightPerBagJute?: Record<string, number>;
+  /** Per-size weight per bag (kg) for LENO. Shown in brackets below quantity. */
+  sizeWeightPerBagLeno?: Record<string, number>;
+  /** Per-size weight per bag (kg) when sizeBags used without JUTE/LENO split. */
+  sizeWeightPerBag?: Record<string, number>;
 }
 
 export interface StockLedgerPdfProps {
@@ -56,6 +63,10 @@ const COL_WIDTHS = {
   bagType: 28,
   /** Width for each grading size column (Below 25, 25–30, etc.) */
   sizeColumn: 20,
+  /** Wt Received After Grading (row span after size columns) */
+  wtReceivedAfterGrading: 44,
+  /** Less Bardana after grading (bifurcated: JUTE/LENO bag weight deduction) */
+  lessBardanaAfterGrading: 38,
 } as const;
 
 /** Total width of left block (Gp No through Post Gr.) for exact alignment. */
@@ -73,8 +84,8 @@ const LEFT_BLOCK_WIDTH =
   COL_WIDTHS.actualWeight +
   COL_WIDTHS.postGradingBags;
 
-/** Total width of right block (Type + size columns). */
-const RIGHT_BLOCK_WIDTH =
+/** Total width of middle block (Type + size columns only; bifurcation ends here). */
+const MIDDLE_BLOCK_WIDTH =
   COL_WIDTHS.bagType + GRADING_SIZES.length * COL_WIDTHS.sizeColumn;
 
 const styles = StyleSheet.create({
@@ -135,10 +146,27 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexShrink: 0,
   },
-  /** Right block (Type + size columns) - fixed width so columns align with header. */
-  dataRowRightBlock: {
-    width: RIGHT_BLOCK_WIDTH,
+  /** Middle block (Type + size columns) - bifurcation; fixed width for alignment. */
+  dataRowMiddleBlock: {
+    width: MIDDLE_BLOCK_WIDTH,
     flexShrink: 0,
+  },
+  /** Block: Wt Received After Grading (row span 2, like left block). */
+  dataRowWtReceivedBlock: {
+    flexDirection: 'column',
+    justifyContent: 'center',
+    minHeight: ROW_HEIGHT * 2,
+    width: COL_WIDTHS.wtReceivedAfterGrading,
+    flexShrink: 0,
+    borderLeftWidth: 1,
+    borderColor: BORDER,
+  },
+  /** Block: Less Bardana after grading (2 sub-rows: JUTE row value, LENO row value). */
+  dataRowLessBardanaBlock: {
+    width: COL_WIDTHS.lessBardanaAfterGrading,
+    flexShrink: 0,
+    borderLeftWidth: 1,
+    borderColor: BORDER,
   },
   /** Single sub-row for TYPE + size columns (JUTE or LENO). */
   dataSubRow: {
@@ -181,6 +209,15 @@ const styles = StyleSheet.create({
   },
   cellRight: {
     textAlign: 'right',
+  },
+  /** Wrapper for size cell content (quantity + weight line) to keep right-aligned block */
+  sizeCellContent: {
+    alignItems: 'flex-end',
+  },
+  /** Second line in size cell: weight per bag in brackets */
+  sizeCellSub: {
+    fontSize: 3,
+    color: '#6b7280',
   },
   totalRow: {
     flexDirection: 'row',
@@ -261,20 +298,35 @@ function TableHeader() {
       <View style={[styles.headerCell, { width: COL_WIDTHS.bagType }]}>
         <Text style={styles.cellCenter}>Type</Text>
       </View>
-      {GRADING_SIZES.map((size, i) => (
+      {GRADING_SIZES.map((size) => (
         <View
           key={size}
-          style={[
-            styles.headerCell,
-            ...(i === GRADING_SIZES.length - 1 ? [styles.headerCellLast] : []),
-            { width: COL_WIDTHS.sizeColumn },
-          ]}
+          style={[styles.headerCell, { width: COL_WIDTHS.sizeColumn }]}
         >
           <Text style={styles.cellCenter}>
             {SIZE_HEADER_LABELS[size] ?? size}
           </Text>
         </View>
       ))}
+      <View
+        style={[
+          styles.headerCell,
+          { width: COL_WIDTHS.wtReceivedAfterGrading },
+        ]}
+      >
+        <Text style={[styles.cellCenter, { fontSize: 3 }]}>
+          Wt Rec. After Gr.
+        </Text>
+      </View>
+      <View
+        style={[
+          styles.headerCell,
+          styles.headerCellLast,
+          { width: COL_WIDTHS.lessBardanaAfterGrading },
+        ]}
+      >
+        <Text style={[styles.cellCenter, { fontSize: 3 }]}>Less Bard.</Text>
+      </View>
     </View>
   );
 }
@@ -287,6 +339,60 @@ function formatWeight(value: number | undefined): string {
 /** Round up to the next multiple of 10 */
 function roundUpToMultipleOf10(value: number): number {
   return Math.ceil(value / 10) * 10;
+}
+
+/** Sum of (bags × weightPerBagKg) for the row (wt received after grading). */
+function computeWtReceivedAfterGrading(row: StockLedgerRow): number {
+  const hasSplit = row.sizeBagsJute != null || row.sizeBagsLeno != null;
+  if (hasSplit) {
+    let sum = 0;
+    for (const size of GRADING_SIZES) {
+      const juteBags = row.sizeBagsJute?.[size] ?? 0;
+      const juteWt = row.sizeWeightPerBagJute?.[size] ?? 0;
+      const lenoBags = row.sizeBagsLeno?.[size] ?? 0;
+      const lenoWt = row.sizeWeightPerBagLeno?.[size] ?? 0;
+      sum += juteBags * juteWt + lenoBags * lenoWt;
+    }
+    return sum;
+  }
+  let sum = 0;
+  for (const size of GRADING_SIZES) {
+    const bags = row.sizeBags?.[size] ?? 0;
+    const wt = row.sizeWeightPerBag?.[size] ?? 0;
+    sum += bags * wt;
+  }
+  return sum;
+}
+
+/** Total JUTE bags and LENO bags for the row (for less bardana after grading). */
+function getTotalJuteAndLenoBags(row: StockLedgerRow): {
+  totalJute: number;
+  totalLeno: number;
+} {
+  const hasSplit = row.sizeBagsJute != null || row.sizeBagsLeno != null;
+  if (hasSplit) {
+    let totalJute = 0;
+    let totalLeno = 0;
+    for (const size of GRADING_SIZES) {
+      totalJute += row.sizeBagsJute?.[size] ?? 0;
+      totalLeno += row.sizeBagsLeno?.[size] ?? 0;
+    }
+    return { totalJute, totalLeno };
+  }
+  let totalBags = 0;
+  for (const size of GRADING_SIZES) {
+    totalBags += row.sizeBags?.[size] ?? 0;
+  }
+  const isLeno = row.bagType?.toUpperCase() === 'LENO';
+  return isLeno
+    ? { totalJute: 0, totalLeno: totalBags }
+    : { totalJute: totalBags, totalLeno: 0 };
+}
+
+/** Less bardana after grading: (JUTE bags × JUTE_BAG_WEIGHT) + (LENO bags × LENO_BAG_WEIGHT). */
+function computeLessBardanaAfterGrading(row: StockLedgerRow): number {
+  const { totalJute, totalLeno } = getTotalJuteAndLenoBags(row);
+  return totalJute * JUTE_BAG_WEIGHT + totalLeno * LENO_BAG_WEIGHT;
 }
 
 function computeTotals(rows: StockLedgerRow[]) {
@@ -327,6 +433,14 @@ function computeTotals(rows: StockLedgerRow[]) {
       return sum + (row.sizeBags?.[size] ?? 0);
     }, 0);
   }
+  let totalWtReceivedAfterGrading = 0;
+  for (const row of rows) {
+    totalWtReceivedAfterGrading += computeWtReceivedAfterGrading(row);
+  }
+  let totalLessBardanaAfterGrading = 0;
+  for (const row of rows) {
+    totalLessBardanaAfterGrading += computeLessBardanaAfterGrading(row);
+  }
   return {
     totalBagsReceived,
     totalGrossKg,
@@ -336,6 +450,8 @@ function computeTotals(rows: StockLedgerRow[]) {
     totalActualWeightKg,
     totalPostGradingBags,
     totalSizeBags,
+    totalWtReceivedAfterGrading,
+    totalLessBardanaAfterGrading,
   };
 }
 
@@ -397,14 +513,10 @@ function TotalRow({ rows }: { rows: StockLedgerRow[] }) {
       <View style={[styles.totalCell, { width: COL_WIDTHS.bagType }]}>
         <Text />
       </View>
-      {GRADING_SIZES.map((size, i) => (
+      {GRADING_SIZES.map((size) => (
         <View
           key={size}
-          style={[
-            styles.totalCell,
-            ...(i === GRADING_SIZES.length - 1 ? [styles.cellLast] : []),
-            { width: COL_WIDTHS.sizeColumn },
-          ]}
+          style={[styles.totalCell, { width: COL_WIDTHS.sizeColumn }]}
         >
           <Text style={boldRight}>
             {totals.totalSizeBags[size] > 0
@@ -413,6 +525,28 @@ function TotalRow({ rows }: { rows: StockLedgerRow[] }) {
           </Text>
         </View>
       ))}
+      <View
+        style={[styles.totalCell, { width: COL_WIDTHS.wtReceivedAfterGrading }]}
+      >
+        <Text style={boldRight}>
+          {totals.totalWtReceivedAfterGrading > 0
+            ? totals.totalWtReceivedAfterGrading.toLocaleString('en-IN')
+            : ''}
+        </Text>
+      </View>
+      <View
+        style={[
+          styles.totalCell,
+          styles.cellLast,
+          { width: COL_WIDTHS.lessBardanaAfterGrading },
+        ]}
+      >
+        <Text style={boldRight}>
+          {totals.totalLessBardanaAfterGrading > 0
+            ? totals.totalLessBardanaAfterGrading.toLocaleString('en-IN')
+            : ''}
+        </Text>
+      </View>
     </View>
   );
 }
@@ -510,31 +644,48 @@ function DataRow({ row }: { row: StockLedgerRow }) {
 
   const typeAndSizeCells = (
     bagType: 'JUTE' | 'LENO',
-    sizeBags: Record<string, number> | undefined
+    sizeBags: Record<string, number> | undefined,
+    sizeWeightPerBag: Record<string, number> | undefined
   ) => (
     <>
       <View style={[styles.cell, { width: COL_WIDTHS.bagType }]}>
         <Text style={styles.cellCenter}>{bagType}</Text>
       </View>
-      {GRADING_SIZES.map((size, i) => {
+      {GRADING_SIZES.map((size) => {
         const value = sizeBags?.[size];
+        const weightKg = sizeWeightPerBag?.[size];
+        const showQty = value != null && value > 0;
         return (
           <View
             key={size}
-            style={[
-              styles.cell,
-              ...(i === GRADING_SIZES.length - 1 ? [styles.cellLast] : []),
-              { width: COL_WIDTHS.sizeColumn },
-            ]}
+            style={[styles.cell, { width: COL_WIDTHS.sizeColumn }]}
           >
-            <Text style={styles.cellRight}>
-              {value != null && value > 0 ? value.toLocaleString('en-IN') : ''}
-            </Text>
+            <View style={[styles.cellRight, styles.sizeCellContent]}>
+              {showQty && (
+                <>
+                  <Text style={styles.cellRight}>
+                    {value.toLocaleString('en-IN')}
+                  </Text>
+                  {weightKg != null &&
+                    !Number.isNaN(weightKg) &&
+                    weightKg > 0 && (
+                      <Text style={[styles.cellRight, styles.sizeCellSub]}>
+                        ({weightKg})
+                      </Text>
+                    )}
+                </>
+              )}
+            </View>
           </View>
         );
       })}
     </>
   );
+
+  const wtReceivedAfterGrading = computeWtReceivedAfterGrading(row);
+  const { totalJute, totalLeno } = getTotalJuteAndLenoBags(row);
+  const lessBardanaJute = totalJute * JUTE_BAG_WEIGHT;
+  const lessBardanaLeno = totalLeno * LENO_BAG_WEIGHT;
 
   if (hasPostGrading) {
     return (
@@ -542,12 +693,76 @@ function DataRow({ row }: { row: StockLedgerRow }) {
         <View style={styles.dataRowLeftBlock}>
           <View style={styles.dataRowLeftBlockRow}>{leftCells}</View>
         </View>
-        <View style={styles.dataRowRightBlock}>
+        <View style={styles.dataRowMiddleBlock}>
           <View style={styles.dataSubRow}>
-            {typeAndSizeCells('JUTE', sizeBagsJute)}
+            {typeAndSizeCells('JUTE', sizeBagsJute, row.sizeWeightPerBagJute)}
           </View>
           <View style={[styles.dataSubRow, styles.dataSubRowLast]}>
-            {typeAndSizeCells('LENO', sizeBagsLeno)}
+            {typeAndSizeCells('LENO', sizeBagsLeno, row.sizeWeightPerBagLeno)}
+          </View>
+        </View>
+        <View style={styles.dataRowWtReceivedBlock}>
+          <View
+            style={[
+              styles.cell,
+              {
+                width: COL_WIDTHS.wtReceivedAfterGrading,
+                borderLeftWidth: 0,
+                borderRightWidth: 0,
+              },
+            ]}
+          >
+            <Text style={styles.cellRight}>
+              {wtReceivedAfterGrading > 0
+                ? wtReceivedAfterGrading.toLocaleString('en-IN')
+                : '—'}
+            </Text>
+          </View>
+        </View>
+        <View style={styles.dataRowLessBardanaBlock}>
+          <View style={[styles.dataSubRow, { borderLeftWidth: 0 }]}>
+            <View
+              style={[
+                styles.cell,
+                styles.cellLast,
+                {
+                  width: COL_WIDTHS.lessBardanaAfterGrading,
+                  borderLeftWidth: 0,
+                  borderRightWidth: 0,
+                },
+              ]}
+            >
+              <Text style={styles.cellRight}>
+                {lessBardanaJute > 0
+                  ? lessBardanaJute.toLocaleString('en-IN')
+                  : '—'}
+              </Text>
+            </View>
+          </View>
+          <View
+            style={[
+              styles.dataSubRow,
+              styles.dataSubRowLast,
+              { borderLeftWidth: 0 },
+            ]}
+          >
+            <View
+              style={[
+                styles.cell,
+                styles.cellLast,
+                {
+                  width: COL_WIDTHS.lessBardanaAfterGrading,
+                  borderLeftWidth: 0,
+                  borderRightWidth: 0,
+                },
+              ]}
+            >
+              <Text style={styles.cellRight}>
+                {lessBardanaLeno > 0
+                  ? lessBardanaLeno.toLocaleString('en-IN')
+                  : '—'}
+              </Text>
+            </View>
           </View>
         </View>
       </View>
@@ -560,23 +775,54 @@ function DataRow({ row }: { row: StockLedgerRow }) {
       <View style={[styles.cell, { width: COL_WIDTHS.bagType }]}>
         <Text style={styles.cellCenter}>{row.bagType ?? '—'}</Text>
       </View>
-      {GRADING_SIZES.map((size, i) => {
+      {GRADING_SIZES.map((size) => {
         const value = row.sizeBags?.[size];
+        const weightKg = row.sizeWeightPerBag?.[size];
+        const showQty = value != null && value > 0;
         return (
           <View
             key={size}
-            style={[
-              styles.cell,
-              ...(i === GRADING_SIZES.length - 1 ? [styles.cellLast] : []),
-              { width: COL_WIDTHS.sizeColumn },
-            ]}
+            style={[styles.cell, { width: COL_WIDTHS.sizeColumn }]}
           >
-            <Text style={styles.cellRight}>
-              {value != null && value > 0 ? value.toLocaleString('en-IN') : ''}
-            </Text>
+            <View style={[styles.cellRight, styles.sizeCellContent]}>
+              {showQty && (
+                <>
+                  <Text style={styles.cellRight}>
+                    {value.toLocaleString('en-IN')}
+                  </Text>
+                  {weightKg != null &&
+                    !Number.isNaN(weightKg) &&
+                    weightKg > 0 && (
+                      <Text style={[styles.cellRight, styles.sizeCellSub]}>
+                        ({weightKg})
+                      </Text>
+                    )}
+                </>
+              )}
+            </View>
           </View>
         );
       })}
+      <View style={[styles.cell, { width: COL_WIDTHS.wtReceivedAfterGrading }]}>
+        <Text style={styles.cellRight}>
+          {wtReceivedAfterGrading > 0
+            ? wtReceivedAfterGrading.toLocaleString('en-IN')
+            : '—'}
+        </Text>
+      </View>
+      <View
+        style={[
+          styles.cell,
+          styles.cellLast,
+          { width: COL_WIDTHS.lessBardanaAfterGrading },
+        ]}
+      >
+        <Text style={styles.cellRight}>
+          {lessBardanaJute + lessBardanaLeno > 0
+            ? (lessBardanaJute + lessBardanaLeno).toLocaleString('en-IN')
+            : '—'}
+        </Text>
+      </View>
     </View>
   );
 }
