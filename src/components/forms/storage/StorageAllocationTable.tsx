@@ -51,7 +51,7 @@ export const StorageAllocationTable = memo(function StorageAllocationTable({
             <Table>
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
-                  <TableHead className="font-custom text-foreground/80 w-[120px] font-medium">
+                  <TableHead className="font-custom text-foreground/80 w-30 font-medium">
                     R. Voucher
                   </TableHead>
                   {visibleSizes.map((size) => (
@@ -106,7 +106,7 @@ export const StorageAllocationTable = memo(function StorageAllocationTable({
                           if (!detail) {
                             return (
                               <TableCell key={size} className="py-1">
-                                <div className="bg-muted/30 border-border/40 h-[58px] w-[70px] rounded-md border" />
+                                <div className="bg-muted/30 border-border/40 h-14.5 w-17.5 rounded-md border" />
                               </TableCell>
                             );
                           }

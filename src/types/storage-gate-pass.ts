@@ -67,6 +67,10 @@ export interface StorageGatePass {
   createdAt: string;
   updatedAt: string;
   __v: number;
+  /** Present when returned from GET /storage-gate-pass/grouped */
+  manualGatePassNumber?: number;
+  farmerStorageLinkId?: string;
+  createdBy?: string;
 }
 
 /** API response for GET /storage-gate-pass */
@@ -74,6 +78,19 @@ export interface GetStorageGatePassesApiResponse {
   success: boolean;
   data: StorageGatePass[];
   message?: string;
+}
+
+/** One group from GET /storage-gate-pass/grouped (by manualGatePassNumber and date) */
+export interface GroupedStorageGatePassGroup {
+  manualGatePassNumber: number | null;
+  date: string;
+  passes: StorageGatePass[];
+}
+
+/** API response for GET /storage-gate-pass/grouped */
+export interface GetGroupedStorageGatePassesApiResponse {
+  success: boolean;
+  data: GroupedStorageGatePassGroup[];
 }
 
 /** Created storage gate pass as returned by POST /storage-gate-pass */

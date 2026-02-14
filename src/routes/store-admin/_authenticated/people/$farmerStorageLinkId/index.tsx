@@ -53,6 +53,7 @@ import {
   totalBagsFromOrderDetails,
   type PassVoucherData,
 } from '@/components/daybook/vouchers';
+import type { GradingOrderDetailRow } from '@/components/daybook/vouchers/types';
 import type { StockLedgerRow } from '@/components/pdf/StockLedgerPdf';
 import { Spinner } from '@/components/ui/spinner';
 
@@ -192,6 +193,41 @@ function PeopleDetailPage() {
         gross != null && tare != null && !Number.isNaN(gross - tare)
           ? gross - tare
           : undefined;
+
+      const gradingPasses = (entry.gradingPasses ?? []) as PassVoucherData[];
+      const postGradingBags = gradingPasses.reduce(
+        (sum, pass) => sum + totalBagsFromOrderDetails(pass.orderDetails),
+        0
+      );
+      const bagType = (() => {
+        for (const pass of gradingPasses) {
+          const details = (pass.orderDetails ?? []) as GradingOrderDetailRow[];
+          const withQty = details.find((d) => (d.currentQuantity ?? 0) > 0);
+          if (withQty?.bagType) return withQty.bagType;
+          if (details[0]?.bagType) return details[0].bagType;
+        }
+        return undefined;
+      })();
+
+      const sizeBagsJute: Record<string, number> = {};
+      const sizeBagsLeno: Record<string, number> = {};
+      for (const pass of gradingPasses) {
+        const details = (pass.orderDetails ?? []) as GradingOrderDetailRow[];
+        for (const d of details) {
+          if (d.size == null || (d.currentQuantity ?? 0) <= 0) continue;
+          const typeKey = d.bagType?.toUpperCase();
+          const qty = d.currentQuantity ?? 0;
+          if (typeKey === 'JUTE') {
+            sizeBagsJute[d.size] = (sizeBagsJute[d.size] ?? 0) + qty;
+          } else if (typeKey === 'LENO') {
+            sizeBagsLeno[d.size] = (sizeBagsLeno[d.size] ?? 0) + qty;
+          }
+        }
+      }
+
+      const hasJute = Object.keys(sizeBagsJute).length > 0;
+      const hasLeno = Object.keys(sizeBagsLeno).length > 0;
+
       return {
         serialNo: index + 1,
         date: inc.date,
@@ -203,6 +239,10 @@ function PeopleDetailPage() {
         grossWeightKg: gross,
         tareWeightKg: tare,
         netWeightKg: net,
+        postGradingBags: gradingPasses.length > 0 ? postGradingBags : undefined,
+        bagType,
+        sizeBagsJute: hasJute ? sizeBagsJute : undefined,
+        sizeBagsLeno: hasLeno ? sizeBagsLeno : undefined,
       };
     });
   }, [daybook]);

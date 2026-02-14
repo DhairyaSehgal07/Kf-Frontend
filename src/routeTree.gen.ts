@@ -18,6 +18,7 @@ import { Route as StoreAdminAuthenticatedPeopleIndexRouteImport } from './routes
 import { Route as StoreAdminAuthenticatedOutgoingIndexRouteImport } from './routes/store-admin/_authenticated/outgoing/index'
 import { Route as StoreAdminAuthenticatedNikasiIndexRouteImport } from './routes/store-admin/_authenticated/nikasi/index'
 import { Route as StoreAdminAuthenticatedIncomingIndexRouteImport } from './routes/store-admin/_authenticated/incoming/index'
+import { Route as StoreAdminAuthenticatedGroupedIndexRouteImport } from './routes/store-admin/_authenticated/grouped/index'
 import { Route as StoreAdminAuthenticatedGradingIndexRouteImport } from './routes/store-admin/_authenticated/grading/index'
 import { Route as StoreAdminAuthenticatedDaybookIndexRouteImport } from './routes/store-admin/_authenticated/daybook/index'
 import { Route as StoreAdminAuthenticatedPeopleFarmerStorageLinkIdIndexRouteImport } from './routes/store-admin/_authenticated/people/$farmerStorageLinkId/index'
@@ -72,6 +73,12 @@ const StoreAdminAuthenticatedIncomingIndexRoute =
     path: '/incoming/',
     getParentRoute: () => StoreAdminAuthenticatedRoute,
   } as any)
+const StoreAdminAuthenticatedGroupedIndexRoute =
+  StoreAdminAuthenticatedGroupedIndexRouteImport.update({
+    id: '/grouped/',
+    path: '/grouped/',
+    getParentRoute: () => StoreAdminAuthenticatedRoute,
+  } as any)
 const StoreAdminAuthenticatedGradingIndexRoute =
   StoreAdminAuthenticatedGradingIndexRouteImport.update({
     id: '/grading/',
@@ -98,6 +105,7 @@ export interface FileRoutesByFullPath {
   '/store-admin/login/': typeof StoreAdminLoginIndexRoute
   '/store-admin/daybook/': typeof StoreAdminAuthenticatedDaybookIndexRoute
   '/store-admin/grading/': typeof StoreAdminAuthenticatedGradingIndexRoute
+  '/store-admin/grouped/': typeof StoreAdminAuthenticatedGroupedIndexRoute
   '/store-admin/incoming/': typeof StoreAdminAuthenticatedIncomingIndexRoute
   '/store-admin/nikasi/': typeof StoreAdminAuthenticatedNikasiIndexRoute
   '/store-admin/outgoing/': typeof StoreAdminAuthenticatedOutgoingIndexRoute
@@ -112,6 +120,7 @@ export interface FileRoutesByTo {
   '/store-admin/login': typeof StoreAdminLoginIndexRoute
   '/store-admin/daybook': typeof StoreAdminAuthenticatedDaybookIndexRoute
   '/store-admin/grading': typeof StoreAdminAuthenticatedGradingIndexRoute
+  '/store-admin/grouped': typeof StoreAdminAuthenticatedGroupedIndexRoute
   '/store-admin/incoming': typeof StoreAdminAuthenticatedIncomingIndexRoute
   '/store-admin/nikasi': typeof StoreAdminAuthenticatedNikasiIndexRoute
   '/store-admin/outgoing': typeof StoreAdminAuthenticatedOutgoingIndexRoute
@@ -127,6 +136,7 @@ export interface FileRoutesById {
   '/store-admin/login/': typeof StoreAdminLoginIndexRoute
   '/store-admin/_authenticated/daybook/': typeof StoreAdminAuthenticatedDaybookIndexRoute
   '/store-admin/_authenticated/grading/': typeof StoreAdminAuthenticatedGradingIndexRoute
+  '/store-admin/_authenticated/grouped/': typeof StoreAdminAuthenticatedGroupedIndexRoute
   '/store-admin/_authenticated/incoming/': typeof StoreAdminAuthenticatedIncomingIndexRoute
   '/store-admin/_authenticated/nikasi/': typeof StoreAdminAuthenticatedNikasiIndexRoute
   '/store-admin/_authenticated/outgoing/': typeof StoreAdminAuthenticatedOutgoingIndexRoute
@@ -143,6 +153,7 @@ export interface FileRouteTypes {
     | '/store-admin/login/'
     | '/store-admin/daybook/'
     | '/store-admin/grading/'
+    | '/store-admin/grouped/'
     | '/store-admin/incoming/'
     | '/store-admin/nikasi/'
     | '/store-admin/outgoing/'
@@ -157,6 +168,7 @@ export interface FileRouteTypes {
     | '/store-admin/login'
     | '/store-admin/daybook'
     | '/store-admin/grading'
+    | '/store-admin/grouped'
     | '/store-admin/incoming'
     | '/store-admin/nikasi'
     | '/store-admin/outgoing'
@@ -171,6 +183,7 @@ export interface FileRouteTypes {
     | '/store-admin/login/'
     | '/store-admin/_authenticated/daybook/'
     | '/store-admin/_authenticated/grading/'
+    | '/store-admin/_authenticated/grouped/'
     | '/store-admin/_authenticated/incoming/'
     | '/store-admin/_authenticated/nikasi/'
     | '/store-admin/_authenticated/outgoing/'
@@ -251,6 +264,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StoreAdminAuthenticatedIncomingIndexRouteImport
       parentRoute: typeof StoreAdminAuthenticatedRoute
     }
+    '/store-admin/_authenticated/grouped/': {
+      id: '/store-admin/_authenticated/grouped/'
+      path: '/grouped'
+      fullPath: '/store-admin/grouped/'
+      preLoaderRoute: typeof StoreAdminAuthenticatedGroupedIndexRouteImport
+      parentRoute: typeof StoreAdminAuthenticatedRoute
+    }
     '/store-admin/_authenticated/grading/': {
       id: '/store-admin/_authenticated/grading/'
       path: '/grading'
@@ -278,6 +298,7 @@ declare module '@tanstack/react-router' {
 interface StoreAdminAuthenticatedRouteChildren {
   StoreAdminAuthenticatedDaybookIndexRoute: typeof StoreAdminAuthenticatedDaybookIndexRoute
   StoreAdminAuthenticatedGradingIndexRoute: typeof StoreAdminAuthenticatedGradingIndexRoute
+  StoreAdminAuthenticatedGroupedIndexRoute: typeof StoreAdminAuthenticatedGroupedIndexRoute
   StoreAdminAuthenticatedIncomingIndexRoute: typeof StoreAdminAuthenticatedIncomingIndexRoute
   StoreAdminAuthenticatedNikasiIndexRoute: typeof StoreAdminAuthenticatedNikasiIndexRoute
   StoreAdminAuthenticatedOutgoingIndexRoute: typeof StoreAdminAuthenticatedOutgoingIndexRoute
@@ -292,6 +313,8 @@ const StoreAdminAuthenticatedRouteChildren: StoreAdminAuthenticatedRouteChildren
       StoreAdminAuthenticatedDaybookIndexRoute,
     StoreAdminAuthenticatedGradingIndexRoute:
       StoreAdminAuthenticatedGradingIndexRoute,
+    StoreAdminAuthenticatedGroupedIndexRoute:
+      StoreAdminAuthenticatedGroupedIndexRoute,
     StoreAdminAuthenticatedIncomingIndexRoute:
       StoreAdminAuthenticatedIncomingIndexRoute,
     StoreAdminAuthenticatedNikasiIndexRoute:

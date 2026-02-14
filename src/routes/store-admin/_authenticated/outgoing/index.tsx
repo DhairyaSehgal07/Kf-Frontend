@@ -11,8 +11,6 @@ function OutgoingPlaceholder() {
   );
 }
 
-export const Route = createFileRoute(
-  '/store-admin/_authenticated/outgoing/',
-)({
+export const Route = createFileRoute('/store-admin/_authenticated/outgoing/')({
   component: OutgoingPlaceholder,
 });
