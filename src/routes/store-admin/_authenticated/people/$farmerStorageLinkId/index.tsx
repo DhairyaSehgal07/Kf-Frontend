@@ -256,10 +256,21 @@ function PeopleDetailPage() {
         .find((p) => p.variety?.trim())
         ?.variety?.trim();
 
+      /** Grading gate pass number(s) for PDF table (comma-separated if multiple). */
+      const gradingGatePassNo =
+        gradingPasses.length > 0
+          ? gradingPasses
+              .map((p) => p.gatePassNo)
+              .filter((n) => n != null && !Number.isNaN(Number(n)))
+              .join(', ')
+          : undefined;
+
       return {
         serialNo: index + 1,
         date: inc.date,
         incomingGatePassNo: inc.gatePassNo ?? '—',
+        manualIncomingVoucherNo: inc.manualGatePassNumber,
+        gradingGatePassNo,
         store: 'JICSPL- Bazpur',
         truckNumber: inc.truckNumber,
         bagsReceived: bags,
