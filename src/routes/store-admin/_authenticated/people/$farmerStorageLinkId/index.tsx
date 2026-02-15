@@ -265,12 +265,22 @@ function PeopleDetailPage() {
               .join(', ')
           : undefined;
 
+      /** Manual gate pass number(s) for grading voucher(s) (comma-separated if multiple). */
+      const manualGradingGatePassNo =
+        gradingPasses.length > 0
+          ? gradingPasses
+              .map((p) => p.manualGatePassNumber)
+              .filter((n) => n != null && !Number.isNaN(Number(n)))
+              .join(', ')
+          : undefined;
+
       return {
         serialNo: index + 1,
         date: inc.date,
         incomingGatePassNo: inc.gatePassNo ?? '—',
         manualIncomingVoucherNo: inc.manualGatePassNumber,
         gradingGatePassNo,
+        manualGradingGatePassNo,
         store: 'JICSPL- Bazpur',
         truckNumber: inc.truckNumber,
         bagsReceived: bags,

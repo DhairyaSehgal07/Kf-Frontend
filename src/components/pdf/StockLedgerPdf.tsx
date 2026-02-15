@@ -17,6 +17,8 @@ export interface StockLedgerRow {
   manualIncomingVoucherNo?: number | string;
   /** Grading gate pass number(s), e.g. from grading voucher (displayed in table). */
   gradingGatePassNo?: number | string;
+  /** Manual gate pass number(s) from grading voucher(s) (displayed in table). */
+  manualGradingGatePassNo?: number | string;
   store: string;
   truckNumber: string | number | undefined;
   bagsReceived: number;
@@ -59,6 +61,7 @@ const COL_WIDTHS = {
   gpNo: 22,
   manualIncomingVoucherNo: 22,
   gradingGatePassNo: 22,
+  manualGradingGatePassNo: 22,
   date: 30,
   store: 38,
   variety: 32,
@@ -93,6 +96,7 @@ const LEFT_BLOCK_WIDTH =
   COL_WIDTHS.gpNo +
   COL_WIDTHS.manualIncomingVoucherNo +
   COL_WIDTHS.gradingGatePassNo +
+  COL_WIDTHS.manualGradingGatePassNo +
   COL_WIDTHS.date +
   COL_WIDTHS.store +
   COL_WIDTHS.variety +
@@ -436,6 +440,14 @@ function TableHeader() {
         style={[styles.headerCell, { width: COL_WIDTHS.gradingGatePassNo }]}
       >
         <Text style={[styles.cellCenter, { fontSize: 3 }]}>GGP No</Text>
+      </View>
+      <View
+        style={[
+          styles.headerCell,
+          { width: COL_WIDTHS.manualGradingGatePassNo },
+        ]}
+      >
+        <Text style={[styles.cellCenter, { fontSize: 3 }]}>Manual GGP</Text>
       </View>
       <View style={[styles.headerCell, { width: COL_WIDTHS.date }]}>
         <Text style={styles.cellCenter}>Date</Text>
@@ -1056,6 +1068,11 @@ function TotalRow({ rows }: { rows: StockLedgerRow[] }) {
       >
         <Text />
       </View>
+      <View
+        style={[styles.totalCell, { width: COL_WIDTHS.manualGradingGatePassNo }]}
+      >
+        <Text />
+      </View>
       <View style={[styles.totalCell, { width: COL_WIDTHS.date }]}>
         <Text />
       </View>
@@ -1238,6 +1255,11 @@ function DataRow({ row }: { row: StockLedgerRow }) {
     String(row.gradingGatePassNo).trim() !== ''
       ? String(row.gradingGatePassNo)
       : '—';
+  const manualGgpStr =
+    row.manualGradingGatePassNo != null &&
+    String(row.manualGradingGatePassNo).trim() !== ''
+      ? String(row.manualGradingGatePassNo)
+      : '—';
   const varietyStr =
     row.variety != null && String(row.variety).trim() !== ''
       ? String(row.variety).trim()
@@ -1255,6 +1277,11 @@ function DataRow({ row }: { row: StockLedgerRow }) {
       </View>
       <View style={[styles.cell, { width: COL_WIDTHS.gradingGatePassNo }]}>
         <Text style={styles.cellCenter}>{ggpNoStr}</Text>
+      </View>
+      <View
+        style={[styles.cell, { width: COL_WIDTHS.manualGradingGatePassNo }]}
+      >
+        <Text style={styles.cellCenter}>{manualGgpStr}</Text>
       </View>
       <View style={[styles.cell, { width: COL_WIDTHS.date }]}>
         <Text style={styles.cellCenter}>{dateStr}</Text>
