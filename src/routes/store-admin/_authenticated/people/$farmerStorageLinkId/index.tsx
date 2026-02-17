@@ -18,6 +18,13 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuCheckboxItem,
@@ -40,6 +47,8 @@ import {
   Hash,
   Package,
   Edit,
+  FileSpreadsheet,
+  FileText,
 } from 'lucide-react';
 import type { FarmerStorageLink } from '@/types/farmer';
 import type {
@@ -56,6 +65,7 @@ import {
 import type { GradingOrderDetailRow } from '@/components/daybook/vouchers/types';
 import type { StockLedgerRow } from '@/components/pdf/StockLedgerPdf';
 import { Spinner } from '@/components/ui/spinner';
+import { downloadStockLedgerExcel } from '@/utils/stockLedgerExcel';
 
 export const Route = createFileRoute(
   '/store-admin/_authenticated/people/$farmerStorageLinkId/'
@@ -306,6 +316,7 @@ function PeopleDetailPage() {
   }, [daybook]);
 
   const [isPdfOpening, setIsPdfOpening] = useState(false);
+  const [stockLedgerDialogOpen, setStockLedgerDialogOpen] = useState(false);
   const openStockLedgerPdf = useCallback(() => {
     if (!link) return;
     const win = window.open('', '_blank');
@@ -433,7 +444,7 @@ function PeopleDetailPage() {
                   variant="default"
                   className="gap-2 rounded-xl"
                   disabled={isPdfOpening}
-                  onClick={openStockLedgerPdf}
+                  onClick={() => setStockLedgerDialogOpen(true)}
                 >
                   {isPdfOpening ? (
                     <>
@@ -448,6 +459,62 @@ function PeopleDetailPage() {
                   )}
                 </Button>
               </div>
+
+              {/* Stock Ledger export dialog */}
+              <Dialog
+                open={stockLedgerDialogOpen}
+                onOpenChange={setStockLedgerDialogOpen}
+              >
+                <DialogContent
+                  className="font-custom sm:max-w-md"
+                  showCloseButton={true}
+                >
+                  <DialogHeader>
+                    <DialogTitle>Stock Ledger</DialogTitle>
+                  </DialogHeader>
+                  <p className="font-custom text-muted-foreground text-sm">
+                    Choose how you want to view or download the stock ledger.
+                  </p>
+                  <DialogFooter className="gap-2 sm:gap-0">
+                    <Button
+                      variant="default"
+                      className="gap-2"
+                      disabled={isPdfOpening}
+                      onClick={() => {
+                        setStockLedgerDialogOpen(false);
+                        openStockLedgerPdf();
+                      }}
+                    >
+                      {isPdfOpening ? (
+                        <>
+                          <Spinner className="h-4 w-4" />
+                          Generating…
+                        </>
+                      ) : (
+                        <>
+                          <FileText className="h-4 w-4" />
+                          View PDF
+                        </>
+                      )}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="gap-2"
+                      onClick={() => {
+                        if (!link) return;
+                        setStockLedgerDialogOpen(false);
+                        downloadStockLedgerExcel(
+                          link.farmerId.name,
+                          stockLedgerRows
+                        );
+                      }}
+                    >
+                      <FileSpreadsheet className="h-4 w-4" />
+                      Download Excel
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
 
               <Separator />
 

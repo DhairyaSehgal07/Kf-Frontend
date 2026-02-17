@@ -407,7 +407,7 @@ const styles = StyleSheet.create({
 });
 
 /** Short labels for grading size columns to save space */
-const SIZE_HEADER_LABELS: Record<string, string> = {
+export const SIZE_HEADER_LABELS: Record<string, string> = {
   'Below 25': 'B25',
   '25–30': '25-30',
   'Below 30': 'B30',
@@ -544,18 +544,18 @@ function TableHeader() {
   );
 }
 
-function formatWeight(value: number | undefined): string {
+export function formatWeight(value: number | undefined): string {
   if (value == null || Number.isNaN(value)) return '—';
   return value.toLocaleString('en-IN');
 }
 
 /** Round up to the next multiple of 10 */
-function roundUpToMultipleOf10(value: number): number {
+export function roundUpToMultipleOf10(value: number): number {
   return Math.ceil(value / 10) * 10;
 }
 
 /** Sum of (bags × weightPerBagKg) for the row (wt received after grading). */
-function computeWtReceivedAfterGrading(row: StockLedgerRow): number {
+export function computeWtReceivedAfterGrading(row: StockLedgerRow): number {
   const hasSplit = row.sizeBagsJute != null || row.sizeBagsLeno != null;
   if (hasSplit) {
     let sum = 0;
@@ -578,7 +578,7 @@ function computeWtReceivedAfterGrading(row: StockLedgerRow): number {
 }
 
 /** Total JUTE bags and LENO bags for the row (for less bardana after grading). */
-function getTotalJuteAndLenoBags(row: StockLedgerRow): {
+export function getTotalJuteAndLenoBags(row: StockLedgerRow): {
   totalJute: number;
   totalLeno: number;
 } {
@@ -603,13 +603,13 @@ function getTotalJuteAndLenoBags(row: StockLedgerRow): {
 }
 
 /** Less bardana after grading: (JUTE bags × JUTE_BAG_WEIGHT) + (LENO bags × LENO_BAG_WEIGHT). */
-function computeLessBardanaAfterGrading(row: StockLedgerRow): number {
+export function computeLessBardanaAfterGrading(row: StockLedgerRow): number {
   const { totalJute, totalLeno } = getTotalJuteAndLenoBags(row);
   return totalJute * JUTE_BAG_WEIGHT + totalLeno * LENO_BAG_WEIGHT;
 }
 
 /** Actual wt of Potato = weight received after grading - (wastage from LENO + wastage from JUTE), rounded to nearest 10. */
-function computeActualWtOfPotato(row: StockLedgerRow): number {
+export function computeActualWtOfPotato(row: StockLedgerRow): number {
   const wtReceived = computeWtReceivedAfterGrading(row);
   const lessBardana = computeLessBardanaAfterGrading(row);
   const value = wtReceived - lessBardana;
@@ -617,7 +617,7 @@ function computeActualWtOfPotato(row: StockLedgerRow): number {
 }
 
 /** Actual Weight from incoming gate pass (Net - Less Bardana, rounded up to multiple of 10). */
-function computeIncomingActualWeight(row: StockLedgerRow): number | undefined {
+export function computeIncomingActualWeight(row: StockLedgerRow): number | undefined {
   const lessBardana = row.bagsReceived * JUTE_BAG_WEIGHT;
   if (row.netWeightKg == null || Number.isNaN(row.netWeightKg)) {
     return undefined;
@@ -626,14 +626,14 @@ function computeIncomingActualWeight(row: StockLedgerRow): number | undefined {
 }
 
 /** Weight Shortage = Actual Weight (incoming) - Actual wt of Potato (grading). */
-function computeWeightShortage(row: StockLedgerRow): number | undefined {
+export function computeWeightShortage(row: StockLedgerRow): number | undefined {
   const incoming = computeIncomingActualWeight(row);
   if (incoming == null) return undefined;
   return incoming - computeActualWtOfPotato(row);
 }
 
 /** Shortage % = (Weight Shortage / Actual Weight incoming) × 100. */
-function computeWeightShortagePercent(row: StockLedgerRow): number | undefined {
+export function computeWeightShortagePercent(row: StockLedgerRow): number | undefined {
   const incoming = computeIncomingActualWeight(row);
   const shortage = computeWeightShortage(row);
   if (
@@ -648,7 +648,7 @@ function computeWeightShortagePercent(row: StockLedgerRow): number | undefined {
 }
 
 /** Buy-back rate (₹/kg) for a variety and size; 0 if variety not in BUY_BACK_COST or size not found. */
-function getBuyBackRate(variety: string | undefined, size: string): number {
+export function getBuyBackRate(variety: string | undefined, size: string): number {
   if (!variety?.trim()) return 0;
   const config = BUY_BACK_COST.find(
     (c) => c.variety.toLowerCase() === variety.trim().toLowerCase()
@@ -662,7 +662,7 @@ function getBuyBackRate(variety: string | undefined, size: string): number {
  * Amount Payable = for each bag size: no. of bags × (weight per bag in − wt of bag by type) × buy-back cost (variety, size).
  * Summed over all sizes, with JUTE/LENO split when available.
  */
-function computeAmountPayable(row: StockLedgerRow): number {
+export function computeAmountPayable(row: StockLedgerRow): number {
   const variety = row.variety?.trim();
   const hasSplit = row.sizeBagsJute != null || row.sizeBagsLeno != null;
   let sum = 0;
@@ -1627,7 +1627,7 @@ function DataRow({ row }: { row: StockLedgerRow }) {
 }
 
 /** Sort rows by Gate Pass No. ascending (numeric when possible). */
-function sortRowsByGatePassNo(rows: StockLedgerRow[]): StockLedgerRow[] {
+export function sortRowsByGatePassNo(rows: StockLedgerRow[]): StockLedgerRow[] {
   return [...rows].sort((a, b) => {
     const aNum = Number(a.incomingGatePassNo);
     const bNum = Number(b.incomingGatePassNo);
