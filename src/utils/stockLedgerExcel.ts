@@ -3,7 +3,6 @@ import { formatVoucherDate } from '@/components/daybook/vouchers/format-date';
 import {
   GRADING_SIZES,
   JUTE_BAG_WEIGHT,
-  LENO_BAG_WEIGHT,
 } from '@/components/forms/grading/constants';
 import type { StockLedgerRow } from '@/components/pdf/StockLedgerPdf';
 import {
@@ -94,8 +93,6 @@ function rowToExcelCells(row: StockLedgerRow): (string | number)[] {
   const lessBardanaKg = row.bagsReceived * JUTE_BAG_WEIGHT;
   const actualWeightKg = computeIncomingActualWeight(row);
   const { totalJute, totalLeno } = getTotalJuteAndLenoBags(row);
-  const lessBardanaJute = totalJute * JUTE_BAG_WEIGHT;
-  const lessBardanaLeno = totalLeno * LENO_BAG_WEIGHT;
   const wtReceivedAfterGrading = computeWtReceivedAfterGrading(row);
   const lessBardanaAfterGrading = computeLessBardanaAfterGrading(row);
   const actualWtOfPotato = computeActualWtOfPotato(row);
