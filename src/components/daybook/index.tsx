@@ -61,10 +61,12 @@ import {
   StorageVoucher,
   NikasiVoucher,
   OutgoingVoucher,
+  RentalIncomingVoucher,
   totalBagsFromOrderDetails,
   type IncomingVoucherData,
   type PassVoucherData,
 } from './vouchers';
+import { useGetRentalIncomingGatePasses } from '@/services/store-admin/rental-incoming-gate-pass/useGetRentalIncomingGatePasses';
 
 interface DaybookEntryCardProps {
   entry: DaybookEntry;
@@ -414,6 +416,145 @@ const DaybookEntryCard = memo(function DaybookEntryCard({
 
 export { DaybookEntryCard };
 
+/** Rental tab: list of rental storage gate passes with search and add CTA */
+const RentalTabContent = memo(function RentalTabContent() {
+  const [rentalSearchQuery, setRentalSearchQuery] = useState('');
+  const {
+    data: rentalGatePasses = [],
+    isLoading: rentalLoading,
+    isFetching: rentalFetching,
+    refetch: refetchRental,
+  } = useGetRentalIncomingGatePasses();
+
+  const filteredRentalPasses = useMemo(() => {
+    const q = rentalSearchQuery.trim().toLowerCase();
+    if (!q) return rentalGatePasses;
+    return rentalGatePasses.filter((entry) => {
+      const farmerName = entry.farmerStorageLinkId?.name?.toLowerCase() ?? '';
+      const voucherNo = String(entry.gatePassNo ?? '');
+      const date = entry.date
+        ? new Date(entry.date).toLocaleDateString('en-IN')
+        : '';
+      const variety = (entry.variety ?? '').toLowerCase();
+      return (
+        farmerName.includes(q) ||
+        voucherNo.includes(q) ||
+        date.includes(q) ||
+        variety.includes(q)
+      );
+    });
+  }, [rentalGatePasses, rentalSearchQuery]);
+
+  return (
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col gap-4">
+        <Item variant="outline" size="sm" className="rounded-xl shadow-sm">
+          <ItemHeader className="h-full">
+            <div className="flex items-center gap-3">
+              <ItemMedia variant="icon" className="rounded-lg">
+                <Receipt className="text-primary h-5 w-5" />
+              </ItemMedia>
+              <ItemTitle className="font-custom text-sm font-semibold sm:text-base">
+                {filteredRentalPasses.length}{' '}
+                {filteredRentalPasses.length === 1 ? 'voucher' : 'vouchers'}
+              </ItemTitle>
+            </div>
+            <ItemActions>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={rentalFetching}
+                onClick={() => refetchRental()}
+                className="font-custom h-8 gap-2 rounded-lg px-3"
+              >
+                <RefreshCw
+                  className={`h-4 w-4 shrink-0 ${
+                    rentalFetching ? 'animate-spin' : ''
+                  }`}
+                />
+                <span className="hidden sm:inline">Refresh</span>
+              </Button>
+            </ItemActions>
+          </ItemHeader>
+        </Item>
+
+        <Item
+          variant="outline"
+          size="sm"
+          className="flex-col items-stretch gap-4 rounded-xl"
+        >
+          <div className="relative w-full">
+            <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+            <Input
+              placeholder="Search by voucher number, date, farmer..."
+              value={rentalSearchQuery}
+              onChange={(e) => setRentalSearchQuery(e.target.value)}
+              className="font-custom focus-visible:ring-primary w-full pl-10 focus-visible:ring-2 focus-visible:ring-offset-2"
+            />
+          </div>
+          <ItemFooter className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
+            <Button
+              className="font-custom h-10 w-full shrink-0 sm:w-auto"
+              asChild
+            >
+              <Link to="/store-admin/rental">
+                <ArrowUpFromLine className="h-4 w-4 shrink-0" />
+                Add Rental Incoming
+              </Link>
+            </Button>
+          </ItemFooter>
+        </Item>
+      </div>
+
+      {rentalLoading ? (
+        <div className="space-y-6">
+          {[...Array(3)].map((_, i) => (
+            <Card key={i} className="overflow-hidden p-0">
+              <div className="border-border bg-muted/30 px-3 py-2 sm:px-4 sm:py-2.5">
+                <div className="flex items-center justify-between gap-2">
+                  <Skeleton className="h-4 w-16" />
+                  <Skeleton className="h-4 w-8" />
+                </div>
+                <Skeleton className="mt-1.5 h-2 w-full rounded-full" />
+              </div>
+              <div className="space-y-2 border-b px-4 py-3">
+                <div className="flex gap-4">
+                  {[...Array(4)].map((__, j) => (
+                    <Skeleton key={j} className="h-4 w-14" />
+                  ))}
+                </div>
+              </div>
+              <div className="p-4">
+                <div className="flex gap-2">
+                  <Skeleton className="h-9 w-24 rounded-lg" />
+                  <Skeleton className="h-9 w-9 rounded-lg" />
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
+      ) : filteredRentalPasses.length === 0 ? (
+        <Card>
+          <CardContent className="py-8 pt-6 text-center">
+            <p className="font-custom text-muted-foreground">
+              No rental vouchers yet.
+            </p>
+            <Button className="font-custom mt-4" asChild>
+              <Link to="/store-admin/rental">Add Rental Incoming</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-6">
+          {filteredRentalPasses.map((entry) => (
+            <RentalIncomingVoucher key={entry._id} entry={entry} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+});
+
 const LIMIT_OPTIONS = [10, 25, 50, 100] as const;
 
 const GATE_PASS_TYPE_OPTIONS: {
@@ -508,285 +649,315 @@ const DaybookPage = memo(function DaybookPage() {
 
   return (
     <main className="mx-auto max-w-7xl p-3 sm:p-4 lg:p-6">
-      <div className="space-y-4 sm:space-y-6">
-        {/* Header: voucher count + refresh, then search + sort + add */}
-        <div className="flex flex-col gap-4">
-          <Item variant="outline" size="sm" className="rounded-xl shadow-sm">
-            <ItemHeader className="h-full">
-              <div className="flex items-center gap-3">
-                <ItemMedia variant="icon" className="rounded-lg">
-                  <Receipt className="text-primary h-5 w-5" />
-                </ItemMedia>
-                <ItemTitle className="font-custom text-sm font-semibold sm:text-base">
-                  {totalCount} {totalCount === 1 ? 'voucher' : 'vouchers'}
-                </ItemTitle>
-              </div>
-              <ItemActions>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={isFetching}
-                  onClick={() => refetch()}
-                  className="font-custom h-8 gap-2 rounded-lg px-3"
-                >
-                  <RefreshCw
-                    className={`h-4 w-4 shrink-0 ${
-                      isFetching ? 'animate-spin' : ''
-                    }`}
-                  />
-                  <span className="hidden sm:inline">Refresh</span>
-                </Button>
-              </ItemActions>
-            </ItemHeader>
-          </Item>
+      <Tabs defaultValue="contract" className="w-full">
+        <TabsList className="font-custom bg-secondary mb-4 inline-flex h-10 w-full max-w-[20rem] rounded-lg p-1">
+          <TabsTrigger value="rental" className="flex-1 rounded-md">
+            Rental
+          </TabsTrigger>
+          <TabsTrigger value="contract" className="flex-1 rounded-md">
+            Contract
+          </TabsTrigger>
+        </TabsList>
 
-          {/* Search + sort + add */}
-          <Item
-            variant="outline"
-            size="sm"
-            className="flex-col items-stretch gap-4 rounded-xl"
-          >
-            <div className="relative w-full">
-              <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-              <Input
-                placeholder="Search by voucher number, date..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="font-custom focus-visible:ring-primary w-full pl-10 focus-visible:ring-2 focus-visible:ring-offset-2"
-              />
-            </div>
-            <ItemFooter className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex w-full flex-col gap-3 sm:flex-1 sm:flex-row sm:flex-nowrap sm:items-center sm:gap-4">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="font-custom focus-visible:ring-primary w-full min-w-0 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 sm:w-auto sm:min-w-40"
-                    >
-                      <span className="hidden sm:inline">Sort by: </span>
-                      <span className="sm:hidden">Sort: </span>
-                      {sortBy === 'Voucher Number' ? (
-                        <span className="truncate">Voucher No.</span>
-                      ) : (
-                        sortBy
-                      )}
-                      <span className="font-custom text-muted-foreground hidden sm:inline">
-                        {' '}
-                        · {sortOrder === 'asc' ? 'Ascending' : 'Descending'}
-                      </span>
-                      <ChevronDown className="ml-2 h-4 w-4 shrink-0" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start" className="font-custom">
-                    <DropdownMenuItem onClick={() => setSortBy('Date')}>
-                      Date
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => setSortBy('Voucher Number')}
-                    >
-                      Voucher Number
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => {
-                        setSortOrder('asc');
-                        setPage(1);
-                      }}
-                    >
-                      Ascending
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => {
-                        setSortOrder('desc');
-                        setPage(1);
-                      }}
-                    >
-                      Descending
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="font-custom focus-visible:ring-primary w-full min-w-0 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 sm:w-auto sm:min-w-40"
-                    >
-                      <span className="hidden sm:inline">Filter: </span>
-                      <span className="sm:hidden">Type: </span>
-                      {gatePassType.length === 0 ? (
-                        'All'
-                      ) : gatePassType.length === 1 ? (
-                        (GATE_PASS_TYPE_OPTIONS.find(
-                          (o) => o.value === gatePassType[0]
-                        )?.label ?? 'All')
-                      ) : (
-                        <span className="truncate">
-                          {gatePassType.length} types
-                        </span>
-                      )}
-                      <ChevronDown className="ml-2 h-4 w-4 shrink-0" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start" className="font-custom">
-                    {GATE_PASS_TYPE_OPTIONS.map((opt) => (
-                      <DropdownMenuCheckboxItem
-                        key={opt.value}
-                        checked={gatePassType.includes(opt.value)}
-                        onCheckedChange={() => toggleGatePassType(opt.value)}
-                      >
-                        {opt.label}
-                      </DropdownMenuCheckboxItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-              <Button
-                className="font-custom h-10 w-full shrink-0 sm:w-auto"
-                asChild
+        <TabsContent value="rental" className="mt-0 outline-none">
+          <RentalTabContent />
+        </TabsContent>
+
+        <TabsContent value="contract" className="mt-0 outline-none">
+          <div className="space-y-4 sm:space-y-6">
+            {/* Header: voucher count + refresh, then search + sort + add */}
+            <div className="flex flex-col gap-4">
+              <Item
+                variant="outline"
+                size="sm"
+                className="rounded-xl shadow-sm"
               >
-                <Link to="/store-admin/incoming">
-                  <ArrowUpFromLine className="h-4 w-4 shrink-0" />
-                  Add Incoming
-                </Link>
-              </Button>
-            </ItemFooter>
-          </Item>
-        </div>
+                <ItemHeader className="h-full">
+                  <div className="flex items-center gap-3">
+                    <ItemMedia variant="icon" className="rounded-lg">
+                      <Receipt className="text-primary h-5 w-5" />
+                    </ItemMedia>
+                    <ItemTitle className="font-custom text-sm font-semibold sm:text-base">
+                      {totalCount} {totalCount === 1 ? 'voucher' : 'vouchers'}
+                    </ItemTitle>
+                  </div>
+                  <ItemActions>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={isFetching}
+                      onClick={() => refetch()}
+                      className="font-custom h-8 gap-2 rounded-lg px-3"
+                    >
+                      <RefreshCw
+                        className={`h-4 w-4 shrink-0 ${
+                          isFetching ? 'animate-spin' : ''
+                        }`}
+                      />
+                      <span className="hidden sm:inline">Refresh</span>
+                    </Button>
+                  </ItemActions>
+                </ItemHeader>
+              </Item>
 
-        {/* List: one tabbed card per daybook entry */}
-        {isLoading ? (
-          <div className="space-y-6">
-            {[...Array(3)].map((_, i) => (
-              <Card key={i} className="overflow-hidden p-0">
-                <div className="border-border bg-muted/30 px-3 py-2 sm:px-4 sm:py-2.5">
-                  <div className="flex items-center justify-between gap-2">
-                    <Skeleton className="h-4 w-16" />
-                    <Skeleton className="h-4 w-8" />
-                  </div>
-                  <Skeleton className="mt-1.5 h-2 w-full rounded-full" />
+              {/* Search + sort + add */}
+              <Item
+                variant="outline"
+                size="sm"
+                className="flex-col items-stretch gap-4 rounded-xl"
+              >
+                <div className="relative w-full">
+                  <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+                  <Input
+                    placeholder="Search by voucher number, date..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="font-custom focus-visible:ring-primary w-full pl-10 focus-visible:ring-2 focus-visible:ring-offset-2"
+                  />
                 </div>
-                <div className="space-y-2 border-b px-4 py-3">
-                  <div className="flex gap-4">
-                    {[...Array(4)].map((__, j) => (
-                      <Skeleton key={j} className="h-4 w-14" />
-                    ))}
+                <ItemFooter className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex w-full flex-col gap-3 sm:flex-1 sm:flex-row sm:flex-nowrap sm:items-center sm:gap-4">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className="font-custom focus-visible:ring-primary w-full min-w-0 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 sm:w-auto sm:min-w-40"
+                        >
+                          <span className="hidden sm:inline">Sort by: </span>
+                          <span className="sm:hidden">Sort: </span>
+                          {sortBy === 'Voucher Number' ? (
+                            <span className="truncate">Voucher No.</span>
+                          ) : (
+                            sortBy
+                          )}
+                          <span className="font-custom text-muted-foreground hidden sm:inline">
+                            {' '}
+                            · {sortOrder === 'asc' ? 'Ascending' : 'Descending'}
+                          </span>
+                          <ChevronDown className="ml-2 h-4 w-4 shrink-0" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent
+                        align="start"
+                        className="font-custom"
+                      >
+                        <DropdownMenuItem onClick={() => setSortBy('Date')}>
+                          Date
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => setSortBy('Voucher Number')}
+                        >
+                          Voucher Number
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => {
+                            setSortOrder('asc');
+                            setPage(1);
+                          }}
+                        >
+                          Ascending
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => {
+                            setSortOrder('desc');
+                            setPage(1);
+                          }}
+                        >
+                          Descending
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className="font-custom focus-visible:ring-primary w-full min-w-0 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 sm:w-auto sm:min-w-40"
+                        >
+                          <span className="hidden sm:inline">Filter: </span>
+                          <span className="sm:hidden">Type: </span>
+                          {gatePassType.length === 0 ? (
+                            'All'
+                          ) : gatePassType.length === 1 ? (
+                            (GATE_PASS_TYPE_OPTIONS.find(
+                              (o) => o.value === gatePassType[0]
+                            )?.label ?? 'All')
+                          ) : (
+                            <span className="truncate">
+                              {gatePassType.length} types
+                            </span>
+                          )}
+                          <ChevronDown className="ml-2 h-4 w-4 shrink-0" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent
+                        align="start"
+                        className="font-custom"
+                      >
+                        {GATE_PASS_TYPE_OPTIONS.map((opt) => (
+                          <DropdownMenuCheckboxItem
+                            key={opt.value}
+                            checked={gatePassType.includes(opt.value)}
+                            onCheckedChange={() =>
+                              toggleGatePassType(opt.value)
+                            }
+                          >
+                            {opt.label}
+                          </DropdownMenuCheckboxItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
-                </div>
-                <div className="p-4">
-                  <div className="flex gap-2">
-                    {[...Array(5)].map((__, j) => (
-                      <Skeleton key={j} className="h-9 flex-1 rounded-lg" />
-                    ))}
-                  </div>
-                  <div className="mt-4 space-y-3">
-                    <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-4 w-[80%]" />
-                    <Skeleton className="h-4 w-3/4" />
-                  </div>
-                </div>
-              </Card>
-            ))}
-          </div>
-        ) : filteredAndSortedEntries.length === 0 ? (
-          <Card>
-            <CardContent className="py-8 pt-6 text-center">
-              <p className="font-custom text-muted-foreground">
-                No vouchers yet.
-              </p>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="space-y-6">
-            {filteredAndSortedEntries.map((entry, idx) => (
-              <DaybookEntryCard
-                key={
-                  (entry.incoming as { _id?: string })?._id ??
-                  entry.farmer?._id ??
-                  `entry-${idx}`
-                }
-                entry={entry}
-              />
-            ))}
-          </div>
-        )}
-
-        {/* Pagination footer */}
-        {!isLoading && daybookData != null && (
-          <Item
-            variant="outline"
-            size="sm"
-            className="flex flex-wrap items-center justify-between gap-3 rounded-xl px-4 py-3"
-          >
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="font-custom focus-visible:ring-primary rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
-                >
-                  {limit} per page
-                  <ChevronDown className="ml-1.5 h-4 w-4 shrink-0" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start">
-                {LIMIT_OPTIONS.map((n) => (
-                  <DropdownMenuItem
-                    key={n}
-                    onClick={() => setLimitAndResetPage(n)}
+                  <Button
+                    className="font-custom h-10 w-full shrink-0 sm:w-auto"
+                    asChild
                   >
-                    {n} per page
-                  </DropdownMenuItem>
+                    <Link to="/store-admin/incoming">
+                      <ArrowUpFromLine className="h-4 w-4 shrink-0" />
+                      Add Incoming
+                    </Link>
+                  </Button>
+                </ItemFooter>
+              </Item>
+            </div>
+
+            {/* List: one tabbed card per daybook entry */}
+            {isLoading ? (
+              <div className="space-y-6">
+                {[...Array(3)].map((_, i) => (
+                  <Card key={i} className="overflow-hidden p-0">
+                    <div className="border-border bg-muted/30 px-3 py-2 sm:px-4 sm:py-2.5">
+                      <div className="flex items-center justify-between gap-2">
+                        <Skeleton className="h-4 w-16" />
+                        <Skeleton className="h-4 w-8" />
+                      </div>
+                      <Skeleton className="mt-1.5 h-2 w-full rounded-full" />
+                    </div>
+                    <div className="space-y-2 border-b px-4 py-3">
+                      <div className="flex gap-4">
+                        {[...Array(4)].map((__, j) => (
+                          <Skeleton key={j} className="h-4 w-14" />
+                        ))}
+                      </div>
+                    </div>
+                    <div className="p-4">
+                      <div className="flex gap-2">
+                        {[...Array(5)].map((__, j) => (
+                          <Skeleton key={j} className="h-9 flex-1 rounded-lg" />
+                        ))}
+                      </div>
+                      <div className="mt-4 space-y-3">
+                        <Skeleton className="h-4 w-full" />
+                        <Skeleton className="h-4 w-[80%]" />
+                        <Skeleton className="h-4 w-3/4" />
+                      </div>
+                    </div>
+                  </Card>
                 ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <Pagination>
-              <PaginationContent className="gap-1">
-                <PaginationItem>
-                  <PaginationPrevious
-                    href="#"
-                    className="font-custom focus-visible:ring-primary cursor-pointer rounded-lg focus-visible:ring-2 focus-visible:ring-offset-2"
-                    aria-disabled={!hasPrev}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      if (hasPrev) setPage((p) => Math.max(1, p - 1));
-                    }}
-                    style={
-                      !hasPrev
-                        ? { pointerEvents: 'none', opacity: 0.5 }
-                        : undefined
+              </div>
+            ) : filteredAndSortedEntries.length === 0 ? (
+              <Card>
+                <CardContent className="py-8 pt-6 text-center">
+                  <p className="font-custom text-muted-foreground">
+                    No vouchers yet.
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-6">
+                {filteredAndSortedEntries.map((entry, idx) => (
+                  <DaybookEntryCard
+                    key={
+                      (entry.incoming as { _id?: string })?._id ??
+                      entry.farmer?._id ??
+                      `entry-${idx}`
                     }
+                    entry={entry}
                   />
-                </PaginationItem>
-                <PaginationItem>
-                  <PaginationLink
-                    isActive
-                    href="#"
-                    className="font-custom cursor-default"
-                    onClick={(e) => e.preventDefault()}
-                  >
-                    {page} / {totalPages}
-                  </PaginationLink>
-                </PaginationItem>
-                <PaginationItem>
-                  <PaginationNext
-                    href="#"
-                    className="font-custom focus-visible:ring-primary cursor-pointer rounded-lg focus-visible:ring-2 focus-visible:ring-offset-2"
-                    aria-disabled={!hasNext}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      if (hasNext) setPage((p) => Math.min(totalPages, p + 1));
-                    }}
-                    style={
-                      !hasNext
-                        ? { pointerEvents: 'none', opacity: 0.5 }
-                        : undefined
-                    }
-                  />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
-          </Item>
-        )}
-      </div>
+                ))}
+              </div>
+            )}
+
+            {/* Pagination footer */}
+            {!isLoading && daybookData != null && (
+              <Item
+                variant="outline"
+                size="sm"
+                className="flex flex-wrap items-center justify-between gap-3 rounded-xl px-4 py-3"
+              >
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="font-custom focus-visible:ring-primary rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+                    >
+                      {limit} per page
+                      <ChevronDown className="ml-1.5 h-4 w-4 shrink-0" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start">
+                    {LIMIT_OPTIONS.map((n) => (
+                      <DropdownMenuItem
+                        key={n}
+                        onClick={() => setLimitAndResetPage(n)}
+                      >
+                        {n} per page
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                <Pagination>
+                  <PaginationContent className="gap-1">
+                    <PaginationItem>
+                      <PaginationPrevious
+                        href="#"
+                        className="font-custom focus-visible:ring-primary cursor-pointer rounded-lg focus-visible:ring-2 focus-visible:ring-offset-2"
+                        aria-disabled={!hasPrev}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          if (hasPrev) setPage((p) => Math.max(1, p - 1));
+                        }}
+                        style={
+                          !hasPrev
+                            ? { pointerEvents: 'none', opacity: 0.5 }
+                            : undefined
+                        }
+                      />
+                    </PaginationItem>
+                    <PaginationItem>
+                      <PaginationLink
+                        isActive
+                        href="#"
+                        className="font-custom cursor-default"
+                        onClick={(e) => e.preventDefault()}
+                      >
+                        {page} / {totalPages}
+                      </PaginationLink>
+                    </PaginationItem>
+                    <PaginationItem>
+                      <PaginationNext
+                        href="#"
+                        className="font-custom focus-visible:ring-primary cursor-pointer rounded-lg focus-visible:ring-2 focus-visible:ring-offset-2"
+                        aria-disabled={!hasNext}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          if (hasNext)
+                            setPage((p) => Math.min(totalPages, p + 1));
+                        }}
+                        style={
+                          !hasNext
+                            ? { pointerEvents: 'none', opacity: 0.5 }
+                            : undefined
+                        }
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              </Item>
+            )}
+          </div>
+        </TabsContent>
+      </Tabs>
     </main>
   );
 });

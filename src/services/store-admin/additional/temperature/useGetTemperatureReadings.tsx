@@ -3,7 +3,7 @@ import storeAdminAxiosClient from '@/lib/axios';
 import { queryClient } from '@/lib/queryClient';
 import type {
   GetTemperatureReadingsApiResponse,
-  TemperatureReading,
+  Temperature,
 } from '@/types/temperature';
 
 /** Query key prefix for temperature readings */
@@ -13,7 +13,12 @@ export const temperatureKeys = {
 
 const temperatureListKey = [...temperatureKeys.all, 'list'] as const;
 
-async function fetchTemperatureReadings(): Promise<TemperatureReading[]> {
+/**
+ * GET /temperature response shape:
+ * { success, data: Temperature[], message }
+ * Each Temperature: { _id, coldStorageId, date, temperatureReading: [{ chamber, value }], createdAt, updatedAt, __v }
+ */
+async function fetchTemperatureReadings(): Promise<Temperature[]> {
   const { data } =
     await storeAdminAxiosClient.get<GetTemperatureReadingsApiResponse>(
       '/temperature'

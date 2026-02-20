@@ -28,7 +28,7 @@ function getCreateTemperatureErrorMessage(
 /**
  * Hook to create a temperature reading.
  * POST /temperature
- * Body: { chamber, runningTemperature, date }
+ * Body: { date, temperatureReading: [{ chamber, value }, ...] }
  */
 export function useCreateTemperatureReading() {
   return useMutation<

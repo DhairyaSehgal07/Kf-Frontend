@@ -10,7 +10,7 @@ import * as z from 'zod';
 import { useGetTemperatureReadings } from '@/services/store-admin/additional/temperature/useGetTemperatureReadings';
 import { useCreateTemperatureReading } from '@/services/store-admin/additional/temperature/useCreateTemperatureReading';
 import { useUpdateTemperatureReading } from '@/services/store-admin/additional/temperature/useUpdateTemperatureReading';
-import type { TemperatureReading } from '@/types/temperature';
+import type { Temperature, TemperatureReadingItem } from '@/types/temperature';
 
 import { Card, CardContent } from '@/components/ui/card';
 import {
@@ -75,47 +75,89 @@ function formatDate(dateStr: string) {
   }
 }
 
-const columnHelper = createColumnHelper<TemperatureReading>();
+const columnHelper = createColumnHelper<Temperature>();
 
-const addReadingFormSchema = z.object({
-  chamber: z.string().min(1, 'Chamber is required'),
-  runningTemperature: z
-    .number()
-    .min(-50, 'Temperature too low')
-    .max(50, 'Temperature too high'),
+/** Temperature unit: all readings are in Fahrenheit */
+const UNIT = '°F';
+const TEMP_MIN = -58;
+const TEMP_MAX = 122;
+const RANGE_MIN = 28;
+const RANGE_MAX = 40;
+
+function isAllInRange(readings: TemperatureReadingItem[]): boolean {
+  return readings.every((r) => r.value >= RANGE_MIN && r.value <= RANGE_MAX);
+}
+
+/** Default payload for create form: 4 chambers with empty values */
+const DEFAULT_CHAMBER_IDS = ['1', '2', '3', '4'] as const;
+
+function getDefaultCreateTemperatureReading(): TemperatureReadingItem[] {
+  return DEFAULT_CHAMBER_IDS.map((chamber) => ({ chamber, value: 0 }));
+}
+
+const addCreateFormSchema = z.object({
   date: z.string().min(1, 'Date is required'),
+  temperatureReading: z
+    .array(
+      z.object({
+        chamber: z.string(),
+        value: z
+          .number()
+          .min(TEMP_MIN, 'Temperature too low')
+          .max(TEMP_MAX, 'Temperature too high'),
+      })
+    )
+    .length(4, 'Exactly 4 chamber readings required'),
+});
+
+const updateReadingFormSchema = z.object({
+  date: z.string().min(1, 'Date is required'),
+  temperatureReading: z
+    .array(
+      z.object({
+        chamber: z.string().min(1, 'Chamber is required'),
+        value: z
+          .number()
+          .min(TEMP_MIN, 'Temperature too low')
+          .max(TEMP_MAX, 'Temperature too high'),
+      })
+    )
+    .min(1, 'At least one reading is required'),
 });
 
 const TemperatureMonitoringPage = memo(function TemperatureMonitoringPage() {
   const {
-    data: readings = [],
+    data: temperatureDocs = [],
     isLoading,
     isFetching,
     refetch,
   } = useGetTemperatureReadings();
   const [searchQuery, setSearchQuery] = useState('');
   const [addDialogOpen, setAddDialogOpen] = useState(false);
-  const [editingReading, setEditingReading] =
-    useState<TemperatureReading | null>(null);
+  const [editingDoc, setEditingDoc] = useState<Temperature | null>(null);
   const createReading = useCreateTemperatureReading();
   const updateReading = useUpdateTemperatureReading();
 
   const addForm = useForm({
     defaultValues: {
-      chamber: '',
-      runningTemperature: 0,
       date: getTodayDatetimeLocal(),
+      temperatureReading: getDefaultCreateTemperatureReading(),
     },
     validators: {
-      onChange: addReadingFormSchema,
-      onBlur: addReadingFormSchema,
-      onSubmit: addReadingFormSchema,
+      onChange: addCreateFormSchema,
+      onBlur: addCreateFormSchema,
+      onSubmit: addCreateFormSchema,
     },
     onSubmit: async ({ value }) => {
-      const payload = {
-        chamber: value.chamber.trim(),
-        runningTemperature: Number(value.runningTemperature),
+      const payload: {
+        date: string;
+        temperatureReading: TemperatureReadingItem[];
+      } = {
         date: new Date(value.date).toISOString(),
+        temperatureReading: value.temperatureReading.map((r) => ({
+          chamber: r.chamber,
+          value: Number(r.value),
+        })),
       };
       createReading.mutate(payload, {
         onSuccess: () => {
@@ -129,6 +171,10 @@ const TemperatureMonitoringPage = memo(function TemperatureMonitoringPage() {
   useEffect(() => {
     if (addDialogOpen) {
       addForm.setFieldValue('date', getTodayDatetimeLocal());
+      addForm.setFieldValue(
+        'temperatureReading',
+        getDefaultCreateTemperatureReading()
+      );
     }
   }, [addDialogOpen, addForm]);
 
@@ -139,28 +185,31 @@ const TemperatureMonitoringPage = memo(function TemperatureMonitoringPage() {
 
   const updateForm = useForm({
     defaultValues: {
-      chamber: '',
-      runningTemperature: 0,
       date: getTodayDatetimeLocal(),
+      temperatureReading: [] as TemperatureReadingItem[],
     },
     validators: {
-      onChange: addReadingFormSchema,
-      onBlur: addReadingFormSchema,
-      onSubmit: addReadingFormSchema,
+      onChange: updateReadingFormSchema,
+      onBlur: updateReadingFormSchema,
+      onSubmit: updateReadingFormSchema,
     },
     onSubmit: async ({ value }) => {
-      if (!editingReading) return;
+      if (!editingDoc) return;
+      const temperatureReading: TemperatureReadingItem[] =
+        value.temperatureReading.map((r) => ({
+          chamber: r.chamber.trim(),
+          value: Number(r.value),
+        }));
       updateReading.mutate(
         {
-          id: editingReading._id,
-          chamber: value.chamber.trim(),
-          runningTemperature: Number(value.runningTemperature),
+          id: editingDoc._id,
           date: new Date(value.date).toISOString(),
+          temperatureReading,
         },
         {
           onSuccess: () => {
             updateForm.reset();
-            setEditingReading(null);
+            setEditingDoc(null);
           },
         }
       );
@@ -168,58 +217,38 @@ const TemperatureMonitoringPage = memo(function TemperatureMonitoringPage() {
   });
 
   useEffect(() => {
-    if (editingReading) {
-      updateForm.setFieldValue('chamber', editingReading.chamber);
+    if (editingDoc) {
+      updateForm.setFieldValue('date', toDatetimeLocal(editingDoc.date));
       updateForm.setFieldValue(
-        'runningTemperature',
-        editingReading.runningTemperature
+        'temperatureReading',
+        editingDoc.temperatureReading.map((r) => ({ ...r }))
       );
-      updateForm.setFieldValue('date', toDatetimeLocal(editingReading.date));
     }
-  }, [editingReading, updateForm]);
+  }, [editingDoc, updateForm]);
 
   const handleEditDialogOpenChange = (open: boolean) => {
     if (!open) {
-      setEditingReading(null);
+      setEditingDoc(null);
       updateForm.reset();
     }
   };
 
-  const filteredReadings = useMemo(() => {
-    if (!searchQuery.trim()) return readings;
+  const filteredDocs = useMemo(() => {
+    if (!searchQuery.trim()) return temperatureDocs;
     const q = searchQuery.toLowerCase();
-    return readings.filter(
-      (r) =>
-        r.chamber.toLowerCase().includes(q) ||
-        r.date.toLowerCase().includes(q) ||
-        r.coldStorageId?.toLowerCase().includes(q)
+    return temperatureDocs.filter(
+      (doc) =>
+        doc.date.toLowerCase().includes(q) ||
+        doc._id.toLowerCase().includes(q) ||
+        doc.temperatureReading.some(
+          (r) =>
+            r.chamber.toLowerCase().includes(q) || String(r.value).includes(q)
+        )
     );
-  }, [readings, searchQuery]);
+  }, [temperatureDocs, searchQuery]);
 
   const columns = useMemo(
     () => [
-      columnHelper.accessor('chamber', {
-        header: 'Chamber',
-        cell: (info) => (
-          <span className="font-custom font-medium">{info.getValue()}</span>
-        ),
-      }),
-      columnHelper.accessor('runningTemperature', {
-        header: 'Temperature (°C)',
-        cell: (info) => {
-          const value = info.getValue();
-          const inRange = value >= -2 && value <= 4;
-          return (
-            <span
-              className={`font-custom font-medium tabular-nums ${
-                inRange ? 'text-primary' : 'text-destructive'
-              }`}
-            >
-              {value} °C
-            </span>
-          );
-        },
-      }),
       columnHelper.accessor('date', {
         header: 'Date',
         cell: (info) => (
@@ -229,11 +258,28 @@ const TemperatureMonitoringPage = memo(function TemperatureMonitoringPage() {
         ),
       }),
       columnHelper.display({
+        id: 'readings',
+        header: `Temperature readings (${UNIT})`,
+        cell: ({ row }) => {
+          const readings = row.original.temperatureReading ?? [];
+          return (
+            <div className="font-custom flex flex-col gap-0.5 text-sm font-medium">
+              {readings.map((r, i) => (
+                <span key={`${row.original._id}-reading-${i}`}>
+                  Chamber {r.chamber}: {r.value}
+                  {UNIT}
+                </span>
+              ))}
+            </div>
+          );
+        },
+      }),
+      columnHelper.display({
         id: 'status',
         header: 'Status',
         cell: ({ row }) => {
-          const temp = row.original.runningTemperature;
-          const inRange = temp >= -2 && temp <= 4;
+          const readings = row.original.temperatureReading ?? [];
+          const inRange = isAllInRange(readings);
           return (
             <span
               className={`font-custom inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
@@ -257,7 +303,7 @@ const TemperatureMonitoringPage = memo(function TemperatureMonitoringPage() {
             size="icon"
             className="font-custom text-muted-foreground hover:text-foreground focus-visible:ring-primary h-8 w-8 focus-visible:ring-2 focus-visible:ring-offset-2"
             aria-label="Update reading"
-            onClick={() => setEditingReading(row.original)}
+            onClick={() => setEditingDoc(row.original)}
           >
             <Pencil className="h-4 w-4" />
           </Button>
@@ -268,7 +314,7 @@ const TemperatureMonitoringPage = memo(function TemperatureMonitoringPage() {
   );
 
   const table = useReactTable({
-    data: filteredReadings,
+    data: filteredDocs,
     columns,
     getCoreRowModel: getCoreRowModel(),
   });
@@ -314,8 +360,8 @@ const TemperatureMonitoringPage = memo(function TemperatureMonitoringPage() {
                 <Thermometer className="text-primary h-5 w-5" />
               </ItemMedia>
               <ItemTitle className="font-custom text-sm font-semibold sm:text-base">
-                {readings.length}{' '}
-                {readings.length === 1 ? 'reading' : 'readings'}
+                {filteredDocs.length}{' '}
+                {filteredDocs.length === 1 ? 'record' : 'records'}
               </ItemTitle>
             </div>
             <ItemActions>
@@ -346,7 +392,7 @@ const TemperatureMonitoringPage = memo(function TemperatureMonitoringPage() {
           <div className="relative w-full">
             <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
             <Input
-              placeholder="Search by chamber or date..."
+              placeholder="Search by date, chamber or value..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="font-custom focus-visible:ring-primary w-full pl-10 focus-visible:ring-2 focus-visible:ring-offset-2"
@@ -374,92 +420,10 @@ const TemperatureMonitoringPage = memo(function TemperatureMonitoringPage() {
                   <DialogHeader>
                     <DialogTitle>Add temperature reading</DialogTitle>
                     <DialogDescription>
-                      Enter chamber, temperature and date for the reading.
+                      Enter temperature values for all 4 chambers and the date.
                     </DialogDescription>
                   </DialogHeader>
                   <FieldGroup className="mt-6 grid gap-4">
-                    <addForm.Field
-                      name="chamber"
-                      children={(field) => {
-                        const isInvalid =
-                          field.state.meta.isTouched &&
-                          !field.state.meta.isValid;
-                        return (
-                          <Field data-invalid={isInvalid}>
-                            <FieldLabel htmlFor={field.name}>
-                              Chamber
-                            </FieldLabel>
-                            <Input
-                              id={field.name}
-                              name={field.name}
-                              value={field.state.value}
-                              onBlur={field.handleBlur}
-                              onChange={(e) =>
-                                field.handleChange(e.target.value)
-                              }
-                              placeholder="e.g. Chamber A"
-                              aria-invalid={isInvalid}
-                              className="font-custom focus-visible:ring-primary focus-visible:ring-2 focus-visible:ring-offset-2"
-                            />
-                            {isInvalid && (
-                              <FieldError
-                                errors={
-                                  field.state.meta.errors as Array<
-                                    { message?: string } | undefined
-                                  >
-                                }
-                              />
-                            )}
-                          </Field>
-                        );
-                      }}
-                    />
-                    <addForm.Field
-                      name="runningTemperature"
-                      children={(field) => {
-                        const isInvalid =
-                          field.state.meta.isTouched &&
-                          !field.state.meta.isValid;
-                        return (
-                          <Field data-invalid={isInvalid}>
-                            <FieldLabel htmlFor={field.name}>
-                              Temperature (°C)
-                            </FieldLabel>
-                            <Input
-                              id={field.name}
-                              name={field.name}
-                              type="number"
-                              step="0.1"
-                              value={
-                                field.state.value != null
-                                  ? String(field.state.value)
-                                  : ''
-                              }
-                              onBlur={field.handleBlur}
-                              onChange={(e) =>
-                                field.handleChange(
-                                  e.target.value === ''
-                                    ? (0 as unknown as number)
-                                    : Number(e.target.value)
-                                )
-                              }
-                              placeholder="e.g. 2.5"
-                              aria-invalid={isInvalid}
-                              className="font-custom focus-visible:ring-primary focus-visible:ring-2 focus-visible:ring-offset-2"
-                            />
-                            {isInvalid && (
-                              <FieldError
-                                errors={
-                                  field.state.meta.errors as Array<
-                                    { message?: string } | undefined
-                                  >
-                                }
-                              />
-                            )}
-                          </Field>
-                        );
-                      }}
-                    />
                     <addForm.Field
                       name="date"
                       children={(field) => {
@@ -494,6 +458,57 @@ const TemperatureMonitoringPage = memo(function TemperatureMonitoringPage() {
                         );
                       }}
                     />
+                    {DEFAULT_CHAMBER_IDS.map((chamberId, i) => (
+                      <addForm.Field
+                        key={chamberId}
+                        name={`temperatureReading[${i}].value`}
+                        children={(field) => {
+                          const isInvalid =
+                            field.state.meta.isTouched &&
+                            !field.state.meta.isValid;
+                          return (
+                            <Field data-invalid={isInvalid}>
+                              <FieldLabel
+                                htmlFor={`add-chamber-${chamberId}-value`}
+                              >
+                                Chamber {chamberId} ({UNIT})
+                              </FieldLabel>
+                              <Input
+                                id={`add-chamber-${chamberId}-value`}
+                                name={field.name}
+                                type="number"
+                                step="0.1"
+                                value={
+                                  field.state.value != null
+                                    ? String(field.state.value)
+                                    : ''
+                                }
+                                onBlur={field.handleBlur}
+                                onChange={(e) =>
+                                  field.handleChange(
+                                    e.target.value === ''
+                                      ? (0 as unknown as number)
+                                      : Number(e.target.value)
+                                  )
+                                }
+                                placeholder="e.g. 35"
+                                aria-invalid={isInvalid}
+                                className="font-custom focus-visible:ring-primary focus-visible:ring-2 focus-visible:ring-offset-2"
+                              />
+                              {isInvalid && (
+                                <FieldError
+                                  errors={
+                                    field.state.meta.errors as Array<
+                                      { message?: string } | undefined
+                                    >
+                                  }
+                                />
+                              )}
+                            </Field>
+                          );
+                        }}
+                      />
+                    ))}
                   </FieldGroup>
                   <DialogFooter className="mt-6">
                     <DialogClose asChild>
@@ -517,10 +532,10 @@ const TemperatureMonitoringPage = memo(function TemperatureMonitoringPage() {
 
         {/* Edit dialog */}
         <Dialog
-          open={editingReading != null}
+          open={editingDoc != null}
           onOpenChange={handleEditDialogOpenChange}
         >
-          <DialogContent className="font-custom sm:max-w-[425px]">
+          <DialogContent className="font-custom sm:max-w-[500px]">
             <form
               onSubmit={(e) => {
                 e.preventDefault();
@@ -529,90 +544,12 @@ const TemperatureMonitoringPage = memo(function TemperatureMonitoringPage() {
               }}
             >
               <DialogHeader>
-                <DialogTitle>Update temperature reading</DialogTitle>
+                <DialogTitle>Update temperature record</DialogTitle>
                 <DialogDescription>
-                  Change chamber, temperature or date for this reading.
+                  Change date or chamber readings for this record.
                 </DialogDescription>
               </DialogHeader>
               <FieldGroup className="mt-6 grid gap-4">
-                <updateForm.Field
-                  name="chamber"
-                  children={(field) => {
-                    const isInvalid =
-                      field.state.meta.isTouched && !field.state.meta.isValid;
-                    return (
-                      <Field data-invalid={isInvalid}>
-                        <FieldLabel htmlFor={`edit-${field.name}`}>
-                          Chamber
-                        </FieldLabel>
-                        <Input
-                          id={`edit-${field.name}`}
-                          name={field.name}
-                          value={field.state.value}
-                          onBlur={field.handleBlur}
-                          onChange={(e) => field.handleChange(e.target.value)}
-                          placeholder="e.g. Chamber A"
-                          aria-invalid={isInvalid}
-                          className="font-custom focus-visible:ring-primary focus-visible:ring-2 focus-visible:ring-offset-2"
-                        />
-                        {isInvalid && (
-                          <FieldError
-                            errors={
-                              field.state.meta.errors as Array<
-                                { message?: string } | undefined
-                              >
-                            }
-                          />
-                        )}
-                      </Field>
-                    );
-                  }}
-                />
-                <updateForm.Field
-                  name="runningTemperature"
-                  children={(field) => {
-                    const isInvalid =
-                      field.state.meta.isTouched && !field.state.meta.isValid;
-                    return (
-                      <Field data-invalid={isInvalid}>
-                        <FieldLabel htmlFor={`edit-${field.name}`}>
-                          Temperature (°C)
-                        </FieldLabel>
-                        <Input
-                          id={`edit-${field.name}`}
-                          name={field.name}
-                          type="number"
-                          step="0.1"
-                          value={
-                            field.state.value != null
-                              ? String(field.state.value)
-                              : ''
-                          }
-                          onBlur={field.handleBlur}
-                          onChange={(e) =>
-                            field.handleChange(
-                              e.target.value === ''
-                                ? (0 as unknown as number)
-                                : Number(e.target.value)
-                            )
-                          }
-                          placeholder="e.g. 2.5"
-                          aria-invalid={isInvalid}
-                          className="font-custom focus-visible:ring-primary focus-visible:ring-2 focus-visible:ring-offset-2"
-                        />
-                        {isInvalid && (
-                          <FieldError
-                            errors={
-                              field.state.meta.errors as Array<
-                                { message?: string } | undefined
-                              >
-                            }
-                          />
-                        )}
-                      </Field>
-                    );
-                  }}
-                />
                 <updateForm.Field
                   name="date"
                   children={(field) => {
@@ -646,6 +583,69 @@ const TemperatureMonitoringPage = memo(function TemperatureMonitoringPage() {
                     );
                   }}
                 />
+                {editingDoc?.temperatureReading.map((_, i) => (
+                  <div
+                    key={editingDoc._id + i}
+                    className="border-border bg-muted/20 flex flex-wrap items-end gap-3 rounded-lg border p-3"
+                  >
+                    <updateForm.Field
+                      name={`temperatureReading[${i}].chamber`}
+                      children={(field) => (
+                        <Field className="min-w-0 flex-1">
+                          <FieldLabel
+                            htmlFor={`edit-reading-${i}-chamber`}
+                            className="text-xs"
+                          >
+                            Chamber
+                          </FieldLabel>
+                          <Input
+                            id={`edit-reading-${i}-chamber`}
+                            name={field.name}
+                            value={field.state.value ?? ''}
+                            onBlur={field.handleBlur}
+                            onChange={(e) => field.handleChange(e.target.value)}
+                            placeholder="e.g. 1"
+                            className="font-custom focus-visible:ring-primary mt-1 focus-visible:ring-2 focus-visible:ring-offset-2"
+                          />
+                        </Field>
+                      )}
+                    />
+                    <updateForm.Field
+                      name={`temperatureReading[${i}].value`}
+                      children={(field) => (
+                        <Field className="min-w-0 flex-1">
+                          <FieldLabel
+                            htmlFor={`edit-reading-${i}-value`}
+                            className="text-xs"
+                          >
+                            Temperature ({UNIT})
+                          </FieldLabel>
+                          <Input
+                            id={`edit-reading-${i}-value`}
+                            name={field.name}
+                            type="number"
+                            step="0.1"
+                            value={
+                              field.state.value != null
+                                ? String(field.state.value)
+                                : ''
+                            }
+                            onBlur={field.handleBlur}
+                            onChange={(e) =>
+                              field.handleChange(
+                                e.target.value === ''
+                                  ? (0 as unknown as number)
+                                  : Number(e.target.value)
+                              )
+                            }
+                            placeholder="e.g. 35"
+                            className="font-custom focus-visible:ring-primary mt-1 focus-visible:ring-2 focus-visible:ring-offset-2"
+                          />
+                        </Field>
+                      )}
+                    />
+                  </div>
+                ))}
               </FieldGroup>
               <DialogFooter className="mt-6">
                 <DialogClose asChild>
@@ -658,7 +658,7 @@ const TemperatureMonitoringPage = memo(function TemperatureMonitoringPage() {
                   disabled={updateReading.isPending}
                   className="font-custom focus-visible:ring-primary focus-visible:ring-2 focus-visible:ring-offset-2"
                 >
-                  {updateReading.isPending ? 'Updating...' : 'Update reading'}
+                  {updateReading.isPending ? 'Updating...' : 'Update record'}
                 </Button>
               </DialogFooter>
             </form>
@@ -666,7 +666,7 @@ const TemperatureMonitoringPage = memo(function TemperatureMonitoringPage() {
         </Dialog>
 
         {/* Table */}
-        {filteredReadings.length === 0 ? (
+        {filteredDocs.length === 0 ? (
           <Card>
             <CardContent className="py-8 pt-6 text-center">
               <p className="font-custom text-muted-foreground">

@@ -13,6 +13,8 @@ export type { NikasiVoucherProps } from './nikasi-voucher';
 export { OutgoingVoucher } from './outgoing-voucher';
 export type { OutgoingVoucherProps } from './outgoing-voucher';
 
+export { RentalIncomingVoucher } from './rental-incoming-voucher';
+
 export { DetailRow } from './detail-row';
 
 export {

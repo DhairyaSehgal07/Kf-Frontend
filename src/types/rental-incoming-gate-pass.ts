@@ -21,10 +21,47 @@ export interface CreateRentalIncomingGatePassInput {
   bagSizes: CreateRentalIncomingGatePassBagSize[];
 }
 
-/** Created rental incoming gate pass (minimal shape; extend as API response is known) */
+/** Bag size as returned in GET list (includes location) */
+export interface RentalIncomingGatePassBagSizeItem {
+  name: string;
+  initialQuantity: number;
+  currentQuantity: number;
+  location: RentalIncomingGatePassBagLocation;
+}
+
+/** Farmer storage link as returned in GET list */
+export interface RentalIncomingGatePassFarmerLink {
+  name: string;
+  accountNumber: number;
+  address: string;
+  mobileNumber: string;
+}
+
+/** Created-by user as returned in GET list */
+export interface RentalIncomingGatePassCreatedBy {
+  _id: string;
+  name: string;
+}
+
+/** Single rental storage gate pass as returned by GET /rental-storage-gate-pass */
 export interface RentalIncomingGatePass {
   _id: string;
-  [key: string]: unknown;
+  farmerStorageLinkId: RentalIncomingGatePassFarmerLink;
+  createdBy: RentalIncomingGatePassCreatedBy;
+  gatePassNo: number;
+  date: string;
+  type: string;
+  variety: string;
+  bagSizes: RentalIncomingGatePassBagSizeItem[];
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** API response for GET /rental-storage-gate-pass (200) */
+export interface GetRentalIncomingGatePassesApiResponse {
+  success: boolean;
+  data: RentalIncomingGatePass[];
 }
 
 /** API response for POST /rental-storage-gate-pass (201) */

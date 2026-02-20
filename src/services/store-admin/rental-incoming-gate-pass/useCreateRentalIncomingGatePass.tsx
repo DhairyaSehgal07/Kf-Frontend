@@ -7,11 +7,7 @@ import type {
   CreateRentalIncomingGatePassInput,
   CreateRentalIncomingGatePassApiResponse,
 } from '@/types/rental-incoming-gate-pass';
-
-/** Query key prefix for rental incoming gate pass – use for invalidation */
-export const rentalIncomingGatePassKeys = {
-  all: ['store-admin', 'rental-incoming-gate-pass'] as const,
-};
+import { rentalIncomingGatePassKeys } from './useGetRentalIncomingGatePasses';
 
 /** API error shape (400, 404, 409): { success, error: { code, message } } */
 type RentalIncomingGatePassApiError = {

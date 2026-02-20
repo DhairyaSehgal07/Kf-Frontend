@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.1] - 2026-02-21
+
+### Added
+- Daybook: Rental tab with list of rental incoming gate passes, search, refresh, and "Add Rental Incoming" CTA
+- Rental incoming voucher component (`RentalIncomingVoucher`) for daybook with entry details
+- Service hook `useGetRentalIncomingGatePasses` for fetching rental incoming gate passes
+
+### Changed
+- Temperature monitoring: component and hooks (`useGetTemperatureReadings`, `useCreateTemperatureReading`); types in `src/types/temperature.ts`
+- Rental incoming gate pass types and `useCreateRentalIncomingGatePass` hook updates
+- Daybook: integration of rental tab and voucher exports in `vouchers/index.ts`
+
 ## [0.10.0] - 2026-02-21
 
 ### Added
