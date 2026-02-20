@@ -8,6 +8,7 @@ export interface WeightSlipData {
 /** Shape of incoming voucher from daybook API */
 export interface IncomingVoucherData {
   _id?: string;
+  category?: string;
   gatePassNo?: number;
   manualGatePassNumber?: number;
   date?: string;

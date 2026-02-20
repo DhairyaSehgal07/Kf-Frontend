@@ -1,5 +1,5 @@
 import { memo, useMemo } from 'react';
-import { BookOpen, Users, BarChart3, Settings } from 'lucide-react';
+import { BookOpen, Users, BarChart3, PlusCircle, Settings } from 'lucide-react';
 import { useLocation, Link } from '@tanstack/react-router';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -61,6 +61,12 @@ const navigationItems: NavigationItem[] = [
     href: '/store-admin/analytics',
     icon: BarChart3,
     activePaths: ['/store-admin/analytics', '/store-admin/variety-breakdown'],
+  },
+  {
+    name: 'Additional',
+    href: '/store-admin/additional',
+    icon: PlusCircle,
+    activePaths: ['/store-admin/additional'],
   },
   {
     name: 'Settings',

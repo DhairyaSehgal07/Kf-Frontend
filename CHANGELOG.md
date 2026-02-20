@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.9] - 2026-02-20
+
+### Added
+- Additional modules section: landing page at `/store-admin/additional` with module cards (Temperature Monitoring and placeholders)
+- Temperature Monitoring: full CRUD UI — list readings (table with chamber, temperature, date), add reading (dialog with chamber, temperature, datetime), edit reading (inline dialog), search and refresh; hooks `useGetTemperatureReadings`, `useCreateTemperatureReading`, `useUpdateTemperatureReading`; types in `src/types/temperature.ts`
+- App sidebar: "Additional" nav item linking to `/store-admin/additional`
+- Routes: `store-admin/_authenticated/additional/index.tsx`, `additional/temperature-monitoring/index.tsx`; generated route tree updates
+
+### Changed
+- Incoming form, summary sheet, daybook incoming voucher, grading constants, and incoming gate pass types: updates and refinements
+
 ## [0.9.8] - 2026-02-17
 
 ### Added

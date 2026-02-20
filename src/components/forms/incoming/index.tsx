@@ -24,6 +24,7 @@ import { useCreateIncomingGatePass } from '@/services/store-admin/incoming-gate-
 import { toast } from 'sonner';
 import { formatDate, formatDateToISO } from '@/lib/helpers';
 import { POTATO_VARIETIES } from '@/components/forms/grading/constants';
+import { IncomingGatePassCategory } from '@/types/incoming-gate-pass';
 
 export const IncomingForm = memo(function IncomingForm() {
   const navigate = useNavigate();
@@ -60,12 +61,23 @@ export const IncomingForm = memo(function IncomingForm() {
       }));
   }, [farmerLinks]);
 
+  const categoryOptions: Option<string>[] = useMemo(
+    () =>
+      Object.values(IncomingGatePassCategory).map((value) => ({
+        value,
+        label: value,
+        searchableText: value,
+      })),
+    []
+  );
+
   const formSchema = useMemo(
     () =>
       z.object({
         farmerStorageLinkId: z.string().min(1, 'Please select a farmer'),
         date: z.string().min(1, 'Date is required'),
         variety: z.string().min(1, 'Please select a variety'),
+        category: z.string().min(1, 'Please select a category'),
         truckNumber: z
           .string()
           .transform((val) => val.trim().toUpperCase())
@@ -95,6 +107,7 @@ export const IncomingForm = memo(function IncomingForm() {
       farmerStorageLinkId: '',
       date: formatDate(new Date()),
       variety: '',
+      category: '',
       truckNumber: '',
       bagsReceived: 0,
       weightSlip: { slipNumber: '', grossWeightKg: 0, tareWeightKg: 0 },
@@ -115,6 +128,7 @@ export const IncomingForm = memo(function IncomingForm() {
         gatePassNo,
         date: formatDateToISO(value.date),
         variety: value.variety,
+        category: value.category,
         truckNumber: value.truckNumber,
         bagsReceived: value.bagsReceived,
         status: 'OPEN',
@@ -391,6 +405,51 @@ export const IncomingForm = memo(function IncomingForm() {
             }}
           />
 
+          {/* Category Selection */}
+          <form.Field
+            name="category"
+            children={(field) => {
+              const hasSubmitError = Boolean(
+                field.state.meta.errorMap &&
+                'onSubmit' in field.state.meta.errorMap &&
+                field.state.meta.errorMap.onSubmit
+              );
+              const invalidFromValidation =
+                hasSubmitError ||
+                (field.state.meta.isTouched && !field.state.meta.isValid);
+              const isInvalid = invalidFromValidation && !field.state.value;
+              return (
+                <Field data-invalid={isInvalid}>
+                  <FieldLabel
+                    htmlFor="category-select"
+                    className="font-custom block text-base font-semibold"
+                  >
+                    Category
+                  </FieldLabel>
+                  <SearchSelector
+                    id="category-select"
+                    options={categoryOptions}
+                    placeholder="Select category"
+                    searchPlaceholder="Search category..."
+                    onSelect={(value) => field.handleChange(value)}
+                    value={field.state.value}
+                    className="w-full"
+                    buttonClassName="w-full justify-between"
+                  />
+                  {isInvalid && (
+                    <FieldError
+                      errors={
+                        field.state.meta.errors as Array<
+                          { message?: string } | undefined
+                        >
+                      }
+                    />
+                  )}
+                </Field>
+              );
+            }}
+          />
+
           {/* Date Selection */}
           <form.Field
             name="date"
@@ -646,6 +705,7 @@ export const IncomingForm = memo(function IncomingForm() {
         formValues={{
           date: form.state.values.date,
           variety: form.state.values.variety,
+          category: form.state.values.category,
           truckNumber: form.state.values.truckNumber,
           bagsReceived: form.state.values.bagsReceived,
           weightSlip: form.state.values.weightSlip,

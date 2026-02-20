@@ -19,6 +19,7 @@ import {
   Truck,
   Layers,
   Loader2,
+  Tag,
 } from 'lucide-react';
 
 /* -------------------------------------------------------------------------- */
@@ -33,6 +34,7 @@ interface SummarySheetProps {
   formValues: {
     date: string;
     variety: string;
+    category: string;
     truckNumber: string;
     bagsReceived: number;
     weightSlip?: {
@@ -151,6 +153,14 @@ export const SummarySheet = memo(function SummarySheet({
               value={formValues.variety}
               icon={Package}
             />
+
+            {formValues.category && (
+              <SummaryRow
+                label="Category"
+                value={formValues.category}
+                icon={Tag}
+              />
+            )}
 
             <SummaryRow
               label="Truck"

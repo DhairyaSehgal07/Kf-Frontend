@@ -97,7 +97,15 @@ const IncomingVoucher = memo(function IncomingVoucher({
               </p>
             </div>
 
-            <div className="flex shrink-0 items-center gap-1.5">
+            <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
+              {voucher.category != null && voucher.category !== '' && (
+                <Badge
+                  variant="secondary"
+                  className="px-2 py-0.5 text-[10px] font-medium"
+                >
+                  {voucher.category}
+                </Badge>
+              )}
               <Badge
                 variant="secondary"
                 className="px-2 py-0.5 text-[10px] font-medium"
@@ -195,6 +203,9 @@ const IncomingVoucher = memo(function IncomingVoucher({
                   Gate Pass Details
                 </h4>
                 <div className="bg-muted/30 grid grid-cols-1 gap-3 rounded-lg p-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {voucher.category != null && voucher.category !== '' && (
+                    <DetailRow label="Category" value={voucher.category} />
+                  )}
                   <DetailRow
                     label="Pass Number"
                     value={`#${voucher.gatePassNo ?? '—'}`}

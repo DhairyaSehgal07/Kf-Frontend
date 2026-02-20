@@ -1,5 +1,18 @@
 import type { FarmerStorageLinkFarmer } from './farmer';
 
+/** Category options for incoming gate pass (const object is erasable; enum is not) */
+export const IncomingGatePassCategory = {
+  OWN_STOCK: 'Own Stock',
+  CONTRACT_FARMING: 'Contract Farming',
+  FAZALPUR: 'Fazalpur',
+  PURCHASES_APR: 'Purchases-Apr',
+  CONVERSION: 'Conversion',
+  TRANSFER_FROM_STORES: 'Transfer From Stores',
+} as const;
+
+export type IncomingGatePassCategory =
+  (typeof IncomingGatePassCategory)[keyof typeof IncomingGatePassCategory];
+
 /** Weight slip sub-object for incoming gate pass */
 export interface IncomingGatePassWeightSlip {
   slipNumber: string;
@@ -26,6 +39,7 @@ export interface CreateIncomingGatePassInput {
   gradingSummary?: CreateIncomingGatePassGradingSummary;
   remarks?: string;
   manualGatePassNumber?: number;
+  category?: string; // One of IncomingGatePassCategory values
 }
 
 /** Grading summary on an incoming gate pass */
