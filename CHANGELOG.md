@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.0] - 2026-02-21
+
+### Added
+- Rental incoming gate pass: form with validation and submission (`RentalIncomingFormBase`, `CreateRentalIncomingForm`, rental summary sheet)
+- Rental incoming route and page at `/store-admin/rental`
+- Service hook `useCreateRentalIncomingGatePass` and types in `src/types/rental-incoming-gate-pass.ts`
+- Voucher number hook: support for rental incoming gate pass type in `useGetVoucherNumber`
+
+### Changed
+- Incoming form: updates and refinements
+- Route tree: new rental routes under store-admin
+
 ## [0.9.9] - 2026-02-20
 
 ### Added

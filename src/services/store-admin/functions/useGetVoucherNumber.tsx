@@ -8,7 +8,8 @@ export type VoucherNumberType =
   | 'grading-gate-pass'
   | 'storage-gate-pass'
   | 'nikasi-gate-pass'
-  | 'outgoing-gate-pass';
+  | 'outgoing-gate-pass'
+  | 'rental-incoming-order';
 
 /** API response shape for voucher-number */
 export interface VoucherNumberApiResponse {

@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ZustandIndexRouteImport } from './routes/zustand/index'
 import { Route as StoreAdminAuthenticatedRouteImport } from './routes/store-admin/_authenticated'
+import { Route as StoreAdminRentalIndexRouteImport } from './routes/store-admin/rental/index'
 import { Route as StoreAdminLoginIndexRouteImport } from './routes/store-admin/login/index'
 import { Route as StoreAdminAuthenticatedStorageIndexRouteImport } from './routes/store-admin/_authenticated/storage/index'
 import { Route as StoreAdminAuthenticatedPeopleIndexRouteImport } from './routes/store-admin/_authenticated/people/index'
@@ -39,6 +40,11 @@ const ZustandIndexRoute = ZustandIndexRouteImport.update({
 const StoreAdminAuthenticatedRoute = StoreAdminAuthenticatedRouteImport.update({
   id: '/store-admin/_authenticated',
   path: '/store-admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StoreAdminRentalIndexRoute = StoreAdminRentalIndexRouteImport.update({
+  id: '/store-admin/rental/',
+  path: '/store-admin/rental/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const StoreAdminLoginIndexRoute = StoreAdminLoginIndexRouteImport.update({
@@ -126,6 +132,7 @@ export interface FileRoutesByFullPath {
   '/store-admin': typeof StoreAdminAuthenticatedRouteWithChildren
   '/zustand/': typeof ZustandIndexRoute
   '/store-admin/login/': typeof StoreAdminLoginIndexRoute
+  '/store-admin/rental/': typeof StoreAdminRentalIndexRoute
   '/store-admin/additional/': typeof StoreAdminAuthenticatedAdditionalIndexRoute
   '/store-admin/analytics/': typeof StoreAdminAuthenticatedAnalyticsIndexRoute
   '/store-admin/daybook/': typeof StoreAdminAuthenticatedDaybookIndexRoute
@@ -144,6 +151,7 @@ export interface FileRoutesByTo {
   '/store-admin': typeof StoreAdminAuthenticatedRouteWithChildren
   '/zustand': typeof ZustandIndexRoute
   '/store-admin/login': typeof StoreAdminLoginIndexRoute
+  '/store-admin/rental': typeof StoreAdminRentalIndexRoute
   '/store-admin/additional': typeof StoreAdminAuthenticatedAdditionalIndexRoute
   '/store-admin/analytics': typeof StoreAdminAuthenticatedAnalyticsIndexRoute
   '/store-admin/daybook': typeof StoreAdminAuthenticatedDaybookIndexRoute
@@ -163,6 +171,7 @@ export interface FileRoutesById {
   '/store-admin/_authenticated': typeof StoreAdminAuthenticatedRouteWithChildren
   '/zustand/': typeof ZustandIndexRoute
   '/store-admin/login/': typeof StoreAdminLoginIndexRoute
+  '/store-admin/rental/': typeof StoreAdminRentalIndexRoute
   '/store-admin/_authenticated/additional/': typeof StoreAdminAuthenticatedAdditionalIndexRoute
   '/store-admin/_authenticated/analytics/': typeof StoreAdminAuthenticatedAnalyticsIndexRoute
   '/store-admin/_authenticated/daybook/': typeof StoreAdminAuthenticatedDaybookIndexRoute
@@ -183,6 +192,7 @@ export interface FileRouteTypes {
     | '/store-admin'
     | '/zustand/'
     | '/store-admin/login/'
+    | '/store-admin/rental/'
     | '/store-admin/additional/'
     | '/store-admin/analytics/'
     | '/store-admin/daybook/'
@@ -201,6 +211,7 @@ export interface FileRouteTypes {
     | '/store-admin'
     | '/zustand'
     | '/store-admin/login'
+    | '/store-admin/rental'
     | '/store-admin/additional'
     | '/store-admin/analytics'
     | '/store-admin/daybook'
@@ -219,6 +230,7 @@ export interface FileRouteTypes {
     | '/store-admin/_authenticated'
     | '/zustand/'
     | '/store-admin/login/'
+    | '/store-admin/rental/'
     | '/store-admin/_authenticated/additional/'
     | '/store-admin/_authenticated/analytics/'
     | '/store-admin/_authenticated/daybook/'
@@ -238,6 +250,7 @@ export interface RootRouteChildren {
   StoreAdminAuthenticatedRoute: typeof StoreAdminAuthenticatedRouteWithChildren
   ZustandIndexRoute: typeof ZustandIndexRoute
   StoreAdminLoginIndexRoute: typeof StoreAdminLoginIndexRoute
+  StoreAdminRentalIndexRoute: typeof StoreAdminRentalIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -261,6 +274,13 @@ declare module '@tanstack/react-router' {
       path: '/store-admin'
       fullPath: '/store-admin'
       preLoaderRoute: typeof StoreAdminAuthenticatedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/store-admin/rental/': {
+      id: '/store-admin/rental/'
+      path: '/store-admin/rental'
+      fullPath: '/store-admin/rental/'
+      preLoaderRoute: typeof StoreAdminRentalIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/store-admin/login/': {
@@ -410,6 +430,7 @@ const rootRouteChildren: RootRouteChildren = {
   StoreAdminAuthenticatedRoute: StoreAdminAuthenticatedRouteWithChildren,
   ZustandIndexRoute: ZustandIndexRoute,
   StoreAdminLoginIndexRoute: StoreAdminLoginIndexRoute,
+  StoreAdminRentalIndexRoute: StoreAdminRentalIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -2,8 +2,16 @@ import { memo, useMemo, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { useForm } from '@tanstack/react-form';
 import * as z from 'zod';
+import { ChevronDown, Package, FileStack } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import CreateRentalIncomingForm from '@/components/forms/rental-incoming-form';
 import {
   Field,
   FieldError,
@@ -721,4 +729,74 @@ export const IncomingForm = memo(function IncomingForm() {
   );
 });
 
-export default IncomingForm;
+/** Form type for the incoming page: standard gate pass or rental. */
+export type IncomingFormType =
+  | 'incoming-gate-pass'
+  | 'rental-incoming-gate-pass';
+
+const FORM_TYPE_OPTIONS: { value: IncomingFormType; label: string }[] = [
+  { value: 'incoming-gate-pass', label: 'Incoming Gate Pass' },
+  { value: 'rental-incoming-gate-pass', label: 'Rental Incoming Gate Pass' },
+];
+
+/**
+ * Wrapper that shows a type switcher at the top and renders either
+ * IncomingForm or CreateRentalIncomingForm.
+ */
+const IncomingFormWithTypeSwitch = memo(function IncomingFormWithTypeSwitch() {
+  const [formType, setFormType] =
+    useState<IncomingFormType>('incoming-gate-pass');
+  const currentLabel =
+    FORM_TYPE_OPTIONS.find((o) => o.value === formType)?.label ??
+    FORM_TYPE_OPTIONS[0].label;
+
+  return (
+    <div className="font-custom mx-auto max-w-2xl">
+      <div className="mb-6 px-4 pt-6 sm:px-8">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="outline"
+              size="default"
+              className="hover:border-primary/30 focus-visible:ring-primary font-custom min-w-48 justify-between gap-2 border-gray-200 bg-white shadow-sm transition-colors duration-200 hover:bg-gray-50 focus-visible:ring-2 focus-visible:ring-offset-2"
+            >
+              <span className="flex items-center gap-2">
+                {formType === 'incoming-gate-pass' ? (
+                  <Package className="text-primary size-4" />
+                ) : (
+                  <FileStack className="text-primary size-4" />
+                )}
+                {currentLabel}
+              </span>
+              <ChevronDown className="size-4 shrink-0 opacity-60" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="font-custom min-w-56">
+            {FORM_TYPE_OPTIONS.map((option) => (
+              <DropdownMenuItem
+                key={option.value}
+                onClick={() => setFormType(option.value)}
+                className="flex cursor-pointer items-center gap-2"
+              >
+                {option.value === 'incoming-gate-pass' ? (
+                  <Package className="size-4" />
+                ) : (
+                  <FileStack className="size-4" />
+                )}
+                {option.label}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
+      {formType === 'incoming-gate-pass' ? (
+        <IncomingForm />
+      ) : (
+        <CreateRentalIncomingForm />
+      )}
+    </div>
+  );
+});
+
+export default IncomingFormWithTypeSwitch;
