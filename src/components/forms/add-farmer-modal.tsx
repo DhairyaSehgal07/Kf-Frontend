@@ -114,6 +114,16 @@ export const AddFarmerModal = memo(function AddFarmerModal({
                 message: 'This account number is already taken',
               })
           ),
+
+        aadharCardNumber: z
+          .string()
+          .trim()
+          .max(12, 'Aadhar card number must not exceed 12 characters'),
+
+        panCardNumber: z
+          .string()
+          .trim()
+          .max(10, 'PAN card number must not exceed 10 characters'),
       }),
     [usedAccountNumbers, usedMobileNumbers]
   );
@@ -128,6 +138,8 @@ export const AddFarmerModal = memo(function AddFarmerModal({
       address: '',
       mobileNumber: '',
       accountNumber: nextAccountNumber.toString(),
+      aadharCardNumber: '',
+      panCardNumber: '',
     },
 
     validators: {
@@ -147,6 +159,12 @@ export const AddFarmerModal = memo(function AddFarmerModal({
           coldStorageId: coldStorage._id,
           linkedById: admin._id,
           accountNumber: Number(value.accountNumber),
+          ...(value.aadharCardNumber?.trim() && {
+            aadharCardNumber: value.aadharCardNumber.trim(),
+          }),
+          ...(value.panCardNumber?.trim() && {
+            panCardNumber: value.panCardNumber.trim(),
+          }),
         },
         {
           onSuccess: () => {
@@ -389,6 +407,98 @@ export const AddFarmerModal = memo(function AddFarmerModal({
                       onBlur={field.handleBlur}
                       onChange={(e) => field.handleChange(e.target.value)}
                       placeholder="Enter address"
+                      aria-invalid={isInvalid}
+                    />
+
+                    {isInvalid && (
+                      <FieldError
+                        errors={
+                          field.state.meta.errors as Array<
+                            { message?: string } | undefined
+                          >
+                        }
+                      />
+                    )}
+                  </Field>
+                );
+              }}
+            />
+
+            {/* ---------------- AADHAR CARD NUMBER (optional) ---------------- */}
+
+            <form.Field
+              name="aadharCardNumber"
+              children={(field) => {
+                const isInvalid =
+                  field.state.meta.isTouched && !field.state.meta.isValid;
+
+                return (
+                  <Field data-invalid={isInvalid}>
+                    <FieldLabel htmlFor={field.name}>
+                      Aadhar Card Number{' '}
+                      <span className="text-muted-foreground font-normal">
+                        (optional)
+                      </span>
+                    </FieldLabel>
+
+                    <Input
+                      id={field.name}
+                      name={field.name}
+                      value={field.state.value}
+                      onBlur={field.handleBlur}
+                      onChange={(e) =>
+                        field.handleChange(
+                          e.target.value.replace(/\D/g, '').slice(0, 12)
+                        )
+                      }
+                      placeholder="Enter 12-digit Aadhar number"
+                      maxLength={12}
+                      aria-invalid={isInvalid}
+                    />
+
+                    {isInvalid && (
+                      <FieldError
+                        errors={
+                          field.state.meta.errors as Array<
+                            { message?: string } | undefined
+                          >
+                        }
+                      />
+                    )}
+                  </Field>
+                );
+              }}
+            />
+
+            {/* ---------------- PAN CARD NUMBER (optional) ---------------- */}
+
+            <form.Field
+              name="panCardNumber"
+              children={(field) => {
+                const isInvalid =
+                  field.state.meta.isTouched && !field.state.meta.isValid;
+
+                return (
+                  <Field data-invalid={isInvalid}>
+                    <FieldLabel htmlFor={field.name}>
+                      PAN Card Number{' '}
+                      <span className="text-muted-foreground font-normal">
+                        (optional)
+                      </span>
+                    </FieldLabel>
+
+                    <Input
+                      id={field.name}
+                      name={field.name}
+                      value={field.state.value}
+                      onBlur={field.handleBlur}
+                      onChange={(e) =>
+                        field.handleChange(
+                          e.target.value.toUpperCase().slice(0, 10)
+                        )
+                      }
+                      placeholder="e.g. ABCDE1234F"
+                      maxLength={10}
                       aria-invalid={isInvalid}
                     />
 

@@ -37,6 +37,8 @@ export interface QuickRegisterFarmerInput {
   coldStorageId: string;
   linkedById: string;
   accountNumber: number;
+  aadharCardNumber?: string;
+  panCardNumber?: string;
 }
 
 /** Farmer as returned in quick-register-farmer response */
