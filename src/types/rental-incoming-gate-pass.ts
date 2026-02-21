@@ -18,6 +18,7 @@ export interface CreateRentalIncomingGatePassInput {
   farmerStorageLinkId: string;
   date: string; // ISO date e.g. "2025-02-20"
   variety: string;
+  manualRentalGatePassNumber?: string;
   bagSizes: CreateRentalIncomingGatePassBagSize[];
 }
 
@@ -54,6 +55,8 @@ export interface RentalIncomingGatePass {
   variety: string;
   bagSizes: RentalIncomingGatePassBagSizeItem[];
   status: string;
+  /** Optional manual gate pass number (e.g. from physical gate pass) */
+  manualRentalGatePassNumber?: string;
   createdAt: string;
   updatedAt: string;
 }

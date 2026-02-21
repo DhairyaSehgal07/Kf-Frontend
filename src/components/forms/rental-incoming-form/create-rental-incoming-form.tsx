@@ -29,6 +29,13 @@ export const CreateRentalIncomingForm = memo(
         farmerStorageLinkId: payload.farmerStorageLinkId,
         date: payload.date,
         variety: payload.variety,
+        ...(payload.manualRentalGatePassNumber != null &&
+        payload.manualRentalGatePassNumber.trim() !== ''
+          ? {
+              manualRentalGatePassNumber:
+                payload.manualRentalGatePassNumber.trim(),
+            }
+          : {}),
         bagSizes: payload.bagSizes,
       });
       navigate({ to: '/store-admin/daybook' });

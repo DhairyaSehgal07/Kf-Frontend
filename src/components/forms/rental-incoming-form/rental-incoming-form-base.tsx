@@ -52,6 +52,7 @@ export type RentalIncomingFormSubmitPayload = {
     currentQuantity: number;
     location: { chamber: string; floor: string; row: string };
   }>;
+  manualRentalGatePassNumber?: string;
 };
 
 export interface RentalIncomingFormBaseProps {
@@ -131,6 +132,11 @@ export const RentalIncomingFormBase = memo(function RentalIncomingFormBase({
             })
           ),
           remarks: z.string().max(500).default(''),
+          manualRentalGatePassNumber: z
+            .string()
+            .max(200)
+            .optional()
+            .default(''),
         })
         .refine(
           (data) => {
@@ -210,6 +216,7 @@ export const RentalIncomingFormBase = memo(function RentalIncomingFormBase({
       extraQuantityRows: [] as ExtraQuantityRow[],
       locationBySize: {} as Record<string, LocationEntry>,
       remarks: '',
+      manualRentalGatePassNumber: '',
     },
     validators: {
       onSubmit: formSchema as never,
@@ -256,6 +263,12 @@ export const RentalIncomingFormBase = memo(function RentalIncomingFormBase({
         date: dateIso,
         variety: value.variety,
         bagSizes,
+        ...(value.manualRentalGatePassNumber?.trim()
+          ? {
+              manualRentalGatePassNumber:
+                value.manualRentalGatePassNumber.trim(),
+            }
+          : {}),
       };
 
       if (!submitFromSheetRef.current) {
@@ -396,6 +409,28 @@ export const RentalIncomingFormBase = memo(function RentalIncomingFormBase({
                       value={field.state.value}
                       onChange={(v) => field.handleChange(v)}
                       label="Date"
+                    />
+                  </Field>
+                )}
+              />
+
+              <form.Field
+                name="manualRentalGatePassNumber"
+                children={(field) => (
+                  <Field>
+                    <FieldLabel
+                      htmlFor="manualRentalGatePassNumber"
+                      className="font-custom mb-2 block text-base font-semibold"
+                    >
+                      Manual Rental Gate Pass No. (optional)
+                    </FieldLabel>
+                    <Input
+                      id="manualRentalGatePassNumber"
+                      type="text"
+                      value={field.state.value}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      placeholder="Enter manual rental gate pass number"
+                      className="font-custom"
                     />
                   </Field>
                 )}

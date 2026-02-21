@@ -86,12 +86,14 @@ const RentalIncomingVoucher = memo(function RentalIncomingVoucher({
 
   const variety = entry.variety ?? '—';
   const status = (entry.status ?? '—').replace(/_/g, ' ');
+  const manualRentalGatePassNumber =
+    entry.manualRentalGatePassNumber?.trim() || null;
 
   return (
     <Card className="border-border/40 hover:border-primary/30 overflow-hidden pt-0 shadow-sm transition-all duration-200 hover:shadow-md">
-      <div className="w-full px-4 py-4 sm:px-5 sm:py-5">
-        <CardHeader className="px-0 pt-0 pb-4">
-          <div className="flex items-start justify-between gap-4">
+      <div className="px-3 pt-2 pb-3 sm:px-4 sm:pb-4">
+        <CardHeader className="px-0 pt-2 pb-2 sm:pt-3">
+          <div className="flex items-start justify-between gap-3">
             <div className="min-w-0 flex-1">
               <div className="flex min-w-0 items-center gap-2">
                 <div className="bg-primary h-1.5 w-1.5 shrink-0 rounded-full" />
@@ -100,6 +102,12 @@ const RentalIncomingVoucher = memo(function RentalIncomingVoucher({
                   <span className="text-primary">
                     #{entry.gatePassNo ?? '—'}
                   </span>
+                  {manualRentalGatePassNumber != null && (
+                    <span className="text-muted-foreground font-normal">
+                      {' '}
+                      · Manual #{manualRentalGatePassNumber}
+                    </span>
+                  )}
                 </h3>
               </div>
               <p className="text-muted-foreground mt-2 text-xs">
@@ -107,16 +115,16 @@ const RentalIncomingVoucher = memo(function RentalIncomingVoucher({
               </p>
             </div>
 
-            <div className="flex shrink-0 items-center gap-2">
+            <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
               <Badge
                 variant="secondary"
-                className="px-2.5 py-1 text-[10px] font-medium"
+                className="px-2 py-0.5 text-[10px] font-medium"
               >
                 {totalInitial.toLocaleString('en-IN')} bags
               </Badge>
               <Badge
                 variant="outline"
-                className="px-2.5 py-1 text-[10px] font-medium capitalize"
+                className="px-2 py-0.5 text-[10px] font-medium capitalize"
               >
                 {status}
               </Badge>
@@ -124,14 +132,14 @@ const RentalIncomingVoucher = memo(function RentalIncomingVoucher({
           </div>
         </CardHeader>
 
-        <div className="mb-4 grid w-full grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+        <div className="mb-3 grid grid-cols-2 gap-3 lg:grid-cols-4">
           <DetailRow label="Farmer" value={farmerName} icon={User} />
           <DetailRow label="Account" value={`#${accountNumber}`} />
           <DetailRow label="Variety" value={variety} icon={Package} />
           <DetailRow label="Lot No" value={lotNo} />
         </div>
 
-        <div className="border-border/50 flex w-full items-center justify-between border-t pt-4">
+        <div className="flex items-center justify-between pt-1">
           <Button
             variant="ghost"
             size="sm"
@@ -151,28 +159,26 @@ const RentalIncomingVoucher = memo(function RentalIncomingVoucher({
             )}
           </Button>
 
-          <div className="flex shrink-0 items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handlePrintPdf}
-              className="h-8 w-8 p-0"
-              aria-label="Print gate pass"
-            >
-              <Printer className="h-3.5 w-3.5" />
-            </Button>
-          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handlePrintPdf}
+            className="h-8 w-8 p-0"
+            aria-label="Print gate pass"
+          >
+            <Printer className="h-3.5 w-3.5" />
+          </Button>
         </div>
 
         {isExpanded && (
           <>
-            <Separator className="my-5" />
-            <div className="w-full space-y-5">
-              <section className="w-full">
-                <h4 className="text-muted-foreground/70 mb-3 text-xs font-semibold tracking-wider uppercase">
+            <Separator className="my-4" />
+            <div className="space-y-4">
+              <section>
+                <h4 className="text-muted-foreground/70 mb-2 text-xs font-semibold tracking-wider uppercase">
                   Farmer Details
                 </h4>
-                <div className="bg-muted/30 grid w-full grid-cols-1 gap-3 rounded-lg p-4 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="bg-muted/30 grid grid-cols-1 gap-2 rounded-lg p-2 sm:grid-cols-2 lg:grid-cols-3">
                   <DetailRow label="Name" value={farmerName} />
                   <DetailRow label="Mobile" value={farmerMobile} />
                   <DetailRow label="Account" value={`#${accountNumber}`} />
@@ -188,9 +194,35 @@ const RentalIncomingVoucher = memo(function RentalIncomingVoucher({
                 </div>
               </section>
 
+              <Separator />
+
+              <section>
+                <h4 className="text-muted-foreground/70 mb-2.5 text-xs font-semibold tracking-wider uppercase">
+                  Gate Pass Details
+                </h4>
+                <div className="bg-muted/30 grid grid-cols-1 gap-3 rounded-lg p-3 sm:grid-cols-2 lg:grid-cols-3">
+                  <DetailRow
+                    label="Pass Number"
+                    value={`#${entry.gatePassNo ?? '—'}`}
+                  />
+                  {manualRentalGatePassNumber != null && (
+                    <DetailRow
+                      label="Manual Gate Pass No"
+                      value={`#${manualRentalGatePassNumber}`}
+                    />
+                  )}
+                  <DetailRow label="Status" value={status} />
+                  <DetailRow label="Lot No" value={lotNo} />
+                  <DetailRow
+                    label="Bags"
+                    value={totalInitial.toLocaleString('en-IN')}
+                  />
+                </div>
+              </section>
+
               {bagSizesOrdered.length > 0 && (
-                <section className="w-full">
-                  <h4 className="text-muted-foreground/70 mb-3 text-xs font-semibold tracking-wider uppercase">
+                <section>
+                  <h4 className="text-muted-foreground/70 mb-2.5 text-xs font-semibold tracking-wider uppercase">
                     Order Details
                   </h4>
                   <div className="border-border w-full overflow-hidden rounded-lg border shadow-sm">
