@@ -63,7 +63,7 @@ import {
   type PassVoucherData,
 } from '@/components/daybook/vouchers';
 import type { GradingOrderDetailRow } from '@/components/daybook/vouchers/types';
-import type { StockLedgerRow } from '@/components/pdf/StockLedgerPdf';
+import type { StockLedgerRow } from '@/components/pdf/stockLedgerPdfTypes';
 import { Spinner } from '@/components/ui/spinner';
 import { downloadStockLedgerExcel } from '@/utils/stockLedgerExcel';
 

@@ -1,4 +1,5 @@
 import { memo, useMemo } from 'react';
+import { useNavigate } from '@tanstack/react-router';
 import {
   RentalIncomingFormBase,
   type RentalIncomingFormSubmitPayload,
@@ -8,6 +9,7 @@ import { useGetReceiptVoucherNumber } from '@/services/store-admin/functions/use
 
 export const CreateRentalIncomingForm = memo(
   function CreateRentalIncomingForm() {
+    const navigate = useNavigate();
     const createGatePass = useCreateRentalIncomingGatePass();
     const { data: nextVoucherNumber, isLoading: isLoadingVoucher } =
       useGetReceiptVoucherNumber('rental-incoming-order');
@@ -29,6 +31,7 @@ export const CreateRentalIncomingForm = memo(
         variety: payload.variety,
         bagSizes: payload.bagSizes,
       });
+      navigate({ to: '/store-admin/daybook' });
     };
 
     return (

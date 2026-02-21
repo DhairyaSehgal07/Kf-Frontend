@@ -198,7 +198,8 @@ export const RentalIncomingFormBase = memo(function RentalIncomingFormBase({
 
   const [step, setStep] = useState<1 | 2>(1);
   const [summaryOpen, setSummaryOpen] = useState(false);
-  const openSheetRef = useRef(false);
+  /** True when submit is from the sheet's Create button; then we perform the actual submit. */
+  const submitFromSheetRef = useRef(false);
 
   const form = useForm({
     defaultValues: {
@@ -257,13 +258,12 @@ export const RentalIncomingFormBase = memo(function RentalIncomingFormBase({
         bagSizes,
       };
 
-      if (!openSheetRef.current) {
-        openSheetRef.current = true;
+      if (!submitFromSheetRef.current) {
         setSummaryOpen(true);
         return;
       }
 
-      openSheetRef.current = false;
+      submitFromSheetRef.current = false;
       await onSubmitProp(payload);
       form.reset();
       setStep(1);
@@ -881,7 +881,10 @@ export const RentalIncomingFormBase = memo(function RentalIncomingFormBase({
         isPending={isSubmitting}
         isLoadingVoucher={isLoadingVoucher}
         gatePassNo={gatePassNoForSummary}
-        onSubmit={() => form.handleSubmit()}
+        onSubmit={() => {
+          submitFromSheetRef.current = true;
+          form.handleSubmit();
+        }}
       />
     </main>
   );

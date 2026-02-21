@@ -4,7 +4,7 @@ import {
   GRADING_SIZES,
   JUTE_BAG_WEIGHT,
 } from '@/components/forms/grading/constants';
-import type { StockLedgerRow } from '@/components/pdf/StockLedgerPdf';
+import type { StockLedgerRow } from '@/components/pdf/stockLedgerPdfTypes';
 import {
   sortRowsByGatePassNo,
   computeWtReceivedAfterGrading,
@@ -16,7 +16,7 @@ import {
   computeAmountPayable,
   getTotalJuteAndLenoBags,
   SIZE_HEADER_LABELS,
-} from '@/components/pdf/StockLedgerPdf';
+} from '@/components/pdf/stockLedgerPdfUtils';
 
 /** Build header row matching PDF table columns */
 function getHeaders(): string[] {
@@ -76,8 +76,7 @@ function rowToExcelCells(row: StockLedgerRow): (string | number)[] {
       ? String(row.manualIncomingVoucherNo)
       : '—';
   const ggpNoStr =
-    row.gradingGatePassNo != null &&
-    String(row.gradingGatePassNo).trim() !== ''
+    row.gradingGatePassNo != null && String(row.gradingGatePassNo).trim() !== ''
       ? String(row.gradingGatePassNo)
       : '—';
   const manualGgpStr =
@@ -101,9 +100,7 @@ function rowToExcelCells(row: StockLedgerRow): (string | number)[] {
   const amountPayable = computeAmountPayable(row);
 
   const typeStr =
-    totalJute > 0 && totalLeno > 0
-      ? 'JUTE, LENO'
-      : row.bagType ?? '—';
+    totalJute > 0 && totalLeno > 0 ? 'JUTE, LENO' : (row.bagType ?? '—');
 
   const hasSplit = row.sizeBagsJute != null || row.sizeBagsLeno != null;
   const sizeCells = GRADING_SIZES.map((size) => {
@@ -113,7 +110,10 @@ function rowToExcelCells(row: StockLedgerRow): (string | number)[] {
       const juteBags = row.sizeBagsJute?.[size] ?? 0;
       const lenoBags = row.sizeBagsLeno?.[size] ?? 0;
       totalBags = juteBags + lenoBags;
-      wt = juteBags > 0 ? row.sizeWeightPerBagJute?.[size] : row.sizeWeightPerBagLeno?.[size];
+      wt =
+        juteBags > 0
+          ? row.sizeWeightPerBagJute?.[size]
+          : row.sizeWeightPerBagLeno?.[size];
     } else {
       totalBags = row.sizeBags?.[size] ?? 0;
       wt = row.sizeWeightPerBag?.[size];
@@ -200,7 +200,8 @@ function buildTotalRow(rows: StockLedgerRow[]): (string | number)[] {
     totalLessBardanaAfterGrading += computeLessBardanaAfterGrading(row);
     totalActualWtOfPotato += computeActualWtOfPotato(row);
     const shortage = computeWeightShortage(row);
-    if (shortage != null && !Number.isNaN(shortage)) totalWeightShortage += shortage;
+    if (shortage != null && !Number.isNaN(shortage))
+      totalWeightShortage += shortage;
     totalAmountPayable += computeAmountPayable(row);
   }
 
@@ -236,7 +237,8 @@ function buildTotalRow(rows: StockLedgerRow[]): (string | number)[] {
     totalLessBardanaAfterGrading > 0 ? totalLessBardanaAfterGrading : '',
     totalActualWtOfPotato > 0 ? totalActualWtOfPotato : '',
     totalWeightShortage !== 0 ? totalWeightShortage : '',
-    totalWeightShortagePercent != null && !Number.isNaN(totalWeightShortagePercent)
+    totalWeightShortagePercent != null &&
+    !Number.isNaN(totalWeightShortagePercent)
       ? `${totalWeightShortagePercent.toFixed(1)}%`
       : '',
     totalAmountPayable > 0

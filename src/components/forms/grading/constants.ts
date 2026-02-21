@@ -3,9 +3,31 @@
  *  ===================================================== */
 
 export const POTATO_VARIETIES: { label: string; value: string }[] = [
+  { label: 'Atlantic', value: 'Atlantic' },
+  { label: 'Cardinal', value: 'Cardinal' },
+  { label: 'Chipsona 1', value: 'Chipsona 1' },
+  { label: 'Chipsona 2', value: 'Chipsona 2' },
+  { label: 'Chipsona 3', value: 'Chipsona 3' },
+  { label: 'Colomba', value: 'Colomba' },
+  { label: 'Desiree', value: 'Desiree' },
+  { label: 'Diamond', value: 'Diamond' },
+  { label: 'FC - 11', value: 'FC - 11' },
+  { label: 'FC - 12', value: 'FC - 12' },
+  { label: 'FC - 5', value: 'FC - 5' },
   { label: 'Himalini', value: 'Himalini' },
-  { label: 'B101', value: 'B101' },
-  { label: 'Jyoti', value: 'Jyoti' },
+  { label: 'Fry Sona', value: 'Fry Sona' },
+  { label: 'K. Badshah', value: 'K. Badshah' },
+  { label: 'K. Chandramukhi', value: 'K. Chandramukhi' },
+  { label: 'K. Jyoti', value: 'K. Jyoti' },
+  { label: 'K. Pukhraj', value: 'K. Pukhraj' },
+  { label: 'Kuroda', value: 'Kuroda' },
+  { label: 'Khyati', value: 'Khyati' },
+  { label: 'L.R', value: 'L.R' },
+  { label: 'Lima', value: 'Lima' },
+  { label: 'Mohan', value: 'Mohan' },
+  { label: 'Pushkar', value: 'Pushkar' },
+  { label: 'SU - Khyati', value: 'SU - Khyati' },
+  { label: 'Super Six', value: 'Super Six' },
 ];
 
 /** =====================================================
@@ -46,31 +68,18 @@ export type BuyBackCost = {
   sizeRates: Record<GradingSize, number>;
 };
 
-export const BUY_BACK_COST: BuyBackCost[] = [
-  {
-    variety: 'Himalini',
-    sizeRates: {
-      Ration: 0,
-      Seed: 0,
-      Goli: 0,
-      'Number-8': 0,
-      'Number-10': 0,
-      'Number-12': 0,
-      'Number-6/4': 0,
-      Cut: 0,
-    },
-  },
-  {
-    variety: 'B101',
-    sizeRates: {
-      Ration: 0,
-      Seed: 0,
-      Goli: 0,
-      'Number-8': 0,
-      'Number-10': 0,
-      'Number-12': 0,
-      'Number-6/4': 0,
-      Cut: 0,
-    },
-  },
-];
+const defaultSizeRates: Record<GradingSize, number> = {
+  Ration: 0,
+  Seed: 0,
+  Goli: 0,
+  'Number-8': 0,
+  'Number-10': 0,
+  'Number-12': 0,
+  'Number-6/4': 0,
+  Cut: 0,
+};
+
+export const BUY_BACK_COST: BuyBackCost[] = POTATO_VARIETIES.map((v) => ({
+  variety: v.value,
+  sizeRates: { ...defaultSizeRates },
+}));
