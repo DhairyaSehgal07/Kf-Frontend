@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.3] - 2026-02-22
+
+### Added
+- Temperature monitoring: bar charts for overview (all chambers) and per-chamber temperature over time using recharts
+- Chart UI component (`chart.tsx`) with ChartContainer, ChartTooltip, and recharts integration
+- Dependency: recharts 2.15.4
+
+### Changed
+- Voucher number type: `rental-incoming-order` renamed to `rental-storage-gate-pass` in useGetVoucherNumber and rental incoming form
+
 ## [0.10.2] - 2026-02-21
 
 ### Added

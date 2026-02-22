@@ -12,7 +12,7 @@ export const CreateRentalIncomingForm = memo(
     const navigate = useNavigate();
     const createGatePass = useCreateRentalIncomingGatePass();
     const { data: nextVoucherNumber, isLoading: isLoadingVoucher } =
-      useGetReceiptVoucherNumber('rental-incoming-order');
+      useGetReceiptVoucherNumber('rental-storage-gate-pass');
 
     const voucherNumberDisplay = useMemo(
       () =>
