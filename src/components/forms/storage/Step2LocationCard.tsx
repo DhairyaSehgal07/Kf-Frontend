@@ -55,6 +55,10 @@ export const Step2LocationCard = memo(function Step2LocationCard({
                 row: '',
               };
               const error = locationErrors[size];
+              const bagCount = Object.values(pass.removedQuantities).reduce(
+                (sum, sizes) => sum + (sizes[size] ?? 0),
+                0
+              );
               return (
                 <div
                   key={size}
@@ -62,6 +66,9 @@ export const Step2LocationCard = memo(function Step2LocationCard({
                 >
                   <p className="font-custom text-foreground mb-2 font-medium">
                     {size}
+                    <span className="font-custom text-muted-foreground ml-1.5 font-normal">
+                      ({bagCount} {bagCount === 1 ? 'bag' : 'bags'})
+                    </span>
                   </p>
                   <div className="grid gap-3 sm:grid-cols-3">
                     <Field data-invalid={!!error}>

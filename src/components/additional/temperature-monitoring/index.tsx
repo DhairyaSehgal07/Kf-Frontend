@@ -54,7 +54,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Cell } from 'recharts';
 import {
   Search,
   RefreshCw,
@@ -62,15 +61,11 @@ import {
   Plus,
   Pencil,
   CalendarIcon,
-  BarChart3,
 } from 'lucide-react';
+import { DatePicker } from '@/components/forms/date-picker';
 import { formatDate as formatDateDDMMYYYY } from '@/lib/helpers';
 import { cn } from '@/lib/utils';
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from '@/components/ui/chart';
+import { X } from 'lucide-react';
 
 /** Today's date in YYYY-MM-DDTHH:mm for datetime-local input */
 function getTodayDatetimeLocal(): string {
@@ -107,6 +102,18 @@ function parseDDMMYYYY(str: string): Date | undefined {
   if (!day || !month || !year) return undefined;
   const parsed = new Date(year, month - 1, day);
   return isNaN(parsed.getTime()) ? undefined : parsed;
+}
+
+/** True if doc's date (ISO string) falls on the same calendar day (local) as dd.mm.yyyy */
+function isDocDateOn(docDateStr: string, ddMmYyyy: string): boolean {
+  const selected = parseDDMMYYYY(ddMmYyyy);
+  if (!selected) return false;
+  const docDate = new Date(docDateStr);
+  return (
+    selected.getFullYear() === docDate.getFullYear() &&
+    selected.getMonth() === docDate.getMonth() &&
+    selected.getDate() === docDate.getDate()
+  );
 }
 
 /** dd.mm.yyyy + HH:mm → YYYY-MM-DDTHH:mm */
@@ -174,25 +181,9 @@ const TEMP_MAX = 122;
 const RANGE_MIN = 28;
 const RANGE_MAX = 40;
 
-/** Color ranges for charts (from legend): Green 32–33, Yellow 34–40, Blue 41–48, Red >48, Gray <32 */
-const TEMP_RANGE_COLORS = {
-  green: 'oklch(0.55 0.18 149)', // 32–33°F
-  yellow: 'oklch(0.88 0.15 95)', // 34–40°F
-  blue: 'oklch(0.55 0.2 250)', // 41–48°F
-  red: 'oklch(0.55 0.22 25)', // Above 48°F
-  gray: 'oklch(0.65 0.02 250)', // Below 32°F
-} as const;
-
-function getTemperatureRangeColor(value: number): string {
-  if (value >= 32 && value <= 33) return TEMP_RANGE_COLORS.green;
-  if (value >= 34 && value <= 40) return TEMP_RANGE_COLORS.yellow;
-  if (value >= 41 && value <= 48) return TEMP_RANGE_COLORS.blue;
-  if (value > 48) return TEMP_RANGE_COLORS.red;
-  return TEMP_RANGE_COLORS.gray;
-}
-
-function isAllInRange(readings: TemperatureReadingItem[]): boolean {
-  return readings.every((r) => r.value >= RANGE_MIN && r.value <= RANGE_MAX);
+/** Whether a single chamber value is within the allowed range (28–40°F) */
+function isChamberValueInRange(value: number): boolean {
+  return value >= RANGE_MIN && value <= RANGE_MAX;
 }
 
 /** Default payload for create form: 4 chambers with empty values */
@@ -240,6 +231,7 @@ const TemperatureMonitoringPage = memo(function TemperatureMonitoringPage() {
     refetch,
   } = useGetTemperatureReadings();
   const [searchQuery, setSearchQuery] = useState('');
+  const [dateFilter, setDateFilter] = useState<string | undefined>(undefined);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [addDatePopoverOpen, setAddDatePopoverOpen] = useState(false);
   const [editDatePopoverOpen, setEditDatePopoverOpen] = useState(false);
@@ -343,81 +335,33 @@ const TemperatureMonitoringPage = memo(function TemperatureMonitoringPage() {
   };
 
   const filteredDocs = useMemo(() => {
-    if (!searchQuery.trim()) return temperatureDocs;
-    const q = searchQuery.toLowerCase();
-    return temperatureDocs.filter(
-      (doc) =>
-        doc.date.toLowerCase().includes(q) ||
-        doc._id.toLowerCase().includes(q) ||
-        doc.temperatureReading.some(
+    let docs = temperatureDocs;
+    if (dateFilter?.trim()) {
+      docs = docs.filter((doc) => isDocDateOn(doc.date, dateFilter.trim()));
+    }
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      docs = docs.filter((doc) => {
+        const matchChamberOrValue = doc.temperatureReading.some(
           (r) =>
             r.chamber.toLowerCase().includes(q) || String(r.value).includes(q)
-        )
-    );
-  }, [temperatureDocs, searchQuery]);
-
-  /** Chart data: last 20 readings, one row per date with Chamber 1–4 values */
-  const overviewChartData = useMemo(() => {
-    const docs = [...filteredDocs]
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-      .slice(0, 20)
-      .reverse();
-    return docs.map((doc) => {
-      const row: Record<string, string | number> = {
-        dateLabel: formatDate(doc.date),
-        dateSort: doc.date,
-      };
-      const byChamber: Record<string, number> = {};
-      for (const r of doc.temperatureReading ?? []) {
-        byChamber[r.chamber] = r.value;
-      }
-      for (const c of DEFAULT_CHAMBER_IDS) {
-        row[`Chamber ${c}`] = byChamber[c] ?? 0;
-      }
-      return row;
-    });
-  }, [filteredDocs]);
-
-  /** Per-chamber series for chamber-wise analytics (last 15 dates per chamber) */
-  const chamberWiseChartData = useMemo(() => {
-    const docs = [...filteredDocs].sort(
-      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-    );
-    const byChamber: Record<
-      string,
-      { dateLabel: string; dateSort: string; value: number }[]
-    > = {};
-    for (const c of DEFAULT_CHAMBER_IDS) {
-      byChamber[c] = [];
+        );
+        return (
+          doc.date.toLowerCase().includes(q) ||
+          doc._id.toLowerCase().includes(q) ||
+          matchChamberOrValue
+        );
+      });
     }
-    for (const doc of docs.slice(0, 25)) {
-      const dateLabel = formatDate(doc.date);
-      for (const r of doc.temperatureReading ?? []) {
-        if (byChamber[r.chamber]) {
-          byChamber[r.chamber].push({
-            dateLabel,
-            dateSort: doc.date,
-            value: r.value,
-          });
-        }
-      }
-    }
-    // Oldest first for chart X axis
-    for (const c of DEFAULT_CHAMBER_IDS) {
-      byChamber[c].sort(
-        (a, b) =>
-          new Date(a.dateSort).getTime() - new Date(b.dateSort).getTime()
-      );
-    }
-    return byChamber;
-  }, [filteredDocs]);
+    return docs;
+  }, [temperatureDocs, dateFilter, searchQuery]);
 
   const columns = useMemo(
     () => [
       columnHelper.accessor('date', {
         header: 'Date',
         cell: (info) => (
-          <span className="font-custom text-muted-foreground text-sm">
+          <span className="font-custom text-sm font-medium">
             {formatDate(info.getValue())}
           </span>
         ),
@@ -425,38 +369,34 @@ const TemperatureMonitoringPage = memo(function TemperatureMonitoringPage() {
       ...DEFAULT_CHAMBER_IDS.map((chamberId) =>
         columnHelper.display({
           id: `chamber-${chamberId}`,
-          header: `Chamber ${chamberId} (${UNIT})`,
+          header: `Ch ${chamberId}`,
           cell: ({ row }) => {
             const readings = row.original.temperatureReading ?? [];
             const reading = readings.find((r) => r.chamber === chamberId);
             const value = reading?.value;
+            const inRange =
+              value != null ? isChamberValueInRange(value) : false;
             return (
-              <span className="font-custom text-sm font-medium">
-                {value != null ? `${value}${UNIT}` : '–'}
-              </span>
+              <div className="font-custom flex flex-col gap-1.5">
+                <span className="font-custom text-sm font-medium tabular-nums">
+                  {value != null ? `${value}${UNIT}` : '–'}
+                </span>
+                <span
+                  className={`text-xs font-medium ${
+                    value == null
+                      ? 'text-muted-foreground'
+                      : inRange
+                        ? 'text-primary font-medium'
+                        : 'text-destructive'
+                  }`}
+                >
+                  {value == null ? '–' : inRange ? 'OK' : 'Out of range'}
+                </span>
+              </div>
             );
           },
         })
       ),
-      columnHelper.display({
-        id: 'status',
-        header: 'Status',
-        cell: ({ row }) => {
-          const readings = row.original.temperatureReading ?? [];
-          const inRange = isAllInRange(readings);
-          return (
-            <span
-              className={`font-custom inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
-                inRange
-                  ? 'bg-primary/10 text-primary'
-                  : 'bg-destructive/10 text-destructive'
-              }`}
-            >
-              {inRange ? 'Within range' : 'Out of range'}
-            </span>
-          );
-        },
-      }),
       columnHelper.display({
         id: 'actions',
         header: '',
@@ -820,27 +760,70 @@ const TemperatureMonitoringPage = memo(function TemperatureMonitoringPage() {
           </ItemFooter>
         </Item>
 
+        {/* Search by date */}
+        <Item variant="outline" size="sm" className="rounded-xl">
+          <ItemHeader className="flex flex-wrap items-end gap-4">
+            <DatePicker
+              id="temperature-date-filter"
+              label="Search by date"
+              value={dateFilter}
+              onChange={(value) => setDateFilter(value || undefined)}
+            />
+            {dateFilter && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="font-custom text-muted-foreground hover:text-foreground -mb-1 gap-1.5"
+                onClick={() => setDateFilter(undefined)}
+              >
+                <X className="h-4 w-4" />
+                Clear date filter
+              </Button>
+            )}
+          </ItemHeader>
+        </Item>
+
         {/* Table */}
         {filteredDocs.length === 0 ? (
           <Card>
             <CardContent className="py-8 pt-6 text-center">
               <p className="font-custom text-muted-foreground">
-                {searchQuery
-                  ? 'No readings match your search.'
-                  : 'No temperature readings yet.'}
+                {dateFilter
+                  ? 'No temperature readings found for this date. Try another date or clear the date filter.'
+                  : searchQuery
+                    ? 'No readings match your search.'
+                    : 'No temperature readings yet.'}
               </p>
+              {dateFilter && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="font-custom mt-4"
+                  onClick={() => setDateFilter(undefined)}
+                >
+                  Clear date filter
+                </Button>
+              )}
             </CardContent>
           </Card>
         ) : (
-          <Card className="overflow-hidden rounded-xl">
-            <Table>
+          <div className="border-border overflow-x-auto rounded-lg border">
+            <Table className="border-collapse">
               <TableHeader>
                 {table.getHeaderGroups().map((headerGroup) => (
-                  <TableRow key={headerGroup.id}>
-                    {headerGroup.headers.map((header) => (
+                  <TableRow
+                    key={headerGroup.id}
+                    className="border-border bg-muted hover:bg-muted"
+                  >
+                    {headerGroup.headers.map((header, i) => (
                       <TableHead
                         key={header.id}
-                        className="font-custom px-4 py-3"
+                        className={cn(
+                          'font-custom border-border border px-4 py-2 font-bold',
+                          i === 0 ? 'text-left' : 'text-center'
+                        )}
                       >
                         {header.isPlaceholder
                           ? null
@@ -855,11 +838,17 @@ const TemperatureMonitoringPage = memo(function TemperatureMonitoringPage() {
               </TableHeader>
               <TableBody>
                 {table.getRowModel().rows.map((row) => (
-                  <TableRow key={row.id}>
-                    {row.getVisibleCells().map((cell) => (
+                  <TableRow
+                    key={row.id}
+                    className="border-border hover:bg-transparent"
+                  >
+                    {row.getVisibleCells().map((cell, i) => (
                       <TableCell
                         key={cell.id}
-                        className="font-custom px-4 py-3"
+                        className={cn(
+                          'font-custom border-border border px-4 py-2',
+                          i === 0 ? 'text-left' : 'text-center'
+                        )}
                       >
                         {flexRender(
                           cell.column.columnDef.cell,
@@ -871,237 +860,7 @@ const TemperatureMonitoringPage = memo(function TemperatureMonitoringPage() {
                 ))}
               </TableBody>
             </Table>
-          </Card>
-        )}
-
-        {/* Temperature overview bar chart */}
-        {overviewChartData.length > 0 && (
-          <Card className="overflow-hidden rounded-xl">
-            <CardContent className="pt-6">
-              <div className="font-custom mb-4 flex flex-wrap items-center gap-4">
-                <h3 className="flex items-center gap-2 text-lg font-semibold">
-                  <BarChart3 className="text-primary h-5 w-5" />
-                  Temperature overview
-                </h3>
-                <div className="text-muted-foreground flex flex-wrap items-center gap-3 text-xs">
-                  <span className="flex items-center gap-1.5">
-                    <span
-                      className="h-2.5 w-2.5 shrink-0 rounded-[2px]"
-                      style={{ backgroundColor: TEMP_RANGE_COLORS.green }}
-                    />
-                    <span>32–33{UNIT}</span>
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <span
-                      className="h-2.5 w-2.5 shrink-0 rounded-[2px]"
-                      style={{ backgroundColor: TEMP_RANGE_COLORS.yellow }}
-                    />
-                    <span>34–40{UNIT}</span>
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <span
-                      className="h-2.5 w-2.5 shrink-0 rounded-[2px]"
-                      style={{ backgroundColor: TEMP_RANGE_COLORS.blue }}
-                    />
-                    <span>41–48{UNIT}</span>
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <span
-                      className="h-2.5 w-2.5 shrink-0 rounded-[2px]"
-                      style={{ backgroundColor: TEMP_RANGE_COLORS.red }}
-                    />
-                    <span>Above 48{UNIT}</span>
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <span
-                      className="h-2.5 w-2.5 shrink-0 rounded-[2px]"
-                      style={{ backgroundColor: TEMP_RANGE_COLORS.gray }}
-                    />
-                    <span>Below 32{UNIT}</span>
-                  </span>
-                </div>
-              </div>
-              <ChartContainer
-                config={{
-                  value: { label: `Temperature (${UNIT})` },
-                  ...Object.fromEntries(
-                    DEFAULT_CHAMBER_IDS.map((c) => [
-                      `Chamber ${c}`,
-                      { label: `Chamber ${c}` },
-                    ])
-                  ),
-                }}
-                className="h-[280px] w-full"
-              >
-                <BarChart
-                  data={overviewChartData}
-                  margin={{ top: 8, right: 8, left: 8, bottom: 8 }}
-                >
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    className="stroke-border/50"
-                  />
-                  <XAxis
-                    dataKey="dateLabel"
-                    tick={{ fontSize: 11 }}
-                    tickLine={false}
-                  />
-                  <YAxis
-                    unit={UNIT}
-                    tick={{ fontSize: 11 }}
-                    tickLine={false}
-                    domain={['auto', 'auto']}
-                  />
-                  <ChartTooltip
-                    content={
-                      <ChartTooltipContent
-                        formatter={(value) => [`${value}${UNIT}`, '']}
-                      />
-                    }
-                  />
-                  {DEFAULT_CHAMBER_IDS.map((chamberId) => (
-                    <Bar
-                      key={chamberId}
-                      dataKey={`Chamber ${chamberId}`}
-                      name={`Chamber ${chamberId}`}
-                      radius={[2, 2, 0, 0]}
-                      maxBarSize={32}
-                    >
-                      {overviewChartData.map((entry, index) => (
-                        <Cell
-                          key={`${chamberId}-${index}`}
-                          fill={getTemperatureRangeColor(
-                            (entry[`Chamber ${chamberId}`] as number) || 0
-                          )}
-                        />
-                      ))}
-                    </Bar>
-                  ))}
-                </BarChart>
-              </ChartContainer>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Chamber-wise analytics */}
-        {filteredDocs.length > 0 && (
-          <Card className="overflow-hidden rounded-xl">
-            <CardContent className="pt-6">
-              <h3 className="font-custom mb-4 flex items-center gap-2 text-lg font-semibold">
-                <Thermometer className="text-primary h-5 w-5" />
-                Chamber-wise analytics
-              </h3>
-              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-                {DEFAULT_CHAMBER_IDS.map((chamberId) => {
-                  const series = chamberWiseChartData[chamberId] ?? [];
-                  const values = series
-                    .map((d) => d.value)
-                    .filter((v) => v != null);
-                  const min = values.length > 0 ? Math.min(...values) : null;
-                  const max = values.length > 0 ? Math.max(...values) : null;
-                  const avg =
-                    values.length > 0
-                      ? values.reduce((a, b) => a + b, 0) / values.length
-                      : null;
-                  const last =
-                    series.length > 0 ? series[series.length - 1]?.value : null;
-                  return (
-                    <div
-                      key={chamberId}
-                      className="border-border bg-muted/20 flex flex-col rounded-lg border p-4"
-                    >
-                      <p className="font-custom mb-3 font-medium">
-                        Chamber {chamberId}
-                      </p>
-                      <div className="font-custom mb-3 grid grid-cols-2 gap-2 text-xs">
-                        {last != null && (
-                          <span className="text-muted-foreground">
-                            Last:{' '}
-                            <span className="text-foreground font-medium">
-                              {last}
-                              {UNIT}
-                            </span>
-                          </span>
-                        )}
-                        {min != null && (
-                          <span className="text-muted-foreground">
-                            Min:{' '}
-                            <span className="text-foreground font-medium">
-                              {min.toFixed(1)}
-                              {UNIT}
-                            </span>
-                          </span>
-                        )}
-                        {max != null && (
-                          <span className="text-muted-foreground">
-                            Max:{' '}
-                            <span className="text-foreground font-medium">
-                              {max.toFixed(1)}
-                              {UNIT}
-                            </span>
-                          </span>
-                        )}
-                        {avg != null && (
-                          <span className="text-muted-foreground">
-                            Avg:{' '}
-                            <span className="text-foreground font-medium">
-                              {avg.toFixed(1)}
-                              {UNIT}
-                            </span>
-                          </span>
-                        )}
-                      </div>
-                      {series.length > 0 ? (
-                        <ChartContainer
-                          config={{
-                            value: { label: `Temperature (${UNIT})` },
-                          }}
-                          className="h-[120px] w-full"
-                        >
-                          <BarChart
-                            data={series}
-                            margin={{ top: 4, right: 4, left: 4, bottom: 4 }}
-                          >
-                            <XAxis
-                              dataKey="dateLabel"
-                              tick={{ fontSize: 9 }}
-                              tickLine={false}
-                              interval="preserveStartEnd"
-                            />
-                            <YAxis hide domain={['auto', 'auto']} />
-                            <ChartTooltip
-                              content={
-                                <ChartTooltipContent
-                                  formatter={(value) => [`${value}${UNIT}`, '']}
-                                />
-                              }
-                            />
-                            <Bar
-                              dataKey="value"
-                              name="Temperature"
-                              radius={[2, 2, 0, 0]}
-                              maxBarSize={24}
-                            >
-                              {series.map((entry, index) => (
-                                <Cell
-                                  key={index}
-                                  fill={getTemperatureRangeColor(entry.value)}
-                                />
-                              ))}
-                            </Bar>
-                          </BarChart>
-                        </ChartContainer>
-                      ) : (
-                        <p className="font-custom text-muted-foreground py-4 text-center text-xs">
-                          No readings
-                        </p>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
+          </div>
         )}
 
         {/* Edit dialog */}
