@@ -60,13 +60,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { CartesianGrid, Line, LineChart, XAxis, YAxis } from 'recharts';
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-  type ChartConfig,
-} from '@/components/ui/chart';
+import TemperatureChart from './TemperatureChart';
 import {
   Search,
   RefreshCw,
@@ -191,24 +185,24 @@ const columnHelper = createColumnHelper<Temperature>();
 const UNIT = '°F';
 const TEMP_MIN = -58;
 const TEMP_MAX = 122;
-const RANGE_MIN = 28;
-const RANGE_MAX = 40;
+/** localStorage key for preset temperatures per chamber */
+const PRESET_STORAGE_KEY = 'temperature-monitoring-presets';
 
-/** Whether a single chamber value is within the allowed range (28–40°F) */
-function isChamberValueInRange(value: number): boolean {
-  return value >= RANGE_MIN && value <= RANGE_MAX;
+/** Color ranges per spec: Green 32–33, Yellow 34–40, Blue 41–48, Red >48, Gray <32 */
+function getTempRangeClassName(value: number): string {
+  if (value >= 32 && value <= 33)
+    return 'bg-green-100 text-green-900 dark:bg-green-950 dark:text-green-100';
+  if (value >= 34 && value <= 40)
+    return 'bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-100';
+  if (value >= 41 && value <= 48)
+    return 'bg-blue-100 text-blue-900 dark:bg-blue-950 dark:text-blue-100';
+  if (value > 48)
+    return 'bg-red-100 text-red-900 dark:bg-red-950 dark:text-red-100';
+  return 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300';
 }
 
 /** Default payload for create form: 4 chambers with empty values */
 const DEFAULT_CHAMBER_IDS = ['1', '2', '3', '4'] as const;
-
-const TEMPERATURE_CHART_CONFIG = {
-  date: { label: 'Date' },
-  ch1: { label: 'Ch 1', color: 'var(--chart-1)' },
-  ch2: { label: 'Ch 2', color: 'var(--chart-2)' },
-  ch3: { label: 'Ch 3', color: 'var(--chart-3)' },
-  ch4: { label: 'Ch 4', color: 'var(--chart-4)' },
-} satisfies ChartConfig;
 
 function getDefaultCreateTemperatureReading(): TemperatureReadingItem[] {
   return DEFAULT_CHAMBER_IDS.map((chamber) => ({ chamber, value: 0 }));
@@ -253,6 +247,16 @@ const TemperatureMonitoringPage = memo(function TemperatureMonitoringPage() {
   } = useGetTemperatureReadings();
   const [searchQuery, setSearchQuery] = useState('');
   const [dateFilter, setDateFilter] = useState<string | undefined>(undefined);
+  const [presetTemps, setPresetTemps] = useState<Record<string, number>>(() => {
+    try {
+      const raw = localStorage.getItem(PRESET_STORAGE_KEY);
+      if (!raw) return {};
+      const parsed = JSON.parse(raw) as Record<string, number>;
+      return typeof parsed === 'object' && parsed !== null ? parsed : {};
+    } catch {
+      return {};
+    }
+  });
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [addDatePopoverOpen, setAddDatePopoverOpen] = useState(false);
   const [editDatePopoverOpen, setEditDatePopoverOpen] = useState(false);
@@ -355,6 +359,26 @@ const TemperatureMonitoringPage = memo(function TemperatureMonitoringPage() {
     }
   };
 
+  useEffect(() => {
+    try {
+      localStorage.setItem(PRESET_STORAGE_KEY, JSON.stringify(presetTemps));
+    } catch {
+      /* ignore */
+    }
+  }, [presetTemps]);
+
+  const setPresetForChamber = (chamberId: string, value: number | '') => {
+    setPresetTemps((prev) => {
+      const next = { ...prev };
+      if (value === '') {
+        delete next[chamberId];
+      } else {
+        next[chamberId] = value;
+      }
+      return next;
+    });
+  };
+
   const filteredDocs = useMemo(() => {
     let docs = temperatureDocs;
     if (dateFilter?.trim()) {
@@ -415,24 +439,32 @@ const TemperatureMonitoringPage = memo(function TemperatureMonitoringPage() {
             const readings = row.original.temperatureReading ?? [];
             const reading = readings.find((r) => r.chamber === chamberId);
             const value = reading?.value;
-            const inRange =
-              value != null ? isChamberValueInRange(value) : false;
+            const preset = presetTemps[chamberId];
+            const diff =
+              value != null && preset != null ? value - preset : null;
+            const rangeClass =
+              value != null ? getTempRangeClassName(value) : '';
             return (
-              <div className="font-custom flex flex-col gap-1.5">
-                <span className="font-custom text-sm font-medium tabular-nums">
-                  {value != null ? `${value}${UNIT}` : '–'}
-                </span>
-                <span
-                  className={`text-xs font-medium ${
-                    value == null
-                      ? 'text-muted-foreground'
-                      : inRange
-                        ? 'text-primary font-medium'
-                        : 'text-destructive'
-                  }`}
-                >
-                  {value == null ? '–' : inRange ? 'OK' : 'Out of range'}
-                </span>
+              <div
+                className={cn(
+                  'font-custom rounded-md px-2 py-1.5 text-sm font-medium tabular-nums',
+                  value != null ? rangeClass : ''
+                )}
+              >
+                {value != null ? (
+                  <>
+                    {value}
+                    {UNIT}
+                    {diff !== null && (
+                      <span className="ml-0.5 opacity-90">
+                        ({diff >= 0 ? '+' : ''}
+                        {diff})
+                      </span>
+                    )}
+                  </>
+                ) : (
+                  '–'
+                )}
               </div>
             );
           },
@@ -455,7 +487,7 @@ const TemperatureMonitoringPage = memo(function TemperatureMonitoringPage() {
         ),
       }),
     ],
-    []
+    [presetTemps]
   );
 
   const table = useReactTable({
@@ -527,6 +559,59 @@ const TemperatureMonitoringPage = memo(function TemperatureMonitoringPage() {
             </ItemActions>
           </ItemHeader>
         </Item>
+
+        {/* Preset temperatures (target per chamber for comparison) */}
+        <Card className="border-border rounded-xl shadow-sm">
+          <CardHeader className="border-border border-b px-6 py-4">
+            <CardTitle className="font-custom text-lg font-semibold">
+              Preset temperatures
+            </CardTitle>
+            <CardDescription className="font-custom text-sm">
+              Set target temperature per chamber. Daily readings are compared
+              against these; difference is shown in brackets in the table.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-4 px-6 py-4">
+            <div className="flex flex-wrap items-end gap-4">
+              {DEFAULT_CHAMBER_IDS.map((chamberId) => (
+                <div
+                  key={chamberId}
+                  className="font-custom flex flex-col gap-1.5"
+                >
+                  <label
+                    htmlFor={`preset-ch-${chamberId}`}
+                    className="text-muted-foreground text-xs font-medium"
+                  >
+                    Ch {chamberId} ({UNIT})
+                  </label>
+                  <Input
+                    id={`preset-ch-${chamberId}`}
+                    type="number"
+                    min={TEMP_MIN}
+                    max={TEMP_MAX}
+                    placeholder="Preset"
+                    value={presetTemps[chamberId] ?? ''}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      if (v === '') {
+                        setPresetForChamber(chamberId, '');
+                        return;
+                      }
+                      const num = Number(v);
+                      if (!Number.isNaN(num))
+                        setPresetForChamber(chamberId, num);
+                    }}
+                    className="w-24"
+                  />
+                </div>
+              ))}
+            </div>
+            <p className="text-muted-foreground font-custom text-xs">
+              Table colours: Green 32–33, Yellow 34–40, Blue 41–48, Red &gt;48,
+              Grey &lt;32 ({UNIT}).
+            </p>
+          </CardContent>
+        </Card>
 
         {/* Search + Add */}
         <Item
@@ -826,104 +911,7 @@ const TemperatureMonitoringPage = memo(function TemperatureMonitoringPage() {
         </Item>
 
         {/* Temperature trend line chart */}
-        {chartData.length > 0 && (
-          <Card className="border-border rounded-xl shadow-sm">
-            <CardHeader className="border-border border-b px-6 py-4">
-              <CardTitle className="font-custom text-lg font-semibold">
-                Temperature trend
-              </CardTitle>
-              <CardDescription className="font-custom text-sm">
-                Last 30 readings by chamber ({UNIT})
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="px-2 sm:px-6 sm:pt-6">
-              <ChartContainer
-                config={TEMPERATURE_CHART_CONFIG}
-                className="font-custom aspect-auto h-[250px] w-full"
-              >
-                <LineChart
-                  accessibilityLayer
-                  data={chartData}
-                  margin={{ left: 12, right: 12 }}
-                >
-                  <CartesianGrid vertical={false} />
-                  <XAxis
-                    dataKey="date"
-                    tickLine={false}
-                    axisLine={false}
-                    tickMargin={8}
-                    minTickGap={32}
-                    tickFormatter={(value) => {
-                      const d = new Date(value);
-                      return d.toLocaleDateString('en-IN', {
-                        month: 'short',
-                        day: 'numeric',
-                      });
-                    }}
-                  />
-                  <YAxis
-                    tickLine={false}
-                    axisLine={false}
-                    tickMargin={8}
-                    unit={UNIT}
-                    domain={['auto', 'auto']}
-                  />
-                  <ChartTooltip
-                    content={
-                      <ChartTooltipContent
-                        className="w-[180px]"
-                        formatter={(value) =>
-                          value != null ? [`${value}${UNIT}`, ''] : ['–', '']
-                        }
-                        labelFormatter={(value) =>
-                          new Date(value).toLocaleDateString('en-IN', {
-                            month: 'short',
-                            day: 'numeric',
-                            year: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })
-                        }
-                      />
-                    }
-                  />
-                  <Line
-                    dataKey="ch1"
-                    type="monotone"
-                    stroke="var(--color-ch1)"
-                    strokeWidth={2}
-                    dot={false}
-                    connectNulls
-                  />
-                  <Line
-                    dataKey="ch2"
-                    type="monotone"
-                    stroke="var(--color-ch2)"
-                    strokeWidth={2}
-                    dot={false}
-                    connectNulls
-                  />
-                  <Line
-                    dataKey="ch3"
-                    type="monotone"
-                    stroke="var(--color-ch3)"
-                    strokeWidth={2}
-                    dot={false}
-                    connectNulls
-                  />
-                  <Line
-                    dataKey="ch4"
-                    type="monotone"
-                    stroke="var(--color-ch4)"
-                    strokeWidth={2}
-                    dot={false}
-                    connectNulls
-                  />
-                </LineChart>
-              </ChartContainer>
-            </CardContent>
-          </Card>
-        )}
+        <TemperatureChart data={chartData} />
 
         {/* Table */}
         {filteredDocs.length === 0 ? (

@@ -39,6 +39,7 @@ export interface QuickRegisterFarmerInput {
   accountNumber: number;
   aadharCardNumber?: string;
   panCardNumber?: string;
+  costPerBag?: number;
 }
 
 /** Farmer as returned in quick-register-farmer response */
@@ -72,6 +73,29 @@ export interface QuickRegisterFarmerApiResponse {
   data: {
     farmer: QuickRegisterFarmerResponseFarmer;
     farmerStorageLink: QuickRegisterFarmerResponseLink;
+  };
+  message: string;
+}
+
+/** Request body for PUT /store-admin/farmer-storage-link/:id (fields aligned with QuickRegisterFarmerInput) */
+export interface UpdateFarmerStorageLinkInput {
+  name: string;
+  address: string;
+  mobileNumber: string;
+  imageUrl?: string;
+  accountNumber: number;
+  linkedById: string;
+  aadharCardNumber?: string;
+  panCardNumber?: string;
+  costPerBag?: number;
+}
+
+/** API response for PUT /store-admin/farmer-storage-link/:id */
+export interface UpdateFarmerStorageLinkApiResponse {
+  success: boolean;
+  data: {
+    farmer: Record<string, unknown>;
+    farmerStorageLink: Record<string, unknown>;
   };
   message: string;
 }

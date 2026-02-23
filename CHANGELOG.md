@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.4] - 2026-02-23
+
+### Added
+- Edit farmer: `EditFarmerModal` for updating farmer and farmer-storage-link (name, address, mobile, account number, Aadhar, PAN, cost per bag) with duplicate validation
+- Service hook `useEditFarmer` for `PUT /store-admin/farmer-storage-link/:id`; invalidates farmer-storage-links on success
+- Types: `UpdateFarmerStorageLinkInput`, `UpdateFarmerStorageLinkApiResponse` in `src/types/farmer.ts`
+- Temperature monitoring: `TemperatureChart.tsx` component for chart rendering (extracted from main module)
+
+### Changed
+- Temperature monitoring: refactored to use `TemperatureChart`; component and layout updates
+- Add farmer modal: refinements and alignment with edit-farmer validation patterns
+- People (farmer storage) detail page: integrated Edit Farmer action and modal
+
 ## [0.10.3] - 2026-02-22
 
 ### Added

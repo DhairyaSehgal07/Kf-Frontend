@@ -1,7 +1,6 @@
-import { memo, useState, useMemo, useEffect } from 'react';
+import { memo, useMemo, useEffect } from 'react';
 import { useForm } from '@tanstack/react-form';
 import * as z from 'zod';
-import { Info, Plus } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -12,7 +11,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import {
   Field,
@@ -21,55 +19,55 @@ import {
   FieldLabel,
 } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { useQuickAddFarmer } from '@/services/store-admin/functions/useQuickAddFarmer';
+import { useEditFarmer } from '@/services/store-admin/functions/useEditFarmer';
 import { useStore } from '@/stores/store';
 import type { FarmerStorageLink } from '@/types/farmer';
 
-interface AddFarmerModalProps {
+interface EditFarmerModalProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  link: FarmerStorageLink | null | undefined;
+  /** All links (e.g. from list page) for duplicate validation; exclude current link. When omitted, duplicate check is skipped. */
   links?: FarmerStorageLink[];
-  onFarmerAdded?: () => void;
+  onFarmerUpdated?: () => void;
 }
 
-export const AddFarmerModal = memo(function AddFarmerModal({
+const defaultFormValues = {
+  name: '',
+  address: '',
+  mobileNumber: '',
+  accountNumber: '',
+  aadharCardNumber: '',
+  panCardNumber: '',
+  costPerBag: '',
+};
+
+export const EditFarmerModal = memo(function EditFarmerModal({
+  open,
+  onOpenChange,
+  link,
   links = [],
-  onFarmerAdded,
-}: AddFarmerModalProps) {
-  const { mutate: quickAddFarmer, isPending } = useQuickAddFarmer();
-  const { coldStorage, admin } = useStore();
-  const [isOpen, setIsOpen] = useState(false);
+  onFarmerUpdated,
+}: EditFarmerModalProps) {
+  const { mutate: editFarmer, isPending } = useEditFarmer();
+  const { admin } = useStore();
 
-  /* ---------------------------------- */
-  /* Used numbers */
-  /* ---------------------------------- */
-
+  /* Used numbers: exclude current link so user can keep same values */
   const usedAccountNumbers = useMemo(() => {
     return links
+      .filter((l) => l._id !== link?._id)
       .map((l) => l.accountNumber.toString())
       .filter((acc, i, s) => s.indexOf(acc) === i)
       .sort((a, b) => Number(a) - Number(b));
-  }, [links]);
+  }, [links, link?._id]);
 
   const usedMobileNumbers = useMemo(() => {
     return links
+      .filter((l) => l._id !== link?._id)
       .map((l) => l.farmerId.mobileNumber)
       .filter((mob, i, s) => s.indexOf(mob) === i)
       .sort();
-  }, [links]);
-
-  const nextAccountNumber = useMemo(() => {
-    if (usedAccountNumbers.length === 0) return 1;
-    const latest = Number(usedAccountNumbers[usedAccountNumbers.length - 1]);
-    return latest + 1;
-  }, [usedAccountNumbers]);
-
-  /* ---------------------------------- */
-  /* Schema */
-  /* ---------------------------------- */
+  }, [links, link?._id]);
 
   const formSchema = useMemo(
     () =>
@@ -79,7 +77,6 @@ export const AddFarmerModal = memo(function AddFarmerModal({
           .transform((val) => {
             const trimmed = val.trim();
             if (!trimmed) return trimmed;
-
             return (
               trimmed.charAt(0).toUpperCase() + trimmed.slice(1).toLowerCase()
             );
@@ -134,20 +131,8 @@ export const AddFarmerModal = memo(function AddFarmerModal({
     [usedAccountNumbers, usedMobileNumbers]
   );
 
-  /* ---------------------------------- */
-  /* Form */
-  /* ---------------------------------- */
-
   const form = useForm({
-    defaultValues: {
-      name: '',
-      address: '',
-      mobileNumber: '',
-      accountNumber: nextAccountNumber.toString(),
-      aadharCardNumber: '',
-      panCardNumber: '',
-      costPerBag: '',
-    },
+    defaultValues: defaultFormValues,
 
     validators: {
       onChange: formSchema,
@@ -156,21 +141,21 @@ export const AddFarmerModal = memo(function AddFarmerModal({
     },
 
     onSubmit: async ({ value }) => {
-      if (!coldStorage?._id || !admin?._id) return;
+      if (!link?._id || !admin?._id) return;
 
       const costPerBagNum =
         value.costPerBag !== '' ? Number(value.costPerBag) : undefined;
       const costPerBagValid =
         costPerBagNum != null && !Number.isNaN(costPerBagNum);
 
-      quickAddFarmer(
+      editFarmer(
         {
+          id: link._id,
           name: value.name,
           address: value.address,
           mobileNumber: value.mobileNumber,
-          coldStorageId: coldStorage._id,
-          linkedById: admin._id,
           accountNumber: Number(value.accountNumber),
+          linkedById: admin._id,
           ...(value.aadharCardNumber?.trim() && {
             aadharCardNumber: value.aadharCardNumber.trim(),
           }),
@@ -182,42 +167,36 @@ export const AddFarmerModal = memo(function AddFarmerModal({
         {
           onSuccess: () => {
             form.reset();
-            setIsOpen(false);
-            onFarmerAdded?.();
+            onOpenChange(false);
+            onFarmerUpdated?.();
           },
         }
       );
     },
   });
 
-  /* ---------------------------------- */
-  /* When modal opens */
-  /* ---------------------------------- */
-
+  /* Populate form when modal opens with link */
   useEffect(() => {
-    if (isOpen) {
-      form.setFieldValue('accountNumber', nextAccountNumber.toString());
+    if (open && link) {
+      form.setFieldValue('name', link.farmerId.name);
+      form.setFieldValue('address', link.farmerId.address);
+      form.setFieldValue('mobileNumber', link.farmerId.mobileNumber);
+      form.setFieldValue('accountNumber', link.accountNumber.toString());
+      form.setFieldValue('aadharCardNumber', '');
+      form.setFieldValue('panCardNumber', '');
+      form.setFieldValue('costPerBag', '');
     }
-  }, [isOpen, nextAccountNumber, form]);
+  }, [open, link, form]);
 
-  const handleOpenChange = (open: boolean) => {
-    setIsOpen(open);
-    if (!open) form.reset();
+  const handleOpenChange = (newOpen: boolean) => {
+    onOpenChange(newOpen);
+    if (!newOpen) form.reset();
   };
 
-  /* ---------------------------------- */
-  /* Render */
-  /* ---------------------------------- */
+  if (!link) return null;
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>
-        <Button className="font-custom h-10 w-full sm:w-auto">
-          <Plus className="h-4 w-4 shrink-0" />
-          New Farmer
-        </Button>
-      </DialogTrigger>
-
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="font-custom flex max-h-[90dvh] w-full flex-col overflow-hidden p-4 sm:max-w-[425px] sm:p-6 md:max-w-[480px]">
         <form
           onSubmit={(e) => {
@@ -229,94 +208,36 @@ export const AddFarmerModal = memo(function AddFarmerModal({
         >
           <DialogHeader className="shrink-0 space-y-1.5">
             <DialogTitle className="font-custom text-xl font-bold tracking-tight sm:text-2xl">
-              Add New Farmer
+              Edit Farmer
             </DialogTitle>
             <DialogDescription className="font-custom text-sm leading-relaxed text-[#6f6f6f] sm:text-base">
-              Enter the farmer details to register them quickly
+              Update farmer details below
             </DialogDescription>
           </DialogHeader>
 
           <div className="min-h-0 flex-1 overflow-y-auto py-4 sm:py-6">
             <FieldGroup className="grid gap-4 sm:gap-5">
-              {/* ---------------- ACCOUNT NUMBER ---------------- */}
-
               <form.Field
                 name="accountNumber"
                 children={(field) => {
                   const isInvalid =
                     field.state.meta.isTouched && !field.state.meta.isValid;
-
                   return (
                     <Field data-invalid={isInvalid}>
-                      <div className="flex items-center justify-between">
-                        <FieldLabel
-                          htmlFor={field.name}
-                          className="font-custom"
-                        >
-                          Account Number
-                        </FieldLabel>
-
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              className="h-6 w-6 p-0"
-                            >
-                              <Info className="text-muted-foreground h-4 w-4" />
-                            </Button>
-                          </TooltipTrigger>
-
-                          <TooltipContent className="max-w-xs">
-                            {usedAccountNumbers.length > 0 ? (
-                              <span>
-                                Used account numbers:{' '}
-                                {usedAccountNumbers.join(', ')}
-                              </span>
-                            ) : (
-                              'No account numbers in use'
-                            )}
-                          </TooltipContent>
-                        </Tooltip>
-                      </div>
-
-                      <div className="flex flex-col gap-2">
-                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-2">
-                          <Input
-                            id={field.name}
-                            name={field.name}
-                            type="number"
-                            value={field.state.value}
-                            onBlur={field.handleBlur}
-                            onChange={(e) => field.handleChange(e.target.value)}
-                            placeholder={`Suggested: ${nextAccountNumber}`}
-                            aria-invalid={isInvalid}
-                            className="font-custom min-w-0 flex-1"
-                          />
-
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            className="w-full shrink-0 sm:w-auto"
-                            onClick={() =>
-                              form.setFieldValue(
-                                'accountNumber',
-                                nextAccountNumber.toString()
-                              )
-                            }
-                          >
-                            Use suggested ({nextAccountNumber})
-                          </Button>
-                        </div>
-
-                        <p className="text-muted-foreground font-custom text-xs leading-relaxed">
-                          Enter any positive number. Duplicate values are not
-                          allowed.
-                        </p>
-                      </div>
-
+                      <FieldLabel htmlFor={field.name} className="font-custom">
+                        Account Number
+                      </FieldLabel>
+                      <Input
+                        id={field.name}
+                        name={field.name}
+                        type="number"
+                        value={field.state.value}
+                        onBlur={field.handleBlur}
+                        onChange={(e) => field.handleChange(e.target.value)}
+                        placeholder="Account number"
+                        aria-invalid={isInvalid}
+                        className="font-custom min-w-0 flex-1"
+                      />
                       {isInvalid && (
                         <FieldError
                           errors={
@@ -331,20 +252,16 @@ export const AddFarmerModal = memo(function AddFarmerModal({
                 }}
               />
 
-              {/* ---------------- MOBILE NUMBER ---------------- */}
-
               <form.Field
                 name="mobileNumber"
                 children={(field) => {
                   const isInvalid =
                     field.state.meta.isTouched && !field.state.meta.isValid;
-
                   return (
                     <Field data-invalid={isInvalid}>
                       <FieldLabel htmlFor={field.name} className="font-custom">
                         Mobile Number
                       </FieldLabel>
-
                       <Input
                         id={field.name}
                         name={field.name}
@@ -361,7 +278,6 @@ export const AddFarmerModal = memo(function AddFarmerModal({
                         maxLength={10}
                         aria-invalid={isInvalid}
                       />
-
                       {isInvalid && (
                         <FieldError
                           errors={
@@ -376,20 +292,16 @@ export const AddFarmerModal = memo(function AddFarmerModal({
                 }}
               />
 
-              {/* ---------------- NAME ---------------- */}
-
               <form.Field
                 name="name"
                 children={(field) => {
                   const isInvalid =
                     field.state.meta.isTouched && !field.state.meta.isValid;
-
                   return (
                     <Field data-invalid={isInvalid}>
                       <FieldLabel htmlFor={field.name} className="font-custom">
                         Name
                       </FieldLabel>
-
                       <Input
                         id={field.name}
                         name={field.name}
@@ -400,7 +312,6 @@ export const AddFarmerModal = memo(function AddFarmerModal({
                         placeholder="Enter farmer name"
                         aria-invalid={isInvalid}
                       />
-
                       {isInvalid && (
                         <FieldError
                           errors={
@@ -415,20 +326,16 @@ export const AddFarmerModal = memo(function AddFarmerModal({
                 }}
               />
 
-              {/* ---------------- ADDRESS ---------------- */}
-
               <form.Field
                 name="address"
                 children={(field) => {
                   const isInvalid =
                     field.state.meta.isTouched && !field.state.meta.isValid;
-
                   return (
                     <Field data-invalid={isInvalid}>
                       <FieldLabel htmlFor={field.name} className="font-custom">
                         Address
                       </FieldLabel>
-
                       <Input
                         id={field.name}
                         name={field.name}
@@ -439,7 +346,6 @@ export const AddFarmerModal = memo(function AddFarmerModal({
                         placeholder="Enter address"
                         aria-invalid={isInvalid}
                       />
-
                       {isInvalid && (
                         <FieldError
                           errors={
@@ -454,21 +360,17 @@ export const AddFarmerModal = memo(function AddFarmerModal({
                 }}
               />
 
-              {/* ---------------- Optional details ---------------- */}
-
+              {/* Optional details: Aadhar, PAN, Cost per bag (same as add-farmer-modal) */}
               <div className="border-border/60 pt-2 sm:pt-3">
                 <p className="text-muted-foreground font-custom mb-3 text-xs font-medium tracking-wider uppercase sm:mb-4 sm:text-sm">
                   Optional details
                 </p>
                 <div className="grid gap-4 sm:gap-5">
-                  {/* ---------------- AADHAR CARD NUMBER (optional) ---------------- */}
-
                   <form.Field
                     name="aadharCardNumber"
                     children={(field) => {
                       const isInvalid =
                         field.state.meta.isTouched && !field.state.meta.isValid;
-
                       return (
                         <Field data-invalid={isInvalid}>
                           <FieldLabel
@@ -480,7 +382,6 @@ export const AddFarmerModal = memo(function AddFarmerModal({
                               (optional)
                             </span>
                           </FieldLabel>
-
                           <Input
                             id={field.name}
                             name={field.name}
@@ -496,7 +397,6 @@ export const AddFarmerModal = memo(function AddFarmerModal({
                             maxLength={12}
                             aria-invalid={isInvalid}
                           />
-
                           {isInvalid && (
                             <FieldError
                               errors={
@@ -511,14 +411,11 @@ export const AddFarmerModal = memo(function AddFarmerModal({
                     }}
                   />
 
-                  {/* ---------------- PAN CARD NUMBER (optional) ---------------- */}
-
                   <form.Field
                     name="panCardNumber"
                     children={(field) => {
                       const isInvalid =
                         field.state.meta.isTouched && !field.state.meta.isValid;
-
                       return (
                         <Field data-invalid={isInvalid}>
                           <FieldLabel
@@ -530,7 +427,6 @@ export const AddFarmerModal = memo(function AddFarmerModal({
                               (optional)
                             </span>
                           </FieldLabel>
-
                           <Input
                             id={field.name}
                             name={field.name}
@@ -546,7 +442,6 @@ export const AddFarmerModal = memo(function AddFarmerModal({
                             maxLength={10}
                             aria-invalid={isInvalid}
                           />
-
                           {isInvalid && (
                             <FieldError
                               errors={
@@ -561,14 +456,11 @@ export const AddFarmerModal = memo(function AddFarmerModal({
                     }}
                   />
 
-                  {/* ---------------- COST PER BAG (optional) ---------------- */}
-
                   <form.Field
                     name="costPerBag"
                     children={(field) => {
                       const isInvalid =
                         field.state.meta.isTouched && !field.state.meta.isValid;
-
                       return (
                         <Field data-invalid={isInvalid}>
                           <FieldLabel
@@ -580,7 +472,6 @@ export const AddFarmerModal = memo(function AddFarmerModal({
                               (optional)
                             </span>
                           </FieldLabel>
-
                           <Input
                             id={field.name}
                             name={field.name}
@@ -600,7 +491,6 @@ export const AddFarmerModal = memo(function AddFarmerModal({
                             placeholder="e.g. 110"
                             aria-invalid={isInvalid}
                           />
-
                           {isInvalid && (
                             <FieldError
                               errors={
@@ -635,7 +525,7 @@ export const AddFarmerModal = memo(function AddFarmerModal({
               disabled={isPending}
               className="font-custom w-full sm:w-auto"
             >
-              {isPending ? 'Adding...' : 'Add Farmer'}
+              {isPending ? 'Saving...' : 'Save Changes'}
             </Button>
           </DialogFooter>
         </form>

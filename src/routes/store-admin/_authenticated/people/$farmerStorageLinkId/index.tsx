@@ -66,6 +66,7 @@ import type { GradingOrderDetailRow } from '@/components/daybook/vouchers/types'
 import type { StockLedgerRow } from '@/components/pdf/stockLedgerPdfTypes';
 import { Spinner } from '@/components/ui/spinner';
 import { downloadStockLedgerExcel } from '@/utils/stockLedgerExcel';
+import { EditFarmerModal } from '@/components/forms/edit-farmer-modal';
 
 export const Route = createFileRoute(
   '/store-admin/_authenticated/people/$farmerStorageLinkId/'
@@ -96,6 +97,7 @@ function PeopleDetailPage() {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [sortBy, setSortBy] = useState<'Date' | 'Voucher Number'>('Date');
   const [gatePassType, setGatePassType] = useState<DaybookGatePassType[]>([]);
+  const [editModalOpen, setEditModalOpen] = useState(false);
 
   const toggleGatePassType = useCallback((type: DaybookGatePassType) => {
     setGatePassType((prev) => {
@@ -433,6 +435,8 @@ function PeopleDetailPage() {
                   variant="ghost"
                   size="icon"
                   className="h-10 w-10 rounded-full"
+                  onClick={() => setEditModalOpen(true)}
+                  aria-label="Edit farmer"
                 >
                   <Edit className="h-4 w-4" />
                 </Button>
@@ -796,6 +800,12 @@ function PeopleDetailPage() {
           </div>
         )}
       </div>
+
+      <EditFarmerModal
+        open={editModalOpen}
+        onOpenChange={setEditModalOpen}
+        link={link}
+      />
     </main>
   );
 }
