@@ -12,7 +12,13 @@ import { useCreateTemperatureReading } from '@/services/store-admin/additional/t
 import { useUpdateTemperatureReading } from '@/services/store-admin/additional/temperature/useUpdateTemperatureReading';
 import type { Temperature, TemperatureReadingItem } from '@/types/temperature';
 
-import { Card, CardContent } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import {
   Item,
   ItemMedia,
@@ -54,6 +60,13 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import { CartesianGrid, Line, LineChart, XAxis, YAxis } from 'recharts';
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  type ChartConfig,
+} from '@/components/ui/chart';
 import {
   Search,
   RefreshCw,
@@ -188,6 +201,14 @@ function isChamberValueInRange(value: number): boolean {
 
 /** Default payload for create form: 4 chambers with empty values */
 const DEFAULT_CHAMBER_IDS = ['1', '2', '3', '4'] as const;
+
+const TEMPERATURE_CHART_CONFIG = {
+  date: { label: 'Date' },
+  ch1: { label: 'Ch 1', color: 'var(--chart-1)' },
+  ch2: { label: 'Ch 2', color: 'var(--chart-2)' },
+  ch3: { label: 'Ch 3', color: 'var(--chart-3)' },
+  ch4: { label: 'Ch 4', color: 'var(--chart-4)' },
+} satisfies ChartConfig;
 
 function getDefaultCreateTemperatureReading(): TemperatureReadingItem[] {
   return DEFAULT_CHAMBER_IDS.map((chamber) => ({ chamber, value: 0 }));
@@ -355,6 +376,26 @@ const TemperatureMonitoringPage = memo(function TemperatureMonitoringPage() {
     }
     return docs;
   }, [temperatureDocs, dateFilter, searchQuery]);
+
+  const chartData = useMemo(() => {
+    const sorted = [...filteredDocs].sort(
+      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+    );
+    const slice = sorted.slice(-30);
+    return slice.map((doc) => {
+      const byChamber: Record<string, number> = {};
+      for (const r of doc.temperatureReading ?? []) {
+        byChamber[r.chamber] = r.value;
+      }
+      return {
+        date: doc.date,
+        ch1: byChamber['1'] ?? null,
+        ch2: byChamber['2'] ?? null,
+        ch3: byChamber['3'] ?? null,
+        ch4: byChamber['4'] ?? null,
+      };
+    });
+  }, [filteredDocs]);
 
   const columns = useMemo(
     () => [
@@ -783,6 +824,106 @@ const TemperatureMonitoringPage = memo(function TemperatureMonitoringPage() {
             )}
           </ItemHeader>
         </Item>
+
+        {/* Temperature trend line chart */}
+        {chartData.length > 0 && (
+          <Card className="border-border rounded-xl shadow-sm">
+            <CardHeader className="border-border border-b px-6 py-4">
+              <CardTitle className="font-custom text-lg font-semibold">
+                Temperature trend
+              </CardTitle>
+              <CardDescription className="font-custom text-sm">
+                Last 30 readings by chamber ({UNIT})
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="px-2 sm:px-6 sm:pt-6">
+              <ChartContainer
+                config={TEMPERATURE_CHART_CONFIG}
+                className="font-custom aspect-auto h-[250px] w-full"
+              >
+                <LineChart
+                  accessibilityLayer
+                  data={chartData}
+                  margin={{ left: 12, right: 12 }}
+                >
+                  <CartesianGrid vertical={false} />
+                  <XAxis
+                    dataKey="date"
+                    tickLine={false}
+                    axisLine={false}
+                    tickMargin={8}
+                    minTickGap={32}
+                    tickFormatter={(value) => {
+                      const d = new Date(value);
+                      return d.toLocaleDateString('en-IN', {
+                        month: 'short',
+                        day: 'numeric',
+                      });
+                    }}
+                  />
+                  <YAxis
+                    tickLine={false}
+                    axisLine={false}
+                    tickMargin={8}
+                    unit={UNIT}
+                    domain={['auto', 'auto']}
+                  />
+                  <ChartTooltip
+                    content={
+                      <ChartTooltipContent
+                        className="w-[180px]"
+                        formatter={(value) =>
+                          value != null ? [`${value}${UNIT}`, ''] : ['–', '']
+                        }
+                        labelFormatter={(value) =>
+                          new Date(value).toLocaleDateString('en-IN', {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })
+                        }
+                      />
+                    }
+                  />
+                  <Line
+                    dataKey="ch1"
+                    type="monotone"
+                    stroke="var(--color-ch1)"
+                    strokeWidth={2}
+                    dot={false}
+                    connectNulls
+                  />
+                  <Line
+                    dataKey="ch2"
+                    type="monotone"
+                    stroke="var(--color-ch2)"
+                    strokeWidth={2}
+                    dot={false}
+                    connectNulls
+                  />
+                  <Line
+                    dataKey="ch3"
+                    type="monotone"
+                    stroke="var(--color-ch3)"
+                    strokeWidth={2}
+                    dot={false}
+                    connectNulls
+                  />
+                  <Line
+                    dataKey="ch4"
+                    type="monotone"
+                    stroke="var(--color-ch4)"
+                    strokeWidth={2}
+                    dot={false}
+                    connectNulls
+                  />
+                </LineChart>
+              </ChartContainer>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Table */}
         {filteredDocs.length === 0 ? (
