@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.5] - 2026-02-23
+
+### Added
+- Theme: `--chart-6` CSS variable for chart palette (light and dark) to support additional series in temperature charts
+
+### Changed
+- Temperature monitoring: refactored main module layout and logic; TemperatureChart enhancements and integration
+
 ## [0.10.4] - 2026-02-23
 
 ### Added

@@ -24,6 +24,8 @@ export type TemperatureChartDataPoint = {
   ch2: number | null;
   ch3: number | null;
   ch4: number | null;
+  ch5: number | null;
+  ch6: number | null;
 };
 
 const TEMPERATURE_CHART_CONFIG = {
@@ -32,6 +34,8 @@ const TEMPERATURE_CHART_CONFIG = {
   ch2: { label: 'Chamber 2', color: 'var(--chart-2)' },
   ch3: { label: 'Chamber 3', color: 'var(--chart-3)' },
   ch4: { label: 'Chamber 4', color: 'var(--chart-4)' },
+  ch5: { label: 'Chamber 5', color: 'var(--chart-5)' },
+  ch6: { label: 'Chamber 6', color: 'var(--chart-6)' },
 } satisfies ChartConfig;
 
 interface TemperatureChartProps {
@@ -145,6 +149,24 @@ const TemperatureChart = memo(function TemperatureChart({
               dot={false}
               connectNulls
               name="Chamber 4"
+            />
+            <Line
+              dataKey="ch5"
+              type="monotone"
+              stroke="var(--color-ch5)"
+              strokeWidth={2}
+              dot={false}
+              connectNulls
+              name="Chamber 5"
+            />
+            <Line
+              dataKey="ch6"
+              type="monotone"
+              stroke="var(--color-ch6)"
+              strokeWidth={2}
+              dot={false}
+              connectNulls
+              name="Chamber 6"
             />
           </LineChart>
         </ChartContainer>

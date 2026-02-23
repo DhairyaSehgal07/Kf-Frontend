@@ -201,8 +201,8 @@ function getTempRangeClassName(value: number): string {
   return 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300';
 }
 
-/** Default payload for create form: 4 chambers with empty values */
-const DEFAULT_CHAMBER_IDS = ['1', '2', '3', '4'] as const;
+/** Default payload for create form: 6 chambers with empty values */
+const DEFAULT_CHAMBER_IDS = ['1', '2', '3', '4', '5', '6'] as const;
 
 function getDefaultCreateTemperatureReading(): TemperatureReadingItem[] {
   return DEFAULT_CHAMBER_IDS.map((chamber) => ({ chamber, value: 0 }));
@@ -220,7 +220,7 @@ const addCreateFormSchema = z.object({
           .max(TEMP_MAX, 'Temperature too high'),
       })
     )
-    .length(4, 'Exactly 4 chamber readings required'),
+    .length(6, 'Exactly 6 chamber readings required'),
 });
 
 const updateReadingFormSchema = z.object({
@@ -417,6 +417,8 @@ const TemperatureMonitoringPage = memo(function TemperatureMonitoringPage() {
         ch2: byChamber['2'] ?? null,
         ch3: byChamber['3'] ?? null,
         ch4: byChamber['4'] ?? null,
+        ch5: byChamber['5'] ?? null,
+        ch6: byChamber['6'] ?? null,
       };
     });
   }, [filteredDocs]);
@@ -505,7 +507,7 @@ const TemperatureMonitoringPage = memo(function TemperatureMonitoringPage() {
           <Card className="overflow-hidden rounded-xl">
             <div className="space-y-0">
               <div className="border-border bg-muted/30 flex gap-4 border-b px-4 py-3">
-                {[...Array(4)].map((_, i) => (
+                {[...Array(6)].map((_, i) => (
                   <Skeleton key={i} className="h-4 flex-1" />
                 ))}
               </div>
@@ -514,7 +516,7 @@ const TemperatureMonitoringPage = memo(function TemperatureMonitoringPage() {
                   key={i}
                   className="border-border flex gap-4 border-b px-4 py-3 last:border-0"
                 >
-                  {[...Array(4)].map((_, j) => (
+                  {[...Array(6)].map((_, j) => (
                     <Skeleton key={j} className="h-4 flex-1" />
                   ))}
                 </div>
@@ -639,8 +641,9 @@ const TemperatureMonitoringPage = memo(function TemperatureMonitoringPage() {
                   Add
                 </Button>
               </DialogTrigger>
-              <DialogContent className="font-custom sm:max-w-[500px]">
+              <DialogContent className="font-custom flex max-h-[90vh] flex-col overflow-hidden p-4 sm:max-w-[540px] sm:p-6">
                 <form
+                  className="flex min-h-0 flex-1 flex-col"
                   onSubmit={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -648,225 +651,219 @@ const TemperatureMonitoringPage = memo(function TemperatureMonitoringPage() {
                   }}
                 >
                   <DialogHeader>
-                    <DialogTitle>Add temperature reading</DialogTitle>
-                    <DialogDescription>
-                      Enter temperature values for all 4 chambers and the date.
+                    <DialogTitle className="font-custom text-left">
+                      Add temperature reading
+                    </DialogTitle>
+                    <DialogDescription className="text-left">
+                      Enter temperature values for all 6 chambers and the date.
                     </DialogDescription>
                   </DialogHeader>
-                  <FieldGroup className="mt-6 grid gap-4">
-                    <addForm.Field
-                      name="date"
-                      children={(field) => {
-                        const isInvalid =
-                          field.state.meta.isTouched &&
-                          !field.state.meta.isValid;
-                        const parts = datetimeLocalToParts(
-                          field.state.value || getTodayDatetimeLocal()
-                        );
-                        const { timeStr12, period } = time24To12Parts(
-                          parts.timeStr
-                        );
-                        return (
-                          <Field data-invalid={isInvalid}>
-                            <FieldLabel htmlFor={field.name}>Date</FieldLabel>
-                            <div className="flex h-10 items-center gap-2">
-                              <input
-                                id={field.name}
-                                type="text"
-                                placeholder="dd.mm.yyyy"
-                                value={parts.dateStr}
-                                onBlur={field.handleBlur}
-                                onChange={(e) => {
-                                  const newDateStr = e.target.value;
-                                  const parsed = parseDDMMYYYY(newDateStr);
-                                  if (parsed) {
-                                    field.handleChange(
-                                      partsToDatetimeLocal(
-                                        formatDateDDMMYYYY(parsed),
-                                        parts.timeStr
-                                      )
-                                    );
-                                  }
-                                }}
-                                aria-invalid={isInvalid}
-                                className={cn(
-                                  'border-input bg-background font-custom h-10 w-44 shrink-0 rounded-md border px-3 py-2 text-sm shadow-sm transition-colors',
-                                  'focus-visible:ring-primary focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none'
-                                )}
-                              />
-                              <Popover
-                                open={addDatePopoverOpen}
-                                onOpenChange={setAddDatePopoverOpen}
-                              >
-                                <PopoverTrigger asChild>
-                                  <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="icon"
-                                    className="h-10 w-10 shrink-0"
-                                    aria-label="Open calendar"
-                                  >
-                                    <CalendarIcon className="h-4 w-4" />
-                                  </Button>
-                                </PopoverTrigger>
-                                <PopoverContent
-                                  side="bottom"
-                                  className="w-auto overflow-hidden p-0"
-                                  align="start"
-                                  sideOffset={10}
-                                >
-                                  <Calendar
-                                    mode="single"
-                                    selected={
-                                      parseDDMMYYYY(parts.dateStr) ?? undefined
-                                    }
-                                    onSelect={(selectedDate) => {
-                                      if (selectedDate) {
-                                        field.handleChange(
-                                          partsToDatetimeLocal(
-                                            formatDateDDMMYYYY(selectedDate),
-                                            parts.timeStr
-                                          )
-                                        );
-                                        setAddDatePopoverOpen(false);
-                                      }
-                                    }}
-                                    captionLayout="dropdown"
-                                  />
-                                </PopoverContent>
-                              </Popover>
-                              <Input
-                                type="text"
-                                placeholder="hh:mm"
-                                value={timeStr12}
-                                onChange={(e) =>
-                                  field.handleChange(
-                                    partsToDatetimeLocal(
-                                      parts.dateStr,
-                                      time12PartsTo24(e.target.value, period)
-                                    )
-                                  )
-                                }
-                                onBlur={field.handleBlur}
-                                aria-invalid={isInvalid}
-                                className="font-custom focus-visible:ring-primary h-10 w-16 shrink-0 focus-visible:ring-2 focus-visible:ring-offset-2"
-                              />
-                              <select
-                                aria-label="AM or PM"
-                                value={period}
-                                onChange={(e) => {
-                                  const amPm = e.target.value as 'AM' | 'PM';
-                                  field.handleChange(
-                                    partsToDatetimeLocal(
-                                      parts.dateStr,
-                                      time12PartsTo24(timeStr12, amPm)
-                                    )
-                                  );
-                                }}
-                                onBlur={field.handleBlur}
-                                className={cn(
-                                  'border-input bg-background font-custom h-10 w-16 shrink-0 rounded-md border px-2 py-2 text-sm shadow-sm transition-colors',
-                                  'focus-visible:ring-primary focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none'
-                                )}
-                              >
-                                <option value="AM">AM</option>
-                                <option value="PM">PM</option>
-                              </select>
-                            </div>
-                            {isInvalid && (
-                              <FieldError
-                                errors={
-                                  field.state.meta.errors as Array<
-                                    { message?: string } | undefined
-                                  >
-                                }
-                              />
-                            )}
-                          </Field>
-                        );
-                      }}
-                    />
-                    {DEFAULT_CHAMBER_IDS.map((chamberId, i) => (
-                      <div
-                        key={chamberId}
-                        className="border-border bg-muted/20 flex flex-wrap items-end gap-3 rounded-lg border p-3"
-                      >
-                        <Field className="min-w-0 flex-1">
-                          <FieldLabel className="text-xs">Chamber</FieldLabel>
-                          <Input
-                            disabled
-                            value={chamberId}
-                            className="font-custom bg-muted/50 mt-1"
-                            aria-hidden
-                            tabIndex={-1}
-                          />
-                        </Field>
-                        <addForm.Field
-                          name={`temperatureReading[${i}].value`}
-                          children={(field) => {
-                            const isInvalid =
-                              field.state.meta.isTouched &&
-                              !field.state.meta.isValid;
-                            return (
-                              <Field
-                                data-invalid={isInvalid}
-                                className="min-w-0 flex-1"
-                              >
-                                <FieldLabel
-                                  htmlFor={`add-chamber-${chamberId}-value`}
-                                  className="text-xs"
-                                >
-                                  Temperature ({UNIT})
-                                </FieldLabel>
-                                <Input
-                                  id={`add-chamber-${chamberId}-value`}
-                                  name={field.name}
-                                  type="number"
-                                  step="0.1"
-                                  value={
-                                    field.state.value != null &&
-                                    field.state.value !== 0
-                                      ? String(field.state.value)
-                                      : ''
-                                  }
+                  <div className="min-h-0 flex-1 overflow-y-auto py-4">
+                    <FieldGroup className="grid gap-4">
+                      <addForm.Field
+                        name="date"
+                        children={(field) => {
+                          const isInvalid =
+                            field.state.meta.isTouched &&
+                            !field.state.meta.isValid;
+                          const parts = datetimeLocalToParts(
+                            field.state.value || getTodayDatetimeLocal()
+                          );
+                          const { timeStr12, period } = time24To12Parts(
+                            parts.timeStr
+                          );
+                          return (
+                            <Field data-invalid={isInvalid}>
+                              <FieldLabel htmlFor={field.name}>Date</FieldLabel>
+                              <div className="flex h-10 flex-wrap items-center gap-2">
+                                <input
+                                  id={field.name}
+                                  type="text"
+                                  placeholder="dd.mm.yyyy"
+                                  value={parts.dateStr}
                                   onBlur={field.handleBlur}
-                                  onChange={(e) =>
-                                    field.handleChange(
-                                      e.target.value === ''
-                                        ? (0 as unknown as number)
-                                        : Number(e.target.value)
-                                    )
-                                  }
-                                  onWheel={(e) => e.currentTarget.blur()}
-                                  onKeyDown={(e) => {
-                                    if (
-                                      e.key === 'ArrowUp' ||
-                                      e.key === 'ArrowDown'
-                                    ) {
-                                      e.preventDefault();
+                                  onChange={(e) => {
+                                    const newDateStr = e.target.value;
+                                    const parsed = parseDDMMYYYY(newDateStr);
+                                    if (parsed) {
+                                      field.handleChange(
+                                        partsToDatetimeLocal(
+                                          formatDateDDMMYYYY(parsed),
+                                          parts.timeStr
+                                        )
+                                      );
                                     }
                                   }}
-                                  placeholder="e.g. 35"
                                   aria-invalid={isInvalid}
-                                  className="font-custom focus-visible:ring-primary mt-1 [appearance:textfield] focus-visible:ring-2 focus-visible:ring-offset-2 [&]:[-moz-appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                                  className={cn(
+                                    'border-input bg-background font-custom h-10 min-w-0 flex-1 rounded-md border px-3 py-2 text-sm shadow-sm transition-colors sm:max-w-[8.5rem]',
+                                    'focus-visible:ring-primary focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none'
+                                  )}
                                 />
-                                {isInvalid && (
-                                  <FieldError
-                                    errors={
-                                      field.state.meta.errors as Array<
-                                        { message?: string } | undefined
-                                      >
-                                    }
-                                  />
-                                )}
-                              </Field>
-                            );
-                          }}
-                        />
+                                <Popover
+                                  open={addDatePopoverOpen}
+                                  onOpenChange={setAddDatePopoverOpen}
+                                >
+                                  <PopoverTrigger asChild>
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="icon"
+                                      className="h-10 w-10 shrink-0"
+                                      aria-label="Open calendar"
+                                    >
+                                      <CalendarIcon className="h-4 w-4" />
+                                    </Button>
+                                  </PopoverTrigger>
+                                  <PopoverContent
+                                    side="bottom"
+                                    className="w-auto overflow-hidden p-0"
+                                    align="start"
+                                    sideOffset={10}
+                                  >
+                                    <Calendar
+                                      mode="single"
+                                      selected={
+                                        parseDDMMYYYY(parts.dateStr) ??
+                                        undefined
+                                      }
+                                      onSelect={(selectedDate) => {
+                                        if (selectedDate) {
+                                          field.handleChange(
+                                            partsToDatetimeLocal(
+                                              formatDateDDMMYYYY(selectedDate),
+                                              parts.timeStr
+                                            )
+                                          );
+                                          setAddDatePopoverOpen(false);
+                                        }
+                                      }}
+                                      captionLayout="dropdown"
+                                    />
+                                  </PopoverContent>
+                                </Popover>
+                                <Input
+                                  type="text"
+                                  placeholder="hh:mm"
+                                  value={timeStr12}
+                                  onChange={(e) =>
+                                    field.handleChange(
+                                      partsToDatetimeLocal(
+                                        parts.dateStr,
+                                        time12PartsTo24(e.target.value, period)
+                                      )
+                                    )
+                                  }
+                                  onBlur={field.handleBlur}
+                                  aria-invalid={isInvalid}
+                                  className="font-custom focus-visible:ring-primary h-10 w-14 shrink-0 focus-visible:ring-2 focus-visible:ring-offset-2 sm:w-16"
+                                />
+                                <select
+                                  aria-label="AM or PM"
+                                  value={period}
+                                  onChange={(e) => {
+                                    const amPm = e.target.value as 'AM' | 'PM';
+                                    field.handleChange(
+                                      partsToDatetimeLocal(
+                                        parts.dateStr,
+                                        time12PartsTo24(timeStr12, amPm)
+                                      )
+                                    );
+                                  }}
+                                  onBlur={field.handleBlur}
+                                  className={cn(
+                                    'border-input bg-background font-custom h-10 w-14 shrink-0 rounded-md border px-2 py-2 text-sm shadow-sm transition-colors sm:w-16',
+                                    'focus-visible:ring-primary focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none'
+                                  )}
+                                >
+                                  <option value="AM">AM</option>
+                                  <option value="PM">PM</option>
+                                </select>
+                              </div>
+                              {isInvalid && (
+                                <FieldError
+                                  errors={
+                                    field.state.meta.errors as Array<
+                                      { message?: string } | undefined
+                                    >
+                                  }
+                                />
+                              )}
+                            </Field>
+                          );
+                        }}
+                      />
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                        {DEFAULT_CHAMBER_IDS.map((chamberId, i) => (
+                          <div
+                            key={chamberId}
+                            className="border-border bg-muted/20 rounded-lg border p-3"
+                          >
+                            <addForm.Field
+                              name={`temperatureReading[${i}].value`}
+                              children={(field) => {
+                                const isInvalid =
+                                  field.state.meta.isTouched &&
+                                  !field.state.meta.isValid;
+                                return (
+                                  <Field data-invalid={isInvalid}>
+                                    <FieldLabel
+                                      htmlFor={`add-chamber-${chamberId}-value`}
+                                      className="font-custom text-xs font-medium"
+                                    >
+                                      Chamber {chamberId} ({UNIT})
+                                    </FieldLabel>
+                                    <Input
+                                      id={`add-chamber-${chamberId}-value`}
+                                      name={field.name}
+                                      type="number"
+                                      step="0.1"
+                                      value={
+                                        field.state.value != null &&
+                                        field.state.value !== 0
+                                          ? String(field.state.value)
+                                          : ''
+                                      }
+                                      onBlur={field.handleBlur}
+                                      onChange={(e) =>
+                                        field.handleChange(
+                                          e.target.value === ''
+                                            ? (0 as unknown as number)
+                                            : Number(e.target.value)
+                                        )
+                                      }
+                                      onWheel={(e) => e.currentTarget.blur()}
+                                      onKeyDown={(e) => {
+                                        if (
+                                          e.key === 'ArrowUp' ||
+                                          e.key === 'ArrowDown'
+                                        ) {
+                                          e.preventDefault();
+                                        }
+                                      }}
+                                      placeholder="e.g. 35"
+                                      aria-invalid={isInvalid}
+                                      className="font-custom focus-visible:ring-primary mt-1.5 [appearance:textfield] focus-visible:ring-2 focus-visible:ring-offset-2 [&]:[-moz-appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                                    />
+                                    {isInvalid && (
+                                      <FieldError
+                                        errors={
+                                          field.state.meta.errors as Array<
+                                            { message?: string } | undefined
+                                          >
+                                        }
+                                      />
+                                    )}
+                                  </Field>
+                                );
+                              }}
+                            />
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </FieldGroup>
-                  <DialogFooter className="mt-6">
+                    </FieldGroup>
+                  </div>
+                  <DialogFooter className="mt-4 shrink-0 border-t pt-4 sm:mt-6">
                     <DialogClose asChild>
                       <Button type="button" variant="outline">
                         Cancel
@@ -997,8 +994,9 @@ const TemperatureMonitoringPage = memo(function TemperatureMonitoringPage() {
           open={editingDoc != null}
           onOpenChange={handleEditDialogOpenChange}
         >
-          <DialogContent className="font-custom sm:max-w-[500px]">
+          <DialogContent className="font-custom flex max-h-[90vh] flex-col overflow-hidden p-4 sm:max-w-[540px] sm:p-6">
             <form
+              className="flex min-h-0 flex-1 flex-col"
               onSubmit={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -1006,220 +1004,230 @@ const TemperatureMonitoringPage = memo(function TemperatureMonitoringPage() {
               }}
             >
               <DialogHeader>
-                <DialogTitle>Update temperature record</DialogTitle>
-                <DialogDescription>
+                <DialogTitle className="font-custom text-left">
+                  Update temperature record
+                </DialogTitle>
+                <DialogDescription className="text-left">
                   Change date or chamber readings for this record.
                 </DialogDescription>
               </DialogHeader>
-              <FieldGroup className="mt-6 grid gap-4">
-                <updateForm.Field
-                  name="date"
-                  children={(field) => {
-                    const isInvalid =
-                      field.state.meta.isTouched && !field.state.meta.isValid;
-                    const parts = datetimeLocalToParts(
-                      field.state.value || getTodayDatetimeLocal()
-                    );
-                    const { timeStr12, period } = time24To12Parts(
-                      parts.timeStr
-                    );
-                    return (
-                      <Field data-invalid={isInvalid}>
-                        <FieldLabel htmlFor={`edit-${field.name}`}>
-                          Date
-                        </FieldLabel>
-                        <div className="flex h-10 items-center gap-2">
-                          <input
-                            id={`edit-${field.name}`}
-                            type="text"
-                            placeholder="dd.mm.yyyy"
-                            value={parts.dateStr}
-                            onBlur={field.handleBlur}
-                            onChange={(e) => {
-                              const newDateStr = e.target.value;
-                              const parsed = parseDDMMYYYY(newDateStr);
-                              if (parsed) {
+              <div className="min-h-0 flex-1 overflow-y-auto py-4">
+                <FieldGroup className="grid gap-4">
+                  <updateForm.Field
+                    name="date"
+                    children={(field) => {
+                      const isInvalid =
+                        field.state.meta.isTouched && !field.state.meta.isValid;
+                      const parts = datetimeLocalToParts(
+                        field.state.value || getTodayDatetimeLocal()
+                      );
+                      const { timeStr12, period } = time24To12Parts(
+                        parts.timeStr
+                      );
+                      return (
+                        <Field data-invalid={isInvalid}>
+                          <FieldLabel htmlFor={`edit-${field.name}`}>
+                            Date
+                          </FieldLabel>
+                          <div className="flex h-10 flex-wrap items-center gap-2">
+                            <input
+                              id={`edit-${field.name}`}
+                              type="text"
+                              placeholder="dd.mm.yyyy"
+                              value={parts.dateStr}
+                              onBlur={field.handleBlur}
+                              onChange={(e) => {
+                                const newDateStr = e.target.value;
+                                const parsed = parseDDMMYYYY(newDateStr);
+                                if (parsed) {
+                                  field.handleChange(
+                                    partsToDatetimeLocal(
+                                      formatDateDDMMYYYY(parsed),
+                                      parts.timeStr
+                                    )
+                                  );
+                                }
+                              }}
+                              aria-invalid={isInvalid}
+                              className={cn(
+                                'border-input bg-background font-custom h-10 min-w-0 flex-1 rounded-md border px-3 py-2 text-sm shadow-sm transition-colors sm:max-w-[8.5rem]',
+                                'focus-visible:ring-primary focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none'
+                              )}
+                            />
+                            <Popover
+                              open={editDatePopoverOpen}
+                              onOpenChange={setEditDatePopoverOpen}
+                            >
+                              <PopoverTrigger asChild>
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="icon"
+                                  className="h-10 w-10 shrink-0"
+                                  aria-label="Open calendar"
+                                >
+                                  <CalendarIcon className="h-4 w-4" />
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent
+                                side="bottom"
+                                className="w-auto overflow-hidden p-0"
+                                align="start"
+                                sideOffset={10}
+                              >
+                                <Calendar
+                                  mode="single"
+                                  selected={
+                                    parseDDMMYYYY(parts.dateStr) ?? undefined
+                                  }
+                                  onSelect={(selectedDate) => {
+                                    if (selectedDate) {
+                                      field.handleChange(
+                                        partsToDatetimeLocal(
+                                          formatDateDDMMYYYY(selectedDate),
+                                          parts.timeStr
+                                        )
+                                      );
+                                      setEditDatePopoverOpen(false);
+                                    }
+                                  }}
+                                  captionLayout="dropdown"
+                                />
+                              </PopoverContent>
+                            </Popover>
+                            <Input
+                              type="text"
+                              placeholder="hh:mm"
+                              value={timeStr12}
+                              onChange={(e) =>
                                 field.handleChange(
                                   partsToDatetimeLocal(
-                                    formatDateDDMMYYYY(parsed),
-                                    parts.timeStr
+                                    parts.dateStr,
+                                    time12PartsTo24(e.target.value, period)
+                                  )
+                                )
+                              }
+                              onBlur={field.handleBlur}
+                              aria-invalid={isInvalid}
+                              className="font-custom focus-visible:ring-primary h-10 w-14 shrink-0 focus-visible:ring-2 focus-visible:ring-offset-2 sm:w-16"
+                            />
+                            <select
+                              aria-label="AM or PM"
+                              value={period}
+                              onChange={(e) => {
+                                const amPm = e.target.value as 'AM' | 'PM';
+                                field.handleChange(
+                                  partsToDatetimeLocal(
+                                    parts.dateStr,
+                                    time12PartsTo24(timeStr12, amPm)
                                   )
                                 );
-                              }
-                            }}
-                            aria-invalid={isInvalid}
-                            className={cn(
-                              'border-input bg-background font-custom h-10 w-44 shrink-0 rounded-md border px-3 py-2 text-sm shadow-sm transition-colors',
-                              'focus-visible:ring-primary focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none'
-                            )}
-                          />
-                          <Popover
-                            open={editDatePopoverOpen}
-                            onOpenChange={setEditDatePopoverOpen}
-                          >
-                            <PopoverTrigger asChild>
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="icon"
-                                className="h-10 w-10 shrink-0"
-                                aria-label="Open calendar"
-                              >
-                                <CalendarIcon className="h-4 w-4" />
-                              </Button>
-                            </PopoverTrigger>
-                            <PopoverContent
-                              side="bottom"
-                              className="w-auto overflow-hidden p-0"
-                              align="start"
-                              sideOffset={10}
+                              }}
+                              onBlur={field.handleBlur}
+                              className={cn(
+                                'border-input bg-background font-custom h-10 w-14 shrink-0 rounded-md border px-2 py-2 text-sm shadow-sm transition-colors sm:w-16',
+                                'focus-visible:ring-primary focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none'
+                              )}
                             >
-                              <Calendar
-                                mode="single"
-                                selected={
-                                  parseDDMMYYYY(parts.dateStr) ?? undefined
-                                }
-                                onSelect={(selectedDate) => {
-                                  if (selectedDate) {
-                                    field.handleChange(
-                                      partsToDatetimeLocal(
-                                        formatDateDDMMYYYY(selectedDate),
-                                        parts.timeStr
-                                      )
-                                    );
-                                    setEditDatePopoverOpen(false);
-                                  }
-                                }}
-                                captionLayout="dropdown"
-                              />
-                            </PopoverContent>
-                          </Popover>
-                          <Input
-                            type="text"
-                            placeholder="hh:mm"
-                            value={timeStr12}
-                            onChange={(e) =>
-                              field.handleChange(
-                                partsToDatetimeLocal(
-                                  parts.dateStr,
-                                  time12PartsTo24(e.target.value, period)
-                                )
-                              )
-                            }
-                            onBlur={field.handleBlur}
-                            aria-invalid={isInvalid}
-                            className="font-custom focus-visible:ring-primary h-10 w-16 shrink-0 focus-visible:ring-2 focus-visible:ring-offset-2"
-                          />
-                          <select
-                            aria-label="AM or PM"
-                            value={period}
-                            onChange={(e) => {
-                              const amPm = e.target.value as 'AM' | 'PM';
-                              field.handleChange(
-                                partsToDatetimeLocal(
-                                  parts.dateStr,
-                                  time12PartsTo24(timeStr12, amPm)
-                                )
-                              );
-                            }}
-                            onBlur={field.handleBlur}
-                            className={cn(
-                              'border-input bg-background font-custom h-10 w-16 shrink-0 rounded-md border px-2 py-2 text-sm shadow-sm transition-colors',
-                              'focus-visible:ring-primary focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none'
-                            )}
-                          >
-                            <option value="AM">AM</option>
-                            <option value="PM">PM</option>
-                          </select>
-                        </div>
-                        {isInvalid && (
-                          <FieldError
-                            errors={
-                              field.state.meta.errors as Array<
-                                { message?: string } | undefined
-                              >
-                            }
-                          />
-                        )}
-                      </Field>
-                    );
-                  }}
-                />
-                {editingDoc?.temperatureReading.map((_, i) => (
-                  <div
-                    key={editingDoc._id + i}
-                    className="border-border bg-muted/20 flex flex-wrap items-end gap-3 rounded-lg border p-3"
-                  >
-                    <updateForm.Field
-                      name={`temperatureReading[${i}].chamber`}
-                      children={(field) => (
-                        <Field className="min-w-0 flex-1">
-                          <FieldLabel
-                            htmlFor={`edit-reading-${i}-chamber`}
-                            className="text-xs"
-                          >
-                            Chamber
-                          </FieldLabel>
-                          <Input
-                            id={`edit-reading-${i}-chamber`}
-                            name={field.name}
-                            value={field.state.value ?? ''}
-                            onBlur={field.handleBlur}
-                            onChange={(e) => field.handleChange(e.target.value)}
-                            placeholder="e.g. 1"
-                            className="font-custom focus-visible:ring-primary mt-1 focus-visible:ring-2 focus-visible:ring-offset-2"
-                          />
-                        </Field>
-                      )}
-                    />
-                    <updateForm.Field
-                      name={`temperatureReading[${i}].value`}
-                      children={(field) => (
-                        <Field className="min-w-0 flex-1">
-                          <FieldLabel
-                            htmlFor={`edit-reading-${i}-value`}
-                            className="text-xs"
-                          >
-                            Temperature ({UNIT})
-                          </FieldLabel>
-                          <Input
-                            id={`edit-reading-${i}-value`}
-                            name={field.name}
-                            type="number"
-                            step="0.1"
-                            value={
-                              field.state.value != null &&
-                              field.state.value !== 0
-                                ? String(field.state.value)
-                                : ''
-                            }
-                            onBlur={field.handleBlur}
-                            onChange={(e) =>
-                              field.handleChange(
-                                e.target.value === ''
-                                  ? (0 as unknown as number)
-                                  : Number(e.target.value)
-                              )
-                            }
-                            onWheel={(e) => e.currentTarget.blur()}
-                            onKeyDown={(e) => {
-                              if (
-                                e.key === 'ArrowUp' ||
-                                e.key === 'ArrowDown'
-                              ) {
-                                e.preventDefault();
+                              <option value="AM">AM</option>
+                              <option value="PM">PM</option>
+                            </select>
+                          </div>
+                          {isInvalid && (
+                            <FieldError
+                              errors={
+                                field.state.meta.errors as Array<
+                                  { message?: string } | undefined
+                                >
                               }
-                            }}
-                            placeholder="e.g. 35"
-                            className="font-custom focus-visible:ring-primary mt-1 [appearance:textfield] focus-visible:ring-2 focus-visible:ring-offset-2 [&]:[-moz-appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-                          />
+                            />
+                          )}
                         </Field>
-                      )}
-                    />
+                      );
+                    }}
+                  />
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    {editingDoc?.temperatureReading.map((_, i) => (
+                      <div
+                        key={editingDoc._id + i}
+                        className="border-border bg-muted/20 rounded-lg border p-3"
+                      >
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                          <updateForm.Field
+                            name={`temperatureReading[${i}].chamber`}
+                            children={(field) => (
+                              <Field>
+                                <FieldLabel
+                                  htmlFor={`edit-reading-${i}-chamber`}
+                                  className="font-custom text-xs font-medium"
+                                >
+                                  Chamber
+                                </FieldLabel>
+                                <Input
+                                  id={`edit-reading-${i}-chamber`}
+                                  name={field.name}
+                                  value={field.state.value ?? ''}
+                                  onBlur={field.handleBlur}
+                                  onChange={(e) =>
+                                    field.handleChange(e.target.value)
+                                  }
+                                  placeholder="e.g. 1"
+                                  className="font-custom focus-visible:ring-primary mt-1.5 focus-visible:ring-2 focus-visible:ring-offset-2"
+                                />
+                              </Field>
+                            )}
+                          />
+                          <updateForm.Field
+                            name={`temperatureReading[${i}].value`}
+                            children={(field) => (
+                              <Field>
+                                <FieldLabel
+                                  htmlFor={`edit-reading-${i}-value`}
+                                  className="font-custom text-xs font-medium"
+                                >
+                                  Temperature ({UNIT})
+                                </FieldLabel>
+                                <Input
+                                  id={`edit-reading-${i}-value`}
+                                  name={field.name}
+                                  type="number"
+                                  step="0.1"
+                                  value={
+                                    field.state.value != null &&
+                                    field.state.value !== 0
+                                      ? String(field.state.value)
+                                      : ''
+                                  }
+                                  onBlur={field.handleBlur}
+                                  onChange={(e) =>
+                                    field.handleChange(
+                                      e.target.value === ''
+                                        ? (0 as unknown as number)
+                                        : Number(e.target.value)
+                                    )
+                                  }
+                                  onWheel={(e) => e.currentTarget.blur()}
+                                  onKeyDown={(e) => {
+                                    if (
+                                      e.key === 'ArrowUp' ||
+                                      e.key === 'ArrowDown'
+                                    ) {
+                                      e.preventDefault();
+                                    }
+                                  }}
+                                  placeholder="e.g. 35"
+                                  className="font-custom focus-visible:ring-primary mt-1.5 [appearance:textfield] focus-visible:ring-2 focus-visible:ring-offset-2 [&]:[-moz-appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                                />
+                              </Field>
+                            )}
+                          />
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </FieldGroup>
-              <DialogFooter className="mt-6">
+                </FieldGroup>
+              </div>
+              <DialogFooter className="mt-4 shrink-0 border-t pt-4 sm:mt-6">
                 <DialogClose asChild>
                   <Button type="button" variant="outline">
                     Cancel
