@@ -197,3 +197,43 @@ export function sortRowsByGatePassNo(rows: StockLedgerRow[]): StockLedgerRow[] {
     );
   });
 }
+
+/**
+ * Key for grouping rows by the same grading voucher.
+ * Rows with no grading data return a unique key per row so they stay separate.
+ */
+function gradingGroupKey(row: StockLedgerRow): string {
+  const ggp = row.gradingGatePassNo;
+  const manual = row.manualGradingGatePassNo;
+  const hasGrading =
+    ggp != null &&
+    String(ggp).trim() !== '' &&
+    (row.postGradingBags != null ||
+      row.sizeBagsJute != null ||
+      row.sizeBagsLeno != null ||
+      row.sizeBags != null);
+  if (!hasGrading) return `single-${row.incomingGatePassNo}`;
+  return `ggp-${String(ggp)}-${manual != null ? String(manual) : ''}`;
+}
+
+/**
+ * Group rows so that all rows sharing the same grading voucher (same GGP No) are in one group.
+ * Used to club multiple incoming vouchers under a single grading voucher block with row span.
+ */
+export function groupRowsByGradingVoucher(
+  rows: StockLedgerRow[]
+): StockLedgerRow[][] {
+  const groups: StockLedgerRow[][] = [];
+  const keyToIndex = new Map<string, number>();
+  for (const row of rows) {
+    const key = gradingGroupKey(row);
+    const idx = keyToIndex.get(key);
+    if (idx != null) {
+      groups[idx].push(row);
+    } else {
+      keyToIndex.set(key, groups.length);
+      groups.push([row]);
+    }
+  }
+  return groups;
+}

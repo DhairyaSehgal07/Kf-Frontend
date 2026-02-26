@@ -13,11 +13,13 @@ import { Input } from '@/components/ui/input';
 import { DatePicker } from '@/components/forms/date-picker';
 import { useGetReceiptVoucherNumber } from '@/services/store-admin/functions/useGetVoucherNumber';
 import { useCreateGradingGatePass } from '@/services/store-admin/grading-gate-pass/useCreateGradingGatePass';
+import { useGetIncomingGatePasses } from '@/services/store-admin/incoming-gate-pass/useGetIncomingGatePasses';
 import { useStore } from '@/stores/store';
 import { toast } from 'sonner';
 import { formatDate, formatDateToISO } from '@/lib/helpers';
 
 import { GRADING_SIZES, BAG_TYPES } from './constants';
+import { GradingFormStep1 } from './GradingFormStep1';
 import { GradingSummarySheet } from './summary-sheet';
 import type { CreateGradingGatePassOrderDetail } from '@/types/grading-gate-pass';
 
@@ -72,7 +74,10 @@ export const GradingGatePassForm = memo(function GradingGatePassForm({
     useGetReceiptVoucherNumber('grading-gate-pass');
   const { mutate: createGradingGatePass, isPending } =
     useCreateGradingGatePass();
+  const { data: incomingGatePassesList = [] } = useGetIncomingGatePasses();
 
+  const [step, setStep] = useState(1);
+  const [incomingGatePassIds, setIncomingGatePassIds] = useState<string[]>([]);
   const [isSummarySheetOpen, setIsSummarySheetOpen] = useState(false);
 
   const formSchema = useMemo(() => buildFormSchema(), []);
@@ -106,6 +111,9 @@ export const GradingGatePassForm = memo(function GradingGatePassForm({
         {
           farmerStorageLinkId,
           incomingGatePassId,
+          ...(incomingGatePassIds.length > 0 && {
+            incomingGatePassIds,
+          }),
           gradedById: admin._id,
           gatePassNo: voucherNumber,
           date: formatDateToISO(value.date),
@@ -120,6 +128,7 @@ export const GradingGatePassForm = memo(function GradingGatePassForm({
         {
           onSuccess: () => {
             form.reset();
+            setIncomingGatePassIds([]);
             setIsSummarySheetOpen(false);
             onSuccess?.();
           },
@@ -132,6 +141,21 @@ export const GradingGatePassForm = memo(function GradingGatePassForm({
     voucherNumber != null ? `#${voucherNumber}` : null;
   const gatePassNo = voucherNumber ?? 0;
 
+  const selectedIncomingPasses = useMemo(
+    () =>
+      incomingGatePassIds.length === 0
+        ? []
+        : incomingGatePassesList.filter((p) =>
+            incomingGatePassIds.includes(p._id)
+          ),
+    [incomingGatePassesList, incomingGatePassIds]
+  );
+  const totalBagsSelected = useMemo(
+    () =>
+      selectedIncomingPasses.reduce((sum, p) => sum + (p.bagsReceived ?? 0), 0),
+    [selectedIncomingPasses]
+  );
+
   const handleNextClick = () => {
     form.validateAllFields('submit');
     if (form.state.isValid) setIsSummarySheetOpen(true);
@@ -141,217 +165,156 @@ export const GradingGatePassForm = memo(function GradingGatePassForm({
 
   return (
     <div className="font-custom flex flex-col">
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          handleNextClick();
-        }}
-        className="space-y-6"
-      >
-        <FieldGroup className="space-y-6">
-          {/* Manual Gate Pass Number */}
-          <form.Field
-            name="manualGatePassNumber"
-            children={(field) => (
-              <Field>
-                <FieldLabel
-                  htmlFor="grading-manualGatePassNumber"
-                  className="font-custom text-base font-semibold"
-                >
-                  Manual Gate Pass Number
-                </FieldLabel>
-                <Input
-                  id="grading-manualGatePassNumber"
-                  type="number"
-                  min={0}
-                  value={field.state.value ?? ''}
-                  onBlur={field.handleBlur}
-                  onChange={(e) => {
-                    const raw = e.target.value;
-                    if (raw === '') {
-                      field.handleChange(undefined);
-                      return;
-                    }
-                    const parsed = parseInt(raw, 10);
-                    field.handleChange(
-                      Number.isNaN(parsed) ? undefined : parsed
-                    );
-                  }}
-                  placeholder=""
-                  className="font-custom [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-                />
-              </Field>
-            )}
-          />
+      {step === 1 && (
+        <GradingFormStep1
+          initialSelectedIds={
+            incomingGatePassIds.length > 0
+              ? incomingGatePassIds
+              : incomingGatePassId
+                ? [incomingGatePassId]
+                : undefined
+          }
+          onNext={(ids) => {
+            setIncomingGatePassIds(ids);
+            setStep(2);
+          }}
+        />
+      )}
 
-          {/* Date */}
-          <form.Field
-            name="date"
-            children={(field) => {
-              const isInvalid =
-                field.state.meta.isTouched && !field.state.meta.isValid;
-              return (
-                <Field data-invalid={isInvalid}>
-                  <DatePicker
-                    value={field.state.value}
-                    onChange={(value) => field.handleChange(value)}
-                    label="Date"
-                    id="grading-date"
-                  />
-                  {isInvalid && (
-                    <FieldError
-                      errors={
-                        field.state.meta.errors as Array<
-                          { message?: string } | undefined
-                        >
-                      }
-                    />
-                  )}
-                </Field>
-              );
-            }}
-          />
-
-          {/* Size-wise entries — elegant layout with horizontal spacing, mobile friendly */}
-          <div className="space-y-4">
-            <h3 className="font-custom text-foreground text-base font-semibold sm:text-lg">
-              Enter Quantities
-            </h3>
-            <p className="text-muted-foreground font-custom text-sm">
-              Please select a variety first to enter quantities.
-            </p>
-
-            {/* Quantities grid: mobile cards, desktop table-like */}
-            <div className="space-y-4 md:space-y-0">
-              {/* Desktop: single grid with header + rows for alignment */}
-              <div className="hidden md:grid md:grid-cols-[minmax(5rem,1fr)_7rem_8rem_6rem] md:gap-x-6 md:gap-y-3 lg:grid-cols-[minmax(6rem,1.25fr)_8rem_9rem_7rem] lg:gap-x-8 lg:gap-y-4">
-                <span className="font-custom text-muted-foreground border-border/60 border-b pb-2 text-xs font-medium tracking-wide uppercase">
-                  Size
-                </span>
-                <span className="font-custom text-muted-foreground border-border/60 border-b pb-2 text-xs font-medium tracking-wide uppercase">
-                  Qty
-                </span>
-                <span className="font-custom text-muted-foreground border-border/60 border-b pb-2 text-xs font-medium tracking-wide uppercase">
-                  Bag Type
-                </span>
-                <span className="font-custom text-muted-foreground border-border/60 border-b pb-2 text-xs font-medium tracking-wide uppercase">
-                  Wt (kg)
-                </span>
-                {GRADING_SIZES.map((sizeLabel, index) => (
-                  <Fragment key={sizeLabel}>
-                    <span className="font-custom text-foreground text-sm font-medium md:text-base">
-                      {sizeLabel}
-                    </span>
-                    <form.Field
-                      name={`sizeEntries[${index}].quantity`}
-                      children={(field) => (
-                        <Field className="min-w-0">
-                          <Input
-                            type="number"
-                            min={0}
-                            step={1}
-                            placeholder="Qty"
-                            value={
-                              field.state.value === 0
-                                ? ''
-                                : (field.state.value ?? '')
-                            }
-                            onBlur={field.handleBlur}
-                            onChange={(e) => {
-                              const raw = e.target.value;
-                              if (raw === '' || raw === '-') {
-                                field.handleChange(0);
-                                return;
-                              }
-                              const parsed = parseInt(raw, 10);
-                              field.handleChange(
-                                Number.isNaN(parsed) ? 0 : parsed
-                              );
-                            }}
-                            className="font-custom h-9 w-full [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-                          />
-                        </Field>
-                      )}
-                    />
-                    <form.Field
-                      name={`sizeEntries[${index}].bagType`}
-                      children={(field) => (
-                        <Field className="min-w-0">
-                          <select
-                            value={field.state.value}
-                            onBlur={field.handleBlur}
-                            onChange={(e) => field.handleChange(e.target.value)}
-                            className="border-input bg-background focus-visible:ring-primary font-custom h-9 w-full rounded-md border px-3 py-1.5 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
-                          >
-                            {BAG_TYPES.map((opt) => (
-                              <option key={opt} value={opt}>
-                                {opt}
-                              </option>
-                            ))}
-                          </select>
-                        </Field>
-                      )}
-                    />
-                    <form.Field
-                      name={`sizeEntries[${index}].weightPerBagKg`}
-                      children={(field) => (
-                        <Field className="min-w-0">
-                          <Input
-                            type="number"
-                            min={0}
-                            step={0.01}
-                            placeholder="Wt"
-                            value={
-                              field.state.value === 0 ||
-                              field.state.value === undefined
-                                ? ''
-                                : field.state.value
-                            }
-                            onBlur={field.handleBlur}
-                            onChange={(e) => {
-                              const raw = e.target.value;
-                              if (raw === '' || raw === '-') {
-                                field.handleChange(0);
-                                return;
-                              }
-                              const parsed = parseFloat(raw);
-                              field.handleChange(
-                                Number.isNaN(parsed) ? 0 : parsed
-                              );
-                            }}
-                            className="font-custom h-9 w-full [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-                          />
-                        </Field>
-                      )}
-                    />
-                  </Fragment>
-                ))}
-              </div>
-
-              {/* Mobile: card per size */}
-              <div className="space-y-4 md:hidden">
-                {GRADING_SIZES.map((sizeLabel, index) => (
-                  <div
-                    key={sizeLabel}
-                    className="border-border/40 bg-muted/20 flex flex-col gap-4 rounded-lg border p-4"
+      {step === 2 && (
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            handleNextClick();
+          }}
+          className="space-y-6"
+        >
+          {/* Summary of selected incoming vouchers */}
+          {selectedIncomingPasses.length > 0 && (
+            <div className="border-border/60 bg-muted/20 rounded-lg border p-4">
+              <h3 className="font-custom text-foreground mb-3 text-base font-semibold sm:text-lg">
+                Selected incoming vouchers
+              </h3>
+              <ul className="font-custom mb-3 space-y-1.5 text-sm">
+                {selectedIncomingPasses.map((pass) => (
+                  <li
+                    key={pass._id}
+                    className="text-muted-foreground flex flex-wrap items-center gap-x-2 gap-y-0.5"
                   >
-                    <span className="font-custom text-foreground text-base font-semibold">
-                      {sizeLabel}
+                    <span className="text-foreground font-medium">
+                      Gate Pass #{pass.gatePassNo}
                     </span>
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                    <span>·</span>
+                    <span>{pass.bagsReceived} bags</span>
+                  </li>
+                ))}
+              </ul>
+              <p className="font-custom text-foreground border-border/40 border-t pt-3 text-base font-semibold">
+                Total bags selected for grading: {totalBagsSelected}
+              </p>
+            </div>
+          )}
+
+          <FieldGroup className="space-y-6">
+            {/* Manual Gate Pass Number */}
+            <form.Field
+              name="manualGatePassNumber"
+              children={(field) => (
+                <Field>
+                  <FieldLabel
+                    htmlFor="grading-manualGatePassNumber"
+                    className="font-custom text-base font-semibold"
+                  >
+                    Manual Gate Pass Number
+                  </FieldLabel>
+                  <Input
+                    id="grading-manualGatePassNumber"
+                    type="number"
+                    min={0}
+                    value={field.state.value ?? ''}
+                    onBlur={field.handleBlur}
+                    onChange={(e) => {
+                      const raw = e.target.value;
+                      if (raw === '') {
+                        field.handleChange(undefined);
+                        return;
+                      }
+                      const parsed = parseInt(raw, 10);
+                      field.handleChange(
+                        Number.isNaN(parsed) ? undefined : parsed
+                      );
+                    }}
+                    placeholder=""
+                    className="font-custom [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                  />
+                </Field>
+              )}
+            />
+
+            {/* Date */}
+            <form.Field
+              name="date"
+              children={(field) => {
+                const isInvalid =
+                  field.state.meta.isTouched && !field.state.meta.isValid;
+                return (
+                  <Field data-invalid={isInvalid}>
+                    <DatePicker
+                      value={field.state.value}
+                      onChange={(value) => field.handleChange(value)}
+                      label="Date"
+                      id="grading-date"
+                    />
+                    {isInvalid && (
+                      <FieldError
+                        errors={
+                          field.state.meta.errors as Array<
+                            { message?: string } | undefined
+                          >
+                        }
+                      />
+                    )}
+                  </Field>
+                );
+              }}
+            />
+
+            {/* Size-wise entries — elegant layout with horizontal spacing, mobile friendly */}
+            <div className="space-y-4">
+              <h3 className="font-custom text-foreground text-base font-semibold sm:text-lg">
+                Enter Quantities
+              </h3>
+              <p className="text-muted-foreground font-custom text-sm">
+                Please select a variety first to enter quantities.
+              </p>
+
+              {/* Quantities grid: mobile cards, desktop table-like */}
+              <div className="space-y-4 md:space-y-0">
+                {/* Desktop: single grid with header + rows for alignment */}
+                <div className="hidden md:grid md:grid-cols-[minmax(5rem,1fr)_7rem_8rem_6rem] md:gap-x-6 md:gap-y-3 lg:grid-cols-[minmax(6rem,1.25fr)_8rem_9rem_7rem] lg:gap-x-8 lg:gap-y-4">
+                  <span className="font-custom text-muted-foreground border-border/60 border-b pb-2 text-xs font-medium tracking-wide uppercase">
+                    Size
+                  </span>
+                  <span className="font-custom text-muted-foreground border-border/60 border-b pb-2 text-xs font-medium tracking-wide uppercase">
+                    Qty
+                  </span>
+                  <span className="font-custom text-muted-foreground border-border/60 border-b pb-2 text-xs font-medium tracking-wide uppercase">
+                    Bag Type
+                  </span>
+                  <span className="font-custom text-muted-foreground border-border/60 border-b pb-2 text-xs font-medium tracking-wide uppercase">
+                    Wt (kg)
+                  </span>
+                  {GRADING_SIZES.map((sizeLabel, index) => (
+                    <Fragment key={sizeLabel}>
+                      <span className="font-custom text-foreground text-sm font-medium md:text-base">
+                        {sizeLabel}
+                      </span>
                       <form.Field
                         name={`sizeEntries[${index}].quantity`}
                         children={(field) => (
-                          <Field>
-                            <label
-                              htmlFor={`qty-m-${index}`}
-                              className="text-muted-foreground font-custom mb-1 block text-xs font-medium"
-                            >
-                              Quantity
-                            </label>
+                          <Field className="min-w-0">
                             <Input
-                              id={`qty-m-${index}`}
                               type="number"
                               min={0}
                               step={1}
@@ -373,7 +336,7 @@ export const GradingGatePassForm = memo(function GradingGatePassForm({
                                   Number.isNaN(parsed) ? 0 : parsed
                                 );
                               }}
-                              className="font-custom h-10 w-full [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                              className="font-custom h-9 w-full [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                             />
                           </Field>
                         )}
@@ -381,21 +344,14 @@ export const GradingGatePassForm = memo(function GradingGatePassForm({
                       <form.Field
                         name={`sizeEntries[${index}].bagType`}
                         children={(field) => (
-                          <Field>
-                            <label
-                              htmlFor={`bag-m-${index}`}
-                              className="text-muted-foreground font-custom mb-1 block text-xs font-medium"
-                            >
-                              Bag Type
-                            </label>
+                          <Field className="min-w-0">
                             <select
-                              id={`bag-m-${index}`}
                               value={field.state.value}
                               onBlur={field.handleBlur}
                               onChange={(e) =>
                                 field.handleChange(e.target.value)
                               }
-                              className="border-input bg-background focus-visible:ring-primary font-custom h-10 w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+                              className="border-input bg-background focus-visible:ring-primary font-custom h-9 w-full rounded-md border px-3 py-1.5 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
                             >
                               {BAG_TYPES.map((opt) => (
                                 <option key={opt} value={opt}>
@@ -409,15 +365,8 @@ export const GradingGatePassForm = memo(function GradingGatePassForm({
                       <form.Field
                         name={`sizeEntries[${index}].weightPerBagKg`}
                         children={(field) => (
-                          <Field>
-                            <label
-                              htmlFor={`wt-m-${index}`}
-                              className="text-muted-foreground font-custom mb-1 block text-xs font-medium"
-                            >
-                              Weight (kg)
-                            </label>
+                          <Field className="min-w-0">
                             <Input
-                              id={`wt-m-${index}`}
                               type="number"
                               min={0}
                               step={0.01}
@@ -440,73 +389,203 @@ export const GradingGatePassForm = memo(function GradingGatePassForm({
                                   Number.isNaN(parsed) ? 0 : parsed
                                 );
                               }}
-                              className="font-custom h-10 w-full [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                              className="font-custom h-9 w-full [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                             />
                           </Field>
                         )}
                       />
+                    </Fragment>
+                  ))}
+                </div>
+
+                {/* Mobile: card per size */}
+                <div className="space-y-4 md:hidden">
+                  {GRADING_SIZES.map((sizeLabel, index) => (
+                    <div
+                      key={sizeLabel}
+                      className="border-border/40 bg-muted/20 flex flex-col gap-4 rounded-lg border p-4"
+                    >
+                      <span className="font-custom text-foreground text-base font-semibold">
+                        {sizeLabel}
+                      </span>
+                      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                        <form.Field
+                          name={`sizeEntries[${index}].quantity`}
+                          children={(field) => (
+                            <Field>
+                              <label
+                                htmlFor={`qty-m-${index}`}
+                                className="text-muted-foreground font-custom mb-1 block text-xs font-medium"
+                              >
+                                Quantity
+                              </label>
+                              <Input
+                                id={`qty-m-${index}`}
+                                type="number"
+                                min={0}
+                                step={1}
+                                placeholder="Qty"
+                                value={
+                                  field.state.value === 0
+                                    ? ''
+                                    : (field.state.value ?? '')
+                                }
+                                onBlur={field.handleBlur}
+                                onChange={(e) => {
+                                  const raw = e.target.value;
+                                  if (raw === '' || raw === '-') {
+                                    field.handleChange(0);
+                                    return;
+                                  }
+                                  const parsed = parseInt(raw, 10);
+                                  field.handleChange(
+                                    Number.isNaN(parsed) ? 0 : parsed
+                                  );
+                                }}
+                                className="font-custom h-10 w-full [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                              />
+                            </Field>
+                          )}
+                        />
+                        <form.Field
+                          name={`sizeEntries[${index}].bagType`}
+                          children={(field) => (
+                            <Field>
+                              <label
+                                htmlFor={`bag-m-${index}`}
+                                className="text-muted-foreground font-custom mb-1 block text-xs font-medium"
+                              >
+                                Bag Type
+                              </label>
+                              <select
+                                id={`bag-m-${index}`}
+                                value={field.state.value}
+                                onBlur={field.handleBlur}
+                                onChange={(e) =>
+                                  field.handleChange(e.target.value)
+                                }
+                                className="border-input bg-background focus-visible:ring-primary font-custom h-10 w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+                              >
+                                {BAG_TYPES.map((opt) => (
+                                  <option key={opt} value={opt}>
+                                    {opt}
+                                  </option>
+                                ))}
+                              </select>
+                            </Field>
+                          )}
+                        />
+                        <form.Field
+                          name={`sizeEntries[${index}].weightPerBagKg`}
+                          children={(field) => (
+                            <Field>
+                              <label
+                                htmlFor={`wt-m-${index}`}
+                                className="text-muted-foreground font-custom mb-1 block text-xs font-medium"
+                              >
+                                Weight (kg)
+                              </label>
+                              <Input
+                                id={`wt-m-${index}`}
+                                type="number"
+                                min={0}
+                                step={0.01}
+                                placeholder="Wt"
+                                value={
+                                  field.state.value === 0 ||
+                                  field.state.value === undefined
+                                    ? ''
+                                    : field.state.value
+                                }
+                                onBlur={field.handleBlur}
+                                onChange={(e) => {
+                                  const raw = e.target.value;
+                                  if (raw === '' || raw === '-') {
+                                    field.handleChange(0);
+                                    return;
+                                  }
+                                  const parsed = parseFloat(raw);
+                                  field.handleChange(
+                                    Number.isNaN(parsed) ? 0 : parsed
+                                  );
+                                }}
+                                className="font-custom h-10 w-full [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                              />
+                            </Field>
+                          )}
+                        />
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
+              <span className="text-muted-foreground block text-xs">
+                Quantity / Approx Weight (kg)
+              </span>
             </div>
-            <span className="text-muted-foreground block text-xs">
-              Quantity / Approx Weight (kg)
-            </span>
+
+            {/* Remarks */}
+            <form.Field
+              name="remarks"
+              children={(field) => (
+                <Field>
+                  <FieldLabel
+                    htmlFor="grading-remarks"
+                    className="font-custom text-base font-semibold"
+                  >
+                    Remarks
+                  </FieldLabel>
+                  <textarea
+                    id="grading-remarks"
+                    name={field.name}
+                    value={field.state.value ?? ''}
+                    onBlur={field.handleBlur}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    placeholder="Max 500 characters"
+                    maxLength={500}
+                    rows={3}
+                    className="border-input bg-background ring-offset-background focus-visible:ring-primary font-custom flex w-full rounded-md border px-3 py-2 text-base focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                  />
+                </Field>
+              )}
+            />
+          </FieldGroup>
+
+          {/* Actions — full width on mobile, inline on desktop */}
+          <div className="flex flex-col gap-3 pt-4 sm:flex-row sm:justify-end sm:gap-4">
+            <Button
+              type="button"
+              variant="outline"
+              className="font-custom order-3 w-full sm:order-1 sm:w-auto"
+              onClick={() => setStep(1)}
+              disabled={isPending}
+            >
+              Back
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="font-custom order-2 w-full sm:order-2 sm:w-auto"
+              onClick={() => {
+                form.reset();
+                toast.info('Form reset');
+              }}
+              disabled={isPending}
+            >
+              Reset
+            </Button>
+            <Button
+              type="submit"
+              variant="default"
+              size="lg"
+              className="font-custom order-1 w-full px-8 font-bold sm:order-3 sm:w-auto"
+              disabled={isPending || isLoadingVoucher || !gatePassNo}
+            >
+              Next
+            </Button>
           </div>
-
-          {/* Remarks */}
-          <form.Field
-            name="remarks"
-            children={(field) => (
-              <Field>
-                <FieldLabel
-                  htmlFor="grading-remarks"
-                  className="font-custom text-base font-semibold"
-                >
-                  Remarks
-                </FieldLabel>
-                <textarea
-                  id="grading-remarks"
-                  name={field.name}
-                  value={field.state.value ?? ''}
-                  onBlur={field.handleBlur}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                  placeholder="Max 500 characters"
-                  maxLength={500}
-                  rows={3}
-                  className="border-input bg-background ring-offset-background focus-visible:ring-primary font-custom flex w-full rounded-md border px-3 py-2 text-base focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-                />
-              </Field>
-            )}
-          />
-        </FieldGroup>
-
-        {/* Actions — full width on mobile, inline on desktop */}
-        <div className="flex flex-col gap-3 pt-4 sm:flex-row sm:justify-end sm:gap-4">
-          <Button
-            type="button"
-            variant="outline"
-            className="font-custom order-2 w-full sm:order-1 sm:w-auto"
-            onClick={() => {
-              form.reset();
-              toast.info('Form reset');
-            }}
-            disabled={isPending}
-          >
-            Reset
-          </Button>
-          <Button
-            type="submit"
-            variant="default"
-            size="lg"
-            className="font-custom order-1 w-full px-8 font-bold sm:order-2 sm:w-auto"
-            disabled={isPending || isLoadingVoucher || !gatePassNo}
-          >
-            Next
-          </Button>
-        </div>
-      </form>
+        </form>
+      )}
 
       {/* Summary Sheet */}
       <GradingSummarySheet

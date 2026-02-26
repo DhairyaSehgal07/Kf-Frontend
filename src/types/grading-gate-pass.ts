@@ -95,6 +95,8 @@ export interface CreateGradingGatePassOrderDetail {
 export interface CreateGradingGatePassInput {
   farmerStorageLinkId: string;
   incomingGatePassId: string;
+  /** Optional list of incoming gate pass IDs to reference (from step 1 selection). */
+  incomingGatePassIds?: string[];
   gradedById: string;
   gatePassNo: number;
   date: string;

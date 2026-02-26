@@ -25,6 +25,7 @@ import {
   getBuyBackRate,
   computeAmountPayable,
   sortRowsByGatePassNo,
+  groupRowsByGradingVoucher,
 } from './stockLedgerPdfUtils';
 
 const HEADER_BG = '#f9fafb';
@@ -149,6 +150,19 @@ const styles = StyleSheet.create({
     minHeight: ROW_HEIGHT * 2,
     width: LEFT_BLOCK_WIDTH,
     flexShrink: 0,
+  },
+  /** Column of left blocks when multiple incoming vouchers share one grading voucher. */
+  dataRowGroupLeftColumn: {
+    flexDirection: 'column',
+    width: LEFT_BLOCK_WIDTH,
+    flexShrink: 0,
+  },
+  /** Wrapper for grading block when it spans multiple incoming rows. Height set dynamically to cover all referenced incoming rows. */
+  dataRowGradingSpanBlock: {
+    flexDirection: 'row',
+    flexShrink: 0,
+    alignSelf: 'stretch',
+    justifyContent: 'center',
   },
   dataRowLeftBlockRow: {
     flexDirection: 'row',
@@ -1018,12 +1032,15 @@ function getSizeBagsLeno(
   return undefined;
 }
 
-function DataRow({
+/** Renders left-block cells (Gp No through Post Gr.) for one row. When showGgp is false, GGP No and Manual GGP show "—". */
+function LeftCellsContent({
   row,
   coldStorageName,
+  showGgp,
 }: {
   row: StockLedgerRow;
   coldStorageName: string;
+  showGgp: boolean;
 }) {
   const dateStr = formatVoucherDate(row.date);
   const truckStr =
@@ -1034,38 +1051,33 @@ function DataRow({
     row.weightSlipNumber != null && String(row.weightSlipNumber).trim() !== ''
       ? row.weightSlipNumber
       : '—';
-
   const lessBardanaKg = row.bagsReceived * JUTE_BAG_WEIGHT;
   const actualWeightKg =
     row.netWeightKg != null && !Number.isNaN(row.netWeightKg)
       ? roundUpToMultipleOf10(row.netWeightKg - lessBardanaKg)
       : undefined;
-
-  const sizeBagsJute = getSizeBagsJute(row);
-  const sizeBagsLeno = getSizeBagsLeno(row);
-  const hasPostGrading =
-    row.postGradingBags != null || sizeBagsJute != null || sizeBagsLeno != null;
-
   const manualNoStr =
     row.manualIncomingVoucherNo != null &&
     String(row.manualIncomingVoucherNo).trim() !== ''
       ? String(row.manualIncomingVoucherNo)
       : '—';
   const ggpNoStr =
-    row.gradingGatePassNo != null && String(row.gradingGatePassNo).trim() !== ''
+    showGgp &&
+    row.gradingGatePassNo != null &&
+    String(row.gradingGatePassNo).trim() !== ''
       ? String(row.gradingGatePassNo)
       : '—';
   const manualGgpStr =
+    showGgp &&
     row.manualGradingGatePassNo != null &&
     String(row.manualGradingGatePassNo).trim() !== ''
       ? String(row.manualGradingGatePassNo)
       : '—';
   const varietyStr =
     row.variety != null && String(row.variety).trim() !== ''
-      ? String(row.variety).trim()
+      ? row.variety.trim()
       : '—';
-
-  const leftCells = (
+  return (
     <>
       <View style={[styles.cell, { width: COL_WIDTHS.gpNo }]}>
         <Text style={styles.cellCenter}>{row.incomingGatePassNo}</Text>
@@ -1131,7 +1143,12 @@ function DataRow({
       </View>
     </>
   );
+}
 
+/** Renders middle block (Type + sizes) and right-side grading blocks for one row. */
+function GradingBlocksContent({ row }: { row: StockLedgerRow }) {
+  const sizeBagsJute = getSizeBagsJute(row);
+  const sizeBagsLeno = getSizeBagsLeno(row);
   const typeAndSizeCells = (
     bagType: 'JUTE' | 'LENO',
     sizeBags: Record<string, number> | undefined,
@@ -1171,6 +1188,193 @@ function DataRow({
       })}
     </>
   );
+  const wtReceivedAfterGrading = computeWtReceivedAfterGrading(row);
+  const { totalJute, totalLeno } = getTotalJuteAndLenoBags(row);
+  const lessBardanaJute = totalJute * JUTE_BAG_WEIGHT;
+  const lessBardanaLeno = totalLeno * LENO_BAG_WEIGHT;
+  const actualWtOfPotato = computeActualWtOfPotato(row);
+  const weightShortage = computeWeightShortage(row);
+  const weightShortagePercent = computeWeightShortagePercent(row);
+  const amountPayable = computeAmountPayable(row);
+  return (
+    <>
+      <View style={styles.dataRowMiddleBlock}>
+        <View style={styles.dataSubRow}>
+          {typeAndSizeCells('JUTE', sizeBagsJute, row.sizeWeightPerBagJute)}
+        </View>
+        <View style={[styles.dataSubRow, styles.dataSubRowLast]}>
+          {typeAndSizeCells('LENO', sizeBagsLeno, row.sizeWeightPerBagLeno)}
+        </View>
+      </View>
+      <View style={styles.dataRowWtReceivedBlock}>
+        <View
+          style={[
+            styles.cell,
+            {
+              width: COL_WIDTHS.wtReceivedAfterGrading,
+              borderLeftWidth: 0,
+              borderRightWidth: 0,
+            },
+          ]}
+        >
+          <Text style={styles.cellCenter}>
+            {wtReceivedAfterGrading > 0
+              ? wtReceivedAfterGrading.toLocaleString('en-IN')
+              : '—'}
+          </Text>
+        </View>
+      </View>
+      <View style={styles.dataRowLessBardanaBlock}>
+        <View style={[styles.dataSubRow, { borderLeftWidth: 0 }]}>
+          <View
+            style={[
+              styles.cell,
+              {
+                width: COL_WIDTHS.lessBardanaAfterGrading,
+                borderLeftWidth: 0,
+                borderRightWidth: 0,
+              },
+            ]}
+          >
+            <Text style={styles.cellCenter}>
+              {lessBardanaJute > 0
+                ? lessBardanaJute.toLocaleString('en-IN')
+                : '—'}
+            </Text>
+          </View>
+        </View>
+        <View
+          style={[
+            styles.dataSubRow,
+            styles.dataSubRowLast,
+            { borderLeftWidth: 0 },
+          ]}
+        >
+          <View
+            style={[
+              styles.cell,
+              {
+                width: COL_WIDTHS.lessBardanaAfterGrading,
+                borderLeftWidth: 0,
+                borderRightWidth: 0,
+              },
+            ]}
+          >
+            <Text style={styles.cellCenter}>
+              {lessBardanaLeno > 0
+                ? lessBardanaLeno.toLocaleString('en-IN')
+                : '—'}
+            </Text>
+          </View>
+        </View>
+      </View>
+      <View style={styles.dataRowActualWtOfPotatoBlock}>
+        <View
+          style={[
+            styles.cell,
+            {
+              width: COL_WIDTHS.actualWtOfPotato,
+              borderLeftWidth: 0,
+              borderRightWidth: 0,
+            },
+          ]}
+        >
+          <Text style={styles.cellCenter}>
+            {actualWtOfPotato > 0
+              ? actualWtOfPotato.toLocaleString('en-IN')
+              : '—'}
+          </Text>
+        </View>
+      </View>
+      <View style={styles.dataRowWeightShortageBlock}>
+        <View
+          style={[
+            styles.cell,
+            {
+              width: COL_WIDTHS.weightShortage,
+              borderLeftWidth: 0,
+              borderRightWidth: 0,
+            },
+          ]}
+        >
+          <Text style={styles.cellCenter}>
+            {weightShortage != null && !Number.isNaN(weightShortage)
+              ? weightShortage.toLocaleString('en-IN')
+              : '—'}
+          </Text>
+        </View>
+      </View>
+      <View style={styles.dataRowWeightShortagePercentBlock}>
+        <View
+          style={[
+            styles.cell,
+            {
+              width: COL_WIDTHS.weightShortagePercent,
+              borderLeftWidth: 0,
+              borderRightWidth: 0,
+            },
+          ]}
+        >
+          <Text style={styles.cellCenter}>
+            {weightShortagePercent != null &&
+            !Number.isNaN(weightShortagePercent)
+              ? `${weightShortagePercent.toFixed(1)}%`
+              : '—'}
+          </Text>
+        </View>
+      </View>
+      <View style={styles.dataRowAmountPayableBlock}>
+        <View
+          style={[
+            styles.cell,
+            {
+              width: COL_WIDTHS.amountPayable,
+              borderLeftWidth: 0,
+              borderRightWidth: 0,
+            },
+          ]}
+        >
+          <Text style={styles.cellCenter}>
+            {amountPayable > 0
+              ? amountPayable.toLocaleString('en-IN', {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })
+              : '—'}
+          </Text>
+        </View>
+      </View>
+    </>
+  );
+}
+
+function DataRow({
+  row,
+  coldStorageName,
+}: {
+  row: StockLedgerRow;
+  coldStorageName: string;
+}) {
+  const _dateStr = formatVoucherDate(row.date);
+  const _truckStr =
+    row.truckNumber != null && String(row.truckNumber).trim() !== ''
+      ? String(row.truckNumber)
+      : '—';
+  const _slipStr =
+    row.weightSlipNumber != null && String(row.weightSlipNumber).trim() !== ''
+      ? row.weightSlipNumber
+      : '—';
+
+  const lessBardanaKg = row.bagsReceived * JUTE_BAG_WEIGHT;
+  const _actualWeightKg =
+    row.netWeightKg != null && !Number.isNaN(row.netWeightKg)
+      ? roundUpToMultipleOf10(row.netWeightKg - lessBardanaKg)
+      : undefined;
+
+  const sizeBagsJute = getSizeBagsJute(row);
+  const sizeBagsLeno = getSizeBagsLeno(row);
+  const hasPostGrading =
+    row.postGradingBags != null || sizeBagsJute != null || sizeBagsLeno != null;
 
   const wtReceivedAfterGrading = computeWtReceivedAfterGrading(row);
   const { totalJute, totalLeno } = getTotalJuteAndLenoBags(row);
@@ -1185,161 +1389,26 @@ function DataRow({
     return (
       <View style={styles.dataRowWrapper}>
         <View style={styles.dataRowLeftBlock}>
-          <View style={styles.dataRowLeftBlockRow}>{leftCells}</View>
-        </View>
-        <View style={styles.dataRowMiddleBlock}>
-          <View style={styles.dataSubRow}>
-            {typeAndSizeCells('JUTE', sizeBagsJute, row.sizeWeightPerBagJute)}
-          </View>
-          <View style={[styles.dataSubRow, styles.dataSubRowLast]}>
-            {typeAndSizeCells('LENO', sizeBagsLeno, row.sizeWeightPerBagLeno)}
+          <View style={styles.dataRowLeftBlockRow}>
+            <LeftCellsContent
+              row={row}
+              coldStorageName={coldStorageName}
+              showGgp={true}
+            />
           </View>
         </View>
-        <View style={styles.dataRowWtReceivedBlock}>
-          <View
-            style={[
-              styles.cell,
-              {
-                width: COL_WIDTHS.wtReceivedAfterGrading,
-                borderLeftWidth: 0,
-                borderRightWidth: 0,
-              },
-            ]}
-          >
-            <Text style={styles.cellCenter}>
-              {wtReceivedAfterGrading > 0
-                ? wtReceivedAfterGrading.toLocaleString('en-IN')
-                : '—'}
-            </Text>
-          </View>
-        </View>
-        <View style={styles.dataRowLessBardanaBlock}>
-          <View style={[styles.dataSubRow, { borderLeftWidth: 0 }]}>
-            <View
-              style={[
-                styles.cell,
-                {
-                  width: COL_WIDTHS.lessBardanaAfterGrading,
-                  borderLeftWidth: 0,
-                  borderRightWidth: 0,
-                },
-              ]}
-            >
-              <Text style={styles.cellCenter}>
-                {lessBardanaJute > 0
-                  ? lessBardanaJute.toLocaleString('en-IN')
-                  : '—'}
-              </Text>
-            </View>
-          </View>
-          <View
-            style={[
-              styles.dataSubRow,
-              styles.dataSubRowLast,
-              { borderLeftWidth: 0 },
-            ]}
-          >
-            <View
-              style={[
-                styles.cell,
-                {
-                  width: COL_WIDTHS.lessBardanaAfterGrading,
-                  borderLeftWidth: 0,
-                  borderRightWidth: 0,
-                },
-              ]}
-            >
-              <Text style={styles.cellCenter}>
-                {lessBardanaLeno > 0
-                  ? lessBardanaLeno.toLocaleString('en-IN')
-                  : '—'}
-              </Text>
-            </View>
-          </View>
-        </View>
-        <View style={styles.dataRowActualWtOfPotatoBlock}>
-          <View
-            style={[
-              styles.cell,
-              {
-                width: COL_WIDTHS.actualWtOfPotato,
-                borderLeftWidth: 0,
-                borderRightWidth: 0,
-              },
-            ]}
-          >
-            <Text style={styles.cellCenter}>
-              {actualWtOfPotato > 0
-                ? actualWtOfPotato.toLocaleString('en-IN')
-                : '—'}
-            </Text>
-          </View>
-        </View>
-        <View style={styles.dataRowWeightShortageBlock}>
-          <View
-            style={[
-              styles.cell,
-              {
-                width: COL_WIDTHS.weightShortage,
-                borderLeftWidth: 0,
-                borderRightWidth: 0,
-              },
-            ]}
-          >
-            <Text style={styles.cellCenter}>
-              {weightShortage != null && !Number.isNaN(weightShortage)
-                ? weightShortage.toLocaleString('en-IN')
-                : '—'}
-            </Text>
-          </View>
-        </View>
-        <View style={styles.dataRowWeightShortagePercentBlock}>
-          <View
-            style={[
-              styles.cell,
-              {
-                width: COL_WIDTHS.weightShortagePercent,
-                borderLeftWidth: 0,
-                borderRightWidth: 0,
-              },
-            ]}
-          >
-            <Text style={styles.cellCenter}>
-              {weightShortagePercent != null &&
-              !Number.isNaN(weightShortagePercent)
-                ? `${weightShortagePercent.toFixed(1)}%`
-                : '—'}
-            </Text>
-          </View>
-        </View>
-        <View style={styles.dataRowAmountPayableBlock}>
-          <View
-            style={[
-              styles.cell,
-              {
-                width: COL_WIDTHS.amountPayable,
-                borderLeftWidth: 0,
-                borderRightWidth: 0,
-              },
-            ]}
-          >
-            <Text style={styles.cellCenter}>
-              {amountPayable > 0
-                ? amountPayable.toLocaleString('en-IN', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })
-                : '—'}
-            </Text>
-          </View>
-        </View>
+        <GradingBlocksContent row={row} />
       </View>
     );
   }
 
   return (
     <View style={styles.dataRow}>
-      {leftCells}
+      <LeftCellsContent
+        row={row}
+        coldStorageName={coldStorageName}
+        showGgp={true}
+      />
       <View style={[styles.cell, { width: COL_WIDTHS.bagType }]}>
         <Text style={styles.cellCenter}>{row.bagType ?? '—'}</Text>
       </View>
@@ -1428,9 +1497,52 @@ function DataRow({
   );
 }
 
+/** Renders one or more incoming rows. When multiple rows share the same grading voucher, clubs them with a single spanning grading block. */
+function GroupedDataRow({
+  rows,
+  coldStorageName,
+}: {
+  rows: StockLedgerRow[];
+  coldStorageName: string;
+}) {
+  if (rows.length === 1) {
+    return <DataRow row={rows[0]} coldStorageName={coldStorageName} />;
+  }
+  const spanHeight = rows.length * 2 * ROW_HEIGHT;
+  return (
+    <View style={[styles.dataRowWrapper, { minHeight: spanHeight }]}>
+      <View style={styles.dataRowGroupLeftColumn}>
+        {rows.map((row, i) => (
+          <View
+            key={`${row.incomingGatePassNo}-${i}`}
+            style={styles.dataRowLeftBlock}
+          >
+            <View style={styles.dataRowLeftBlockRow}>
+              <LeftCellsContent
+                row={row}
+                coldStorageName={coldStorageName}
+                showGgp={i === 0}
+              />
+            </View>
+          </View>
+        ))}
+      </View>
+      <View
+        style={[
+          styles.dataRowGradingSpanBlock,
+          { height: spanHeight, minHeight: spanHeight },
+        ]}
+      >
+        <GradingBlocksContent row={rows[0]} />
+      </View>
+    </View>
+  );
+}
+
 export function StockLedgerPdf({ farmerName, rows }: StockLedgerPdfProps) {
   const coldStorageName = useStore((s) => s.coldStorage?.name ?? '');
   const sortedRows = sortRowsByGatePassNo(rows);
+  const groups = groupRowsByGradingVoucher(sortedRows);
   return (
     <Document>
       <Page size="A4" orientation="landscape" style={styles.page}>
@@ -1443,10 +1555,10 @@ export function StockLedgerPdf({ farmerName, rows }: StockLedgerPdfProps) {
           </View>
         </View>
         <TableHeader />
-        {sortedRows.map((row, index) => (
-          <DataRow
-            key={`${row.incomingGatePassNo}-${index}`}
-            row={row}
+        {groups.map((group, index) => (
+          <GroupedDataRow
+            key={`group-${index}-${group.map((r) => r.incomingGatePassNo).join('-')}`}
+            rows={group}
             coldStorageName={coldStorageName}
           />
         ))}
