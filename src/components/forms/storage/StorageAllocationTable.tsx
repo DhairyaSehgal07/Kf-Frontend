@@ -92,9 +92,9 @@ export const StorageAllocationTable = memo(function StorageAllocationTable({
                                 #{gp.gatePassNo}
                               </span>
                             </div>
-                            {gp.incomingGatePassId?.truckNumber && (
+                            {gp.incomingGatePassIds?.[0]?.truckNumber && (
                               <span className="font-custom text-muted-foreground pl-7 text-xs">
-                                {gp.incomingGatePassId.truckNumber}
+                                {gp.incomingGatePassIds[0].truckNumber}
                               </span>
                             )}
                           </div>

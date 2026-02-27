@@ -97,8 +97,9 @@ const NikasiGatePassForm = memo(function NikasiGatePassForm({
 }: NikasiGatePassFormProps) {
   const { data: voucherNumber, isLoading: isLoadingVoucher } =
     useGetReceiptVoucherNumber('nikasi-gate-pass');
-  const { data: allGradingPasses = [], isLoading: isLoadingPasses } =
+  const { data: gradingResult, isLoading: isLoadingPasses } =
     useGetGradingGatePasses();
+  const allGradingPasses = gradingResult?.list ?? [];
 
   const navigate = useNavigate();
   const { mutate: createBulkNikasiGatePasses, isPending } =
@@ -754,9 +755,13 @@ const NikasiGatePassForm = memo(function NikasiGatePassForm({
                                             #{gp.gatePassNo}
                                           </span>
                                         </div>
-                                        {gp.incomingGatePassId?.truckNumber && (
+                                        {gp.incomingGatePassIds?.[0]
+                                          ?.truckNumber && (
                                           <span className="font-custom text-muted-foreground pl-7 text-xs">
-                                            {gp.incomingGatePassId.truckNumber}
+                                            {
+                                              gp.incomingGatePassIds[0]
+                                                .truckNumber
+                                            }
                                           </span>
                                         )}
                                       </div>

@@ -44,8 +44,9 @@ const StorageGatePassForm = memo(function StorageGatePassForm({
 }: StorageGatePassFormProps) {
   const { data: voucherNumber, isLoading: isLoadingVoucher } =
     useGetReceiptVoucherNumber('storage-gate-pass');
-  const { data: allGradingPasses = [], isLoading: isLoadingPasses } =
+  const { data: gradingResult, isLoading: isLoadingPasses } =
     useGetGradingGatePasses();
+  const allGradingPasses = gradingResult?.list ?? [];
 
   const varieties = useMemo(
     () => getUniqueVarieties(allGradingPasses),

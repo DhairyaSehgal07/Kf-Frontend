@@ -2,7 +2,10 @@ export { IncomingVoucher } from './incoming-voucher';
 export type { IncomingVoucherProps } from './incoming-voucher';
 
 export { GradingVoucher } from './grading-voucher';
-export type { GradingVoucherProps } from './grading-voucher';
+export type {
+  GradingVoucherProps,
+  IncomingGatePassRef,
+} from './grading-voucher';
 
 export { StorageVoucher } from './storage-voucher';
 export type { StorageVoucherProps } from './storage-voucher';

@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.7] - 2026-02-28
+
+### Added
+- Daybook Grading tab: real data from `useGetGradingGatePasses` with pagination, search by gate pass number, and sort order; loading and empty states with "Add Grading Gate Pass" CTA
+- Grading voucher: "Source Incoming" section showing incoming gate pass refs (gate pass no, manual no, bags); support for `incomingGatePassIds` prop and manual gate pass number in header
+- Grading gate pass types: `GradingGatePassFarmerStorageLinkMinimal`, `GradingGatePassIncomingRef`, `GetGradingGatePassesParams`, `GradingGatePassPagination`, `GetGradingGatePassesData` for list API
+
+### Changed
+- Daybook: Grading tab uses `ContractTabPanel` with `GradingVoucher` and `mapGradingPassToVoucherProps`; sort-order-only (no sort-by field)
+- `useGetGradingGatePasses`: accepts params (page, limit, sortOrder, gatePassNo); returns `{ list, pagination }`; query key and prefetch support params
+- `useGetGradingPassesOfSingleFarmer`: handles both array and paginated object response shapes
+- Grading gate pass type `GradingGatePass`: `farmerStorageLinkId` as minimal link, `incomingGatePassIds` array, `createdBy` (replaces `gradedById`); list API response includes pagination
+- Storage form utils and Nikasi form: minor refinements
+
 ## [0.10.6] - 2026-02-28
 
 ### Added

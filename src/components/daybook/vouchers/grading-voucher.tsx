@@ -15,6 +15,7 @@ import {
   Truck,
   AlertTriangle,
   Calculator,
+  ArrowDownToLine,
 } from 'lucide-react';
 import { DetailRow } from './detail-row';
 import { formatVoucherDate } from './format-date';
@@ -32,6 +33,14 @@ import { Spinner } from '@/components/ui/spinner';
 import { GradingVoucherCalculationsDialog } from './grading-voucher-calculations-dialog';
 import { useStore } from '@/stores/store';
 
+/** Incoming gate pass ref shown in grading voucher (source of graded material) */
+export interface IncomingGatePassRef {
+  _id: string;
+  gatePassNo: number;
+  manualGatePassNumber?: number;
+  bagsReceived: number;
+}
+
 export interface GradingVoucherProps extends VoucherFarmerInfo {
   voucher: PassVoucherData;
   farmerStorageLinkId?: string;
@@ -39,6 +48,8 @@ export interface GradingVoucherProps extends VoucherFarmerInfo {
   wastagePercent?: number;
   incomingNetKg?: number;
   incomingBagsCount?: number;
+  /** Incoming gate passes from which this grading was done */
+  incomingGatePassIds?: IncomingGatePassRef[];
 }
 
 const GradingVoucher = memo(function GradingVoucher({
@@ -50,6 +61,7 @@ const GradingVoucher = memo(function GradingVoucher({
   wastagePercent,
   incomingNetKg,
   incomingBagsCount,
+  incomingGatePassIds = [],
 }: GradingVoucherProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [calculationsOpen, setCalculationsOpen] = useState(false);
@@ -153,6 +165,12 @@ const GradingVoucher = memo(function GradingVoucher({
                   <span className="text-primary">
                     #{voucher.gatePassNo ?? '—'}
                   </span>
+                  {voucher.manualGatePassNumber != null && (
+                    <span className="text-muted-foreground font-normal">
+                      {' '}
+                      · Manual #{voucher.manualGatePassNumber}
+                    </span>
+                  )}
                 </h3>
               </div>
               <p className="text-muted-foreground mt-2 text-xs">
@@ -306,6 +324,63 @@ const GradingVoucher = memo(function GradingVoucher({
           <>
             <Separator className="my-4" />
             <div className="space-y-4">
+              {incomingGatePassIds.length > 0 && (
+                <>
+                  <section>
+                    <h4 className="text-muted-foreground/70 mb-2.5 flex items-center gap-2 text-xs font-semibold tracking-wider uppercase">
+                      <ArrowDownToLine className="h-3.5 w-3.5" aria-hidden />
+                      Incoming Gate Passes
+                    </h4>
+                    <div className="bg-muted/30 overflow-x-auto rounded-lg p-3">
+                      <table className="font-custom w-full min-w-[280px] text-sm">
+                        <thead>
+                          <tr className="text-muted-foreground/70 border-b text-left text-[10px] font-medium tracking-wider uppercase">
+                            <th className="pr-3 pb-2">Gate Pass No.</th>
+                            <th className="pr-3 pb-2">Manual No.</th>
+                            <th className="pb-2 text-right">Bags Received</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {incomingGatePassIds.map((ref) => (
+                            <tr
+                              key={ref._id}
+                              className="border-border/40 border-b last:border-b-0"
+                            >
+                              <td className="py-2.5 pr-3 font-medium tabular-nums">
+                                #{ref.gatePassNo ?? '—'}
+                              </td>
+                              <td className="py-2.5 pr-3 tabular-nums">
+                                {ref.manualGatePassNumber != null
+                                  ? `#${ref.manualGatePassNumber}`
+                                  : '—'}
+                              </td>
+                              <td className="py-2.5 text-right font-medium tabular-nums">
+                                {(ref.bagsReceived ?? 0).toLocaleString(
+                                  'en-IN'
+                                )}
+                              </td>
+                            </tr>
+                          ))}
+                          <tr className="border-border/60 bg-muted/50 text-primary border-t-2 font-semibold">
+                            <td className="py-2.5 pr-3" colSpan={2}>
+                              Total bags
+                            </td>
+                            <td className="py-2.5 text-right tabular-nums">
+                              {incomingGatePassIds
+                                .reduce(
+                                  (sum, ref) => sum + (ref.bagsReceived ?? 0),
+                                  0
+                                )
+                                .toLocaleString('en-IN')}
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </section>
+                  <Separator />
+                </>
+              )}
               <section>
                 <h4 className="text-muted-foreground/70 mb-2.5 text-xs font-semibold tracking-wider uppercase">
                   Order Details

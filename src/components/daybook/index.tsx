@@ -20,12 +20,15 @@ import type { DaybookEntry } from '@/types/daybook';
 import {
   IncomingVoucher,
   RentalIncomingVoucher,
+  GradingVoucher,
   type IncomingVoucherData,
 } from './vouchers';
 import { ContractTabPanel } from './ContractTabPanel';
 import { useGetIncomingGatePasses } from '@/services/store-admin/incoming-gate-pass/useGetIncomingGatePasses';
 import { useGetRentalIncomingGatePasses } from '@/services/store-admin/rental-incoming-gate-pass/useGetRentalIncomingGatePasses';
+import { useGetGradingGatePasses } from '@/services/store-admin/grading-gate-pass/useGetGradingGatePasses';
 import type { IncomingGatePassWithLink } from '@/types/incoming-gate-pass';
+import type { GradingGatePass } from '@/types/grading-gate-pass';
 
 /** Map API response to props for IncomingVoucher (handles populated or plain link) */
 function mapIncomingPassToVoucherProps(pass: IncomingGatePassWithLink) {
@@ -63,6 +66,47 @@ function mapIncomingPassToVoucherProps(pass: IncomingGatePassWithLink) {
     farmerAccount: link?.accountNumber as number | undefined,
     farmerAddress: farmer?.address,
     farmerMobile: farmer?.mobileNumber,
+  };
+}
+
+/** Map API response to props for GradingVoucher */
+function mapGradingPassToVoucherProps(pass: GradingGatePass) {
+  const link = pass.farmerStorageLinkId;
+  const linkObj =
+    link && typeof link === 'object' && !Array.isArray(link)
+      ? (link as {
+          _id?: string;
+          farmerId?: { name?: string };
+          accountNumber?: number;
+        })
+      : undefined;
+  const farmerName = linkObj?.farmerId?.name;
+  const farmerAccount = linkObj?.accountNumber;
+  const linkId = typeof link === 'string' ? link : linkObj?._id;
+  const incomingBagsCount = pass.incomingGatePassIds?.reduce(
+    (sum, ref) => sum + (ref.bagsReceived ?? 0),
+    0
+  );
+
+  return {
+    voucher: {
+      _id: pass._id,
+      gatePassNo: pass.gatePassNo,
+      manualGatePassNumber: pass.manualGatePassNumber,
+      date: pass.date,
+      variety: pass.variety,
+      orderDetails: pass.orderDetails,
+      allocationStatus: pass.allocationStatus,
+      remarks: pass.remarks,
+      createdBy: pass.createdBy,
+    },
+    farmerName,
+    farmerAccount,
+    farmerStorageLinkId: linkId,
+    incomingBagsCount: incomingBagsCount > 0 ? incomingBagsCount : undefined,
+    incomingGatePassIds: pass.incomingGatePassIds?.length
+      ? pass.incomingGatePassIds
+      : undefined,
   };
 }
 
@@ -279,10 +323,32 @@ const DaybookPage = memo(function DaybookPage() {
     status: incomingStatusFilter,
   });
 
+  const {
+    data: gradingGatePassesRaw,
+    isLoading: gradingLoading,
+    isFetching: gradingFetching,
+    refetch: refetchGrading,
+  } = useGetGradingGatePasses({
+    page,
+    limit,
+    sortOrder,
+    gatePassNo: debouncedSearch.trim() || undefined,
+  });
+
   const incomingGatePasses = useMemo(
     () => (Array.isArray(incomingGatePassesRaw) ? incomingGatePassesRaw : []),
     [incomingGatePassesRaw]
   );
+
+  const gradingGatePasses = useMemo(
+    () => gradingGatePassesRaw?.list ?? [],
+    [gradingGatePassesRaw]
+  );
+
+  const gradingPagination = gradingGatePassesRaw?.pagination;
+  const gradingTotalPages = gradingPagination?.totalPages ?? 1;
+  const gradingHasPrev = page > 1;
+  const gradingHasNext = page < gradingTotalPages;
 
   const totalPages = 1;
   const hasPrev = page > 1;
@@ -443,24 +509,82 @@ const DaybookPage = memo(function DaybookPage() {
                 <ContractTabPanel
                   addButtonLabel="Add Grading"
                   addButtonTo="/store-admin/grading"
-                  placeholderCount={placeholderCount}
-                  isRefreshing={isRefreshing}
-                  onRefresh={handleRefresh}
+                  placeholderCount={
+                    gradingPagination?.total ?? gradingGatePasses.length
+                  }
+                  isRefreshing={gradingFetching}
+                  onRefresh={() => refetchGrading()}
                   searchQuery={searchQuery}
                   onSearchChange={setSearchQuery}
-                  sortBy={sortBy}
+                  sortOrderOnly
                   sortOrder={sortOrder}
-                  onSortByChange={setSortBy}
                   onSortOrderChange={setSortOrder}
                   onSortPageReset={() => setPage(1)}
                   limit={limit}
                   setLimitAndResetPage={setLimitAndResetPage}
                   page={page}
-                  totalPages={totalPages}
-                  hasPrev={hasPrev}
-                  hasNext={hasNext}
+                  totalPages={gradingTotalPages}
+                  hasPrev={gradingHasPrev}
+                  hasNext={gradingHasNext}
                   setPage={setPage}
-                />
+                >
+                  {gradingLoading ? (
+                    <div className="space-y-6">
+                      {[...Array(3)].map((_, i) => (
+                        <Card key={i} className="overflow-hidden p-0">
+                          <div className="border-border bg-muted/30 px-3 py-2 sm:px-4 sm:py-2.5">
+                            <div className="flex items-center justify-between gap-2">
+                              <Skeleton className="h-4 w-16" />
+                              <Skeleton className="h-4 w-8" />
+                            </div>
+                            <Skeleton className="mt-1.5 h-2 w-full rounded-full" />
+                          </div>
+                          <div className="space-y-2 border-b px-4 py-3">
+                            <div className="flex gap-4">
+                              {[...Array(4)].map((__, j) => (
+                                <Skeleton key={j} className="h-4 w-14" />
+                              ))}
+                            </div>
+                          </div>
+                          <div className="p-4">
+                            <div className="flex gap-2">
+                              <Skeleton className="h-9 w-24 rounded-lg" />
+                              <Skeleton className="h-9 w-9 rounded-lg" />
+                            </div>
+                          </div>
+                        </Card>
+                      ))}
+                    </div>
+                  ) : gradingGatePasses.length === 0 ? (
+                    <Card>
+                      <CardContent className="py-8 pt-6 text-center">
+                        <p className="font-custom text-muted-foreground">
+                          No grading gate passes yet.
+                        </p>
+                        <Button className="font-custom mt-4" asChild>
+                          <Link to="/store-admin/grading">
+                            Add Grading Gate Pass
+                          </Link>
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  ) : (
+                    gradingGatePasses.map((pass) => {
+                      const props = mapGradingPassToVoucherProps(pass);
+                      return (
+                        <GradingVoucher
+                          key={pass._id}
+                          voucher={props.voucher}
+                          farmerName={props.farmerName}
+                          farmerAccount={props.farmerAccount}
+                          farmerStorageLinkId={props.farmerStorageLinkId}
+                          incomingBagsCount={props.incomingBagsCount}
+                          incomingGatePassIds={props.incomingGatePassIds}
+                        />
+                      );
+                    })
+                  )}
+                </ContractTabPanel>
               </TabsContent>
               <TabsContent value="storage" className="mt-0 outline-none">
                 <ContractTabPanel

@@ -2,7 +2,7 @@ import { useQuery, queryOptions } from '@tanstack/react-query';
 import storeAdminAxiosClient from '@/lib/axios';
 import { queryClient } from '@/lib/queryClient';
 import type {
-  GetGradingGatePassesApiResponse,
+  GetGradingGatePassesData,
   GradingGatePass,
 } from '@/types/grading-gate-pass';
 import { gradingGatePassKeys } from './useGetGradingGatePasses';
@@ -38,14 +38,25 @@ async function fetchGradingGatePassesByFarmer(
 ): Promise<GradingGatePass[]> {
   try {
     const { data } = await storeAdminAxiosClient.get<
-      GetGradingGatePassesApiResponse | GetGradingGatePassesError
+      | { success: boolean; data: GradingGatePass[] | GetGradingGatePassesData }
+      | GetGradingGatePassesError
     >(`/grading-gate-pass/farmer-storage-link/${farmerStorageLinkId}`);
 
     if (!data.success || !('data' in data) || data.data == null) {
       throw new Error(getFetchErrorMessage(data));
     }
 
-    return data.data;
+    const payload = data.data;
+    if (Array.isArray(payload)) return payload;
+    if (
+      payload &&
+      typeof payload === 'object' &&
+      'gradingGatePasses' in payload &&
+      Array.isArray((payload as GetGradingGatePassesData).gradingGatePasses)
+    ) {
+      return (payload as GetGradingGatePassesData).gradingGatePasses;
+    }
+    return [];
   } catch (err) {
     const responseData =
       err &&

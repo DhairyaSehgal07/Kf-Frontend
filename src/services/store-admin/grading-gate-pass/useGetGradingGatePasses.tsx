@@ -3,8 +3,16 @@ import storeAdminAxiosClient from '@/lib/axios';
 import { queryClient } from '@/lib/queryClient';
 import type {
   GetGradingGatePassesApiResponse,
+  GetGradingGatePassesData,
+  GetGradingGatePassesParams,
   GradingGatePass,
+  GradingGatePassPagination,
 } from '@/types/grading-gate-pass';
+
+export interface GradingGatePassesResult {
+  list: GradingGatePass[];
+  pagination: GradingGatePassPagination;
+}
 
 /** Query key prefix for grading gate pass – use for invalidation */
 export const gradingGatePassKeys = {
@@ -13,6 +21,16 @@ export const gradingGatePassKeys = {
 
 /** Query key for the list of grading gate passes */
 const gradingGatePassListKey = [...gradingGatePassKeys.all, 'list'] as const;
+
+function listKey(params: GetGradingGatePassesParams = {}) {
+  return [
+    ...gradingGatePassListKey,
+    params.page,
+    params.limit,
+    params.sortOrder,
+    params.gatePassNo ?? '',
+  ] as const;
+}
 
 /** GET error shape (e.g. 401): { success, error: { code, message } } */
 type GetGradingGatePassesError = {
@@ -32,17 +50,47 @@ function getFetchErrorMessage(
 }
 
 /** Fetcher used by queryOptions and prefetch */
-async function fetchGradingGatePasses(): Promise<GradingGatePass[]> {
+async function fetchGradingGatePasses(
+  params: GetGradingGatePassesParams = {}
+): Promise<GradingGatePassesResult> {
+  const searchParams = new URLSearchParams();
+  if (params.page != null) searchParams.set('page', String(params.page));
+  if (params.limit != null) searchParams.set('limit', String(params.limit));
+  if (params.sortOrder != null) searchParams.set('sortOrder', params.sortOrder);
+  if (params.gatePassNo != null)
+    searchParams.set('gatePassNo', String(params.gatePassNo));
+
+  const queryString = searchParams.toString();
+  const url = queryString
+    ? `/grading-gate-pass?${queryString}`
+    : '/grading-gate-pass';
+
   try {
     const { data } = await storeAdminAxiosClient.get<
       GetGradingGatePassesApiResponse | GetGradingGatePassesError
-    >('/grading-gate-pass');
+    >(url);
 
     if (!data.success || !('data' in data) || data.data == null) {
       throw new Error(getFetchErrorMessage(data));
     }
 
-    return data.data;
+    const payload = data.data as GetGradingGatePassesData;
+    const list = Array.isArray(payload.gradingGatePasses)
+      ? payload.gradingGatePasses
+      : [];
+    const pagination =
+      payload.pagination &&
+      typeof payload.pagination === 'object' &&
+      'totalPages' in payload.pagination
+        ? (payload.pagination as GradingGatePassPagination)
+        : {
+            page: 1,
+            limit: list.length,
+            total: list.length,
+            totalPages: 1,
+          };
+
+    return { list, pagination };
   } catch (err) {
     const responseData =
       err &&
@@ -58,18 +106,24 @@ async function fetchGradingGatePasses(): Promise<GradingGatePass[]> {
 }
 
 /** Query options – use with useQuery, prefetchQuery, or in loaders */
-export const gradingGatePassesQueryOptions = () =>
+export const gradingGatePassesQueryOptions = (
+  params: GetGradingGatePassesParams = {}
+) =>
   queryOptions({
-    queryKey: gradingGatePassListKey,
-    queryFn: fetchGradingGatePasses,
+    queryKey: listKey(params),
+    queryFn: () => fetchGradingGatePasses(params),
   });
 
-/** Hook to fetch all grading gate passes */
-export function useGetGradingGatePasses() {
-  return useQuery(gradingGatePassesQueryOptions());
+/** Hook to fetch grading gate passes with optional pagination and search */
+export function useGetGradingGatePasses(
+  params: GetGradingGatePassesParams = {}
+) {
+  return useQuery(gradingGatePassesQueryOptions(params));
 }
 
 /** Prefetch grading gate passes – e.g. on route hover or before navigation */
-export function prefetchGradingGatePasses() {
-  return queryClient.prefetchQuery(gradingGatePassesQueryOptions());
+export function prefetchGradingGatePasses(
+  params: GetGradingGatePassesParams = {}
+) {
+  return queryClient.prefetchQuery(gradingGatePassesQueryOptions(params));
 }
