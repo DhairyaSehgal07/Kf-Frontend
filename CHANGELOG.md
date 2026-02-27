@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.6] - 2026-02-28
+
+### Added
+- Daybook: `ContractTabPanel` component for reusable contract-type tabs (search, sort, pagination, refresh, empty/loading states)
+- Incoming gate pass types: `IncomingGatePassWithLink` and populated link handling for daybook voucher mapping
+
+### Changed
+- Daybook: refactored to use `ContractTabPanel` for Incoming, Grading, Storage, Nikasi, Outgoing, and Rental tabs; incoming tab uses `useGetIncomingGatePasses` with `mapIncomingPassToVoucherProps` for populated or plain farmer-storage link
+- Stock Ledger PDF: refactored to use shared `stockLedgerPdfTypes` and `stockLedgerPdfUtils`; component simplified
+- Stock Ledger Excel: aligned with shared types and utils from PDF module; `stockLedgerExcel.ts` simplified
+- Grading form: step 1 and form index refinements; Grading voucher PDF refactored for consistency
+- People (farmer storage) detail page: minor updates
+- Daybook and incoming gate pass types: updates for voucher and API response shapes
+
 ## [0.10.5] - 2026-02-23
 
 ### Added

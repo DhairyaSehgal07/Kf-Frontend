@@ -1,10 +1,15 @@
-import { memo, useCallback, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useGetIncomingGatePasses } from '@/services/store-admin/incoming-gate-pass/useGetIncomingGatePasses';
 import type { IncomingGatePassWithLink } from '@/types/incoming-gate-pass';
 import { formatDisplayDate } from '@/lib/helpers';
+
+/** Incoming vouchers with gradingSummary.graded === true are excluded from the grading form. */
+function isUngraded(pass: IncomingGatePassWithLink): boolean {
+  return pass.gradingSummary?.graded !== true;
+}
 
 export interface GradingFormStep1Props {
   /** Pre-selected IDs when opening from Daybook (e.g. single incoming pass in context). */
@@ -18,9 +23,21 @@ export const GradingFormStep1 = memo(function GradingFormStep1({
 }: GradingFormStep1Props) {
   const { data: incomingGatePasses = [], isLoading } =
     useGetIncomingGatePasses();
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(
-    () => new Set(initialSelectedIds)
+  const ungradedPasses = useMemo(
+    () => incomingGatePasses.filter(isUngraded),
+    [incomingGatePasses]
   );
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
+  const hasSyncedInitial = useRef(false);
+
+  useEffect(() => {
+    if (hasSyncedInitial.current || ungradedPasses.length === 0) return;
+    hasSyncedInitial.current = true;
+    const ungradedIds = new Set(ungradedPasses.map((p) => p._id));
+    const validInitial = initialSelectedIds.filter((id) => ungradedIds.has(id));
+    const next = new Set(validInitial);
+    queueMicrotask(() => setSelectedIds(next));
+  }, [ungradedPasses, initialSelectedIds]);
 
   const toggle = useCallback((id: string) => {
     setSelectedIds((prev) => {
@@ -33,11 +50,9 @@ export const GradingFormStep1 = memo(function GradingFormStep1({
 
   const selectAll = useCallback(() => {
     setSelectedIds(
-      new Set(
-        incomingGatePasses.map((pass: IncomingGatePassWithLink) => pass._id)
-      )
+      new Set(ungradedPasses.map((pass: IncomingGatePassWithLink) => pass._id))
     );
-  }, [incomingGatePasses]);
+  }, [ungradedPasses]);
 
   const clearAll = useCallback(() => setSelectedIds(new Set()), []);
 
@@ -57,11 +72,13 @@ export const GradingFormStep1 = memo(function GradingFormStep1({
     );
   }
 
-  if (incomingGatePasses.length === 0) {
+  if (ungradedPasses.length === 0) {
     return (
       <div className="font-custom flex flex-col space-y-6">
         <p className="font-custom text-muted-foreground text-base">
-          No incoming gate passes found. Add incoming gate passes first.
+          {incomingGatePasses.length === 0
+            ? 'No incoming gate passes found. Add incoming gate passes first.'
+            : 'No ungraded incoming gate passes. All incoming vouchers have already been graded.'}
         </p>
         <div className="flex justify-end">
           <Button
@@ -139,7 +156,7 @@ export const GradingFormStep1 = memo(function GradingFormStep1({
             </tr>
           </thead>
           <tbody>
-            {incomingGatePasses.map((pass) => (
+            {ungradedPasses.map((pass) => (
               <tr
                 key={pass._id}
                 className="border-border/40 hover:bg-muted/20 border-b last:border-0"
@@ -171,7 +188,7 @@ export const GradingFormStep1 = memo(function GradingFormStep1({
 
       {/* Mobile: cards */}
       <div className="space-y-3 md:hidden">
-        {incomingGatePasses.map((pass) => (
+        {ungradedPasses.map((pass) => (
           <label
             key={pass._id}
             className="border-border/40 bg-muted/20 hover:bg-muted/30 flex cursor-pointer items-start gap-3 rounded-lg border p-4 transition-colors"

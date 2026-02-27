@@ -45,6 +45,8 @@ export interface CreateIncomingGatePassInput {
 /** Grading summary on an incoming gate pass */
 export interface IncomingGatePassGradingSummary {
   totalGradedBags: number;
+  /** True when this incoming voucher has been fully graded (should not be shown in grading form). */
+  graded?: boolean;
 }
 
 /** Incoming gate pass as returned by the API */
@@ -103,9 +105,21 @@ export interface IncomingGatePassWithLink {
   status: string;
   gradingSummary: IncomingGatePassGradingSummary;
   remarks?: string;
+  category?: string;
+  manualGatePassNumber?: number;
+  /** Admin who created/linked (may be populated by API) */
+  createdBy?: { name?: string };
   createdAt: string;
   updatedAt: string;
   __v: number;
+}
+
+/** Query params for GET /incoming-gate-pass (pagination and search) */
+export interface GetIncomingGatePassesParams {
+  page?: number;
+  limit?: number;
+  sortOrder?: 'asc' | 'desc';
+  gatePassNo?: number | string;
 }
 
 /** API response for GET /incoming-gate-pass */

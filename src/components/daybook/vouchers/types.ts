@@ -18,7 +18,7 @@ export interface IncomingVoucherData {
   status?: string;
   weightSlip?: WeightSlipData;
   remarks?: string;
-  gradingSummary?: { totalGradedBags?: number };
+  gradingSummary?: { totalGradedBags?: number; graded?: boolean };
   createdBy?: { name?: string };
 }
 

@@ -224,12 +224,6 @@ const IncomingVoucher = memo(function IncomingVoucher({
                     label="Bags Received"
                     value={(voucher.bagsReceived ?? 0).toLocaleString('en-IN')}
                   />
-                  <DetailRow
-                    label="Graded Bags"
-                    value={(
-                      voucher.gradingSummary?.totalGradedBags ?? 0
-                    ).toLocaleString('en-IN')}
-                  />
                   <DetailRow label="Created By" value={linkedBy?.name ?? '—'} />
                 </div>
 

@@ -64,6 +64,7 @@ import {
 } from '@/components/daybook/vouchers';
 import type { GradingOrderDetailRow } from '@/components/daybook/vouchers/types';
 import type { StockLedgerRow } from '@/components/pdf/stockLedgerPdfTypes';
+import { enrichAndSortStockLedgerRows } from '@/components/pdf/stockLedgerPdfUtils';
 import { Spinner } from '@/components/ui/spinner';
 import { downloadStockLedgerExcel } from '@/utils/stockLedgerExcel';
 import { EditFarmerModal } from '@/components/forms/edit-farmer-modal';
@@ -195,7 +196,7 @@ function PeopleDetailPage() {
   const totalCount = filteredAndSortedEntries.length;
 
   const stockLedgerRows: StockLedgerRow[] = useMemo(() => {
-    return daybook.map((entry, index) => {
+    const rows = daybook.map((entry, index) => {
       const inc = entry.incoming as IncomingVoucherData & { date?: string };
       const bags = entry.summaries?.totalBagsIncoming ?? inc.bagsReceived ?? 0;
       const ws = inc.weightSlip;
@@ -277,12 +278,12 @@ function PeopleDetailPage() {
               .join(', ')
           : undefined;
 
-      /** Manual gate pass number(s) for grading voucher(s) (comma-separated if multiple). */
+      /** Manual gate pass number(s) for grading voucher(s) (comma-separated if multiple). Exclude 0 so it shows as —. */
       const manualGradingGatePassNo =
         gradingPasses.length > 0
           ? gradingPasses
               .map((p) => p.manualGatePassNumber)
-              .filter((n) => n != null && !Number.isNaN(Number(n)))
+              .filter((n) => n != null && n !== 0 && !Number.isNaN(Number(n)))
               .join(', ')
           : undefined;
 
@@ -290,7 +291,10 @@ function PeopleDetailPage() {
         serialNo: index + 1,
         date: inc.date,
         incomingGatePassNo: inc.gatePassNo ?? '—',
-        manualIncomingVoucherNo: inc.manualGatePassNumber,
+        manualIncomingVoucherNo:
+          inc.manualGatePassNumber != null && inc.manualGatePassNumber !== 0
+            ? inc.manualGatePassNumber
+            : undefined,
         gradingGatePassNo,
         manualGradingGatePassNo,
         store: 'JICSPL- Bazpur',
@@ -315,12 +319,20 @@ function PeopleDetailPage() {
         variety,
       };
     });
+    const sorted = enrichAndSortStockLedgerRows(rows);
+    return sorted.map((row, i) => ({ ...row, serialNo: i + 1 }));
   }, [daybook]);
 
   const [isPdfOpening, setIsPdfOpening] = useState(false);
   const [stockLedgerDialogOpen, setStockLedgerDialogOpen] = useState(false);
   const openStockLedgerPdf = useCallback(() => {
     if (!link) return;
+    const farmerName = link.farmerId.name;
+    console.log('Stock Ledger PDF – data being sent:', {
+      farmerName,
+      rows: stockLedgerRows,
+      rowCount: stockLedgerRows.length,
+    });
     const win = window.open('', '_blank');
     if (win) {
       win.document.write(
@@ -328,7 +340,6 @@ function PeopleDetailPage() {
       );
     }
     setIsPdfOpening(true);
-    const farmerName = link.farmerId.name;
     Promise.all([
       import('@react-pdf/renderer'),
       import('@/components/pdf/StockLedgerPdf'),
@@ -507,10 +518,7 @@ function PeopleDetailPage() {
                       onClick={() => {
                         if (!link) return;
                         setStockLedgerDialogOpen(false);
-                        downloadStockLedgerExcel(
-                          link.farmerId.name,
-                          stockLedgerRows
-                        );
+                        downloadStockLedgerExcel(link.farmerId.name);
                       }}
                     >
                       <FileSpreadsheet className="h-4 w-4" />

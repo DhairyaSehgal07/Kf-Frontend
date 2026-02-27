@@ -198,6 +198,95 @@ export function sortRowsByGatePassNo(rows: StockLedgerRow[]): StockLedgerRow[] {
   });
 }
 
+/** Whether the row has grading data (same logic as gradingGroupKey). */
+function hasGradingData(row: StockLedgerRow): boolean {
+  const ggp = row.gradingGatePassNo;
+  return (
+    ggp != null &&
+    String(ggp).trim() !== '' &&
+    (row.postGradingBags != null ||
+      row.sizeBagsJute != null ||
+      row.sizeBagsLeno != null ||
+      row.sizeBags != null)
+  );
+}
+
+/**
+ * Sort rows so that grading gate pass is the primary reference: rows sharing the
+ * same GGP are adjacent, groups are ordered by GGP number (1, 2, …), then
+ * rows with no grading last. Within each group, rows are ordered by incoming
+ * gate pass number. Use this so the PDF can club multiple incoming vouchers
+ * under one grading block with correct row span.
+ */
+export function sortRowsByGradingPassThenIncoming(
+  rows: StockLedgerRow[]
+): StockLedgerRow[] {
+  return [...rows].sort((a, b) => {
+    const aHasGrading = hasGradingData(a);
+    const bHasGrading = hasGradingData(b);
+    if (aHasGrading && !bHasGrading) return -1;
+    if (!aHasGrading && bHasGrading) return 1;
+    if (!aHasGrading && !bHasGrading) {
+      const aNum = Number(a.incomingGatePassNo);
+      const bNum = Number(b.incomingGatePassNo);
+      if (!Number.isNaN(aNum) && !Number.isNaN(bNum)) return aNum - bNum;
+      return String(a.incomingGatePassNo).localeCompare(
+        String(b.incomingGatePassNo)
+      );
+    }
+    const ggpA = Number(a.gradingGatePassNo);
+    const ggpB = Number(b.gradingGatePassNo);
+    if (!Number.isNaN(ggpA) && !Number.isNaN(ggpB) && ggpA !== ggpB) {
+      return ggpA - ggpB;
+    }
+    const manualA = String(a.manualGradingGatePassNo ?? '').trim();
+    const manualB = String(b.manualGradingGatePassNo ?? '').trim();
+    if (manualA !== manualB) {
+      return manualA.localeCompare(manualB);
+    }
+    const aNum = Number(a.incomingGatePassNo);
+    const bNum = Number(b.incomingGatePassNo);
+    if (!Number.isNaN(aNum) && !Number.isNaN(bNum)) return aNum - bNum;
+    return String(a.incomingGatePassNo).localeCompare(
+      String(b.incomingGatePassNo)
+    );
+  });
+}
+
+/**
+ * Enrich a stock ledger row with all derived values so PDF/Excel can use them
+ * without recomputing. Call this once when building rows (e.g. in the route).
+ */
+export function enrichStockLedgerRow(row: StockLedgerRow): StockLedgerRow {
+  const { totalJute, totalLeno } = getTotalJuteAndLenoBags(row);
+  const wtReceivedAfterGrading = computeWtReceivedAfterGrading(row);
+  const lessBardanaAfterGrading = computeLessBardanaAfterGrading(row);
+  const actualWtOfPotato = computeActualWtOfPotato(row);
+  const incomingActualWeight = computeIncomingActualWeight(row);
+  const weightShortage = computeWeightShortage(row);
+  const weightShortagePercent = computeWeightShortagePercent(row);
+  const amountPayable = computeAmountPayable(row);
+  return {
+    ...row,
+    wtReceivedAfterGrading,
+    lessBardanaAfterGrading,
+    actualWtOfPotato,
+    incomingActualWeight,
+    weightShortage,
+    weightShortagePercent,
+    amountPayable,
+    totalJute,
+    totalLeno,
+  };
+}
+
+/** Enrich and sort rows by grading pass first, then incoming; use when passing from route to PDF. */
+export function enrichAndSortStockLedgerRows(
+  rows: StockLedgerRow[]
+): StockLedgerRow[] {
+  return sortRowsByGradingPassThenIncoming(rows.map(enrichStockLedgerRow));
+}
+
 /**
  * Key for grouping rows by the same grading voucher.
  * Rows with no grading data return a unique key per row so they stay separate.

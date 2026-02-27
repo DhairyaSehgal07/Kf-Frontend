@@ -34,6 +34,17 @@ export interface StockLedgerRow {
   sizeWeightPerBag?: Record<string, number>;
   /** Potato variety for buy-back rate (e.g. from grading pass). Used for Amount Payable and displayed in table. */
   variety?: string;
+
+  /** Pre-computed values (set by route/enrichment so PDF/Excel do minimal work). When present, consumers use these instead of recomputing. */
+  wtReceivedAfterGrading?: number;
+  lessBardanaAfterGrading?: number;
+  actualWtOfPotato?: number;
+  incomingActualWeight?: number;
+  weightShortage?: number;
+  weightShortagePercent?: number;
+  amountPayable?: number;
+  totalJute?: number;
+  totalLeno?: number;
 }
 
 export interface StockLedgerPdfProps {

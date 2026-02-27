@@ -25,9 +25,25 @@ export interface DaybookFarmer {
   updatedAt: string;
 }
 
+/** Incoming gate pass as returned in a daybook entry (from API) */
+export interface DaybookEntryIncoming {
+  _id?: string;
+  farmerStorageLinkId?: unknown;
+  gatePassNo?: number;
+  date?: string;
+  variety?: string;
+  bagsReceived?: number;
+  status?: string;
+  gradingSummary?: {
+    totalGradedBags: number;
+    graded?: boolean;
+  };
+  [key: string]: unknown;
+}
+
 /** One daybook entry: incoming gate pass + attached passes + summaries */
 export interface DaybookEntry {
-  incoming: Record<string, unknown>;
+  incoming: DaybookEntryIncoming;
   farmer: DaybookFarmer | null;
   gradingPasses: unknown[];
   storagePasses: unknown[];

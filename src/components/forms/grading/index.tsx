@@ -145,8 +145,10 @@ export const GradingGatePassForm = memo(function GradingGatePassForm({
     () =>
       incomingGatePassIds.length === 0
         ? []
-        : incomingGatePassesList.filter((p) =>
-            incomingGatePassIds.includes(p._id)
+        : incomingGatePassesList.filter(
+            (p) =>
+              incomingGatePassIds.includes(p._id) &&
+              p.gradingSummary?.graded !== true
           ),
     [incomingGatePassesList, incomingGatePassIds]
   );
