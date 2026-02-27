@@ -120,6 +120,8 @@ export interface GetIncomingGatePassesParams {
   limit?: number;
   sortOrder?: 'asc' | 'desc';
   gatePassNo?: number | string;
+  /** Filter by grading status */
+  status?: 'graded' | 'ungraded';
 }
 
 /** API response for GET /incoming-gate-pass */

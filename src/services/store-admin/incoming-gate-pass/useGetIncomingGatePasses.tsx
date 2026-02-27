@@ -12,7 +12,14 @@ import { incomingGatePassKeys } from './useCreateIncomingGatePass';
 const incomingGatePassListKey = [...incomingGatePassKeys.all, 'list'] as const;
 
 function listKey(params: GetIncomingGatePassesParams = {}) {
-  return [...incomingGatePassListKey, params] as const;
+  return [
+    ...incomingGatePassListKey,
+    params.page,
+    params.limit,
+    params.sortOrder,
+    params.gatePassNo ?? '',
+    params.status ?? '',
+  ] as const;
 }
 
 /** Fetcher used by queryOptions and prefetch */
@@ -25,6 +32,7 @@ async function fetchIncomingGatePasses(
   if (params.sortOrder != null) searchParams.set('sortOrder', params.sortOrder);
   if (params.gatePassNo != null)
     searchParams.set('gatePassNo', String(params.gatePassNo));
+  if (params.status != null) searchParams.set('status', params.status);
 
   const queryString = searchParams.toString();
   const url = queryString

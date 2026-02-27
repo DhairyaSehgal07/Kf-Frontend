@@ -43,9 +43,11 @@ export interface ContractTabPanelProps {
   onRefresh: () => void;
   searchQuery: string;
   onSearchChange: (value: string) => void;
-  sortBy: 'Date' | 'Voucher Number';
+  /** When true, sort dropdown shows only Ascending/Descending (no field name in label) */
+  sortOrderOnly?: boolean;
+  sortBy?: 'Date' | 'Voucher Number';
   sortOrder: 'asc' | 'desc';
-  onSortByChange: (value: 'Date' | 'Voucher Number') => void;
+  onSortByChange?: (value: 'Date' | 'Voucher Number') => void;
   onSortOrderChange: (value: 'asc' | 'desc') => void;
   onSortPageReset: () => void;
   limit: number;
@@ -55,6 +57,9 @@ export interface ContractTabPanelProps {
   hasPrev: boolean;
   hasNext: boolean;
   setPage: (updater: (p: number) => number) => void;
+  /** Optional status filter for incoming tab: "graded" | "ungraded" | undefined (All); when onStatusFilterChange set, shows status dropdown */
+  statusFilter?: 'graded' | 'ungraded';
+  onStatusFilterChange?: (value: 'graded' | 'ungraded' | undefined) => void;
   /** Optional content below controls (e.g. list of vouchers) */
   children?: ReactNode;
 }
@@ -67,7 +72,8 @@ const ContractTabPanel = memo(function ContractTabPanel({
   onRefresh,
   searchQuery,
   onSearchChange,
-  sortBy,
+  sortOrderOnly = false,
+  sortBy = 'Date',
   sortOrder,
   onSortByChange,
   onSortOrderChange,
@@ -79,8 +85,11 @@ const ContractTabPanel = memo(function ContractTabPanel({
   hasPrev,
   hasNext,
   setPage,
+  statusFilter,
+  onStatusFilterChange,
   children,
 }: ContractTabPanelProps) {
+  const showStatusFilter = onStatusFilterChange != null;
   return (
     <div className="space-y-4 sm:space-y-6">
       {/* Voucher count + refresh (UI placeholder) */}
@@ -123,7 +132,7 @@ const ContractTabPanel = memo(function ContractTabPanel({
         <div className="relative w-full">
           <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
           <Input
-            placeholder="Search by voucher number"
+            placeholder="Search by gate pass number"
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
             className="font-custom focus-visible:ring-primary w-full pl-10 focus-visible:ring-2 focus-visible:ring-offset-2"
@@ -137,36 +146,53 @@ const ContractTabPanel = memo(function ContractTabPanel({
                   variant="outline"
                   className="font-custom focus-visible:ring-primary w-full min-w-0 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 sm:w-auto sm:min-w-40"
                 >
-                  <span className="hidden sm:inline">Sort by: </span>
-                  <span className="sm:hidden">Sort: </span>
-                  {sortBy === 'Voucher Number' ? (
-                    <span className="truncate">Voucher No.</span>
-                  ) : (
-                    sortBy
+                  <span className="hidden sm:inline">Sort Order: </span>
+                  <span className="sm:hidden">Sort Order: </span>
+                  {!sortOrderOnly && (
+                    <>
+                      {sortBy === 'Voucher Number' ? (
+                        <span className="truncate">Voucher No.</span>
+                      ) : (
+                        sortBy
+                      )}
+                      <span className="font-custom text-muted-foreground hidden sm:inline">
+                        {' '}
+                        ·{' '}
+                      </span>
+                    </>
                   )}
-                  <span className="font-custom text-muted-foreground hidden sm:inline">
-                    {' '}
-                    · {sortOrder === 'asc' ? 'Ascending' : 'Descending'}
+                  <span
+                    className={
+                      sortOrderOnly
+                        ? ''
+                        : 'font-custom text-muted-foreground hidden sm:inline'
+                    }
+                  >
+                    {sortOrder === 'asc' ? 'Oldest first' : 'Latest first'}
                   </span>
                   <ChevronDown className="ml-2 h-4 w-4 shrink-0" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="font-custom">
-                <DropdownMenuItem onClick={() => onSortByChange('Date')}>
-                  Date
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => onSortByChange('Voucher Number')}
-                >
-                  Voucher Number
-                </DropdownMenuItem>
+                {!sortOrderOnly && (
+                  <>
+                    <DropdownMenuItem onClick={() => onSortByChange?.('Date')}>
+                      Date
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => onSortByChange?.('Voucher Number')}
+                    >
+                      Voucher Number
+                    </DropdownMenuItem>
+                  </>
+                )}
                 <DropdownMenuItem
                   onClick={() => {
                     onSortOrderChange('asc');
                     onSortPageReset();
                   }}
                 >
-                  Ascending
+                  Oldest first
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => {
@@ -174,10 +200,56 @@ const ContractTabPanel = memo(function ContractTabPanel({
                     onSortPageReset();
                   }}
                 >
-                  Descending
+                  Latest first
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+            {showStatusFilter && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="font-custom focus-visible:ring-primary w-full min-w-0 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 sm:w-auto sm:min-w-36"
+                  >
+                    <span className="hidden sm:inline">Status: </span>
+                    <span className="truncate">
+                      {statusFilter === 'graded'
+                        ? 'Graded'
+                        : statusFilter === 'ungraded'
+                          ? 'Ungraded'
+                          : 'All'}
+                    </span>
+                    <ChevronDown className="ml-2 h-4 w-4 shrink-0" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="font-custom">
+                  <DropdownMenuItem
+                    onClick={() => {
+                      onStatusFilterChange(undefined);
+                      onSortPageReset();
+                    }}
+                  >
+                    All
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => {
+                      onStatusFilterChange('graded');
+                      onSortPageReset();
+                    }}
+                  >
+                    Graded
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => {
+                      onStatusFilterChange('ungraded');
+                      onSortPageReset();
+                    }}
+                  >
+                    Ungraded
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </div>
           <Button
             className="font-custom h-10 w-full shrink-0 sm:w-auto"

@@ -68,7 +68,6 @@ const IncomingVoucher = memo(function IncomingVoucher({
       setIsPrinting(false);
     }
   };
-  const status = voucher.status ?? '—';
   const linkedBy = voucher.createdBy;
 
   return (
@@ -100,7 +99,7 @@ const IncomingVoucher = memo(function IncomingVoucher({
             <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
               {voucher.category != null && voucher.category !== '' && (
                 <Badge
-                  variant="secondary"
+                  variant="default"
                   className="px-2 py-0.5 text-[10px] font-medium"
                 >
                   {voucher.category}
@@ -112,12 +111,14 @@ const IncomingVoucher = memo(function IncomingVoucher({
               >
                 {bags.toLocaleString('en-IN')} bags
               </Badge>
-              <Badge
-                variant="outline"
-                className="px-2 py-0.5 text-[10px] font-medium capitalize"
-              >
-                {(status as string).replace(/_/g, ' ')}
-              </Badge>
+              {voucher.gradingSummary?.graded === true && (
+                <Badge
+                  variant="outline"
+                  className="border-primary/40 bg-primary/5 text-primary px-2 py-0.5 text-[10px] font-medium"
+                >
+                  Graded
+                </Badge>
+              )}
             </div>
           </div>
         </CardHeader>
@@ -216,10 +217,6 @@ const IncomingVoucher = memo(function IncomingVoucher({
                       value={`#${voucher.manualGatePassNumber}`}
                     />
                   )}
-                  <DetailRow
-                    label="Status"
-                    value={(voucher.status ?? '—').replace(/_/g, ' ')}
-                  />
                   <DetailRow
                     label="Bags Received"
                     value={(voucher.bagsReceived ?? 0).toLocaleString('en-IN')}

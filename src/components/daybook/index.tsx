@@ -1,4 +1,5 @@
-import { memo, useCallback, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import debounce from 'lodash/debounce';
 import { Link } from '@tanstack/react-router';
 import { Card, CardContent } from '@/components/ui/card';
 
@@ -241,10 +242,24 @@ const RentalTabContent = memo(function RentalTabContent() {
 
 const DaybookPage = memo(function DaybookPage() {
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [sortBy, setSortBy] = useState<'Date' | 'Voucher Number'>('Date');
+  const [incomingStatusFilter, setIncomingStatusFilter] = useState<
+    'graded' | 'ungraded' | undefined
+  >(undefined);
+
+  const debouncedSetSearch = useMemo(
+    () => debounce((value: string) => setDebouncedSearch(value), 300),
+    []
+  );
+
+  useEffect(() => {
+    debouncedSetSearch(searchQuery);
+    return () => debouncedSetSearch.cancel();
+  }, [searchQuery, debouncedSetSearch]);
 
   const setLimitAndResetPage = useCallback((newLimit: number) => {
     setLimit(newLimit);
@@ -260,7 +275,8 @@ const DaybookPage = memo(function DaybookPage() {
     page,
     limit,
     sortOrder,
-    gatePassNo: searchQuery.trim() || undefined,
+    gatePassNo: debouncedSearch.trim() || undefined,
+    status: incomingStatusFilter,
   });
 
   const incomingGatePasses = useMemo(
@@ -349,9 +365,8 @@ const DaybookPage = memo(function DaybookPage() {
                   onRefresh={() => refetchIncoming()}
                   searchQuery={searchQuery}
                   onSearchChange={setSearchQuery}
-                  sortBy={sortBy}
+                  sortOrderOnly
                   sortOrder={sortOrder}
-                  onSortByChange={setSortBy}
                   onSortOrderChange={setSortOrder}
                   onSortPageReset={() => setPage(1)}
                   limit={limit}
@@ -361,6 +376,11 @@ const DaybookPage = memo(function DaybookPage() {
                   hasPrev={hasPrev}
                   hasNext={hasNext}
                   setPage={setPage}
+                  statusFilter={incomingStatusFilter}
+                  onStatusFilterChange={(value) => {
+                    setIncomingStatusFilter(value);
+                    setPage(1);
+                  }}
                 >
                   {incomingLoading ? (
                     <div className="space-y-6">
