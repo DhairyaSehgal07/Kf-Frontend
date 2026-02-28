@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.8] - 2026-02-28
+
+### Added
+- Grading form step 1: farmer and variety filters (SearchSelector) before gate pass selection; gate pass list and Select all/Clear scoped to selected farmer + variety; initial selection from Daybook context (farmer/variety/ids) when opening with pre-selected IDs
+
+### Changed
+- Grading form: `farmerStorageLinkId`, `incomingGatePassId`, and `variety` props are optional; context resolved from first selected incoming pass when not provided; validation toast if submitting without at least one selected pass
+- Grading page: always shows form (no "Open from Daybook" block); variety line in header only when variety is set
+
 ## [0.10.7] - 2026-02-28
 
 ### Added

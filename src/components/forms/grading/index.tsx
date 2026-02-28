@@ -31,9 +31,9 @@ export interface SizeEntry {
 }
 
 export interface GradingGatePassFormProps {
-  farmerStorageLinkId: string;
-  incomingGatePassId: string;
-  variety: string;
+  farmerStorageLinkId?: string;
+  incomingGatePassId?: string;
+  variety?: string;
   onSuccess?: () => void;
 }
 
@@ -82,6 +82,37 @@ export const GradingGatePassForm = memo(function GradingGatePassForm({
 
   const formSchema = useMemo(() => buildFormSchema(), []);
 
+  const selectedIncomingPasses = useMemo(
+    () =>
+      incomingGatePassIds.length === 0
+        ? []
+        : incomingGatePassesList.filter(
+            (p) =>
+              incomingGatePassIds.includes(p._id) &&
+              p.gradingSummary?.graded !== true
+          ),
+    [incomingGatePassesList, incomingGatePassIds]
+  );
+
+  /** Resolve farmerStorageLinkId, incomingGatePassId, variety from props or first selected pass. */
+  const resolvedContext = useMemo(() => {
+    const first = selectedIncomingPasses[0];
+    const linkId =
+      typeof first?.farmerStorageLinkId === 'string'
+        ? first.farmerStorageLinkId
+        : first?.farmerStorageLinkId?._id;
+    return {
+      farmerStorageLinkId: farmerStorageLinkId ?? linkId,
+      incomingGatePassId: incomingGatePassId ?? first?._id,
+      variety: variety ?? first?.variety ?? '',
+    };
+  }, [
+    farmerStorageLinkId,
+    incomingGatePassId,
+    variety,
+    selectedIncomingPasses,
+  ]);
+
   const form = useForm({
     defaultValues: {
       date: formatDate(new Date()),
@@ -97,6 +128,18 @@ export const GradingGatePassForm = memo(function GradingGatePassForm({
     onSubmit: async ({ value }) => {
       if (!admin?._id || !voucherNumber) return;
 
+      const {
+        farmerStorageLinkId: resolvedLinkId,
+        incomingGatePassId: resolvedPassId,
+        variety: resolvedVariety,
+      } = resolvedContext;
+      if (!resolvedLinkId || !resolvedPassId || !resolvedVariety) {
+        toast.error(
+          'Select at least one incoming gate pass to create a grading voucher.'
+        );
+        return;
+      }
+
       const orderDetails: CreateGradingGatePassOrderDetail[] = value.sizeEntries
         .filter((row) => row.quantity > 0)
         .map((row) => ({
@@ -109,15 +152,15 @@ export const GradingGatePassForm = memo(function GradingGatePassForm({
 
       createGradingGatePass(
         {
-          farmerStorageLinkId,
-          incomingGatePassId,
+          farmerStorageLinkId: resolvedLinkId,
+          incomingGatePassId: resolvedPassId,
           ...(incomingGatePassIds.length > 0 && {
             incomingGatePassIds,
           }),
           gradedById: admin._id,
           gatePassNo: voucherNumber,
           date: formatDateToISO(value.date),
-          variety,
+          variety: resolvedVariety,
           orderDetails,
           allocationStatus: 'UNALLOCATED',
           remarks: value.remarks.trim() || undefined,
@@ -141,17 +184,6 @@ export const GradingGatePassForm = memo(function GradingGatePassForm({
     voucherNumber != null ? `#${voucherNumber}` : null;
   const gatePassNo = voucherNumber ?? 0;
 
-  const selectedIncomingPasses = useMemo(
-    () =>
-      incomingGatePassIds.length === 0
-        ? []
-        : incomingGatePassesList.filter(
-            (p) =>
-              incomingGatePassIds.includes(p._id) &&
-              p.gradingSummary?.graded !== true
-          ),
-    [incomingGatePassesList, incomingGatePassIds]
-  );
   const totalBagsSelected = useMemo(
     () =>
       selectedIncomingPasses.reduce((sum, p) => sum + (p.bagsReceived ?? 0), 0),
@@ -594,7 +626,7 @@ export const GradingGatePassForm = memo(function GradingGatePassForm({
         open={isSummarySheetOpen}
         onOpenChange={setIsSummarySheetOpen}
         voucherNumberDisplay={voucherNumberDisplay}
-        variety={variety}
+        variety={resolvedContext.variety}
         formValues={{
           date: form.state.values.date,
           sizeEntries: form.state.values.sizeEntries,
