@@ -9,6 +9,7 @@ import type {
 } from '@/types/grading-gate-pass';
 import { gradingGatePassKeys } from './useGetGradingGatePasses';
 import { daybookKeys } from './useGetDaybook';
+import { incomingGatePassKeys } from '../incoming-gate-pass/useCreateIncomingGatePass';
 
 /** API error shape (400, 404, 409): { success, error: { code, message } } */
 type GradingGatePassApiError = {
@@ -53,6 +54,7 @@ export function useCreateGradingGatePass() {
         toast.success(data.message ?? 'Grading gate pass created successfully');
         queryClient.invalidateQueries({ queryKey: daybookKeys.all });
         queryClient.invalidateQueries({ queryKey: gradingGatePassKeys.all });
+        queryClient.invalidateQueries({ queryKey: incomingGatePassKeys.all });
       } else {
         toast.error(data.message ?? 'Failed to create grading gate pass');
       }
