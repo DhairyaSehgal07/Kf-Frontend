@@ -268,6 +268,11 @@ export const GradingGatePassForm = memo(function GradingGatePassForm({
                     min={0}
                     value={field.state.value ?? ''}
                     onBlur={field.handleBlur}
+                    onWheel={(e) => e.currentTarget.blur()}
+                    onKeyDown={(e) => {
+                      if (e.key === 'ArrowUp' || e.key === 'ArrowDown')
+                        e.preventDefault();
+                    }}
                     onChange={(e) => {
                       const raw = e.target.value;
                       if (raw === '') {
@@ -359,6 +364,14 @@ export const GradingGatePassForm = memo(function GradingGatePassForm({
                                   : (field.state.value ?? '')
                               }
                               onBlur={field.handleBlur}
+                              onWheel={(e) => e.currentTarget.blur()}
+                              onKeyDown={(e) => {
+                                if (
+                                  e.key === 'ArrowUp' ||
+                                  e.key === 'ArrowDown'
+                                )
+                                  e.preventDefault();
+                              }}
                               onChange={(e) => {
                                 const raw = e.target.value;
                                 if (raw === '' || raw === '-') {
@@ -412,6 +425,14 @@ export const GradingGatePassForm = memo(function GradingGatePassForm({
                                   : field.state.value
                               }
                               onBlur={field.handleBlur}
+                              onWheel={(e) => e.currentTarget.blur()}
+                              onKeyDown={(e) => {
+                                if (
+                                  e.key === 'ArrowUp' ||
+                                  e.key === 'ArrowDown'
+                                )
+                                  e.preventDefault();
+                              }}
                               onChange={(e) => {
                                 const raw = e.target.value;
                                 if (raw === '' || raw === '-') {
@@ -465,6 +486,14 @@ export const GradingGatePassForm = memo(function GradingGatePassForm({
                                     : (field.state.value ?? '')
                                 }
                                 onBlur={field.handleBlur}
+                                onWheel={(e) => e.currentTarget.blur()}
+                                onKeyDown={(e) => {
+                                  if (
+                                    e.key === 'ArrowUp' ||
+                                    e.key === 'ArrowDown'
+                                  )
+                                    e.preventDefault();
+                                }}
                                 onChange={(e) => {
                                   const raw = e.target.value;
                                   if (raw === '' || raw === '-') {
@@ -532,6 +561,14 @@ export const GradingGatePassForm = memo(function GradingGatePassForm({
                                     : field.state.value
                                 }
                                 onBlur={field.handleBlur}
+                                onWheel={(e) => e.currentTarget.blur()}
+                                onKeyDown={(e) => {
+                                  if (
+                                    e.key === 'ArrowUp' ||
+                                    e.key === 'ArrowDown'
+                                  )
+                                    e.preventDefault();
+                                }}
                                 onChange={(e) => {
                                   const raw = e.target.value;
                                   if (raw === '' || raw === '-') {
