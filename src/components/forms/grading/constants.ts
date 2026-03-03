@@ -16,6 +16,7 @@ export const POTATO_VARIETIES: { label: string; value: string }[] = [
   { label: 'FC - 5', value: 'FC - 5' },
   { label: 'Himalini', value: 'Himalini' },
   { label: 'Fry Sona', value: 'Fry Sona' },
+  { label: 'KCM', value: 'KCM' },
   { label: 'K. Badshah', value: 'K. Badshah' },
   { label: 'K. Chandramukhi', value: 'K. Chandramukhi' },
   { label: 'K. Jyoti', value: 'K. Jyoti' },
