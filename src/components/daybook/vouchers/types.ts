@@ -8,6 +8,7 @@ export interface WeightSlipData {
 /** Shape of incoming voucher from daybook API */
 export interface IncomingVoucherData {
   _id?: string;
+  category?: string;
   gatePassNo?: number;
   manualGatePassNumber?: number;
   date?: string;
@@ -17,7 +18,7 @@ export interface IncomingVoucherData {
   status?: string;
   weightSlip?: WeightSlipData;
   remarks?: string;
-  gradingSummary?: { totalGradedBags?: number };
+  gradingSummary?: { totalGradedBags?: number; graded?: boolean };
   createdBy?: { name?: string };
 }
 
