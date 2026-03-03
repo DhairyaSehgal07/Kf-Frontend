@@ -3,6 +3,7 @@ import { useForm } from '@tanstack/react-form';
 import * as z from 'zod';
 
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Field,
   FieldError,
@@ -74,7 +75,9 @@ export const GradingGatePassForm = memo(function GradingGatePassForm({
     useGetReceiptVoucherNumber('grading-gate-pass');
   const { mutate: createGradingGatePass, isPending } =
     useCreateGradingGatePass();
-  const { data: incomingGatePassesList = [] } = useGetIncomingGatePasses();
+  const { data: incomingGatePassesList = [] } = useGetIncomingGatePasses({
+    limit: 500,
+  });
 
   const [step, setStep] = useState(1);
   const [incomingGatePassIds, setIncomingGatePassIds] = useState<string[]>([]);
@@ -224,30 +227,61 @@ export const GradingGatePassForm = memo(function GradingGatePassForm({
           }}
           className="space-y-6"
         >
-          {/* Summary of selected incoming vouchers */}
+          {/* Step 2: Selected incoming gate passes — shown first on this screen */}
           {selectedIncomingPasses.length > 0 && (
-            <div className="border-border/60 bg-muted/20 rounded-lg border p-4">
-              <h3 className="font-custom text-foreground mb-3 text-base font-semibold sm:text-lg">
-                Selected incoming vouchers
-              </h3>
-              <ul className="font-custom mb-3 space-y-1.5 text-sm">
-                {selectedIncomingPasses.map((pass) => (
-                  <li
-                    key={pass._id}
-                    className="text-muted-foreground flex flex-wrap items-center gap-x-2 gap-y-0.5"
-                  >
-                    <span className="text-foreground font-medium">
-                      Gate Pass #{pass.gatePassNo}
-                    </span>
-                    <span>·</span>
-                    <span>{pass.bagsReceived} bags</span>
-                  </li>
-                ))}
-              </ul>
-              <p className="font-custom text-foreground border-border/40 border-t pt-3 text-base font-semibold">
-                Total bags selected for grading: {totalBagsSelected}
-              </p>
-            </div>
+            <Card className="border-border/60 shadow-sm">
+              <CardHeader className="pb-3">
+                <CardTitle className="font-custom text-foreground text-base font-semibold sm:text-lg">
+                  Selected incoming gate passes
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="px-6 pt-0 pb-6">
+                <div className="border-border/60 overflow-hidden rounded-lg border">
+                  <table className="font-custom w-full text-sm">
+                    <thead>
+                      <tr className="border-border/60 bg-muted/50">
+                        <th className="text-muted-foreground px-4 py-3 text-left font-semibold">
+                          Gate Pass #
+                        </th>
+                        <th className="text-muted-foreground px-4 py-3 text-right font-semibold">
+                          Bags
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {selectedIncomingPasses.map((pass) => (
+                        <tr
+                          key={pass._id}
+                          className="border-border/40 border-b last:border-0"
+                        >
+                          <td className="text-foreground px-4 py-2.5 font-medium">
+                            #{pass.gatePassNo}
+                          </td>
+                          <td className="text-muted-foreground px-4 py-2.5 text-right tabular-nums">
+                            {pass.bagsReceived ?? 0}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                    <tfoot>
+                      <tr className="border-border/60 bg-muted/30 font-semibold">
+                        <td className="text-foreground px-4 py-3">
+                          Total
+                          {selectedIncomingPasses.length > 1 && (
+                            <span className="text-muted-foreground ml-1 font-normal">
+                              ({selectedIncomingPasses.length} passes)
+                            </span>
+                          )}
+                        </td>
+                        <td className="text-foreground px-4 py-3 text-right tabular-nums">
+                          {totalBagsSelected}
+                        </td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
           )}
 
           <FieldGroup className="space-y-6">
@@ -590,6 +624,27 @@ export const GradingGatePassForm = memo(function GradingGatePassForm({
                   ))}
                 </div>
               </div>
+
+              {/* Total bags entered (sum of all Qty values) */}
+              <form.Subscribe selector={(state) => state.values.sizeEntries}>
+                {(sizeEntries) => {
+                  const totalBagsEntered = (sizeEntries ?? []).reduce(
+                    (sum, row) => sum + (row.quantity ?? 0),
+                    0
+                  );
+                  return (
+                    <div className="border-border/60 bg-muted/30 flex items-center justify-between rounded-lg border px-4 py-2.5">
+                      <span className="font-custom text-foreground text-sm font-semibold">
+                        Total bags
+                      </span>
+                      <span className="font-custom font-medium tabular-nums">
+                        {totalBagsEntered}
+                      </span>
+                    </div>
+                  );
+                }}
+              </form.Subscribe>
+
               <span className="text-muted-foreground block text-xs">
                 Quantity / Approx Weight (kg)
               </span>
