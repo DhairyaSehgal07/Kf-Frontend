@@ -8,7 +8,6 @@ export interface WeightSlipData {
 /** Shape of incoming voucher from daybook API */
 export interface IncomingVoucherData {
   _id?: string;
-  category?: string;
   gatePassNo?: number;
   manualGatePassNumber?: number;
   date?: string;
@@ -18,7 +17,7 @@ export interface IncomingVoucherData {
   status?: string;
   weightSlip?: WeightSlipData;
   remarks?: string;
-  gradingSummary?: { totalGradedBags?: number; graded?: boolean };
+  gradingSummary?: { totalGradedBags?: number };
   createdBy?: { name?: string };
 }
 
@@ -74,6 +73,13 @@ export interface OrderDetailRow {
   quantityAvailable?: number;
 }
 
+/** One bag size row from GET /nikasi-gate-pass (new list API shape) */
+export interface NikasiBagSizeRow {
+  size?: string;
+  variety?: string;
+  quantityIssued?: number;
+}
+
 /** Shape of grading/storage/nikasi/outgoing pass from daybook API */
 export interface PassVoucherData {
   _id?: string;
@@ -82,6 +88,8 @@ export interface PassVoucherData {
   date?: string;
   variety?: string;
   orderDetails?: OrderDetailRow[];
+  /** Nikasi list API: size/variety/quantityIssued per row */
+  bagSize?: NikasiBagSizeRow[];
   from?: string;
   toField?: string;
   allocationStatus?: string;
@@ -108,4 +116,31 @@ export function totalBagsFromOrderDetails(
     (sum, o) => sum + (o.currentQuantity ?? o.quantityIssued ?? 0),
     0
   );
+}
+
+/** Bag size row shape (e.g. storage gate pass bagSizes from API) */
+export interface StorageBagSizeRow {
+  size?: string;
+  currentQuantity?: number;
+  initialQuantity?: number;
+  bagType?: string;
+  chamber?: string;
+  floor?: string;
+  row?: string;
+}
+
+/** Sum bags from bagSizes (currentQuantity) */
+export function totalBagsFromBagSizes(
+  bagSizes: StorageBagSizeRow[] | undefined
+): number {
+  if (!bagSizes?.length) return 0;
+  return bagSizes.reduce((sum, b) => sum + (b.currentQuantity ?? 0), 0);
+}
+
+/** Sum bags from nikasi bagSize (quantityIssued) – new GET /nikasi-gate-pass list shape */
+export function totalBagsFromNikasiBagSizes(
+  bagSize: NikasiBagSizeRow[] | undefined
+): number {
+  if (!bagSize?.length) return 0;
+  return bagSize.reduce((sum, b) => sum + (b.quantityIssued ?? 0), 0);
 }

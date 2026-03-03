@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.9] - 2026-03-03
+
+### Added
+- Storage gate pass: new API shape with `bagSizes` (size, bagType, currentQuantity, initialQuantity, chamber, floor, row) instead of grading-gate-pass allocations; types `CreateStorageGatePassBagSize`, `StorageGatePassBagSize`, `StorageGatePassWithLink`, `StorageGatePassFarmerStorageLink`, `StorageGatePassLinkedByAdmin`
+- Storage form: direct entry flow — farmer/variety/date selection, size quantities and bag types grid, optional extra rows, location-by-size, summary sheet; uses `CreateStorageGatePassInput.bagSizes` for create payload
+
+### Changed
+- Storage form: refactored into single form (TanStack Form + zod); removed separate step components (GradingFiltersBar, Step1BagsCard, Step2LocationCard, StorageAllocationTable, StorageFormHeader, StorageFormFooter, StorageFormStepIndicator); create payload sends `bagSizes` array
+- Storage voucher (daybook): uses `StorageGatePassWithLink`; farmer from `voucher.farmerStorageLinkId` when not passed; order details replaced by `bagSizes`; removed "Grading refs" row; totals from `totalBagsFromBagSizes(bagSizes)`
+- Daybook voucher types: `StorageBagSizeRow`, `totalBagsFromBagSizes` for bag-size-based storage; grading voucher cleanup
+- `useCreateStorageGatePass` / `useGetStorageGatePasses`: aligned with new storage gate pass API (bagSizes, populated farmerStorageLinkId)
+- Storage route and form types/utils: updates for bagSizes flow
+
 ## [0.10.8] - 2026-02-28
 
 ### Added

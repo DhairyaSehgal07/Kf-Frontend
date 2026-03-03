@@ -21,14 +21,17 @@ import {
   IncomingVoucher,
   RentalIncomingVoucher,
   GradingVoucher,
+  StorageVoucher,
   type IncomingVoucherData,
 } from './vouchers';
 import { ContractTabPanel } from './ContractTabPanel';
 import { useGetIncomingGatePasses } from '@/services/store-admin/incoming-gate-pass/useGetIncomingGatePasses';
 import { useGetRentalIncomingGatePasses } from '@/services/store-admin/rental-incoming-gate-pass/useGetRentalIncomingGatePasses';
 import { useGetGradingGatePasses } from '@/services/store-admin/grading-gate-pass/useGetGradingGatePasses';
+import { useGetStorageGatePasses } from '@/services/store-admin/storage-gate-pass/useGetStorageGatePasses';
 import type { IncomingGatePassWithLink } from '@/types/incoming-gate-pass';
 import type { GradingGatePass } from '@/types/grading-gate-pass';
+import type { StorageGatePassWithLink } from '@/types/storage-gate-pass';
 
 /** Map API response to props for IncomingVoucher (handles populated or plain link) */
 function mapIncomingPassToVoucherProps(pass: IncomingGatePassWithLink) {
@@ -335,6 +338,53 @@ const DaybookPage = memo(function DaybookPage() {
     gatePassNo: debouncedSearch.trim() || undefined,
   });
 
+  const {
+    data: storageGatePassesRaw = [],
+    isLoading: storageLoading,
+    isFetching: storageFetching,
+    refetch: refetchStorage,
+  } = useGetStorageGatePasses();
+
+  const storageGatePasses = useMemo(
+    () => (Array.isArray(storageGatePassesRaw) ? storageGatePassesRaw : []),
+    [storageGatePassesRaw]
+  );
+
+  const filteredAndSortedStoragePasses = useMemo(() => {
+    const q = debouncedSearch.trim().toLowerCase();
+    let list = storageGatePasses;
+    if (q) {
+      list = list.filter((pass: StorageGatePassWithLink) => {
+        const gatePassNo = String(pass.gatePassNo ?? '').toLowerCase();
+        const date = pass.date
+          ? new Date(pass.date).toLocaleDateString('en-IN').toLowerCase()
+          : '';
+        const variety = (pass.variety ?? '').toLowerCase();
+        const farmerName = (
+          pass.farmerStorageLinkId?.farmerId?.name ?? ''
+        ).toLowerCase();
+        return (
+          gatePassNo.includes(q) ||
+          date.includes(q) ||
+          variety.includes(q) ||
+          farmerName.includes(q)
+        );
+      });
+    }
+    const sorted = [...list].sort((a, b) => {
+      const aVal =
+        sortBy === 'Date'
+          ? new Date(a.date ?? 0).getTime()
+          : Number(a.gatePassNo ?? 0);
+      const bVal =
+        sortBy === 'Date'
+          ? new Date(b.date ?? 0).getTime()
+          : Number(b.gatePassNo ?? 0);
+      return sortOrder === 'asc' ? aVal - bVal : bVal - aVal;
+    });
+    return sorted;
+  }, [storageGatePasses, debouncedSearch, sortBy, sortOrder]);
+
   const incomingGatePasses = useMemo(
     () => (Array.isArray(incomingGatePassesRaw) ? incomingGatePassesRaw : []),
     [incomingGatePassesRaw]
@@ -590,9 +640,9 @@ const DaybookPage = memo(function DaybookPage() {
                 <ContractTabPanel
                   addButtonLabel="Add Storage"
                   addButtonTo="/store-admin/storage"
-                  placeholderCount={placeholderCount}
-                  isRefreshing={isRefreshing}
-                  onRefresh={handleRefresh}
+                  placeholderCount={filteredAndSortedStoragePasses.length}
+                  isRefreshing={storageFetching}
+                  onRefresh={() => refetchStorage()}
                   searchQuery={searchQuery}
                   onSearchChange={setSearchQuery}
                   sortBy={sortBy}
@@ -607,7 +657,55 @@ const DaybookPage = memo(function DaybookPage() {
                   hasPrev={hasPrev}
                   hasNext={hasNext}
                   setPage={setPage}
-                />
+                >
+                  {storageLoading ? (
+                    <div className="space-y-6">
+                      {[...Array(3)].map((_, i) => (
+                        <Card key={i} className="overflow-hidden p-0">
+                          <div className="border-border bg-muted/30 px-3 py-2 sm:px-4 sm:py-2.5">
+                            <div className="flex items-center justify-between gap-2">
+                              <Skeleton className="h-4 w-16" />
+                              <Skeleton className="h-4 w-8" />
+                            </div>
+                            <Skeleton className="mt-1.5 h-2 w-full rounded-full" />
+                          </div>
+                          <div className="space-y-2 border-b px-4 py-3">
+                            <div className="flex gap-4">
+                              {[...Array(4)].map((__, j) => (
+                                <Skeleton key={j} className="h-4 w-14" />
+                              ))}
+                            </div>
+                          </div>
+                          <div className="p-4">
+                            <div className="flex gap-2">
+                              <Skeleton className="h-9 w-24 rounded-lg" />
+                              <Skeleton className="h-9 w-9 rounded-lg" />
+                            </div>
+                          </div>
+                        </Card>
+                      ))}
+                    </div>
+                  ) : filteredAndSortedStoragePasses.length === 0 ? (
+                    <Card>
+                      <CardContent className="py-8 pt-6 text-center">
+                        <p className="font-custom text-muted-foreground">
+                          No storage gate passes yet.
+                        </p>
+                        <Button className="font-custom mt-4" asChild>
+                          <Link to="/store-admin/storage">
+                            Add Storage Gate Pass
+                          </Link>
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  ) : (
+                    <div className="space-y-6">
+                      {filteredAndSortedStoragePasses.map((pass) => (
+                        <StorageVoucher key={pass._id} voucher={pass} />
+                      ))}
+                    </div>
+                  )}
+                </ContractTabPanel>
               </TabsContent>
               <TabsContent value="dispatch" className="mt-0 outline-none">
                 <ContractTabPanel

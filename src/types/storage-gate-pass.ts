@@ -1,6 +1,7 @@
+import type { FarmerStorageLinkFarmer } from '@/types/farmer';
 import type { GradingGatePass } from '@/types/grading-gate-pass';
 
-/** Single allocation for a grading gate pass when creating a storage gate pass */
+/** Single allocation for a grading gate pass when creating a storage gate pass (legacy / summary display) */
 export interface CreateStorageGatePassAllocation {
   size: string;
   quantityToAllocate: number;
@@ -9,10 +10,21 @@ export interface CreateStorageGatePassAllocation {
   row: string;
 }
 
-/** Entry for one grading gate pass and its allocations in the create payload */
+/** Entry for one grading gate pass and its allocations (legacy / summary display) */
 export interface CreateStorageGatePassGradingEntry {
   gradingGatePassId: string;
   allocations: CreateStorageGatePassAllocation[];
+}
+
+/** One bag size entry in the create storage gate pass request body */
+export interface CreateStorageGatePassBagSize {
+  size: string;
+  bagType: string;
+  currentQuantity: number;
+  initialQuantity: number;
+  chamber: string;
+  floor: string;
+  row: string;
 }
 
 /** Request body for POST /storage-gate-pass */
@@ -21,9 +33,8 @@ export interface CreateStorageGatePassInput {
   gatePassNo: number;
   date: string;
   variety: string;
-  gradingGatePasses: CreateStorageGatePassGradingEntry[];
+  bagSizes: CreateStorageGatePassBagSize[];
   remarks?: string;
-  manualGatePassNumber?: number;
 }
 
 /** Incoming bag size snapshot as returned in grading gate pass snapshots */
@@ -73,10 +84,52 @@ export interface StorageGatePass {
   createdBy?: string;
 }
 
+/** Admin user who linked the farmer–storage pair in GET /storage-gate-pass response */
+export interface StorageGatePassLinkedByAdmin {
+  _id: string;
+  name: string;
+}
+
+/** Farmer storage link as returned in GET /storage-gate-pass response (populated) */
+export interface StorageGatePassFarmerStorageLink {
+  _id: string;
+  farmerId: FarmerStorageLinkFarmer;
+  linkedById: StorageGatePassLinkedByAdmin;
+  accountNumber: number;
+}
+
+/** Single bag size entry on a storage gate pass (GET /storage-gate-pass) */
+export interface StorageGatePassBagSize {
+  size: string;
+  currentQuantity: number;
+  initialQuantity: number;
+  bagType: string;
+  chamber: string;
+  floor: string;
+  row: string;
+}
+
+/** Storage gate pass as returned by GET /storage-gate-pass (with populated farmerStorageLinkId) */
+export interface StorageGatePassWithLink {
+  _id: string;
+  farmerStorageLinkId: StorageGatePassFarmerStorageLink;
+  createdBy: string;
+  gatePassNo: number;
+  date: string;
+  variety: string;
+  bagSizes: StorageGatePassBagSize[];
+  editHistory: unknown[];
+  remarks?: string;
+  createdAt: string;
+  updatedAt: string;
+  __v: number;
+  manualGatePassNumber?: number;
+}
+
 /** API response for GET /storage-gate-pass */
 export interface GetStorageGatePassesApiResponse {
   success: boolean;
-  data: StorageGatePass[];
+  data: StorageGatePassWithLink[];
   message?: string;
 }
 
@@ -93,15 +146,26 @@ export interface GetGroupedStorageGatePassesApiResponse {
   data: GroupedStorageGatePassGroup[];
 }
 
+/** Bag size as returned in created storage gate pass */
+export interface CreatedStorageGatePassBagSize {
+  size: string;
+  currentQuantity: number;
+  initialQuantity: number;
+  bagType: string;
+  chamber: string;
+  floor: string;
+  row: string;
+}
+
 /** Created storage gate pass as returned by POST /storage-gate-pass */
 export interface CreatedStorageGatePass {
   _id: string;
+  farmerStorageLinkId: string;
+  createdBy: string;
   gatePassNo: number;
-  gradingGatePassIds: string[];
-  gradingGatePassSnapshots: StorageGatePassGradingSnapshot[];
   date: string;
   variety: string;
-  orderDetails: StorageGatePassOrderDetail[];
+  bagSizes: CreatedStorageGatePassBagSize[];
   editHistory: unknown[];
   remarks: string;
   createdAt: string;
@@ -111,7 +175,7 @@ export interface CreatedStorageGatePass {
 
 /** API response for POST /storage-gate-pass */
 export interface CreateStorageGatePassApiResponse {
-  success: boolean;
+  success?: boolean;
   data: CreatedStorageGatePass | null;
   message?: string;
 }
