@@ -30,8 +30,9 @@ export const GradingFormStep1 = memo(function GradingFormStep1({
   initialSelectedIds = [],
   onNext,
 }: GradingFormStep1Props) {
-  const { data: incomingGatePasses = [], isLoading } =
-    useGetIncomingGatePasses();
+  const { data: incomingGatePasses = [], isLoading } = useGetIncomingGatePasses(
+    { limit: 500 }
+  );
   const ungradedPasses = useMemo(
     () => incomingGatePasses.filter(isUngraded),
     [incomingGatePasses]
