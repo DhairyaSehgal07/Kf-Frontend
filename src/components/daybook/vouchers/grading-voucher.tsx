@@ -86,6 +86,26 @@ const GradingVoucher = memo(function GradingVoucher({
     incomingNetKg,
     incomingBagsCount
   );
+
+  const totalIncomingBags =
+    incomingBagsCount ??
+    (incomingGatePassIds.length > 0
+      ? incomingGatePassIds.reduce(
+          (sum, ref) => sum + (ref.bagsReceived ?? 0),
+          0
+        )
+      : undefined);
+  const gradingWastageBags =
+    totalIncomingBags != null
+      ? Math.max(0, totalIncomingBags - totalInitial)
+      : undefined;
+  const gradingWastagePercent =
+    totalIncomingBags != null &&
+    totalIncomingBags > 0 &&
+    gradingWastageBags != null
+      ? (gradingWastageBags / totalIncomingBags) * 100
+      : undefined;
+
   const totalGradedWeightPercent = computeTotalGradedWeightPercent(
     totalGradedWeightKg,
     incomingNetProductKg
@@ -464,6 +484,40 @@ const GradingVoucher = memo(function GradingVoucher({
                   </span>
                 </div>
               </section>
+
+              {(gradingWastageBags != null ||
+                gradingWastagePercent != null) && (
+                <>
+                  <Separator />
+                  <section>
+                    <h4 className="text-muted-foreground/70 mb-2 text-xs font-semibold tracking-wider uppercase">
+                      Grading wastage
+                    </h4>
+                    <div className="flex items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-2.5">
+                      <Package
+                        className="h-4 w-4 shrink-0 text-amber-600"
+                        aria-hidden
+                      />
+                      <span className="font-custom text-sm font-medium text-amber-700 tabular-nums dark:text-amber-600">
+                        {gradingWastageBags != null &&
+                          `${gradingWastageBags.toLocaleString('en-IN')} bags`}
+                        {gradingWastageBags != null &&
+                          gradingWastagePercent != null &&
+                          ' · '}
+                        {gradingWastagePercent != null && (
+                          <>
+                            {gradingWastagePercent.toLocaleString('en-IN', {
+                              minimumFractionDigits: 1,
+                              maximumFractionDigits: 1,
+                            })}
+                            % of incoming
+                          </>
+                        )}
+                      </span>
+                    </div>
+                  </section>
+                </>
+              )}
 
               {wastageKg !== undefined && (
                 <>
