@@ -30,12 +30,33 @@ import { Spinner } from '@/components/ui/spinner';
 import { GradingVoucherCalculationsDialog } from './grading-voucher-calculations-dialog';
 import { useStore } from '@/stores/store';
 
+/** Format number for display without rounding (full precision). */
+function formatNumber(value: number): string {
+  return value.toLocaleString('en-IN', { maximumFractionDigits: 10 });
+}
+
+/** Format wastage values to 2 decimal places. */
+function formatWastage(value: number): string {
+  return value.toLocaleString('en-IN', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
+/** Weight slip on an incoming gate pass (from weight slip details) */
+export interface IncomingWeightSlip {
+  grossWeightKg: number;
+  tareWeightKg: number;
+}
+
 /** Incoming gate pass ref shown in grading voucher (source of graded material) */
 export interface IncomingGatePassRef {
   _id: string;
   gatePassNo: number;
   manualGatePassNumber?: number;
   bagsReceived: number;
+  /** Present when populated from weight slip details; net = grossWeightKg − tareWeightKg */
+  weightSlip?: IncomingWeightSlip;
 }
 
 export interface GradingVoucherProps extends VoucherFarmerInfo {
@@ -87,23 +108,36 @@ const GradingVoucher = memo(function GradingVoucher({
     incomingBagsCount
   );
 
-  const totalIncomingBags =
-    incomingBagsCount ??
-    (incomingGatePassIds.length > 0
-      ? incomingGatePassIds.reduce(
-          (sum, ref) => sum + (ref.bagsReceived ?? 0),
-          0
-        )
+  const hasIncomingWeightSlips = incomingGatePassIds.some(
+    (ref) =>
+      ref.weightSlip?.grossWeightKg != null &&
+      ref.weightSlip?.tareWeightKg != null
+  );
+  const totalIncomingNetFromSlips = hasIncomingWeightSlips
+    ? incomingGatePassIds.reduce((sum, ref) => {
+        const ws = ref.weightSlip;
+        if (ws?.grossWeightKg != null && ws?.tareWeightKg != null) {
+          return sum + (ws.grossWeightKg - ws.tareWeightKg);
+        }
+        return sum;
+      }, 0)
+    : undefined;
+
+  /** Use incoming net from weight slips when parent did not pass incomingNetKg (e.g. API shape or mapping) */
+  const effectiveIncomingNetKg =
+    incomingNetKg ??
+    (totalIncomingNetFromSlips && totalIncomingNetFromSlips > 0
+      ? totalIncomingNetFromSlips
       : undefined);
-  const gradingWastageBags =
-    totalIncomingBags != null
-      ? Math.max(0, totalIncomingBags - totalInitial)
+  const effectiveGradingWastageKg =
+    effectiveIncomingNetKg != null && effectiveIncomingNetKg > 0
+      ? Math.max(0, effectiveIncomingNetKg - totalGradedWeightKg)
       : undefined;
-  const gradingWastagePercent =
-    totalIncomingBags != null &&
-    totalIncomingBags > 0 &&
-    gradingWastageBags != null
-      ? (gradingWastageBags / totalIncomingBags) * 100
+  const effectiveGradingWastagePercent =
+    effectiveIncomingNetKg != null &&
+    effectiveIncomingNetKg > 0 &&
+    effectiveGradingWastageKg != null
+      ? (effectiveGradingWastageKg / effectiveIncomingNetKg) * 100
       : undefined;
 
   const totalGradedWeightPercent = computeTotalGradedWeightPercent(
@@ -199,7 +233,7 @@ const GradingVoucher = memo(function GradingVoucher({
                 variant="secondary"
                 className="px-2 py-0.5 text-[10px] font-medium"
               >
-                {bags.toLocaleString('en-IN')} bags
+                {formatNumber(bags)} bags
               </Badge>
               {allocationStatus && (
                 <Badge
@@ -316,41 +350,83 @@ const GradingVoucher = memo(function GradingVoucher({
                             <th className="pr-3 pb-2">Gate Pass No.</th>
                             <th className="pr-3 pb-2">Manual No.</th>
                             <th className="pb-2 text-right">Bags Received</th>
+                            {hasIncomingWeightSlips && (
+                              <>
+                                <th className="pb-2 text-right">Gross (kg)</th>
+                                <th className="pb-2 text-right">Tare (kg)</th>
+                                <th className="pb-2 text-right">Net (kg)</th>
+                              </>
+                            )}
                           </tr>
                         </thead>
                         <tbody>
-                          {incomingGatePassIds.map((ref) => (
-                            <tr
-                              key={ref._id}
-                              className="border-border/40 border-b last:border-b-0"
-                            >
-                              <td className="py-2.5 pr-3 font-medium tabular-nums">
-                                #{ref.gatePassNo ?? '—'}
-                              </td>
-                              <td className="py-2.5 pr-3 tabular-nums">
-                                {ref.manualGatePassNumber != null
-                                  ? `#${ref.manualGatePassNumber}`
-                                  : '—'}
-                              </td>
-                              <td className="py-2.5 text-right font-medium tabular-nums">
-                                {(ref.bagsReceived ?? 0).toLocaleString(
-                                  'en-IN'
+                          {incomingGatePassIds.map((ref) => {
+                            const ws = ref.weightSlip;
+                            const netKg =
+                              ws?.grossWeightKg != null &&
+                              ws?.tareWeightKg != null
+                                ? ws.grossWeightKg - ws.tareWeightKg
+                                : null;
+                            return (
+                              <tr
+                                key={ref._id}
+                                className="border-border/40 border-b last:border-b-0"
+                              >
+                                <td className="py-2.5 pr-3 font-medium tabular-nums">
+                                  #{ref.gatePassNo ?? '—'}
+                                </td>
+                                <td className="py-2.5 pr-3 tabular-nums">
+                                  {ref.manualGatePassNumber != null
+                                    ? `#${ref.manualGatePassNumber}`
+                                    : '—'}
+                                </td>
+                                <td className="py-2.5 text-right font-medium tabular-nums">
+                                  {formatNumber(ref.bagsReceived ?? 0)}
+                                </td>
+                                {hasIncomingWeightSlips && (
+                                  <>
+                                    <td className="py-2.5 pr-3 text-right tabular-nums">
+                                      {ws?.grossWeightKg != null
+                                        ? formatNumber(ws.grossWeightKg)
+                                        : '—'}
+                                    </td>
+                                    <td className="py-2.5 pr-3 text-right tabular-nums">
+                                      {ws?.tareWeightKg != null
+                                        ? formatNumber(ws.tareWeightKg)
+                                        : '—'}
+                                    </td>
+                                    <td className="py-2.5 text-right font-medium tabular-nums">
+                                      {netKg != null
+                                        ? formatNumber(netKg)
+                                        : '—'}
+                                    </td>
+                                  </>
                                 )}
-                              </td>
-                            </tr>
-                          ))}
+                              </tr>
+                            );
+                          })}
                           <tr className="border-border/60 bg-muted/50 text-primary border-t-2 font-semibold">
                             <td className="py-2.5 pr-3" colSpan={2}>
                               Total bags
                             </td>
                             <td className="py-2.5 text-right tabular-nums">
-                              {incomingGatePassIds
-                                .reduce(
+                              {formatNumber(
+                                incomingGatePassIds.reduce(
                                   (sum, ref) => sum + (ref.bagsReceived ?? 0),
                                   0
                                 )
-                                .toLocaleString('en-IN')}
+                              )}
                             </td>
+                            {hasIncomingWeightSlips && (
+                              <>
+                                <td className="py-2.5 pr-3" colSpan={2} />
+                                <td className="py-2.5 text-right tabular-nums">
+                                  {typeof totalIncomingNetFromSlips === 'number'
+                                    ? formatNumber(totalIncomingNetFromSlips)
+                                    : '—'}
+                                </td>
+                              </>
+                            )}
                           </tr>
                         </tbody>
                       </table>
@@ -404,22 +480,16 @@ const GradingVoucher = memo(function GradingVoucher({
                                     {od.bagType ?? '—'}
                                   </td>
                                   <td className="py-2 pr-3 text-right font-medium">
-                                    {(od.currentQuantity ?? 0).toLocaleString(
-                                      'en-IN'
-                                    )}
+                                    {formatNumber(od.currentQuantity ?? 0)}
                                   </td>
                                   <td className="py-2 pr-3 text-right">
-                                    {qty.toLocaleString('en-IN')}
+                                    {formatNumber(qty)}
                                   </td>
                                   <td className="py-2 pr-3 text-right tabular-nums">
-                                    {weightPct.toLocaleString('en-IN', {
-                                      minimumFractionDigits: 1,
-                                      maximumFractionDigits: 1,
-                                    })}
-                                    %
+                                    {formatNumber(weightPct)}%
                                   </td>
                                   <td className="py-2 text-right">
-                                    {wt.toLocaleString('en-IN')}
+                                    {formatNumber(wt)}
                                   </td>
                                 </tr>
                               );
@@ -429,23 +499,18 @@ const GradingVoucher = memo(function GradingVoucher({
                                 Total
                               </td>
                               <td className="py-2.5 pr-3 text-right">
-                                {totalQty.toLocaleString('en-IN')}
+                                {formatNumber(totalQty)}
                               </td>
                               <td className="py-2.5 pr-3 text-right">
-                                {totalInitial.toLocaleString('en-IN')}
+                                {formatNumber(totalInitial)}
                               </td>
                               <td className="py-2.5 pr-3 text-right tabular-nums">
                                 {totalGradedWeight > 0
-                                  ? (100).toLocaleString('en-IN', {
-                                      minimumFractionDigits: 1,
-                                      maximumFractionDigits: 1,
-                                    }) + '%'
+                                  ? `${formatNumber(100)}%`
                                   : '—'}
                               </td>
                               <td className="py-2.5 text-right font-medium">
-                                {totalGradedWeightGrossKg.toLocaleString(
-                                  'en-IN'
-                                )}
+                                {formatNumber(totalGradedWeightKg)}
                               </td>
                             </tr>
                           </>
@@ -467,17 +532,12 @@ const GradingVoucher = memo(function GradingVoucher({
                     aria-hidden
                   />
                   <span className="text-primary font-custom text-sm font-medium tabular-nums">
-                    {totalGradedWeightKg.toLocaleString('en-IN')} kg
+                    {formatNumber(totalGradedWeightKg)} kg
                     {totalGradedWeightPercent !== undefined && (
                       <>
                         {' '}
                         <span className="text-primary/90">
-                          (
-                          {totalGradedWeightPercent.toLocaleString('en-IN', {
-                            minimumFractionDigits: 1,
-                            maximumFractionDigits: 1,
-                          })}
-                          % of net)
+                          ({formatNumber(totalGradedWeightPercent)}% of net)
                         </span>
                       </>
                     )}
@@ -485,8 +545,7 @@ const GradingVoucher = memo(function GradingVoucher({
                 </div>
               </section>
 
-              {(gradingWastageBags != null ||
-                gradingWastagePercent != null) && (
+              {effectiveIncomingNetKg != null && effectiveIncomingNetKg > 0 && (
                 <>
                   <Separator />
                   <section>
@@ -499,18 +558,15 @@ const GradingVoucher = memo(function GradingVoucher({
                         aria-hidden
                       />
                       <span className="font-custom text-sm font-medium text-amber-700 tabular-nums dark:text-amber-600">
-                        {gradingWastageBags != null &&
-                          `${gradingWastageBags.toLocaleString('en-IN')} bags`}
-                        {gradingWastageBags != null &&
-                          gradingWastagePercent != null &&
+                        {effectiveGradingWastageKg != null &&
+                          `${formatWastage(effectiveGradingWastageKg)} kg`}
+                        {effectiveGradingWastageKg != null &&
+                          effectiveGradingWastagePercent != null &&
                           ' · '}
-                        {gradingWastagePercent != null && (
+                        {effectiveGradingWastagePercent != null && (
                           <>
-                            {gradingWastagePercent.toLocaleString('en-IN', {
-                              minimumFractionDigits: 1,
-                              maximumFractionDigits: 1,
-                            })}
-                            % of incoming
+                            {formatWastage(effectiveGradingWastagePercent)}% of
+                            incoming (net)
                           </>
                         )}
                       </span>
@@ -532,17 +588,12 @@ const GradingVoucher = memo(function GradingVoucher({
                         aria-hidden
                       />
                       <span className="text-destructive font-custom text-sm font-medium tabular-nums">
-                        {wastageKg.toLocaleString('en-IN')} kg
+                        {formatWastage(wastageKg)} kg
                         {wastagePercent !== undefined && (
                           <>
                             {' '}
                             <span className="text-destructive/90">
-                              (
-                              {wastagePercent.toLocaleString('en-IN', {
-                                minimumFractionDigits: 1,
-                                maximumFractionDigits: 1,
-                              })}
-                              % of net)
+                              ({formatWastage(wastagePercent)}% of net)
                             </span>
                           </>
                         )}
@@ -567,18 +618,10 @@ const GradingVoucher = memo(function GradingVoucher({
                           aria-hidden
                         />
                         <span className="text-destructive font-custom text-sm font-semibold tabular-nums">
-                          Graded + Wastage ={' '}
-                          {percentSum.toLocaleString('en-IN', {
-                            minimumFractionDigits: 1,
-                            maximumFractionDigits: 1,
-                          })}
-                          % (expected 100%). Discrepancy:{' '}
+                          Graded + Wastage = {formatNumber(percentSum)}%
+                          (expected 100%). Discrepancy:{' '}
                           {discrepancyValue >= 0 ? '+' : ''}
-                          {discrepancyValue.toLocaleString('en-IN', {
-                            minimumFractionDigits: 1,
-                            maximumFractionDigits: 1,
-                          })}
-                          %
+                          {formatNumber(discrepancyValue)}%
                         </span>
                       </div>
                     </section>

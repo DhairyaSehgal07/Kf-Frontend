@@ -34,6 +34,12 @@ export interface GradingGatePassFarmerStorageLinkMinimal {
   accountNumber: number;
 }
 
+/** Weight slip on an incoming gate pass (from weight slip details) */
+export interface GradingGatePassWeightSlip {
+  grossWeightKg: number;
+  tareWeightKg: number;
+}
+
 /** Incoming gate pass ref in GET /grading-gate-pass list response */
 export interface GradingGatePassIncomingRef {
   _id: string;
@@ -42,6 +48,13 @@ export interface GradingGatePassIncomingRef {
   bagsReceived: number;
   /** Present when incoming gate pass is populated */
   truckNumber?: string;
+  /** Present when populated from weight slip details */
+  weightSlip?: GradingGatePassWeightSlip;
+}
+
+/** Incoming gate pass with weight slip (from weightSlipDetails in response) */
+export interface GradingGatePassWeightSlipDetails {
+  incomingGatePassIds: GradingGatePassIncomingRef[];
 }
 
 /** Grading summary on nested incoming gate pass */
@@ -79,6 +92,8 @@ export interface GradingGatePass {
   _id: string;
   farmerStorageLinkId: GradingGatePassFarmerStorageLinkMinimal;
   incomingGatePassIds: GradingGatePassIncomingRef[];
+  /** When present, incoming gate passes include weight slip (gross/tare); use for net weight and wastage by weight */
+  weightSlipDetails?: GradingGatePassWeightSlipDetails;
   createdBy: GradingGatePassGradedBy;
   gatePassNo: number;
   manualGatePassNumber?: number;

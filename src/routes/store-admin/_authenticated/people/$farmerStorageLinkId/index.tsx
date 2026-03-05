@@ -77,6 +77,7 @@ import { downloadStockLedgerExcel } from '@/utils/stockLedgerExcel';
 import { EditFarmerModal } from '@/components/forms/edit-farmer-modal';
 import { useGetIncomingGatePassesOfSingleFarmer } from '@/services/store-admin/incoming-gate-pass/useGetIncomingGatePassesOfSingleFarmer';
 import { useGetGradingPassesOfSingleFarmer } from '@/services/store-admin/grading-gate-pass/useGetGradingPassesOfSingleFarmer';
+import { computeGradingOrderTotals } from '@/components/daybook/vouchers/grading-voucher-calculations';
 
 export const Route = createFileRoute(
   '/store-admin/_authenticated/people/$farmerStorageLinkId/'
@@ -165,7 +166,7 @@ function mapIncomingPassToVoucherProps(pass: IncomingGatePassWithLink) {
   };
 }
 
-/** Map grading gate pass from API to props for GradingVoucher */
+/** Map grading gate pass from API to props for GradingVoucher. Uses weightSlipDetails when present for net weight and wastage by weight. */
 function mapGradingPassToVoucherProps(pass: GradingGatePass) {
   const link = pass.farmerStorageLinkId;
   const linkObj =
@@ -178,11 +179,22 @@ function mapGradingPassToVoucherProps(pass: GradingGatePass) {
       : undefined;
   const farmerName = linkObj?.farmerId?.name;
   const farmerAccount = linkObj?.accountNumber;
+
+  const incomingRefs = pass.weightSlipDetails?.incomingGatePassIds?.length
+    ? pass.weightSlipDetails.incomingGatePassIds
+    : pass.incomingGatePassIds;
   const incomingBagsCount =
-    pass.incomingGatePassIds?.reduce(
-      (sum, ref) => sum + (ref.bagsReceived ?? 0),
-      0
-    ) ?? 0;
+    incomingRefs?.reduce((sum, ref) => sum + (ref.bagsReceived ?? 0), 0) ?? 0;
+  const incomingNetKg = pass.weightSlipDetails?.incomingGatePassIds?.reduce(
+    (sum, ref) => {
+      const ws = ref.weightSlip;
+      if (ws?.grossWeightKg != null && ws?.tareWeightKg != null) {
+        return sum + (ws.grossWeightKg - ws.tareWeightKg);
+      }
+      return sum;
+    },
+    0
+  );
 
   return {
     voucher: {
@@ -199,9 +211,9 @@ function mapGradingPassToVoucherProps(pass: GradingGatePass) {
     farmerName,
     farmerAccount,
     incomingBagsCount: incomingBagsCount > 0 ? incomingBagsCount : undefined,
-    incomingGatePassIds: pass.incomingGatePassIds?.length
-      ? pass.incomingGatePassIds
-      : undefined,
+    incomingNetKg:
+      incomingNetKg != null && incomingNetKg > 0 ? incomingNetKg : undefined,
+    incomingGatePassIds: incomingRefs?.length ? incomingRefs : undefined,
   };
 }
 
@@ -837,6 +849,7 @@ function ContractGradingContent({ link }: { link: FarmerStorageLink }) {
                 farmerName={props.farmerName}
                 farmerAccount={props.farmerAccount}
                 incomingBagsCount={props.incomingBagsCount}
+                incomingNetKg={props.incomingNetKg}
                 incomingGatePassIds={props.incomingGatePassIds}
               />
             );
@@ -887,6 +900,13 @@ function ContractTabContent({
     [incomingPasses, gradingPasses]
   );
 
+  /** Format wastage to 2 decimal places */
+  const formatWastage = (value: number) =>
+    value.toLocaleString('en-IN', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+
   /** Row: one or more incoming passes (clubbed if they share a grading pass) + that grading pass's details */
   type IncomingGradingRow = {
     id: string;
@@ -900,6 +920,14 @@ function ContractTabContent({
     wastageBags: number | undefined;
     /** Wastage % of incoming bags; undefined if no grading */
     wastagePercent: number | undefined;
+    /** Incoming net weight (kg) from weight slip details; undefined if no weight data */
+    incomingNetKg: number | undefined;
+    /** Total graded weight (kg) from order details after bag deduction; undefined if no grading */
+    totalGradedWeightKg: number | undefined;
+    /** Wastage by weight (kg) = incomingNetKg - totalGradedWeightKg; undefined if no weight data */
+    wastageKg: number | undefined;
+    /** Wastage % of incoming net weight; undefined if no weight data */
+    wastagePercentByWeight: number | undefined;
   };
 
   const incomingTableRows = useMemo((): IncomingGradingRow[] => {
@@ -931,6 +959,30 @@ function ContractTabContent({
       const wastagePercent =
         bagsReceived > 0 ? (wastageBags / bagsReceived) * 100 : undefined;
 
+      const { totalGradedWeightKg } = computeGradingOrderTotals(
+        gp.orderDetails ?? []
+      );
+      const incomingRefsWithWeight =
+        gp.weightSlipDetails?.incomingGatePassIds ??
+        gp.incomingGatePassIds ??
+        [];
+      const incomingNetKg = incomingRefsWithWeight.reduce((sum, ref) => {
+        const ws = ref.weightSlip;
+        if (ws?.grossWeightKg != null && ws?.tareWeightKg != null) {
+          return sum + (ws.grossWeightKg - ws.tareWeightKg);
+        }
+        return sum;
+      }, 0);
+      const hasIncomingNet = incomingNetKg != null && incomingNetKg > 0;
+      const wastageKg =
+        hasIncomingNet && totalGradedWeightKg != null
+          ? Math.max(0, incomingNetKg - totalGradedWeightKg)
+          : undefined;
+      const wastagePercentByWeight =
+        hasIncomingNet && wastageKg != null
+          ? (wastageKg / incomingNetKg) * 100
+          : undefined;
+
       rows.push({
         id: gp._id,
         incomingPasses: groupIncoming,
@@ -939,6 +991,16 @@ function ContractTabContent({
         totalGradedBags,
         wastageBags,
         wastagePercent,
+        incomingNetKg:
+          incomingNetKg != null && incomingNetKg > 0
+            ? incomingNetKg
+            : undefined,
+        totalGradedWeightKg:
+          totalGradedWeightKg != null && totalGradedWeightKg > 0
+            ? totalGradedWeightKg
+            : undefined,
+        wastageKg,
+        wastagePercentByWeight,
       });
     }
 
@@ -952,6 +1014,10 @@ function ContractTabContent({
         totalGradedBags: undefined,
         wastageBags: undefined,
         wastagePercent: undefined,
+        incomingNetKg: undefined,
+        totalGradedWeightKg: undefined,
+        wastageKg: undefined,
+        wastagePercentByWeight: undefined,
       });
     }
 
@@ -1003,6 +1069,19 @@ function ContractTabContent({
         ),
       },
       {
+        accessorKey: 'incomingNetKg',
+        header: () => (
+          <span className="font-custom font-bold">Incoming net (kg)</span>
+        ),
+        cell: ({ row }) => (
+          <span className="font-custom font-medium tabular-nums">
+            {row.original.incomingNetKg != null
+              ? formatWastage(row.original.incomingNetKg)
+              : '—'}
+          </span>
+        ),
+      },
+      {
         accessorFn: (row) => row.gradingPass?.gatePassNo,
         id: 'gradingGatePassNo',
         header: () => (
@@ -1030,30 +1109,42 @@ function ContractTabContent({
         ),
       },
       {
-        accessorKey: 'wastageBags',
+        accessorKey: 'totalGradedWeightKg',
         header: () => (
-          <span className="font-custom font-bold">Wastage (bags)</span>
+          <span className="font-custom font-bold">
+            Total graded weight (kg)
+          </span>
         ),
         cell: ({ row }) => (
-          <span className="font-custom font-medium text-red-500 tabular-nums">
-            {row.original.wastageBags != null
-              ? row.original.wastageBags.toLocaleString('en-IN')
+          <span className="font-custom font-medium tabular-nums">
+            {row.original.totalGradedWeightKg != null
+              ? formatWastage(row.original.totalGradedWeightKg)
               : '—'}
           </span>
         ),
       },
       {
-        accessorKey: 'wastagePercent',
+        accessorKey: 'wastageKg',
+        header: () => (
+          <span className="font-custom font-bold">Wastage (kg)</span>
+        ),
+        cell: ({ row }) => (
+          <span className="font-custom font-medium text-red-500 tabular-nums">
+            {row.original.wastageKg != null
+              ? formatWastage(row.original.wastageKg)
+              : '—'}
+          </span>
+        ),
+      },
+      {
+        accessorKey: 'wastagePercentByWeight',
         header: () => (
           <span className="font-custom font-bold">Wastage (%)</span>
         ),
         cell: ({ row }) => (
           <span className="font-custom font-medium text-red-500 tabular-nums">
-            {row.original.wastagePercent != null
-              ? `${row.original.wastagePercent.toLocaleString('en-IN', {
-                  minimumFractionDigits: 1,
-                  maximumFractionDigits: 1,
-                })}%`
+            {row.original.wastagePercentByWeight != null
+              ? `${formatWastage(row.original.wastagePercentByWeight)}%`
               : '—'}
           </span>
         ),
@@ -1080,24 +1171,11 @@ function ContractTabContent({
       (s, r) => s + (r.totalGradedBags ?? 0),
       0
     );
-    const totalWastageBags = gradedRows.reduce(
-      (s, r) => s + (r.wastageBags ?? 0),
-      0
-    );
     const totalIncomingForGraded = gradedRows.reduce(
       (s, r) => s + r.bagsReceived,
       0
     );
-    const overallWastagePercent =
-      totalIncomingForGraded > 0
-        ? (totalWastageBags / totalIncomingForGraded) * 100
-        : null;
-    const avgWastagePercent =
-      gradedRows.length > 0
-        ? gradedRows.reduce((s, r) => s + (r.wastagePercent ?? 0), 0) /
-          gradedRows.length
-        : null;
-    const conversionPercent =
+    const conversionPercentBags =
       totalIncomingForGraded > 0
         ? (totalGradedBags / totalIncomingForGraded) * 100
         : null;
@@ -1109,15 +1187,49 @@ function ContractTabContent({
       (r) => r.gradingPass != null
     ).length;
 
+    const rowsWithWeight = gradedRows.filter(
+      (r) => r.incomingNetKg != null && r.incomingNetKg > 0
+    );
+    const totalIncomingNetKg = rowsWithWeight.reduce(
+      (s, r) => s + (r.incomingNetKg ?? 0),
+      0
+    );
+    const totalGradedWeightKg = rowsWithWeight.reduce(
+      (s, r) => s + (r.totalGradedWeightKg ?? 0),
+      0
+    );
+    const totalWastageKg = rowsWithWeight.reduce(
+      (s, r) => s + (r.wastageKg ?? 0),
+      0
+    );
+    const overallWastagePercentByWeight =
+      totalIncomingNetKg > 0
+        ? (totalWastageKg / totalIncomingNetKg) * 100
+        : null;
+    const avgWastagePercentByWeight =
+      rowsWithWeight.length > 0
+        ? rowsWithWeight.reduce(
+            (s, r) => s + (r.wastagePercentByWeight ?? 0),
+            0
+          ) / rowsWithWeight.length
+        : null;
+    const conversionPercentByWeight =
+      totalIncomingNetKg > 0
+        ? (totalGradedWeightKg / totalIncomingNetKg) * 100
+        : null;
+
     return {
       totalIncomingBags,
       totalGradedBags,
-      totalWastageBags,
-      overallWastagePercent,
-      avgWastagePercent,
-      conversionPercent,
+      conversionPercentBags,
       incomingPassCount,
       gradingPassCount,
+      totalIncomingNetKg,
+      totalGradedWeightKg,
+      totalWastageKg,
+      overallWastagePercentByWeight,
+      avgWastagePercentByWeight,
+      conversionPercentByWeight,
     };
   }, [incomingTableRows]);
 
@@ -1174,6 +1286,20 @@ function ContractTabContent({
             </div>
             <div className="border-border bg-muted/30 rounded-lg border px-3 py-2.5">
               <p className="text-muted-foreground font-custom text-[10px] font-medium tracking-wider uppercase sm:text-xs">
+                Incoming net (kg)
+              </p>
+              <p className="font-custom mt-0.5 text-lg font-semibold tabular-nums">
+                {tableMetrics.totalIncomingNetKg != null &&
+                tableMetrics.totalIncomingNetKg > 0
+                  ? tableMetrics.totalIncomingNetKg.toLocaleString('en-IN', {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })
+                  : '—'}
+              </p>
+            </div>
+            <div className="border-border bg-muted/30 rounded-lg border px-3 py-2.5">
+              <p className="text-muted-foreground font-custom text-[10px] font-medium tracking-wider uppercase sm:text-xs">
                 Total graded bags
               </p>
               <p className="font-custom mt-0.5 text-lg font-semibold tabular-nums">
@@ -1182,14 +1308,50 @@ function ContractTabContent({
             </div>
             <div className="border-border bg-muted/30 rounded-lg border px-3 py-2.5">
               <p className="text-muted-foreground font-custom text-[10px] font-medium tracking-wider uppercase sm:text-xs">
+                Total graded weight (kg)
+              </p>
+              <p className="font-custom mt-0.5 text-lg font-semibold tabular-nums">
+                {tableMetrics.totalGradedWeightKg != null &&
+                tableMetrics.totalGradedWeightKg > 0
+                  ? tableMetrics.totalGradedWeightKg.toLocaleString('en-IN', {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })
+                  : '—'}
+              </p>
+            </div>
+            <div className="border-border bg-muted/30 rounded-lg border px-3 py-2.5">
+              <p className="text-muted-foreground font-custom text-[10px] font-medium tracking-wider uppercase sm:text-xs">
                 Conversion rate
               </p>
               <p className="font-custom mt-0.5 text-lg font-semibold tabular-nums">
-                {tableMetrics.conversionPercent != null
-                  ? `${tableMetrics.conversionPercent.toLocaleString('en-IN', {
-                      minimumFractionDigits: 1,
-                      maximumFractionDigits: 1,
-                    })}%`
+                {tableMetrics.conversionPercentByWeight != null
+                  ? `${tableMetrics.conversionPercentByWeight.toLocaleString(
+                      'en-IN',
+                      { minimumFractionDigits: 2, maximumFractionDigits: 2 }
+                    )}%`
+                  : tableMetrics.conversionPercentBags != null
+                    ? `${tableMetrics.conversionPercentBags.toLocaleString(
+                        'en-IN',
+                        {
+                          minimumFractionDigits: 1,
+                          maximumFractionDigits: 1,
+                        }
+                      )}% (bags)`
+                    : '—'}
+              </p>
+            </div>
+            <div className="border-border bg-muted/30 rounded-lg border px-3 py-2.5">
+              <p className="text-muted-foreground font-custom text-[10px] font-medium tracking-wider uppercase sm:text-xs">
+                Total wastage (kg)
+              </p>
+              <p className="font-custom mt-0.5 text-lg font-semibold text-red-500 tabular-nums">
+                {tableMetrics.totalWastageKg != null &&
+                tableMetrics.totalWastageKg > 0
+                  ? tableMetrics.totalWastageKg.toLocaleString('en-IN', {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })
                   : '—'}
               </p>
             </div>
@@ -1198,20 +1360,12 @@ function ContractTabContent({
                 Avg wastage %
               </p>
               <p className="font-custom mt-0.5 text-lg font-semibold text-red-500 tabular-nums">
-                {tableMetrics.avgWastagePercent != null
-                  ? `${tableMetrics.avgWastagePercent.toLocaleString('en-IN', {
-                      minimumFractionDigits: 1,
-                      maximumFractionDigits: 1,
-                    })}%`
+                {tableMetrics.avgWastagePercentByWeight != null
+                  ? `${tableMetrics.avgWastagePercentByWeight.toLocaleString(
+                      'en-IN',
+                      { minimumFractionDigits: 2, maximumFractionDigits: 2 }
+                    )}%`
                   : '—'}
-              </p>
-            </div>
-            <div className="border-border bg-muted/30 rounded-lg border px-3 py-2.5">
-              <p className="text-muted-foreground font-custom text-[10px] font-medium tracking-wider uppercase sm:text-xs">
-                Total wastage (bags)
-              </p>
-              <p className="font-custom mt-0.5 text-lg font-semibold text-red-500 tabular-nums">
-                {tableMetrics.totalWastageBags.toLocaleString('en-IN')}
               </p>
             </div>
             <div className="border-border bg-muted/30 rounded-lg border px-3 py-2.5">
@@ -1219,13 +1373,10 @@ function ContractTabContent({
                 Overall wastage %
               </p>
               <p className="font-custom mt-0.5 text-lg font-semibold text-red-500 tabular-nums">
-                {tableMetrics.overallWastagePercent != null
-                  ? `${tableMetrics.overallWastagePercent.toLocaleString(
+                {tableMetrics.overallWastagePercentByWeight != null
+                  ? `${tableMetrics.overallWastagePercentByWeight.toLocaleString(
                       'en-IN',
-                      {
-                        minimumFractionDigits: 1,
-                        maximumFractionDigits: 1,
-                      }
+                      { minimumFractionDigits: 2, maximumFractionDigits: 2 }
                     )}%`
                   : '—'}
               </p>
@@ -1299,22 +1450,52 @@ function ContractTabContent({
                     <TableCell className="font-custom border-border border px-4 py-2 tabular-nums">
                       {tableMetrics.totalIncomingBags.toLocaleString('en-IN')}
                     </TableCell>
+                    <TableCell className="font-custom border-border border px-4 py-2 tabular-nums">
+                      {tableMetrics.totalIncomingNetKg != null &&
+                      tableMetrics.totalIncomingNetKg > 0
+                        ? tableMetrics.totalIncomingNetKg.toLocaleString(
+                            'en-IN',
+                            {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            }
+                          )
+                        : '—'}
+                    </TableCell>
                     <TableCell className="font-custom border-border border px-4 py-2">
                       —
                     </TableCell>
                     <TableCell className="font-custom border-border border px-4 py-2 tabular-nums">
                       {tableMetrics.totalGradedBags.toLocaleString('en-IN')}
                     </TableCell>
-                    <TableCell className="font-custom border-border border px-4 py-2 text-red-500 tabular-nums">
-                      {tableMetrics.totalWastageBags.toLocaleString('en-IN')}
-                    </TableCell>
-                    <TableCell className="font-custom border-border border px-4 py-2 text-red-500 tabular-nums">
-                      {tableMetrics.overallWastagePercent != null
-                        ? `${tableMetrics.overallWastagePercent.toLocaleString(
+                    <TableCell className="font-custom border-border border px-4 py-2 tabular-nums">
+                      {tableMetrics.totalGradedWeightKg != null &&
+                      tableMetrics.totalGradedWeightKg > 0
+                        ? tableMetrics.totalGradedWeightKg.toLocaleString(
                             'en-IN',
                             {
-                              minimumFractionDigits: 1,
-                              maximumFractionDigits: 1,
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            }
+                          )
+                        : '—'}
+                    </TableCell>
+                    <TableCell className="font-custom border-border border px-4 py-2 text-red-500 tabular-nums">
+                      {tableMetrics.totalWastageKg != null &&
+                      tableMetrics.totalWastageKg > 0
+                        ? tableMetrics.totalWastageKg.toLocaleString('en-IN', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })
+                        : '—'}
+                    </TableCell>
+                    <TableCell className="font-custom border-border border px-4 py-2 text-red-500 tabular-nums">
+                      {tableMetrics.overallWastagePercentByWeight != null
+                        ? `${tableMetrics.overallWastagePercentByWeight.toLocaleString(
+                            'en-IN',
+                            {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
                             }
                           )}%`
                         : '—'}

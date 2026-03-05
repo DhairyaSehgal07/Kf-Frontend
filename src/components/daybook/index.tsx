@@ -72,7 +72,7 @@ function mapIncomingPassToVoucherProps(pass: IncomingGatePassWithLink) {
   };
 }
 
-/** Map API response to props for GradingVoucher */
+/** Map API response to props for GradingVoucher. Uses weightSlipDetails when present for net weight and wastage by weight. */
 function mapGradingPassToVoucherProps(pass: GradingGatePass) {
   const link = pass.farmerStorageLinkId;
   const linkObj =
@@ -86,8 +86,22 @@ function mapGradingPassToVoucherProps(pass: GradingGatePass) {
   const farmerName = linkObj?.farmerId?.name;
   const farmerAccount = linkObj?.accountNumber;
   const linkId = typeof link === 'string' ? link : linkObj?._id;
-  const incomingBagsCount = pass.incomingGatePassIds?.reduce(
+
+  const incomingRefs = pass.weightSlipDetails?.incomingGatePassIds?.length
+    ? pass.weightSlipDetails.incomingGatePassIds
+    : pass.incomingGatePassIds;
+  const incomingBagsCount = incomingRefs?.reduce(
     (sum, ref) => sum + (ref.bagsReceived ?? 0),
+    0
+  );
+  const incomingNetKg = pass.weightSlipDetails?.incomingGatePassIds?.reduce(
+    (sum, ref) => {
+      const ws = ref.weightSlip;
+      if (ws?.grossWeightKg != null && ws?.tareWeightKg != null) {
+        return sum + (ws.grossWeightKg - ws.tareWeightKg);
+      }
+      return sum;
+    },
     0
   );
 
@@ -106,10 +120,13 @@ function mapGradingPassToVoucherProps(pass: GradingGatePass) {
     farmerName,
     farmerAccount,
     farmerStorageLinkId: linkId,
-    incomingBagsCount: incomingBagsCount > 0 ? incomingBagsCount : undefined,
-    incomingGatePassIds: pass.incomingGatePassIds?.length
-      ? pass.incomingGatePassIds
-      : undefined,
+    incomingBagsCount:
+      incomingBagsCount && incomingBagsCount > 0
+        ? incomingBagsCount
+        : undefined,
+    incomingNetKg:
+      incomingNetKg != null && incomingNetKg > 0 ? incomingNetKg : undefined,
+    incomingGatePassIds: incomingRefs?.length ? incomingRefs : undefined,
   };
 }
 
@@ -629,6 +646,7 @@ const DaybookPage = memo(function DaybookPage() {
                           farmerAccount={props.farmerAccount}
                           farmerStorageLinkId={props.farmerStorageLinkId}
                           incomingBagsCount={props.incomingBagsCount}
+                          incomingNetKg={props.incomingNetKg}
                           incomingGatePassIds={props.incomingGatePassIds}
                         />
                       );
