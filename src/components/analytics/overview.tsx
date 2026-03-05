@@ -11,7 +11,6 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import {
   Package,
@@ -20,13 +19,24 @@ import {
   Warehouse,
   Truck,
   ArrowUpRight,
-  RefreshCw,
   ChevronDown,
   ChevronUp,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useGetOverview } from '@/services/store-admin/analytics/useGetOverview';
 import type { AnalyticsOverviewData } from '@/types/analytics';
+
+/** Placeholder data for UI-only display (no data fetching) */
+const PLACEHOLDER_DATA: AnalyticsOverviewData = {
+  totalIncomingBags: 0,
+  totalIncomingWeight: 0,
+  totalUngradedBags: 0,
+  totalUngradedWeight: 0,
+  totalGradingBags: { initialQuantity: 0, currentQuantity: 0 },
+  totalGradingWeight: 0,
+  totalBagsStored: 0,
+  totalBagsDispatched: 0,
+  totalOutgoingBags: 0,
+};
 
 /** Format number with locale (e.g. 37144 → "37,144") */
 function formatNumber(value: number): string {
@@ -189,82 +199,14 @@ const OverviewContent = memo(function OverviewContent({
   );
 });
 
-function OverviewSkeleton() {
-  return (
-    <div className="grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3 xl:gap-8">
-      {Array.from({ length: 7 }).map((_, i) => (
-        <Card key={i} className="font-custom">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <Skeleton className="h-5 w-32" />
-            <Skeleton className="h-10 w-10 rounded-lg" />
-          </CardHeader>
-          <CardContent>
-            <Skeleton className="h-8 w-24 sm:h-9" />
-          </CardContent>
-        </Card>
-      ))}
-    </div>
-  );
-}
-
 const Overview = memo(function Overview() {
-  const { data, isLoading, isError, error, refetch } = useGetOverview();
-
-  if (isLoading) {
-    return (
-      <section className="px-4 pt-6 pb-16 sm:px-8 sm:py-8">
-        <div className="mx-auto max-w-300 px-4 sm:px-6 lg:px-8">
-          <h2 className="font-custom mb-6 text-2xl font-semibold text-[#333] sm:mb-8 lg:text-3xl">
-            Analytics Overview
-          </h2>
-          <OverviewSkeleton />
-        </div>
-      </section>
-    );
-  }
-
-  if (isError) {
-    return (
-      <section className="px-4 pt-6 pb-16 sm:px-8 sm:py-8">
-        <div className="mx-auto max-w-300 px-4 sm:px-6 lg:px-8">
-          <Card className="font-custom border-destructive/30 bg-destructive/5">
-            <CardHeader>
-              <CardTitle className="text-destructive">
-                Failed to load overview
-              </CardTitle>
-              <CardDescription>
-                {error instanceof Error
-                  ? error.message
-                  : 'Something went wrong.'}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button
-                variant="default"
-                onClick={() => refetch()}
-                className="font-custom gap-2"
-              >
-                <RefreshCw className="h-4 w-4" />
-                Retry
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      </section>
-    );
-  }
-
-  if (!data) {
-    return null;
-  }
-
   return (
     <section className="px-4 pt-6 pb-16 sm:px-8 sm:py-8">
       <div className="mx-auto max-w-300 px-4 sm:px-6 lg:px-8">
         <h2 className="font-custom mb-6 text-2xl font-semibold text-[#333] sm:mb-8 lg:text-3xl">
           Analytics Overview
         </h2>
-        <OverviewContent data={data} />
+        <OverviewContent data={PLACEHOLDER_DATA} />
       </div>
     </section>
   );

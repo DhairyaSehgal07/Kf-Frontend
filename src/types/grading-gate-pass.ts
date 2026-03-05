@@ -121,6 +121,11 @@ export interface GetGradingGatePassesApiResponse {
   message?: string;
 }
 
+/** Payload for GET /grading-gate-pass/farmer-storage-link/:id (no pagination) */
+export interface GetGradingGatePassesByFarmerData {
+  gradingGatePasses: GradingGatePass[];
+}
+
 /** Order detail for POST /grading-gate-pass (size name can vary) */
 export interface CreateGradingGatePassOrderDetail {
   size: string;

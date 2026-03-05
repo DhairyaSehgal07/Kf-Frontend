@@ -130,3 +130,8 @@ export interface GetIncomingGatePassesApiResponse {
   data: IncomingGatePassWithLink[];
   message?: string;
 }
+
+/** Payload for GET /incoming-gate-pass/farmer-storage-link/:id */
+export interface GetIncomingGatePassesByFarmerData {
+  incomingGatePasses: IncomingGatePassWithLink[];
+}

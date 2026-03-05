@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.10] - 2026-03-05
+
+### Added
+- People (farmer storage) detail: Incoming and Grading tabs with real data via `ContractTabPanel`; search, sort, pagination, refresh, and voucher cards
+- Service hook `useGetIncomingGatePassesOfSingleFarmer` for `GET /incoming-gate-pass/farmer-storage-link/:id` with prefetch support
+- Types: `GetIncomingGatePassesByFarmerData` (incoming-gate-pass), `GetGradingGatePassesByFarmerData` (grading-gate-pass) for per-farmer list API responses
+
+### Changed
+- People detail page: Incoming and Grading sections use `IncomingVoucher` and `GradingVoucher` with `mapIncomingPassToVoucherProps` / `mapGradingPassToVoucherProps`; prefetches incoming and grading passes on link load
+- `useGetGradingPassesOfSingleFarmer`: expects API shape `GetGradingGatePassesByFarmerData` (`.gradingGatePasses`) only; removed dual array/paginated handling
+- Analytics overview: uses placeholder data (no API); removed loading/error/skeleton and `useGetOverview` dependency
+
 ## [0.10.9] - 2026-03-03
 
 ### Added
