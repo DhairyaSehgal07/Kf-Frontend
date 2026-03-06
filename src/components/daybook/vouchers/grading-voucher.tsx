@@ -43,6 +43,14 @@ function formatWastage(value: number): string {
   });
 }
 
+/** Format weight % values to 2 decimal places. */
+function formatWeightPercent(value: number): string {
+  return value.toLocaleString('en-IN', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
 /** Weight slip on an incoming gate pass (from weight slip details) */
 export interface IncomingWeightSlip {
   grossWeightKg: number;
@@ -486,7 +494,7 @@ const GradingVoucher = memo(function GradingVoucher({
                                     {formatNumber(qty)}
                                   </td>
                                   <td className="py-2 pr-3 text-right tabular-nums">
-                                    {formatNumber(weightPct)}%
+                                    {formatWeightPercent(weightPct)}%
                                   </td>
                                   <td className="py-2 text-right">
                                     {formatNumber(wt)}
@@ -506,7 +514,7 @@ const GradingVoucher = memo(function GradingVoucher({
                               </td>
                               <td className="py-2.5 pr-3 text-right tabular-nums">
                                 {totalGradedWeight > 0
-                                  ? `${formatNumber(100)}%`
+                                  ? `${formatWeightPercent(100)}%`
                                   : '—'}
                               </td>
                               <td className="py-2.5 text-right font-medium">
