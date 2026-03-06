@@ -11,7 +11,11 @@ export const analyticsOverviewKeys = {
   all: ['store-admin', 'analytics', 'overview'] as const,
 };
 
-/** Fetcher used by queryOptions and prefetch */
+/**
+ * Fetcher for analytics overview.
+ * Calls GET {baseURL}/analytics/overview (e.g. http://localhost:8000/api/v1/analytics/overview)
+ * with Authorization: Bearer <token> via storeAdminAxiosClient.
+ */
 async function fetchAnalyticsOverview(): Promise<AnalyticsOverviewData> {
   const { data } =
     await storeAdminAxiosClient.get<GetAnalyticsOverviewApiResponse>(

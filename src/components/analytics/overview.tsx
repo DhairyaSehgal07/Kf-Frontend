@@ -21,22 +21,12 @@ import {
   ArrowUpRight,
   ChevronDown,
   ChevronUp,
+  Loader2,
+  AlertCircle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { AnalyticsOverviewData } from '@/types/analytics';
-
-/** Placeholder data for UI-only display (no data fetching) */
-const PLACEHOLDER_DATA: AnalyticsOverviewData = {
-  totalIncomingBags: 0,
-  totalIncomingWeight: 0,
-  totalUngradedBags: 0,
-  totalUngradedWeight: 0,
-  totalGradingBags: { initialQuantity: 0, currentQuantity: 0 },
-  totalGradingWeight: 0,
-  totalBagsStored: 0,
-  totalBagsDispatched: 0,
-  totalOutgoingBags: 0,
-};
+import { useGetOverview } from '@/services/store-admin/analytics/useGetOverview';
 
 /** Format number with locale (e.g. 37144 → "37,144") */
 function formatNumber(value: number): string {
@@ -200,13 +190,52 @@ const OverviewContent = memo(function OverviewContent({
 });
 
 const Overview = memo(function Overview() {
+  const { data, isLoading, isError, error, refetch } = useGetOverview();
+
   return (
     <section className="px-4 pt-6 pb-16 sm:px-8 sm:py-8">
       <div className="mx-auto max-w-300 px-4 sm:px-6 lg:px-8">
         <h2 className="font-custom mb-6 text-2xl font-semibold text-[#333] sm:mb-8 lg:text-3xl">
           Analytics Overview
         </h2>
-        <OverviewContent data={PLACEHOLDER_DATA} />
+        {isLoading && (
+          <div className="font-custom bg-secondary/30 flex min-h-[200px] items-center justify-center rounded-xl border border-gray-200">
+            <div className="flex flex-col items-center gap-3 text-[#6f6f6f]">
+              <Loader2 className="h-8 w-8 animate-spin" aria-hidden />
+              <span className="text-sm">Loading overview…</span>
+            </div>
+          </div>
+        )}
+        {isError && (
+          <Card className="font-custom border-destructive/50 bg-destructive/5">
+            <CardHeader className="flex flex-row items-center gap-3">
+              <span className="bg-destructive/10 text-destructive flex h-10 w-10 shrink-0 items-center justify-center rounded-lg">
+                <AlertCircle className="h-5 w-5" />
+              </span>
+              <div className="space-y-1">
+                <CardTitle className="text-base font-semibold text-[#333]">
+                  Failed to load overview
+                </CardTitle>
+                <CardDescription className="font-custom text-sm text-[#6f6f6f]">
+                  {error instanceof Error
+                    ? error.message
+                    : 'Something went wrong.'}
+                </CardDescription>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <Button
+                variant="outline"
+                size="sm"
+                className="font-custom"
+                onClick={() => refetch()}
+              >
+                Try again
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+        {data != null && <OverviewContent data={data} />}
       </div>
     </section>
   );
