@@ -43,7 +43,10 @@ import type { GradingOrderDetailRow } from './types';
 /** Tolerance (in percentage points) for treating graded + wastage % as equal to 100. */
 export const PERCENT_TOLERANCE = 0.1;
 
-/** Bag weight in kg from bag type (JUTE 0.7 kg, LENO 0.06 kg). Default LENO if unknown. */
+/**
+ * Bag weight in kg by bag type. Used only for grading output (after grading, bags can be JUTE or LENO).
+ * Incoming bags are always JUTE — use JUTE_BAG_WEIGHT when deducting incoming bardana.
+ */
 export function getBagWeightKg(bagType: string | null | undefined): number {
   const t = bagType?.toUpperCase();
   return t === 'JUTE' ? JUTE_BAG_WEIGHT : LENO_BAG_WEIGHT;
@@ -98,7 +101,7 @@ export function computeGradingOrderTotals(
 
 /**
  * Net product (kg) = Net weight − (incoming bags × JUTE bag weight).
- * Incoming bags are jute (700 g). Returns undefined if incomingNetKg or incomingBagsCount is missing.
+ * At incoming, all bags are JUTE (700 g each). Returns undefined if incomingNetKg or incomingBagsCount is missing.
  */
 export function computeIncomingNetProductKg(
   incomingNetKg: number | null | undefined,

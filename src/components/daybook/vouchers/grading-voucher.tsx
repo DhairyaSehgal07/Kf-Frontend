@@ -19,12 +19,14 @@ import { formatVoucherDate } from './format-date';
 import type { PassVoucherData } from './types';
 import type { GradingOrderDetailRow } from './types';
 import { totalBagsFromOrderDetails, type VoucherFarmerInfo } from './types';
+import { JUTE_BAG_WEIGHT } from '@/components/forms/grading/constants';
 import {
   computeGradingOrderTotals,
   computeIncomingNetProductKg,
   computeTotalGradedWeightPercent,
   computeWastagePercentOfNetProduct,
   computeDiscrepancy,
+  getBagWeightKg,
 } from './grading-voucher-calculations';
 import { Spinner } from '@/components/ui/spinner';
 import { GradingVoucherCalculationsDialog } from './grading-voucher-calculations-dialog';
@@ -116,6 +118,16 @@ const GradingVoucher = memo(function GradingVoucher({
     incomingBagsCount
   );
 
+  /** Total incoming bags (from props or sum of gate passes) for bardana deduction. */
+  const totalIncomingBags =
+    incomingBagsCount ??
+    (incomingGatePassIds.length > 0
+      ? incomingGatePassIds.reduce(
+          (sum, ref) => sum + (ref.bagsReceived ?? 0),
+          0
+        )
+      : undefined);
+
   const hasIncomingWeightSlips = incomingGatePassIds.some(
     (ref) =>
       ref.weightSlip?.grossWeightKg != null &&
@@ -137,24 +149,31 @@ const GradingVoucher = memo(function GradingVoucher({
     (totalIncomingNetFromSlips && totalIncomingNetFromSlips > 0
       ? totalIncomingNetFromSlips
       : undefined);
+
+  /** Incoming net product (kg): incoming weight minus bardana (incoming bags × 0.7 kg). Used for wastage and %. */
+  const effectiveIncomingNetProductKg =
+    effectiveIncomingNetKg != null && totalIncomingBags != null
+      ? effectiveIncomingNetKg - totalIncomingBags * JUTE_BAG_WEIGHT
+      : incomingNetProductKg;
+
   const effectiveGradingWastageKg =
-    effectiveIncomingNetKg != null && effectiveIncomingNetKg > 0
-      ? Math.max(0, effectiveIncomingNetKg - totalGradedWeightKg)
+    effectiveIncomingNetProductKg != null && effectiveIncomingNetProductKg > 0
+      ? Math.max(0, effectiveIncomingNetProductKg - totalGradedWeightKg)
       : undefined;
   const effectiveGradingWastagePercent =
-    effectiveIncomingNetKg != null &&
-    effectiveIncomingNetKg > 0 &&
+    effectiveIncomingNetProductKg != null &&
+    effectiveIncomingNetProductKg > 0 &&
     effectiveGradingWastageKg != null
-      ? (effectiveGradingWastageKg / effectiveIncomingNetKg) * 100
+      ? (effectiveGradingWastageKg / effectiveIncomingNetProductKg) * 100
       : undefined;
 
   const totalGradedWeightPercent = computeTotalGradedWeightPercent(
     totalGradedWeightKg,
-    incomingNetProductKg
+    effectiveIncomingNetProductKg ?? incomingNetProductKg
   );
   const wastagePercentOfNetProduct = computeWastagePercentOfNetProduct(
     wastageKg,
-    incomingNetProductKg
+    effectiveIncomingNetProductKg ?? incomingNetProductKg
   );
   const { percentSum, hasDiscrepancy, discrepancyValue } = computeDiscrepancy(
     totalGradedWeightPercent,
@@ -330,8 +349,10 @@ const GradingVoucher = memo(function GradingVoucher({
           totalGradedWeightGrossKg={totalGradedWeightGrossKg}
           totalBagWeightDeductionKg={totalBagWeightDeductionKg}
           incomingNetKg={incomingNetKg}
-          incomingBagsCount={incomingBagsCount}
-          incomingNetProductKg={incomingNetProductKg}
+          incomingBagsCount={incomingBagsCount ?? totalIncomingBags}
+          incomingNetProductKg={
+            effectiveIncomingNetProductKg ?? incomingNetProductKg
+          }
           totalGradedWeightPercent={totalGradedWeightPercent}
           wastageKg={wastageKg}
           wastagePercent={wastagePercentOfNetProduct}
@@ -363,18 +384,34 @@ const GradingVoucher = memo(function GradingVoucher({
                                 <th className="pb-2 text-right">Gross (kg)</th>
                                 <th className="pb-2 text-right">Tare (kg)</th>
                                 <th className="pb-2 text-right">Net (kg)</th>
+                                <th className="pb-2 text-right">
+                                  Bardana (kg)
+                                </th>
+                                <th className="pb-2 text-right">
+                                  Net product (kg)
+                                </th>
                               </>
                             )}
+                            {!hasIncomingWeightSlips &&
+                              totalIncomingBags != null && (
+                                <th className="pb-2 text-right">
+                                  Bardana (kg)
+                                </th>
+                              )}
                           </tr>
                         </thead>
                         <tbody>
                           {incomingGatePassIds.map((ref) => {
                             const ws = ref.weightSlip;
+                            const bags = ref.bagsReceived ?? 0;
+                            const bardanaKg = bags * JUTE_BAG_WEIGHT;
                             const netKg =
                               ws?.grossWeightKg != null &&
                               ws?.tareWeightKg != null
                                 ? ws.grossWeightKg - ws.tareWeightKg
                                 : null;
+                            const netProductKg =
+                              netKg != null ? netKg - bardanaKg : null;
                             return (
                               <tr
                                 key={ref._id}
@@ -389,7 +426,7 @@ const GradingVoucher = memo(function GradingVoucher({
                                     : '—'}
                                 </td>
                                 <td className="py-2.5 text-right font-medium tabular-nums">
-                                  {formatNumber(ref.bagsReceived ?? 0)}
+                                  {formatNumber(bags)}
                                 </td>
                                 {hasIncomingWeightSlips && (
                                   <>
@@ -408,8 +445,22 @@ const GradingVoucher = memo(function GradingVoucher({
                                         ? formatNumber(netKg)
                                         : '—'}
                                     </td>
+                                    <td className="text-muted-foreground py-2.5 pr-3 text-right tabular-nums">
+                                      {formatNumber(bardanaKg)}
+                                    </td>
+                                    <td className="py-2.5 text-right font-medium tabular-nums">
+                                      {netProductKg != null
+                                        ? formatNumber(netProductKg)
+                                        : '—'}
+                                    </td>
                                   </>
                                 )}
+                                {!hasIncomingWeightSlips &&
+                                  totalIncomingBags != null && (
+                                    <td className="text-muted-foreground py-2.5 text-right tabular-nums">
+                                      {formatNumber(bardanaKg)}
+                                    </td>
+                                  )}
                               </tr>
                             );
                           })}
@@ -433,8 +484,30 @@ const GradingVoucher = memo(function GradingVoucher({
                                     ? formatNumber(totalIncomingNetFromSlips)
                                     : '—'}
                                 </td>
+                                <td className="text-muted-foreground py-2.5 pr-3 text-right tabular-nums">
+                                  {totalIncomingBags != null
+                                    ? formatNumber(
+                                        totalIncomingBags * JUTE_BAG_WEIGHT
+                                      )
+                                    : '—'}
+                                </td>
+                                <td className="py-2.5 text-right tabular-nums">
+                                  {effectiveIncomingNetProductKg != null
+                                    ? formatNumber(
+                                        effectiveIncomingNetProductKg
+                                      )
+                                    : '—'}
+                                </td>
                               </>
                             )}
+                            {!hasIncomingWeightSlips &&
+                              totalIncomingBags != null && (
+                                <td className="text-muted-foreground py-2.5 text-right tabular-nums">
+                                  {formatNumber(
+                                    totalIncomingBags * JUTE_BAG_WEIGHT
+                                  )}
+                                </td>
+                              )}
                           </tr>
                         </tbody>
                       </table>
@@ -457,6 +530,9 @@ const GradingVoucher = memo(function GradingVoucher({
                         <th className="pr-3 pb-2 text-right">Initial</th>
                         <th className="pr-3 pb-2 text-right">Weight %</th>
                         <th className="pb-2 text-right">Wt/Bag (kg)</th>
+                        <th className="pb-2 text-right">Bag wt (kg)</th>
+                        <th className="pb-2 text-right">Deduction (kg)</th>
+                        <th className="pb-2 text-right">Net (kg)</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -471,10 +547,13 @@ const GradingVoucher = memo(function GradingVoucher({
                             {allOrderDetails.map((od, idx) => {
                               const qty = od.initialQuantity ?? 0;
                               const wt = od.weightPerBagKg ?? 0;
-                              const rowWeight = qty * wt;
+                              const bagWt = getBagWeightKg(od.bagType);
+                              const rowGross = qty * wt;
+                              const rowDeduction = qty * bagWt;
+                              const rowNet = rowGross - rowDeduction;
                               const weightPct =
                                 totalGradedWeight > 0
-                                  ? (rowWeight / totalGradedWeight) * 100
+                                  ? (rowGross / totalGradedWeight) * 100
                                   : 0;
                               return (
                                 <tr
@@ -496,8 +575,17 @@ const GradingVoucher = memo(function GradingVoucher({
                                   <td className="py-2 pr-3 text-right tabular-nums">
                                     {formatWeightPercent(weightPct)}%
                                   </td>
-                                  <td className="py-2 text-right">
+                                  <td className="py-2 pr-3 text-right">
                                     {formatNumber(wt)}
+                                  </td>
+                                  <td className="text-muted-foreground py-2 pr-3 text-right tabular-nums">
+                                    {formatNumber(bagWt)}
+                                  </td>
+                                  <td className="text-muted-foreground py-2 pr-3 text-right tabular-nums">
+                                    {formatNumber(rowDeduction)}
+                                  </td>
+                                  <td className="py-2 text-right font-medium tabular-nums">
+                                    {formatNumber(rowNet)}
                                   </td>
                                 </tr>
                               );
@@ -517,7 +605,14 @@ const GradingVoucher = memo(function GradingVoucher({
                                   ? `${formatWeightPercent(100)}%`
                                   : '—'}
                               </td>
-                              <td className="py-2.5 text-right font-medium">
+                              <td className="py-2.5 pr-3 text-right font-medium">
+                                {formatNumber(totalGradedWeightGrossKg)}
+                              </td>
+                              <td className="py-2.5 pr-3" />
+                              <td className="text-muted-foreground py-2.5 pr-3 text-right tabular-nums">
+                                {formatNumber(totalBagWeightDeductionKg)}
+                              </td>
+                              <td className="py-2.5 text-right font-medium tabular-nums">
                                 {formatNumber(totalGradedWeightKg)}
                               </td>
                             </tr>
@@ -540,12 +635,13 @@ const GradingVoucher = memo(function GradingVoucher({
                     aria-hidden
                   />
                   <span className="text-primary font-custom text-sm font-medium tabular-nums">
-                    {formatNumber(totalGradedWeightKg)} kg
+                    {formatWastage(totalGradedWeightKg)} kg
                     {totalGradedWeightPercent !== undefined && (
                       <>
                         {' '}
                         <span className="text-primary/90">
-                          ({formatNumber(totalGradedWeightPercent)}% of net)
+                          ({formatWeightPercent(totalGradedWeightPercent)}% of
+                          net)
                         </span>
                       </>
                     )}

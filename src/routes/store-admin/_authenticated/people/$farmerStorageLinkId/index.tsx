@@ -77,6 +77,7 @@ import { downloadStockLedgerExcel } from '@/utils/stockLedgerExcel';
 import { EditFarmerModal } from '@/components/forms/edit-farmer-modal';
 import { useGetIncomingGatePassesOfSingleFarmer } from '@/services/store-admin/incoming-gate-pass/useGetIncomingGatePassesOfSingleFarmer';
 import { useGetGradingPassesOfSingleFarmer } from '@/services/store-admin/grading-gate-pass/useGetGradingPassesOfSingleFarmer';
+import { JUTE_BAG_WEIGHT } from '@/components/forms/grading/constants';
 import { computeGradingOrderTotals } from '@/components/daybook/vouchers/grading-voucher-calculations';
 
 export const Route = createFileRoute(
@@ -922,11 +923,17 @@ function ContractTabContent({
     wastagePercent: number | undefined;
     /** Incoming net weight (kg) from weight slip details; undefined if no weight data */
     incomingNetKg: number | undefined;
+    /** Bardana weight (kg) = bagsReceived × JUTE_BAG_WEIGHT (0.7 kg); undefined if no weight row */
+    bardanaKg: number | undefined;
+    /** Incoming net product (kg) = incomingNetKg − bardanaKg; used for wastage calc (matches grading-voucher) */
+    incomingNetProductKg: number | undefined;
+    /** Grading bardana (kg) = bag weight deducted by type (JUTE 0.7 kg, LENO 0.06 kg per bag); undefined if no grading */
+    gradingBardanaKg: number | undefined;
     /** Total graded weight (kg) from order details after bag deduction; undefined if no grading */
     totalGradedWeightKg: number | undefined;
-    /** Wastage by weight (kg) = incomingNetKg - totalGradedWeightKg; undefined if no weight data */
+    /** Wastage by weight (kg) = incomingNetProductKg − totalGradedWeightKg; undefined if no weight data */
     wastageKg: number | undefined;
-    /** Wastage % of incoming net weight; undefined if no weight data */
+    /** Wastage % of incoming net product; undefined if no weight data */
     wastagePercentByWeight: number | undefined;
   };
 
@@ -959,9 +966,8 @@ function ContractTabContent({
       const wastagePercent =
         bagsReceived > 0 ? (wastageBags / bagsReceived) * 100 : undefined;
 
-      const { totalGradedWeightKg } = computeGradingOrderTotals(
-        gp.orderDetails ?? []
-      );
+      const { totalGradedWeightKg, totalBagWeightDeductionKg } =
+        computeGradingOrderTotals(gp.orderDetails ?? []);
       const incomingRefsWithWeight =
         gp.weightSlipDetails?.incomingGatePassIds ??
         gp.incomingGatePassIds ??
@@ -974,13 +980,19 @@ function ContractTabContent({
         return sum;
       }, 0);
       const hasIncomingNet = incomingNetKg != null && incomingNetKg > 0;
+      const bardanaKg = bagsReceived * JUTE_BAG_WEIGHT;
+      const incomingNetProductKg = hasIncomingNet
+        ? incomingNetKg - bardanaKg
+        : undefined;
+      const hasNetProduct =
+        incomingNetProductKg != null && incomingNetProductKg > 0;
       const wastageKg =
-        hasIncomingNet && totalGradedWeightKg != null
-          ? Math.max(0, incomingNetKg - totalGradedWeightKg)
+        hasNetProduct && totalGradedWeightKg != null
+          ? Math.max(0, incomingNetProductKg - totalGradedWeightKg)
           : undefined;
       const wastagePercentByWeight =
-        hasIncomingNet && wastageKg != null
-          ? (wastageKg / incomingNetKg) * 100
+        hasNetProduct && wastageKg != null
+          ? (wastageKg / incomingNetProductKg) * 100
           : undefined;
 
       rows.push({
@@ -994,6 +1006,15 @@ function ContractTabContent({
         incomingNetKg:
           incomingNetKg != null && incomingNetKg > 0
             ? incomingNetKg
+            : undefined,
+        bardanaKg: hasIncomingNet ? bardanaKg : undefined,
+        incomingNetProductKg:
+          incomingNetProductKg != null && incomingNetProductKg > 0
+            ? incomingNetProductKg
+            : undefined,
+        gradingBardanaKg:
+          totalBagWeightDeductionKg != null && totalBagWeightDeductionKg > 0
+            ? totalBagWeightDeductionKg
             : undefined,
         totalGradedWeightKg:
           totalGradedWeightKg != null && totalGradedWeightKg > 0
@@ -1015,6 +1036,9 @@ function ContractTabContent({
         wastageBags: undefined,
         wastagePercent: undefined,
         incomingNetKg: undefined,
+        bardanaKg: undefined,
+        incomingNetProductKg: undefined,
+        gradingBardanaKg: undefined,
         totalGradedWeightKg: undefined,
         wastageKg: undefined,
         wastagePercentByWeight: undefined,
@@ -1082,6 +1106,32 @@ function ContractTabContent({
         ),
       },
       {
+        accessorKey: 'bardanaKg',
+        header: () => (
+          <span className="font-custom font-bold">Bardana (kg)</span>
+        ),
+        cell: ({ row }) => (
+          <span className="font-custom font-medium tabular-nums">
+            {row.original.bardanaKg != null
+              ? formatWastage(row.original.bardanaKg)
+              : '—'}
+          </span>
+        ),
+      },
+      {
+        accessorKey: 'incomingNetProductKg',
+        header: () => (
+          <span className="font-custom font-bold">Net product (kg)</span>
+        ),
+        cell: ({ row }) => (
+          <span className="font-custom font-medium tabular-nums">
+            {row.original.incomingNetProductKg != null
+              ? formatWastage(row.original.incomingNetProductKg)
+              : '—'}
+          </span>
+        ),
+      },
+      {
         accessorFn: (row) => row.gradingPass?.gatePassNo,
         id: 'gradingGatePassNo',
         header: () => (
@@ -1104,6 +1154,19 @@ function ContractTabContent({
           <span className="font-custom font-medium tabular-nums">
             {row.original.totalGradedBags != null
               ? row.original.totalGradedBags.toLocaleString('en-IN')
+              : '—'}
+          </span>
+        ),
+      },
+      {
+        accessorKey: 'gradingBardanaKg',
+        header: () => (
+          <span className="font-custom font-bold">Grading bardana (kg)</span>
+        ),
+        cell: ({ row }) => (
+          <span className="font-custom font-medium tabular-nums">
+            {row.original.gradingBardanaKg != null
+              ? formatWastage(row.original.gradingBardanaKg)
               : '—'}
           </span>
         ),
@@ -1188,14 +1251,26 @@ function ContractTabContent({
     ).length;
 
     const rowsWithWeight = gradedRows.filter(
-      (r) => r.incomingNetKg != null && r.incomingNetKg > 0
+      (r) => r.incomingNetProductKg != null && r.incomingNetProductKg > 0
     );
     const totalIncomingNetKg = rowsWithWeight.reduce(
       (s, r) => s + (r.incomingNetKg ?? 0),
       0
     );
+    const totalBardanaKg = rowsWithWeight.reduce(
+      (s, r) => s + (r.bardanaKg ?? 0),
+      0
+    );
+    const totalIncomingNetProductKg = rowsWithWeight.reduce(
+      (s, r) => s + (r.incomingNetProductKg ?? 0),
+      0
+    );
     const totalGradedWeightKg = rowsWithWeight.reduce(
       (s, r) => s + (r.totalGradedWeightKg ?? 0),
+      0
+    );
+    const totalGradingBardanaKg = gradedRows.reduce(
+      (s, r) => s + (r.gradingBardanaKg ?? 0),
       0
     );
     const totalWastageKg = rowsWithWeight.reduce(
@@ -1203,8 +1278,8 @@ function ContractTabContent({
       0
     );
     const overallWastagePercentByWeight =
-      totalIncomingNetKg > 0
-        ? (totalWastageKg / totalIncomingNetKg) * 100
+      totalIncomingNetProductKg > 0
+        ? (totalWastageKg / totalIncomingNetProductKg) * 100
         : null;
     const avgWastagePercentByWeight =
       rowsWithWeight.length > 0
@@ -1214,8 +1289,8 @@ function ContractTabContent({
           ) / rowsWithWeight.length
         : null;
     const conversionPercentByWeight =
-      totalIncomingNetKg > 0
-        ? (totalGradedWeightKg / totalIncomingNetKg) * 100
+      totalIncomingNetProductKg > 0
+        ? (totalGradedWeightKg / totalIncomingNetProductKg) * 100
         : null;
 
     return {
@@ -1225,6 +1300,9 @@ function ContractTabContent({
       incomingPassCount,
       gradingPassCount,
       totalIncomingNetKg,
+      totalBardanaKg,
+      totalIncomingNetProductKg,
+      totalGradingBardanaKg,
       totalGradedWeightKg,
       totalWastageKg,
       overallWastagePercentByWeight,
@@ -1300,10 +1378,55 @@ function ContractTabContent({
             </div>
             <div className="border-border bg-muted/30 rounded-lg border px-3 py-2.5">
               <p className="text-muted-foreground font-custom text-[10px] font-medium tracking-wider uppercase sm:text-xs">
+                Bardana (kg)
+              </p>
+              <p className="font-custom mt-0.5 text-lg font-semibold tabular-nums">
+                {tableMetrics.totalBardanaKg != null &&
+                tableMetrics.totalBardanaKg > 0
+                  ? tableMetrics.totalBardanaKg.toLocaleString('en-IN', {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })
+                  : '—'}
+              </p>
+            </div>
+            <div className="border-border bg-muted/30 rounded-lg border px-3 py-2.5">
+              <p className="text-muted-foreground font-custom text-[10px] font-medium tracking-wider uppercase sm:text-xs">
+                Net product (kg)
+              </p>
+              <p className="font-custom mt-0.5 text-lg font-semibold tabular-nums">
+                {tableMetrics.totalIncomingNetProductKg != null &&
+                tableMetrics.totalIncomingNetProductKg > 0
+                  ? tableMetrics.totalIncomingNetProductKg.toLocaleString(
+                      'en-IN',
+                      {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      }
+                    )
+                  : '—'}
+              </p>
+            </div>
+            <div className="border-border bg-muted/30 rounded-lg border px-3 py-2.5">
+              <p className="text-muted-foreground font-custom text-[10px] font-medium tracking-wider uppercase sm:text-xs">
                 Total graded bags
               </p>
               <p className="font-custom mt-0.5 text-lg font-semibold tabular-nums">
                 {tableMetrics.totalGradedBags.toLocaleString('en-IN')}
+              </p>
+            </div>
+            <div className="border-border bg-muted/30 rounded-lg border px-3 py-2.5">
+              <p className="text-muted-foreground font-custom text-[10px] font-medium tracking-wider uppercase sm:text-xs">
+                Grading bardana (kg)
+              </p>
+              <p className="font-custom mt-0.5 text-lg font-semibold tabular-nums">
+                {tableMetrics.totalGradingBardanaKg != null &&
+                tableMetrics.totalGradingBardanaKg > 0
+                  ? tableMetrics.totalGradingBardanaKg.toLocaleString('en-IN', {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })
+                  : '—'}
               </p>
             </div>
             <div className="border-border bg-muted/30 rounded-lg border px-3 py-2.5">
@@ -1462,11 +1585,44 @@ function ContractTabContent({
                           )
                         : '—'}
                     </TableCell>
+                    <TableCell className="font-custom border-border border px-4 py-2 tabular-nums">
+                      {tableMetrics.totalBardanaKg != null &&
+                      tableMetrics.totalBardanaKg > 0
+                        ? tableMetrics.totalBardanaKg.toLocaleString('en-IN', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })
+                        : '—'}
+                    </TableCell>
+                    <TableCell className="font-custom border-border border px-4 py-2 tabular-nums">
+                      {tableMetrics.totalIncomingNetProductKg != null &&
+                      tableMetrics.totalIncomingNetProductKg > 0
+                        ? tableMetrics.totalIncomingNetProductKg.toLocaleString(
+                            'en-IN',
+                            {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            }
+                          )
+                        : '—'}
+                    </TableCell>
                     <TableCell className="font-custom border-border border px-4 py-2">
                       —
                     </TableCell>
                     <TableCell className="font-custom border-border border px-4 py-2 tabular-nums">
                       {tableMetrics.totalGradedBags.toLocaleString('en-IN')}
+                    </TableCell>
+                    <TableCell className="font-custom border-border border px-4 py-2 tabular-nums">
+                      {tableMetrics.totalGradingBardanaKg != null &&
+                      tableMetrics.totalGradingBardanaKg > 0
+                        ? tableMetrics.totalGradingBardanaKg.toLocaleString(
+                            'en-IN',
+                            {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            }
+                          )
+                        : '—'}
                     </TableCell>
                     <TableCell className="font-custom border-border border px-4 py-2 tabular-nums">
                       {tableMetrics.totalGradedWeightKg != null &&

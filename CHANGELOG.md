@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.11] - 2026-03-06
+
+### Added
+- Grading voucher: Incoming Gate Passes table columns for Bardana (kg) and Net product (kg) per row and in totals (incoming bardana = bags × 0.7 kg JUTE)
+- Grading voucher: Order Details table columns for Bag wt (kg), Deduction (kg), and Net (kg) per row and in totals (JUTE 0.7 kg, LENO 0.06 kg per bag type)
+- People (farmer storage) detail: Incoming & grading table columns for Bardana (kg), Net product (kg), and Grading bardana (kg); summary cards and footer totals for same
+
+### Changed
+- Grading voucher: wastage and percentages use net product (incoming weight − incoming bags × 0.7 kg); grading weight uses bag-type deduction (JUTE 700 g, LENO 60 g per bag) via `computeGradingOrderTotals`
+- Grading voucher: total graded weight display limited to 2 decimal places (kg and % of net)
+- People detail: incoming/grading row calculations aligned with grading voucher (incoming bardana JUTE only; grading bardana by bag type); conversion and wastage % based on net product
+- Grading voucher calculations: comments clarifying incoming bags are always JUTE; grading uses `getBagWeightKg(bagType)` for JUTE vs LENO
+
 ## [0.10.10] - 2026-03-05
 
 ### Added
