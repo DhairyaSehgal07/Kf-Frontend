@@ -6,42 +6,26 @@ import type {
   AnalyticsOverviewData,
 } from '@/types/analytics';
 
-export type AnalyticsOverviewParams =
-  | { dateFrom: string; dateTo: string }
-  | Record<string, never>;
-
 /** Query key prefix for analytics overview */
 export const analyticsOverviewKeys = {
   all: ['store-admin', 'analytics', 'overview'] as const,
 };
 
-function overviewQueryKey(params: AnalyticsOverviewParams = {}) {
-  return [
-    ...analyticsOverviewKeys.all,
-    'dateFrom' in params ? params.dateFrom : '',
-    'dateTo' in params ? params.dateTo : '',
-  ] as const;
+/** Params for fetching analytics overview (date range in YYYY-MM-DD) */
+export interface GetOverviewParams {
+  dateFrom?: string;
+  dateTo?: string;
 }
 
-/**
- * Fetcher for analytics overview.
- * Calls GET {baseURL}/analytics/overview with optional dateFrom/dateTo query params.
- */
+/** Fetcher used by queryOptions and prefetch */
 async function fetchAnalyticsOverview(
-  params: AnalyticsOverviewParams = {}
+  params: GetOverviewParams
 ): Promise<AnalyticsOverviewData> {
-  const searchParams = new URLSearchParams();
-  if ('dateFrom' in params && params.dateFrom)
-    searchParams.set('dateFrom', params.dateFrom);
-  if ('dateTo' in params && params.dateTo)
-    searchParams.set('dateTo', params.dateTo);
-  const queryString = searchParams.toString();
-  const url = queryString
-    ? `/analytics/overview?${queryString}`
-    : '/analytics/overview';
-
   const { data } =
-    await storeAdminAxiosClient.get<GetAnalyticsOverviewApiResponse>(url);
+    await storeAdminAxiosClient.get<GetAnalyticsOverviewApiResponse>(
+      '/analytics/overview',
+      { params: { dateFrom: params.dateFrom, dateTo: params.dateTo } }
+    );
 
   if (!data.success || data.data == null) {
     throw new Error(data.message ?? 'Failed to fetch analytics overview');
@@ -51,22 +35,18 @@ async function fetchAnalyticsOverview(
 }
 
 /** Query options – use with useQuery, prefetchQuery, or in loaders */
-export const analyticsOverviewQueryOptions = (
-  params: AnalyticsOverviewParams = {}
-) =>
+export const analyticsOverviewQueryOptions = (params: GetOverviewParams = {}) =>
   queryOptions({
-    queryKey: overviewQueryKey(params),
+    queryKey: [...analyticsOverviewKeys.all, params] as const,
     queryFn: () => fetchAnalyticsOverview(params),
   });
 
 /** Hook to fetch analytics overview */
-export function useGetOverview(params: AnalyticsOverviewParams = {}) {
+export function useGetOverview(params: GetOverviewParams = {}) {
   return useQuery(analyticsOverviewQueryOptions(params));
 }
 
 /** Prefetch analytics overview – e.g. on route hover or before navigation */
-export function prefetchAnalyticsOverview(
-  params: AnalyticsOverviewParams = {}
-) {
+export function prefetchAnalyticsOverview(params: GetOverviewParams = {}) {
   return queryClient.prefetchQuery(analyticsOverviewQueryOptions(params));
 }

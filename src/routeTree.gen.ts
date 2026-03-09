@@ -22,6 +22,7 @@ import { Route as StoreAdminAuthenticatedIncomingIndexRouteImport } from './rout
 import { Route as StoreAdminAuthenticatedGroupedIndexRouteImport } from './routes/store-admin/_authenticated/grouped/index'
 import { Route as StoreAdminAuthenticatedGradingIndexRouteImport } from './routes/store-admin/_authenticated/grading/index'
 import { Route as StoreAdminAuthenticatedDaybookIndexRouteImport } from './routes/store-admin/_authenticated/daybook/index'
+import { Route as StoreAdminAuthenticatedAreaBreakdownIndexRouteImport } from './routes/store-admin/_authenticated/area-breakdown/index'
 import { Route as StoreAdminAuthenticatedAnalyticsIndexRouteImport } from './routes/store-admin/_authenticated/analytics/index'
 import { Route as StoreAdminAuthenticatedAdditionalIndexRouteImport } from './routes/store-admin/_authenticated/additional/index'
 import { Route as StoreAdminAuthenticatedPeopleFarmerStorageLinkIdIndexRouteImport } from './routes/store-admin/_authenticated/people/$farmerStorageLinkId/index'
@@ -101,6 +102,12 @@ const StoreAdminAuthenticatedDaybookIndexRoute =
     path: '/daybook/',
     getParentRoute: () => StoreAdminAuthenticatedRoute,
   } as any)
+const StoreAdminAuthenticatedAreaBreakdownIndexRoute =
+  StoreAdminAuthenticatedAreaBreakdownIndexRouteImport.update({
+    id: '/area-breakdown/',
+    path: '/area-breakdown/',
+    getParentRoute: () => StoreAdminAuthenticatedRoute,
+  } as any)
 const StoreAdminAuthenticatedAnalyticsIndexRoute =
   StoreAdminAuthenticatedAnalyticsIndexRouteImport.update({
     id: '/analytics/',
@@ -142,6 +149,7 @@ export interface FileRoutesByFullPath {
   '/store-admin/rental/': typeof StoreAdminRentalIndexRoute
   '/store-admin/additional/': typeof StoreAdminAuthenticatedAdditionalIndexRoute
   '/store-admin/analytics/': typeof StoreAdminAuthenticatedAnalyticsIndexRoute
+  '/store-admin/area-breakdown/': typeof StoreAdminAuthenticatedAreaBreakdownIndexRoute
   '/store-admin/daybook/': typeof StoreAdminAuthenticatedDaybookIndexRoute
   '/store-admin/grading/': typeof StoreAdminAuthenticatedGradingIndexRoute
   '/store-admin/grouped/': typeof StoreAdminAuthenticatedGroupedIndexRoute
@@ -162,6 +170,7 @@ export interface FileRoutesByTo {
   '/store-admin/rental': typeof StoreAdminRentalIndexRoute
   '/store-admin/additional': typeof StoreAdminAuthenticatedAdditionalIndexRoute
   '/store-admin/analytics': typeof StoreAdminAuthenticatedAnalyticsIndexRoute
+  '/store-admin/area-breakdown': typeof StoreAdminAuthenticatedAreaBreakdownIndexRoute
   '/store-admin/daybook': typeof StoreAdminAuthenticatedDaybookIndexRoute
   '/store-admin/grading': typeof StoreAdminAuthenticatedGradingIndexRoute
   '/store-admin/grouped': typeof StoreAdminAuthenticatedGroupedIndexRoute
@@ -183,6 +192,7 @@ export interface FileRoutesById {
   '/store-admin/rental/': typeof StoreAdminRentalIndexRoute
   '/store-admin/_authenticated/additional/': typeof StoreAdminAuthenticatedAdditionalIndexRoute
   '/store-admin/_authenticated/analytics/': typeof StoreAdminAuthenticatedAnalyticsIndexRoute
+  '/store-admin/_authenticated/area-breakdown/': typeof StoreAdminAuthenticatedAreaBreakdownIndexRoute
   '/store-admin/_authenticated/daybook/': typeof StoreAdminAuthenticatedDaybookIndexRoute
   '/store-admin/_authenticated/grading/': typeof StoreAdminAuthenticatedGradingIndexRoute
   '/store-admin/_authenticated/grouped/': typeof StoreAdminAuthenticatedGroupedIndexRoute
@@ -205,6 +215,7 @@ export interface FileRouteTypes {
     | '/store-admin/rental/'
     | '/store-admin/additional/'
     | '/store-admin/analytics/'
+    | '/store-admin/area-breakdown/'
     | '/store-admin/daybook/'
     | '/store-admin/grading/'
     | '/store-admin/grouped/'
@@ -225,6 +236,7 @@ export interface FileRouteTypes {
     | '/store-admin/rental'
     | '/store-admin/additional'
     | '/store-admin/analytics'
+    | '/store-admin/area-breakdown'
     | '/store-admin/daybook'
     | '/store-admin/grading'
     | '/store-admin/grouped'
@@ -245,6 +257,7 @@ export interface FileRouteTypes {
     | '/store-admin/rental/'
     | '/store-admin/_authenticated/additional/'
     | '/store-admin/_authenticated/analytics/'
+    | '/store-admin/_authenticated/area-breakdown/'
     | '/store-admin/_authenticated/daybook/'
     | '/store-admin/_authenticated/grading/'
     | '/store-admin/_authenticated/grouped/'
@@ -359,6 +372,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StoreAdminAuthenticatedDaybookIndexRouteImport
       parentRoute: typeof StoreAdminAuthenticatedRoute
     }
+    '/store-admin/_authenticated/area-breakdown/': {
+      id: '/store-admin/_authenticated/area-breakdown/'
+      path: '/area-breakdown'
+      fullPath: '/store-admin/area-breakdown/'
+      preLoaderRoute: typeof StoreAdminAuthenticatedAreaBreakdownIndexRouteImport
+      parentRoute: typeof StoreAdminAuthenticatedRoute
+    }
     '/store-admin/_authenticated/analytics/': {
       id: '/store-admin/_authenticated/analytics/'
       path: '/analytics'
@@ -400,6 +420,7 @@ declare module '@tanstack/react-router' {
 interface StoreAdminAuthenticatedRouteChildren {
   StoreAdminAuthenticatedAdditionalIndexRoute: typeof StoreAdminAuthenticatedAdditionalIndexRoute
   StoreAdminAuthenticatedAnalyticsIndexRoute: typeof StoreAdminAuthenticatedAnalyticsIndexRoute
+  StoreAdminAuthenticatedAreaBreakdownIndexRoute: typeof StoreAdminAuthenticatedAreaBreakdownIndexRoute
   StoreAdminAuthenticatedDaybookIndexRoute: typeof StoreAdminAuthenticatedDaybookIndexRoute
   StoreAdminAuthenticatedGradingIndexRoute: typeof StoreAdminAuthenticatedGradingIndexRoute
   StoreAdminAuthenticatedGroupedIndexRoute: typeof StoreAdminAuthenticatedGroupedIndexRoute
@@ -419,6 +440,8 @@ const StoreAdminAuthenticatedRouteChildren: StoreAdminAuthenticatedRouteChildren
       StoreAdminAuthenticatedAdditionalIndexRoute,
     StoreAdminAuthenticatedAnalyticsIndexRoute:
       StoreAdminAuthenticatedAnalyticsIndexRoute,
+    StoreAdminAuthenticatedAreaBreakdownIndexRoute:
+      StoreAdminAuthenticatedAreaBreakdownIndexRoute,
     StoreAdminAuthenticatedDaybookIndexRoute:
       StoreAdminAuthenticatedDaybookIndexRoute,
     StoreAdminAuthenticatedGradingIndexRoute:

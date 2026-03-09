@@ -1,35 +1,67 @@
 import { useQuery, queryOptions } from '@tanstack/react-query';
-import type { AreaWiseVarietyItem } from '@/types/analytics';
+import storeAdminAxiosClient from '@/lib/axios';
+import { queryClient } from '@/lib/queryClient';
+import type {
+  GetAreaWiseSizeDistributionApiResponse,
+  AreaWiseSizeDistributionData,
+} from '@/types/analytics';
 
-export type AreaWiseAnalyticsParams =
-  | { dateFrom: string; dateTo: string }
-  | Record<string, never>;
+/** Query key prefix for area-wise size distribution */
+export const areaWiseAnalyticsKeys = {
+  all: ['store-admin', 'analytics', 'area-wise-size-distribution'] as const,
+  list: (params: GetAreaWiseAnalyticsParams) =>
+    [...areaWiseAnalyticsKeys.all, params] as const,
+};
 
-const key = [
-  'store-admin',
-  'grading-gate-pass',
-  'area-wise-analytics',
-] as const;
-
-function queryKey(params: AreaWiseAnalyticsParams = {}) {
-  return [
-    ...key,
-    'dateFrom' in params ? params.dateFrom : '',
-    'dateTo' in params ? params.dateTo : '',
-  ] as const;
+/** Params for GET /analytics/area-wise-size-distribution (date range in YYYY-MM-DD) */
+export interface GetAreaWiseAnalyticsParams {
+  dateFrom?: string;
+  dateTo?: string;
 }
 
-/** Stub: returns empty data. Replace with real GET /analytics/area-wise-size-distribution when available. */
+/** Fetcher used by queryOptions and prefetch */
+async function fetchAreaWiseAnalytics(
+  params: GetAreaWiseAnalyticsParams
+): Promise<AreaWiseSizeDistributionData> {
+  const { data } =
+    await storeAdminAxiosClient.get<GetAreaWiseSizeDistributionApiResponse>(
+      '/analytics/area-wise-size-distribution',
+      {
+        params: {
+          dateFrom: params.dateFrom,
+          dateTo: params.dateTo,
+        },
+      }
+    );
+
+  if (!data.success || data.data == null) {
+    throw new Error(
+      data.message ?? 'Failed to fetch area-wise size distribution'
+    );
+  }
+
+  return data.data;
+}
+
+/** Query options – use with useQuery, prefetchQuery, or in loaders */
 export const areaWiseAnalyticsQueryOptions = (
-  params: AreaWiseAnalyticsParams = {}
+  params: GetAreaWiseAnalyticsParams = {}
 ) =>
   queryOptions({
-    queryKey: queryKey(params),
-    queryFn: async (): Promise<{ data: AreaWiseVarietyItem[] }> => ({
-      data: [],
-    }),
+    queryKey: areaWiseAnalyticsKeys.list(params),
+    queryFn: () => fetchAreaWiseAnalytics(params),
   });
 
-export function useGetAreaWiseAnalytics(params: AreaWiseAnalyticsParams = {}) {
+/** Hook to fetch area-wise size distribution (chart data) for a date range */
+export function useGetAreaWiseAnalytics(
+  params: GetAreaWiseAnalyticsParams = {}
+) {
   return useQuery(areaWiseAnalyticsQueryOptions(params));
+}
+
+/** Prefetch area-wise size distribution – e.g. on route hover or before navigation */
+export function prefetchAreaWiseAnalytics(
+  params: GetAreaWiseAnalyticsParams = {}
+) {
+  return queryClient.prefetchQuery(areaWiseAnalyticsQueryOptions(params));
 }

@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.13] - 2026-03-09
+
+### Added
+- Analytics: Grading and Incoming tabs refactored with dedicated screen components (`GradingGatePassAnalyticsScreen`, `IncomingGatePassAnalyticsScreen`) in `grading/index.tsx` and `incoming/index.tsx`
+- Area breakdown: route at `/store-admin/area-breakdown` and hook `useGetAreaBreakdown` for `GET /analytics/farmers-stock-by-filters` (area, size, variety params)
+- Analytics report hooks: `useGetGradingGatePassReports`, `useGetNikasiGatePassReports`, `useGetStorageGatePassReports` for grading, nikasi, and storage gate pass report data
+
+### Changed
+- Analytics: AreaWiseAnalytics, SizeDistributionChart, IncomingTrendAnalysisChart, VarietyDistributionChart refinements and date-params integration
+- Analytics hooks: `useGetOverview`, `useGetIncomingTrendAnalysis`, `useGetIncomingVarietyBreakdown`, `useGetIncomingGatePassReports` updated for params and prefetch; `useGetAreaWiseAnalytics`, `useGetGradingSizeWiseDistribution` with date params and prefetch support
+- Daybook: refactored and simplified
+- People (farmer storage) detail page: refactored and simplified
+- Types: analytics types extended for area breakdown and report APIs
+
 ## [0.10.12] - 2026-03-09
 
 ### Added

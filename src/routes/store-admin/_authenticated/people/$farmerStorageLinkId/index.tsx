@@ -17,15 +17,6 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import {
-  Item,
-  ItemHeader,
-  ItemMedia,
-  ItemTitle,
-  ItemActions,
-  ItemFooter,
-} from '@/components/ui/item';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -34,21 +25,10 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuCheckboxItem,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import {
-  Search,
-  ChevronDown,
-  RefreshCw,
-  Receipt,
   ArrowUpFromLine,
   Layers,
   Warehouse,
@@ -62,12 +42,10 @@ import {
   Clock,
 } from 'lucide-react';
 import type { FarmerStorageLink } from '@/types/farmer';
-import type { DaybookEntry, DaybookGatePassType } from '@/types/daybook';
 import type { StockLedgerRow } from '@/components/pdf/stockLedgerPdfTypes';
 import type { IncomingGatePassWithLink } from '@/types/incoming-gate-pass';
 import type { IncomingVoucherData } from '@/components/daybook/vouchers/types';
 import type { GradingGatePass } from '@/types/grading-gate-pass';
-import { DaybookEntryCard } from '@/components/daybook';
 import { ContractTabPanel } from '@/components/daybook/ContractTabPanel';
 import { IncomingVoucher } from '@/components/daybook/vouchers/incoming-voucher';
 import { GradingVoucher } from '@/components/daybook/vouchers/grading-voucher';
@@ -86,19 +64,16 @@ export const Route = createFileRoute(
   component: PeopleDetailPage,
 });
 
-const GATE_PASS_TYPE_OPTIONS_PAGE: {
-  value: DaybookGatePassType;
-  label: string;
-  shortLabel: string;
-}[] = [
-  { value: 'incoming', label: 'Incoming', shortLabel: 'Inc' },
-  { value: 'grading', label: 'Grading', shortLabel: 'Gra' },
-  { value: 'storage', label: 'Storage', shortLabel: 'Sto' },
-  { value: 'nikasi', label: 'Dispatch', shortLabel: 'Dis' },
-  { value: 'outgoing', label: 'Outgoing', shortLabel: 'Out' },
-];
+type AggregateBags = {
+  totalBagsIncoming: number;
+  totalBagsUngraded: number;
+  totalBagsGraded: number;
+  totalBagsStored: number;
+  totalBagsNikasi: number;
+  totalBagsOutgoing: number;
+};
 
-const EMPTY_AGGREGATE_BAGS = {
+const EMPTY_AGGREGATE_BAGS: AggregateBags = {
   totalBagsIncoming: 0,
   totalBagsUngraded: 0,
   totalBagsGraded: 0,
@@ -224,31 +199,9 @@ function PeopleDetailPage() {
       (state.location.state as { link?: FarmerStorageLink } | undefined)?.link,
   });
 
-  const [searchQuery, setSearchQuery] = useState('');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
-  const [sortBy, setSortBy] = useState<'Date' | 'Voucher Number'>('Date');
-  const [gatePassType, setGatePassType] = useState<DaybookGatePassType[]>([]);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [isPdfOpening, setIsPdfOpening] = useState(false);
   const [stockLedgerDialogOpen, setStockLedgerDialogOpen] = useState(false);
-
-  const toggleGatePassType = useCallback((type: DaybookGatePassType) => {
-    setGatePassType((prev) => {
-      const next = prev.includes(type)
-        ? prev.filter((t) => t !== type)
-        : [...prev, type].sort(
-            (a, b) =>
-              GATE_PASS_TYPE_OPTIONS_PAGE.findIndex((o) => o.value === a) -
-              GATE_PASS_TYPE_OPTIONS_PAGE.findIndex((o) => o.value === b)
-          );
-      return next;
-    });
-  }, []);
-
-  // UI-only: no data fetching; list and aggregates are empty. Data can be provided by parent or a data layer.
-  const filteredAndSortedEntries: DaybookEntry[] = [];
-  const totalCount: number = 0;
-  const aggregateBags = EMPTY_AGGREGATE_BAGS;
 
   const openStockLedgerPdf = useCallback(() => {
     if (!link) return;
@@ -302,54 +255,16 @@ function PeopleDetailPage() {
   return (
     <main className="mx-auto max-w-7xl p-3 sm:p-4 lg:p-6">
       <div className="space-y-4 sm:space-y-6">
-        {/* Rental / Contract tabs */}
-        <Tabs defaultValue="rental" className="w-full">
-          <TabsList className="font-custom bg-muted h-10 w-full rounded-xl sm:max-w-[16rem]">
-            <TabsTrigger value="rental" className="flex-1 rounded-lg">
-              Rental
-            </TabsTrigger>
-            <TabsTrigger value="contract" className="flex-1 rounded-lg">
-              Contract
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="rental" className="mt-4">
-            <TabPanelContent
-              link={link}
-              getInitials={getInitials}
-              aggregateBags={aggregateBags}
-              searchQuery={searchQuery}
-              setSearchQuery={setSearchQuery}
-              sortOrder={sortOrder}
-              setSortOrder={setSortOrder}
-              sortBy={sortBy}
-              setSortBy={setSortBy}
-              gatePassType={gatePassType}
-              toggleGatePassType={toggleGatePassType}
-              totalCount={totalCount}
-              filteredAndSortedEntries={filteredAndSortedEntries}
-              GATE_PASS_TYPE_OPTIONS_PAGE={GATE_PASS_TYPE_OPTIONS_PAGE}
-              setEditModalOpen={setEditModalOpen}
-              setStockLedgerDialogOpen={setStockLedgerDialogOpen}
-              stockLedgerDialogOpen={stockLedgerDialogOpen}
-              isPdfOpening={isPdfOpening}
-              openStockLedgerPdf={openStockLedgerPdf}
-              downloadStockLedgerExcel={downloadStockLedgerExcel}
-            />
-          </TabsContent>
-          <TabsContent value="contract" className="mt-4">
-            <ContractTabContent
-              link={link}
-              getInitials={getInitials}
-              setEditModalOpen={setEditModalOpen}
-              setStockLedgerDialogOpen={setStockLedgerDialogOpen}
-              stockLedgerDialogOpen={stockLedgerDialogOpen}
-              isPdfOpening={isPdfOpening}
-              openStockLedgerPdf={openStockLedgerPdf}
-              downloadStockLedgerExcel={downloadStockLedgerExcel}
-            />
-          </TabsContent>
-        </Tabs>
+        <ContractTabContent
+          link={link}
+          getInitials={getInitials}
+          setEditModalOpen={setEditModalOpen}
+          setStockLedgerDialogOpen={setStockLedgerDialogOpen}
+          stockLedgerDialogOpen={stockLedgerDialogOpen}
+          isPdfOpening={isPdfOpening}
+          openStockLedgerPdf={openStockLedgerPdf}
+          downloadStockLedgerExcel={downloadStockLedgerExcel}
+        />
       </div>
 
       <EditFarmerModal
@@ -364,7 +279,7 @@ function PeopleDetailPage() {
 type PersonalInfoCardProps = {
   link: FarmerStorageLink;
   getInitials: (name: string) => string;
-  aggregateBags: typeof EMPTY_AGGREGATE_BAGS;
+  aggregateBags: AggregateBags;
   setEditModalOpen: (open: boolean) => void;
   setStockLedgerDialogOpen: (open: boolean) => void;
   stockLedgerDialogOpen: boolean;
@@ -879,7 +794,8 @@ function ContractTabContent({
   );
 
   const aggregateBags = useMemo(
-    () => ({
+    (): AggregateBags => ({
+      ...EMPTY_AGGREGATE_BAGS,
       totalBagsIncoming: incomingPasses.reduce(
         (sum, p) => sum + (p.bagsReceived ?? 0),
         0
@@ -894,9 +810,6 @@ function ContractTabContent({
         );
         return sum + passInitial;
       }, 0),
-      totalBagsStored: 0,
-      totalBagsNikasi: 0,
-      totalBagsOutgoing: 0,
     }),
     [incomingPasses, gradingPasses]
   );
@@ -1731,208 +1644,6 @@ function ContractTabContent({
           </Card>
         </TabsContent>
       </Tabs>
-    </div>
-  );
-}
-
-type TabPanelContentProps = {
-  link: FarmerStorageLink;
-  getInitials: (name: string) => string;
-  aggregateBags: typeof EMPTY_AGGREGATE_BAGS;
-  searchQuery: string;
-  setSearchQuery: (q: string) => void;
-  sortOrder: 'asc' | 'desc';
-  setSortOrder: (o: 'asc' | 'desc') => void;
-  sortBy: 'Date' | 'Voucher Number';
-  setSortBy: (s: 'Date' | 'Voucher Number') => void;
-  gatePassType: DaybookGatePassType[];
-  toggleGatePassType: (type: DaybookGatePassType) => void;
-  totalCount: number;
-  filteredAndSortedEntries: DaybookEntry[];
-  GATE_PASS_TYPE_OPTIONS_PAGE: typeof GATE_PASS_TYPE_OPTIONS_PAGE;
-  setEditModalOpen: (open: boolean) => void;
-  setStockLedgerDialogOpen: (open: boolean) => void;
-  stockLedgerDialogOpen: boolean;
-  isPdfOpening: boolean;
-  openStockLedgerPdf: () => void;
-  downloadStockLedgerExcel: (farmerName: string) => void;
-};
-
-function TabPanelContent({
-  link,
-  getInitials,
-  aggregateBags,
-  searchQuery,
-  setSearchQuery,
-  sortOrder,
-  setSortOrder,
-  sortBy,
-  setSortBy,
-  gatePassType,
-  toggleGatePassType,
-  totalCount,
-  filteredAndSortedEntries,
-  GATE_PASS_TYPE_OPTIONS_PAGE,
-  setEditModalOpen,
-  setStockLedgerDialogOpen,
-  stockLedgerDialogOpen,
-  isPdfOpening,
-  openStockLedgerPdf,
-  downloadStockLedgerExcel,
-}: TabPanelContentProps) {
-  return (
-    <div className="space-y-4 sm:space-y-6">
-      <PersonalInfoCard
-        link={link}
-        getInitials={getInitials}
-        aggregateBags={aggregateBags}
-        setEditModalOpen={setEditModalOpen}
-        setStockLedgerDialogOpen={setStockLedgerDialogOpen}
-        stockLedgerDialogOpen={stockLedgerDialogOpen}
-        isPdfOpening={isPdfOpening}
-        openStockLedgerPdf={openStockLedgerPdf}
-        downloadStockLedgerExcel={downloadStockLedgerExcel}
-      />
-
-      {/* Header: voucher count + refresh */}
-      <div className="flex flex-col gap-4">
-        <Item variant="outline" size="sm" className="rounded-xl shadow-sm">
-          <ItemHeader className="h-full">
-            <div className="flex items-center gap-3">
-              <ItemMedia variant="icon" className="rounded-lg">
-                <Receipt className="text-primary h-5 w-5" />
-              </ItemMedia>
-              <ItemTitle className="font-custom text-sm font-semibold sm:text-base">
-                {totalCount} {totalCount === 1 ? 'voucher' : 'vouchers'}
-              </ItemTitle>
-            </div>
-            <ItemActions>
-              <Button
-                variant="outline"
-                size="sm"
-                className="font-custom h-8 gap-2 rounded-lg px-3"
-              >
-                <RefreshCw className="h-4 w-4 shrink-0" />
-                <span className="hidden sm:inline">Refresh</span>
-              </Button>
-            </ItemActions>
-          </ItemHeader>
-        </Item>
-
-        {/* Search + sort + filter */}
-        <Item
-          variant="outline"
-          size="sm"
-          className="flex-col items-stretch gap-4 rounded-xl"
-        >
-          <div className="relative w-full">
-            <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-            <Input
-              placeholder="Search by voucher number, date..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="font-custom focus-visible:ring-primary w-full pl-10 focus-visible:ring-2 focus-visible:ring-offset-2"
-            />
-          </div>
-          <ItemFooter className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex w-full flex-col gap-3 sm:flex-1 sm:flex-row sm:flex-nowrap sm:items-center sm:gap-4">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="font-custom focus-visible:ring-primary w-full min-w-0 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 sm:w-auto sm:min-w-40"
-                  >
-                    <span className="hidden sm:inline">Sort by: </span>
-                    <span className="sm:hidden">Sort: </span>
-                    {sortBy === 'Voucher Number' ? (
-                      <span className="truncate">Voucher No.</span>
-                    ) : (
-                      sortBy
-                    )}
-                    <span className="font-custom text-muted-foreground hidden sm:inline">
-                      {' '}
-                      · {sortOrder === 'asc' ? 'Ascending' : 'Descending'}
-                    </span>
-                    <ChevronDown className="ml-2 h-4 w-4 shrink-0" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="font-custom">
-                  <DropdownMenuItem onClick={() => setSortBy('Date')}>
-                    Date
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setSortBy('Voucher Number')}>
-                    Voucher Number
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setSortOrder('asc')}>
-                    Ascending
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setSortOrder('desc')}>
-                    Descending
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="font-custom focus-visible:ring-primary w-full min-w-0 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 sm:w-auto sm:min-w-40"
-                  >
-                    <span className="hidden sm:inline">Filter: </span>
-                    <span className="sm:hidden">Type: </span>
-                    {gatePassType.length === 0 ? (
-                      'All'
-                    ) : gatePassType.length === 1 ? (
-                      (GATE_PASS_TYPE_OPTIONS_PAGE.find(
-                        (o) => o.value === gatePassType[0]
-                      )?.label ?? 'All')
-                    ) : (
-                      <span className="truncate">
-                        {gatePassType.length} types
-                      </span>
-                    )}
-                    <ChevronDown className="ml-2 h-4 w-4 shrink-0" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="font-custom">
-                  {GATE_PASS_TYPE_OPTIONS_PAGE.map((opt) => (
-                    <DropdownMenuCheckboxItem
-                      key={opt.value}
-                      checked={gatePassType.includes(opt.value)}
-                      onCheckedChange={() => toggleGatePassType(opt.value)}
-                    >
-                      {opt.label}
-                    </DropdownMenuCheckboxItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          </ItemFooter>
-        </Item>
-      </div>
-
-      {/* List: one tabbed card per daybook entry */}
-      {filteredAndSortedEntries.length === 0 ? (
-        <Card>
-          <CardContent className="py-8 pt-6 text-center">
-            <p className="font-custom text-muted-foreground">
-              No vouchers yet.
-            </p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="space-y-6">
-          {filteredAndSortedEntries.map((entry, idx) => (
-            <DaybookEntryCard
-              key={
-                (entry.incoming as { _id?: string })?._id ??
-                entry.farmer?._id ??
-                `entry-${idx}`
-              }
-              entry={entry}
-            />
-          ))}
-        </div>
-      )}
     </div>
   );
 }

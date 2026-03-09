@@ -39,8 +39,7 @@ const GradingGatePassAnalyticsScreen = ({
     );
   }
 
-  const list = data?.list ?? [];
-  const total = data?.pagination?.total ?? list.length;
+  const total = data?.pagination?.total ?? (data?.list ?? []).length;
 
   return (
     <div className="font-custom space-y-6">
@@ -51,23 +50,6 @@ const GradingGatePassAnalyticsScreen = ({
         <SizeDistributionChart dateParams={dateParams} />
         <AreaWiseAnalytics dateParams={dateParams} />
       </div>
-      {list.length > 0 && (
-        <details className="bg-secondary/10 rounded-lg border border-gray-200">
-          <summary className="font-custom cursor-pointer px-4 py-3 text-sm font-medium text-[#333]">
-            Recent gate passes (first 10)
-          </summary>
-          <ul className="list-inside list-disc border-t border-gray-200 px-4 py-3 text-sm text-[#333]">
-            {list.slice(0, 10).map((item) => (
-              <li key={item._id}>
-                GP #{item.gatePassNo} – {item.variety ?? '—'}
-              </li>
-            ))}
-            {list.length > 10 && (
-              <li className="text-[#6f6f6f]">… and {list.length - 10} more</li>
-            )}
-          </ul>
-        </details>
-      )}
     </div>
   );
 };

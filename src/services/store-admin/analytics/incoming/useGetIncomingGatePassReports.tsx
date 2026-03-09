@@ -1,50 +1,71 @@
 import { useQuery, queryOptions } from '@tanstack/react-query';
-import type { IncomingGatePassWithLink } from '@/types/incoming-gate-pass';
+import storeAdminAxiosClient from '@/lib/axios';
+import { queryClient } from '@/lib/queryClient';
+import type {
+  GetIncomingGatePassReportApiResponse,
+  IncomingGatePassReportData,
+} from '@/types/analytics';
 
-export type IncomingGatePassReportParams = {
-  dateFrom?: string;
-  dateTo?: string;
-  groupByFarmer?: boolean;
-  groupByVariety?: boolean;
+/** Query key prefix for incoming gate pass report */
+export const incomingGatePassReportKeys = {
+  all: ['store-admin', 'analytics', 'incoming-gate-pass-report'] as const,
 };
 
-const key = [
-  'store-admin',
-  'analytics',
-  'incoming',
-  'gate-pass-report',
-] as const;
-
-function queryKey(params: IncomingGatePassReportParams) {
-  return [
-    ...key,
-    params.dateFrom ?? '',
-    params.dateTo ?? '',
-    params.groupByFarmer ?? false,
-    params.groupByVariety ?? false,
-  ] as const;
+/** Params for GET /analytics/incoming-gate-pass-report (date range in YYYY-MM-DD) */
+export interface GetIncomingGatePassReportParams {
+  dateFrom?: string;
+  dateTo?: string;
+  /** When true, response is grouped by farmer */
+  groupByFarmer?: boolean;
+  /** When true, response is grouped by variety (optionally nested by farmer if groupByFarmer is also true) */
+  groupByVariety?: boolean;
 }
 
-/**
- * Fetcher for incoming gate pass report.
- * Replace with real GET /analytics/incoming-gate-pass-report when available.
- */
+/** Fetcher used by queryOptions and prefetch */
 async function fetchIncomingGatePassReport(
-  _params: IncomingGatePassReportParams
-): Promise<IncomingGatePassWithLink[]> {
-  return [];
+  params: GetIncomingGatePassReportParams
+): Promise<IncomingGatePassReportData> {
+  const { data } =
+    await storeAdminAxiosClient.get<GetIncomingGatePassReportApiResponse>(
+      '/analytics/incoming-gate-pass-report',
+      {
+        params: {
+          dateFrom: params.dateFrom,
+          dateTo: params.dateTo,
+          groupByFarmer: params.groupByFarmer,
+          groupByVariety: params.groupByVariety,
+        },
+      }
+    );
+
+  if (!data.success || data.data == null) {
+    throw new Error(
+      data.message ?? 'Failed to fetch incoming gate pass report'
+    );
+  }
+
+  return data.data;
 }
 
+/** Query options – use with useQuery, prefetchQuery, or in loaders */
 export const incomingGatePassReportQueryOptions = (
-  params: IncomingGatePassReportParams
+  params: GetIncomingGatePassReportParams = {}
 ) =>
   queryOptions({
-    queryKey: queryKey(params),
+    queryKey: [...incomingGatePassReportKeys.all, params] as const,
     queryFn: () => fetchIncomingGatePassReport(params),
   });
 
+/** Hook to fetch incoming gate pass report for a date range (optionally grouped by farmer) */
 export function useGetIncomingGatePassReports(
-  params: IncomingGatePassReportParams
+  params: GetIncomingGatePassReportParams = {}
 ) {
   return useQuery(incomingGatePassReportQueryOptions(params));
+}
+
+/** Prefetch incoming gate pass report – e.g. on route hover or before navigation */
+export function prefetchIncomingGatePassReport(
+  params: GetIncomingGatePassReportParams = {}
+) {
+  return queryClient.prefetchQuery(incomingGatePassReportQueryOptions(params));
 }
