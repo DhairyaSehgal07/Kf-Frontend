@@ -25,6 +25,7 @@ import { Route as StoreAdminAuthenticatedDaybookIndexRouteImport } from './route
 import { Route as StoreAdminAuthenticatedAnalyticsIndexRouteImport } from './routes/store-admin/_authenticated/analytics/index'
 import { Route as StoreAdminAuthenticatedAdditionalIndexRouteImport } from './routes/store-admin/_authenticated/additional/index'
 import { Route as StoreAdminAuthenticatedPeopleFarmerStorageLinkIdIndexRouteImport } from './routes/store-admin/_authenticated/people/$farmerStorageLinkId/index'
+import { Route as StoreAdminAuthenticatedAnalyticsReportsIndexRouteImport } from './routes/store-admin/_authenticated/analytics/reports/index'
 import { Route as StoreAdminAuthenticatedAdditionalTemperatureMonitoringIndexRouteImport } from './routes/store-admin/_authenticated/additional/temperature-monitoring/index'
 
 const IndexRoute = IndexRouteImport.update({
@@ -118,6 +119,12 @@ const StoreAdminAuthenticatedPeopleFarmerStorageLinkIdIndexRoute =
     path: '/people/$farmerStorageLinkId/',
     getParentRoute: () => StoreAdminAuthenticatedRoute,
   } as any)
+const StoreAdminAuthenticatedAnalyticsReportsIndexRoute =
+  StoreAdminAuthenticatedAnalyticsReportsIndexRouteImport.update({
+    id: '/analytics/reports/',
+    path: '/analytics/reports/',
+    getParentRoute: () => StoreAdminAuthenticatedRoute,
+  } as any)
 const StoreAdminAuthenticatedAdditionalTemperatureMonitoringIndexRoute =
   StoreAdminAuthenticatedAdditionalTemperatureMonitoringIndexRouteImport.update(
     {
@@ -144,6 +151,7 @@ export interface FileRoutesByFullPath {
   '/store-admin/people/': typeof StoreAdminAuthenticatedPeopleIndexRoute
   '/store-admin/storage/': typeof StoreAdminAuthenticatedStorageIndexRoute
   '/store-admin/additional/temperature-monitoring/': typeof StoreAdminAuthenticatedAdditionalTemperatureMonitoringIndexRoute
+  '/store-admin/analytics/reports/': typeof StoreAdminAuthenticatedAnalyticsReportsIndexRoute
   '/store-admin/people/$farmerStorageLinkId/': typeof StoreAdminAuthenticatedPeopleFarmerStorageLinkIdIndexRoute
 }
 export interface FileRoutesByTo {
@@ -163,6 +171,7 @@ export interface FileRoutesByTo {
   '/store-admin/people': typeof StoreAdminAuthenticatedPeopleIndexRoute
   '/store-admin/storage': typeof StoreAdminAuthenticatedStorageIndexRoute
   '/store-admin/additional/temperature-monitoring': typeof StoreAdminAuthenticatedAdditionalTemperatureMonitoringIndexRoute
+  '/store-admin/analytics/reports': typeof StoreAdminAuthenticatedAnalyticsReportsIndexRoute
   '/store-admin/people/$farmerStorageLinkId': typeof StoreAdminAuthenticatedPeopleFarmerStorageLinkIdIndexRoute
 }
 export interface FileRoutesById {
@@ -183,6 +192,7 @@ export interface FileRoutesById {
   '/store-admin/_authenticated/people/': typeof StoreAdminAuthenticatedPeopleIndexRoute
   '/store-admin/_authenticated/storage/': typeof StoreAdminAuthenticatedStorageIndexRoute
   '/store-admin/_authenticated/additional/temperature-monitoring/': typeof StoreAdminAuthenticatedAdditionalTemperatureMonitoringIndexRoute
+  '/store-admin/_authenticated/analytics/reports/': typeof StoreAdminAuthenticatedAnalyticsReportsIndexRoute
   '/store-admin/_authenticated/people/$farmerStorageLinkId/': typeof StoreAdminAuthenticatedPeopleFarmerStorageLinkIdIndexRoute
 }
 export interface FileRouteTypes {
@@ -204,6 +214,7 @@ export interface FileRouteTypes {
     | '/store-admin/people/'
     | '/store-admin/storage/'
     | '/store-admin/additional/temperature-monitoring/'
+    | '/store-admin/analytics/reports/'
     | '/store-admin/people/$farmerStorageLinkId/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -223,6 +234,7 @@ export interface FileRouteTypes {
     | '/store-admin/people'
     | '/store-admin/storage'
     | '/store-admin/additional/temperature-monitoring'
+    | '/store-admin/analytics/reports'
     | '/store-admin/people/$farmerStorageLinkId'
   id:
     | '__root__'
@@ -242,6 +254,7 @@ export interface FileRouteTypes {
     | '/store-admin/_authenticated/people/'
     | '/store-admin/_authenticated/storage/'
     | '/store-admin/_authenticated/additional/temperature-monitoring/'
+    | '/store-admin/_authenticated/analytics/reports/'
     | '/store-admin/_authenticated/people/$farmerStorageLinkId/'
   fileRoutesById: FileRoutesById
 }
@@ -367,6 +380,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StoreAdminAuthenticatedPeopleFarmerStorageLinkIdIndexRouteImport
       parentRoute: typeof StoreAdminAuthenticatedRoute
     }
+    '/store-admin/_authenticated/analytics/reports/': {
+      id: '/store-admin/_authenticated/analytics/reports/'
+      path: '/analytics/reports'
+      fullPath: '/store-admin/analytics/reports/'
+      preLoaderRoute: typeof StoreAdminAuthenticatedAnalyticsReportsIndexRouteImport
+      parentRoute: typeof StoreAdminAuthenticatedRoute
+    }
     '/store-admin/_authenticated/additional/temperature-monitoring/': {
       id: '/store-admin/_authenticated/additional/temperature-monitoring/'
       path: '/additional/temperature-monitoring'
@@ -389,6 +409,7 @@ interface StoreAdminAuthenticatedRouteChildren {
   StoreAdminAuthenticatedPeopleIndexRoute: typeof StoreAdminAuthenticatedPeopleIndexRoute
   StoreAdminAuthenticatedStorageIndexRoute: typeof StoreAdminAuthenticatedStorageIndexRoute
   StoreAdminAuthenticatedAdditionalTemperatureMonitoringIndexRoute: typeof StoreAdminAuthenticatedAdditionalTemperatureMonitoringIndexRoute
+  StoreAdminAuthenticatedAnalyticsReportsIndexRoute: typeof StoreAdminAuthenticatedAnalyticsReportsIndexRoute
   StoreAdminAuthenticatedPeopleFarmerStorageLinkIdIndexRoute: typeof StoreAdminAuthenticatedPeopleFarmerStorageLinkIdIndexRoute
 }
 
@@ -416,6 +437,8 @@ const StoreAdminAuthenticatedRouteChildren: StoreAdminAuthenticatedRouteChildren
       StoreAdminAuthenticatedStorageIndexRoute,
     StoreAdminAuthenticatedAdditionalTemperatureMonitoringIndexRoute:
       StoreAdminAuthenticatedAdditionalTemperatureMonitoringIndexRoute,
+    StoreAdminAuthenticatedAnalyticsReportsIndexRoute:
+      StoreAdminAuthenticatedAnalyticsReportsIndexRoute,
     StoreAdminAuthenticatedPeopleFarmerStorageLinkIdIndexRoute:
       StoreAdminAuthenticatedPeopleFarmerStorageLinkIdIndexRoute,
   }

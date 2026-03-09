@@ -29,6 +29,8 @@ function listKey(params: GetGradingGatePassesParams = {}) {
     params.limit,
     params.sortOrder,
     params.gatePassNo ?? '',
+    params.dateFrom ?? '',
+    params.dateTo ?? '',
   ] as const;
 }
 
@@ -59,6 +61,8 @@ async function fetchGradingGatePasses(
   if (params.sortOrder != null) searchParams.set('sortOrder', params.sortOrder);
   if (params.gatePassNo != null)
     searchParams.set('gatePassNo', String(params.gatePassNo));
+  if (params.dateFrom != null) searchParams.set('dateFrom', params.dateFrom);
+  if (params.dateTo != null) searchParams.set('dateTo', params.dateTo);
 
   const queryString = searchParams.toString();
   const url = queryString

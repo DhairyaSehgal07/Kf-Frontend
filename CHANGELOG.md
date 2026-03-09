@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.12] - 2026-03-09
+
+### Added
+- Analytics: Incoming tab with trend analysis chart and variety distribution chart; hooks `useGetIncomingTrendAnalysis`, `useGetIncomingVarietyBreakdown`
+- Analytics: Grading tab with area-wise analytics and size distribution chart; hooks `useGetAreaWiseAnalytics`, `useGetGradingSizeWiseDistribution`
+- Analytics: Reports screen at `/store-admin/analytics/reports` with report type from query (`?report=incoming`); Incoming report table with date filters, columns, sort, export to PDF; placeholder report for other report types
+- Incoming report: data table with column visibility, PDF export via `incoming-report-table-pdf`; columns and data-table components
+- Service hooks: `useGetIncomingGatePassReports` for incoming report data; analytics overview re-enabled with real API and date params
+- Route: `store-admin/_authenticated/analytics/reports/index.tsx` for reports sub-route
+
+### Changed
+- Analytics overview: uses `useGetOverview` with date params; overview cards link to Incoming, Grading, and Reports; shared date picker and apply/reset with prefetch for overview, incoming, grading size distribution, and area-wise analytics
+- Daybook: minor updates
+- Grading form: step 1 and constants refinements
+- Types: analytics, grading-gate-pass, and incoming-gate-pass updates for new API shapes and report columns
+- Helpers and table UI: updates for analytics and report usage
+
 ## [0.10.11] - 2026-03-06
 
 ### Added

@@ -122,12 +122,28 @@ export interface GetIncomingGatePassesParams {
   gatePassNo?: number | string;
   /** Filter by grading status */
   status?: 'graded' | 'ungraded';
+  dateFrom?: string;
+  dateTo?: string;
 }
 
-/** API response for GET /incoming-gate-pass */
+/** Pagination as returned in GET /incoming-gate-pass */
+export interface IncomingGatePassPagination {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}
+
+/** Payload when GET /incoming-gate-pass returns paginated shape */
+export interface GetIncomingGatePassesData {
+  incomingGatePasses?: IncomingGatePassWithLink[];
+  pagination?: IncomingGatePassPagination;
+}
+
+/** API response for GET /incoming-gate-pass (data may be array or paginated object) */
 export interface GetIncomingGatePassesApiResponse {
   success: boolean;
-  data: IncomingGatePassWithLink[];
+  data: IncomingGatePassWithLink[] | GetIncomingGatePassesData;
   message?: string;
 }
 

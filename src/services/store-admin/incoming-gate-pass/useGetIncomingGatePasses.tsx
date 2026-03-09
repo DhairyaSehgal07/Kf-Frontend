@@ -4,9 +4,15 @@ import { queryClient } from '@/lib/queryClient';
 import type {
   GetIncomingGatePassesApiResponse,
   GetIncomingGatePassesParams,
+  IncomingGatePassPagination,
   IncomingGatePassWithLink,
 } from '@/types/incoming-gate-pass';
 import { incomingGatePassKeys } from './useCreateIncomingGatePass';
+
+export interface IncomingGatePassesResult {
+  list: IncomingGatePassWithLink[];
+  pagination: IncomingGatePassPagination;
+}
 
 /** Query key for the list of incoming gate passes */
 const incomingGatePassListKey = [...incomingGatePassKeys.all, 'list'] as const;
@@ -19,13 +25,27 @@ function listKey(params: GetIncomingGatePassesParams = {}) {
     params.sortOrder,
     params.gatePassNo ?? '',
     params.status ?? '',
+    params.dateFrom ?? '',
+    params.dateTo ?? '',
   ] as const;
+}
+
+/** Default pagination when API returns only a list */
+function defaultPagination(
+  list: IncomingGatePassWithLink[]
+): IncomingGatePassPagination {
+  return {
+    page: 1,
+    limit: list.length,
+    total: list.length,
+    totalPages: 1,
+  };
 }
 
 /** Fetcher used by queryOptions and prefetch */
 async function fetchIncomingGatePasses(
   params: GetIncomingGatePassesParams = {}
-): Promise<IncomingGatePassWithLink[]> {
+): Promise<IncomingGatePassesResult> {
   const searchParams = new URLSearchParams();
   if (params.page != null) searchParams.set('page', String(params.page));
   if (params.limit != null) searchParams.set('limit', String(params.limit));
@@ -33,6 +53,8 @@ async function fetchIncomingGatePasses(
   if (params.gatePassNo != null)
     searchParams.set('gatePassNo', String(params.gatePassNo));
   if (params.status != null) searchParams.set('status', params.status);
+  if (params.dateFrom != null) searchParams.set('dateFrom', params.dateFrom);
+  if (params.dateTo != null) searchParams.set('dateTo', params.dateTo);
 
   const queryString = searchParams.toString();
   const url = queryString
@@ -47,7 +69,9 @@ async function fetchIncomingGatePasses(
   }
 
   const payload = data.data;
-  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload)) {
+    return { list: payload, pagination: defaultPagination(payload) };
+  }
   if (payload && typeof payload === 'object') {
     const obj = payload as Record<string, unknown>;
     let list: unknown =
@@ -58,7 +82,16 @@ async function fetchIncomingGatePasses(
       obj.items ??
       obj.document ??
       obj.list;
-    if (Array.isArray(list)) return list as IncomingGatePassWithLink[];
+    if (Array.isArray(list)) {
+      const arr = list as IncomingGatePassWithLink[];
+      const pagination =
+        obj.pagination &&
+        typeof obj.pagination === 'object' &&
+        'total' in (obj.pagination as object)
+          ? (obj.pagination as IncomingGatePassPagination)
+          : defaultPagination(arr);
+      return { list: arr, pagination };
+    }
     if (list && typeof list === 'object' && !Array.isArray(list)) {
       const inner = list as Record<string, unknown>;
       list =
@@ -68,10 +101,13 @@ async function fetchIncomingGatePasses(
         inner.items ??
         inner.document ??
         inner.list;
-      if (Array.isArray(list)) return list as IncomingGatePassWithLink[];
+      if (Array.isArray(list)) {
+        const arr = list as IncomingGatePassWithLink[];
+        return { list: arr, pagination: defaultPagination(arr) };
+      }
     }
   }
-  return [];
+  return { list: [], pagination: defaultPagination([]) };
 }
 
 /** Query options – use with useQuery, prefetchQuery, or in loaders */

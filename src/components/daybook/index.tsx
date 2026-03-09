@@ -331,7 +331,7 @@ const DaybookPage = memo(function DaybookPage() {
   }, []);
 
   const {
-    data: incomingGatePassesRaw,
+    data: incomingData,
     isLoading: incomingLoading,
     isFetching: incomingFetching,
     refetch: refetchIncoming,
@@ -403,9 +403,13 @@ const DaybookPage = memo(function DaybookPage() {
   }, [storageGatePasses, debouncedSearch, sortBy, sortOrder]);
 
   const incomingGatePasses = useMemo(
-    () => (Array.isArray(incomingGatePassesRaw) ? incomingGatePassesRaw : []),
-    [incomingGatePassesRaw]
+    () => incomingData?.list ?? [],
+    [incomingData]
   );
+  const incomingPagination = incomingData?.pagination;
+  const incomingTotalPages = incomingPagination?.totalPages ?? 1;
+  const incomingHasPrev = page > 1;
+  const incomingHasNext = page < incomingTotalPages;
 
   const gradingGatePasses = useMemo(
     () => gradingGatePassesRaw?.list ?? [],
@@ -420,6 +424,7 @@ const DaybookPage = memo(function DaybookPage() {
   const totalPages = 1;
   const hasPrev = page > 1;
   const hasNext = page < totalPages;
+  const incomingTotal = incomingPagination?.total ?? incomingGatePasses.length;
 
   const [placeholderCount, setPlaceholderCount] = useState(
     () => Math.floor(Math.random() * 20) + 1
@@ -493,7 +498,7 @@ const DaybookPage = memo(function DaybookPage() {
                 <ContractTabPanel
                   addButtonLabel="Add Incoming"
                   addButtonTo="/store-admin/incoming"
-                  placeholderCount={incomingGatePasses.length}
+                  placeholderCount={incomingTotal}
                   isRefreshing={incomingFetching}
                   onRefresh={() => refetchIncoming()}
                   searchQuery={searchQuery}
@@ -505,9 +510,9 @@ const DaybookPage = memo(function DaybookPage() {
                   limit={limit}
                   setLimitAndResetPage={setLimitAndResetPage}
                   page={page}
-                  totalPages={totalPages}
-                  hasPrev={hasPrev}
-                  hasNext={hasNext}
+                  totalPages={incomingTotalPages}
+                  hasPrev={incomingHasPrev}
+                  hasNext={incomingHasNext}
                   setPage={setPage}
                   statusFilter={incomingStatusFilter}
                   onStatusFilterChange={(value) => {

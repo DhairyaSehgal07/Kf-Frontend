@@ -24,6 +24,7 @@ export const POTATO_VARIETIES: { label: string; value: string }[] = [
   { label: 'Kuroda', value: 'Kuroda' },
   { label: 'Khyati', value: 'Khyati' },
   { label: 'L.R', value: 'L.R' },
+  { label: 'Lav Kar', value: 'Lav Kar' },
   { label: 'Lima', value: 'Lima' },
   { label: 'Mohan', value: 'Mohan' },
   { label: 'Pushkar', value: 'Pushkar' },

@@ -113,6 +113,8 @@ export interface GetGradingGatePassesParams {
   limit?: number;
   sortOrder?: 'asc' | 'desc';
   gatePassNo?: number | string;
+  dateFrom?: string;
+  dateTo?: string;
 }
 
 /** Pagination as returned in GET /grading-gate-pass */

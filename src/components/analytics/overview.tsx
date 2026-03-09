@@ -1,4 +1,5 @@
 import { memo, useState } from 'react';
+import { Link } from '@tanstack/react-router';
 import {
   Card,
   CardContent,
@@ -23,9 +24,13 @@ import {
   ChevronUp,
   Loader2,
   AlertCircle,
+  FileText,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { AnalyticsOverviewData } from '@/types/analytics';
+import type {
+  AnalyticsOverviewData,
+  AnalyticsReportType,
+} from '@/types/analytics';
 import { useGetOverview } from '@/services/store-admin/analytics/useGetOverview';
 
 /** Format number with locale (e.g. 37144 → "37,144") */
@@ -44,6 +49,7 @@ interface StatCardProps {
   description?: string;
   icon: React.ReactNode;
   iconBgClass?: string;
+  reportType: AnalyticsReportType;
 }
 
 const StatCard = memo(function StatCard({
@@ -52,6 +58,7 @@ const StatCard = memo(function StatCard({
   description,
   icon,
   iconBgClass = 'bg-primary/10 text-primary',
+  reportType,
 }: StatCardProps) {
   return (
     <Card className="font-custom transition-shadow duration-200 hover:shadow-md">
@@ -68,15 +75,23 @@ const StatCard = memo(function StatCard({
           {icon}
         </span>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-2">
         <p className="font-custom text-2xl font-bold tracking-tight text-[#333] sm:text-3xl">
           {value}
         </p>
         {description != null && description !== '' && (
-          <CardDescription className="font-custom mt-1 text-sm text-[#6f6f6f]">
+          <CardDescription className="font-custom text-sm text-[#6f6f6f]">
             {description}
           </CardDescription>
         )}
+        <Link
+          to="/store-admin/analytics/reports"
+          search={{ report: reportType }}
+          className="font-custom text-primary hover:text-primary/90 focus-visible:ring-primary mt-2 inline-flex items-center gap-1.5 rounded text-sm font-medium transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+        >
+          <FileText className="h-4 w-4 shrink-0" aria-hidden />
+          Get Reports
+        </Link>
       </CardContent>
     </Card>
   );
@@ -113,6 +128,14 @@ const GradingCard = memo(function GradingCard({
           <CardDescription className="font-custom text-sm text-[#6f6f6f]">
             {formatWeight(weightKg)}
           </CardDescription>
+          <Link
+            to="/store-admin/analytics/reports"
+            search={{ report: 'grading' }}
+            className="font-custom text-primary hover:text-primary/90 focus-visible:ring-primary mt-1 inline-flex items-center gap-1.5 rounded text-sm font-medium transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+          >
+            <FileText className="h-4 w-4 shrink-0" aria-hidden />
+            Get Reports
+          </Link>
           <CollapsibleTrigger asChild>
             <Button
               variant="ghost"
@@ -158,12 +181,14 @@ const OverviewContent = memo(function OverviewContent({
         value={formatNumber(data.totalIncomingBags)}
         description={formatWeight(data.totalIncomingWeight)}
         icon={<Package className="h-5 w-5" />}
+        reportType="incoming"
       />
       <StatCard
         title="Ungraded Bags"
         value={formatNumber(data.totalUngradedBags)}
         description={`${formatWeight(data.totalUngradedWeight)} ungraded`}
         icon={<Boxes className="h-5 w-5" />}
+        reportType="ungraded"
       />
       <GradingCard
         initialQuantity={data.totalGradingBags.initialQuantity}
@@ -174,27 +199,39 @@ const OverviewContent = memo(function OverviewContent({
         title="Bags Stored"
         value={formatNumber(data.totalBagsStored)}
         icon={<Warehouse className="h-5 w-5" />}
+        reportType="stored"
       />
       <StatCard
         title="Dispatch"
         value={formatNumber(data.totalBagsDispatched)}
         icon={<Truck className="h-5 w-5" />}
+        reportType="dispatch"
       />
       <StatCard
         title="Total Outgoing Bags"
         value={formatNumber(data.totalOutgoingBags)}
         icon={<ArrowUpRight className="h-5 w-5" />}
+        reportType="outgoing"
       />
     </div>
   );
 });
 
-const Overview = memo(function Overview() {
-  const { data, isLoading, isError, error, refetch } = useGetOverview();
+type OverviewDateParams =
+  | { dateFrom: string; dateTo: string }
+  | Record<string, never>;
+
+const Overview = memo(function Overview({
+  dateParams = {},
+}: {
+  dateParams?: OverviewDateParams;
+}) {
+  const { data, isLoading, isError, error, refetch } =
+    useGetOverview(dateParams);
 
   return (
-    <section className="px-4 pt-6 pb-16 sm:px-8 sm:py-8">
-      <div className="mx-auto max-w-300 px-4 sm:px-6 lg:px-8">
+    <section>
+      <div className="mx-auto w-full max-w-[75rem]">
         <h2 className="font-custom mb-6 text-2xl font-semibold text-[#333] sm:mb-8 lg:text-3xl">
           Analytics Overview
         </h2>
