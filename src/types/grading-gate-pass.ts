@@ -50,6 +50,14 @@ export interface GradingGatePassIncomingRef {
   truckNumber?: string;
   /** Present when populated from weight slip details */
   weightSlip?: GradingGatePassWeightSlip;
+  /** Present when incoming gate pass is populated (farmer, account, etc.) */
+  farmerStorageLinkId?:
+    | GradingGatePassFarmerStorageLink
+    | GradingGatePassFarmerStorageLinkMinimal;
+  /** Present when populated (incoming gate pass date) */
+  date?: string;
+  /** Present when populated (variety from incoming) */
+  variety?: string;
 }
 
 /** Incoming gate pass with weight slip (from weightSlipDetails in response) */
@@ -101,6 +109,8 @@ export interface GradingGatePass {
   variety: string;
   orderDetails: GradingGatePassOrderDetail[];
   allocationStatus: string;
+  /** Grader name (may be from createdBy when populated) */
+  grader?: string;
   remarks?: string;
   createdAt: string;
   updatedAt: string;

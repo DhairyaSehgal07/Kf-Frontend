@@ -85,6 +85,8 @@ interface DataTableProps<TData, TValue> {
   toolbarLeftContent?: React.ReactNode;
   /** Optional content to render on the right side of the toolbar (e.g. primary action) */
   toolbarRightContent?: React.ReactNode;
+  /** Optional map of column id -> label for Group by / Columns UI (defaults to incoming report labels) */
+  columnLabels?: Record<string, string>;
 }
 
 /** Human-readable labels for column visibility toggle */
@@ -111,8 +113,8 @@ const COLUMN_LABELS: Record<string, string> = {
   updatedAt: 'Updated at',
 };
 
-function getColumnLabel(id: string): string {
-  return COLUMN_LABELS[id] ?? id;
+function getColumnLabel(id: string, labels?: Record<string, string>): string {
+  return (labels ?? COLUMN_LABELS)[id] ?? id;
 }
 
 function getFirstLeaf<TData>(row: Row<TData>): TData | undefined {
@@ -127,9 +129,11 @@ export const DataTable = forwardRef(function DataTableInner<TData, TValue>(
     totalColumnIds = [...TOTAL_COLUMN_IDS],
     toolbarLeftContent,
     toolbarRightContent,
+    columnLabels,
   }: DataTableProps<TData, TValue>,
   ref: React.Ref<IncomingReportDataTableRef<TData>>
 ) {
+  const labels = columnLabels ?? COLUMN_LABELS;
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [grouping, setGrouping] = useState<string[]>([]);
   const [sorting, setSorting] = useState<{ id: string; desc: boolean }[]>([]);
@@ -312,13 +316,13 @@ export const DataTable = forwardRef(function DataTableInner<TData, TValue>(
                         >
                           <GripVertical className="text-muted-foreground h-4 w-4 shrink-0" />
                           <span className="text-foreground min-w-0 flex-1 truncate">
-                            {getColumnLabel(columnId)}
+                            {getColumnLabel(columnId, labels)}
                           </span>
                           <Button
                             variant="ghost"
                             size="icon"
                             className="text-muted-foreground hover:text-destructive h-7 w-7 shrink-0"
-                            aria-label={`Remove ${getColumnLabel(columnId)} from groups`}
+                            aria-label={`Remove ${getColumnLabel(columnId, labels)} from groups`}
                             onClick={() => removeFromGrouping(columnId)}
                           >
                             <X className="h-3.5 w-3.5" />
@@ -365,7 +369,7 @@ export const DataTable = forwardRef(function DataTableInner<TData, TValue>(
                       }
                       onSelect={(e) => e.preventDefault()}
                     >
-                      {getColumnLabel(column.id)}
+                      {getColumnLabel(column.id, labels)}
                     </DropdownMenuCheckboxItem>
                   ))}
               </DropdownMenuContent>

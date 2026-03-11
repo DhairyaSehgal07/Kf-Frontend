@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.14] - 2026-03-11
+
+### Added
+- Analytics Reports: Grading report at `/store-admin/analytics/reports?report=grading` with date filters, data table (columns, sort, column visibility), and PDF export via `grading-report-table-pdf`
+- Grading report: `GradingReportTable` component with grading gate pass list data; columns and constants for grading report; snapshot-based PDF generation
+- Grading gate pass types: `GradingGatePassWeightSlip`, `GradingGatePassIncomingRef` with `date`, and report-related type extensions in `grading-gate-pass.ts`
+
+### Changed
+- Reports screen: routes `report=grading` to `GradingReportTable`; placeholder hint updated with grading report URL example
+- Incoming report data-table: refinements for consistency with shared report patterns
+
 ## [0.10.13] - 2026-03-09
 
 ### Added
