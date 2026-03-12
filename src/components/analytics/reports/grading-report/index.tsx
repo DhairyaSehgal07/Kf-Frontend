@@ -34,34 +34,20 @@ function formatDate(iso: string | undefined): string {
   }
 }
 
-/** Map grading gate passes to table rows (one row per pass with aggregated order details). */
+/** Map grading gate passes to table rows. One row per incoming gate pass when a grading pass references multiple; shared columns (farmer, variety, GP no., date, graded bags, etc.) span. */
 function mapGradingGatePassesToRows(
   gatePasses: GradingGatePass[]
 ): GradingReportRow[] {
   const rows: GradingReportRow[] = [];
   for (const pass of gatePasses) {
-    const firstIncoming = pass.incomingGatePassIds?.[0];
+    const incomingRefs =
+      pass.weightSlipDetails?.incomingGatePassIds?.length &&
+      pass.weightSlipDetails.incomingGatePassIds.length > 0
+        ? pass.weightSlipDetails.incomingGatePassIds
+        : (pass.incomingGatePassIds ?? []);
     const farmerName = pass.farmerStorageLinkId?.farmerId?.name ?? '—';
     const accountNumber = pass.farmerStorageLinkId?.accountNumber ?? '—';
-    const incomingGatePassNo = firstIncoming?.gatePassNo ?? '—';
-    const incomingManualNo = firstIncoming?.manualGatePassNumber ?? '—';
-    const incomingGatePassDate = firstIncoming?.date
-      ? formatDate(firstIncoming.date)
-      : '—';
     const variety = pass.variety ?? '—';
-    const bagsReceived = firstIncoming?.bagsReceived ?? '—';
-    const weightSlip =
-      firstIncoming?.weightSlip ??
-      pass.weightSlipDetails?.incomingGatePassIds?.[0]?.weightSlip;
-    const grossKg = weightSlip?.grossWeightKg;
-    const tareKg = weightSlip?.tareWeightKg;
-    const netProductKg =
-      grossKg != null &&
-      tareKg != null &&
-      !Number.isNaN(grossKg) &&
-      !Number.isNaN(tareKg)
-        ? grossKg - tareKg
-        : '—';
     const gatePassNo = pass.gatePassNo ?? '—';
     const date = formatDate(pass.date);
     const grader = pass.createdBy?.name ?? pass.grader ?? '—';
@@ -77,38 +63,111 @@ function mapGradingGatePassesToRows(
         (sum, od) => sum + (od.initialQuantity ?? 0) * (od.weightPerBagKg ?? 0),
         0
       ) || 0;
-    const netProductNum =
-      typeof netProductKg === 'number' ? netProductKg : Number(netProductKg);
-    const wastagePass =
-      !Number.isNaN(netProductNum) && netProductNum > 0
-        ? netProductNum - totalGradedWeightKg
-        : '—';
 
-    rows.push({
-      id: pass._id,
-      gradingPassGroupSize: 1,
-      farmerName,
-      accountNumber,
-      farmerMobile: '—',
-      farmerAddress: '—',
-      incomingGatePassNo,
-      incomingManualNo,
-      incomingGatePassDate,
-      variety,
-      bagsReceived,
-      netProductKg,
-      gatePassNo,
-      manualGatePassNumber: pass.manualGatePassNumber ?? '—',
-      date,
-      totalGradedBags,
-      totalGradedWeightKg,
-      wastageKg: wastagePass,
-      grader,
-      remarks,
-      grossWeightKg: grossKg ?? '—',
-      netWeightKg:
-        typeof netProductKg === 'number' ? netProductKg : netProductKg,
-    });
+    if (incomingRefs.length === 0) {
+      const firstIncoming = pass.incomingGatePassIds?.[0];
+      const weightSlip =
+        firstIncoming?.weightSlip ??
+        pass.weightSlipDetails?.incomingGatePassIds?.[0]?.weightSlip;
+      const grossKg = weightSlip?.grossWeightKg;
+      const tareKg = weightSlip?.tareWeightKg;
+      const netProductKg =
+        grossKg != null &&
+        tareKg != null &&
+        !Number.isNaN(grossKg) &&
+        !Number.isNaN(tareKg)
+          ? grossKg - tareKg
+          : '—';
+      const netProductNum =
+        typeof netProductKg === 'number' ? netProductKg : Number(netProductKg);
+      const wastagePass =
+        !Number.isNaN(netProductNum) && netProductNum > 0
+          ? netProductNum - totalGradedWeightKg
+          : '—';
+      rows.push({
+        id: `${pass._id}-0`,
+        gradingPassGroupSize: 1,
+        farmerName,
+        accountNumber,
+        farmerMobile: '—',
+        farmerAddress: '—',
+        incomingGatePassNo: firstIncoming?.gatePassNo ?? '—',
+        incomingManualNo: firstIncoming?.manualGatePassNumber ?? '—',
+        incomingGatePassDate: firstIncoming?.date
+          ? formatDate(firstIncoming.date)
+          : '—',
+        variety,
+        bagsReceived: firstIncoming?.bagsReceived ?? '—',
+        netProductKg,
+        gatePassNo,
+        manualGatePassNumber: pass.manualGatePassNumber ?? '—',
+        date,
+        totalGradedBags,
+        totalGradedWeightKg,
+        wastageKg: wastagePass,
+        grader,
+        remarks,
+        grossWeightKg: (weightSlip?.grossWeightKg as number | string) ?? '—',
+        netWeightKg:
+          typeof netProductKg === 'number' ? netProductKg : netProductKg,
+      });
+      continue;
+    }
+
+    const netProductKgTotal =
+      incomingRefs.reduce((sum, ref) => {
+        const ws = ref.weightSlip;
+        if (
+          ws?.grossWeightKg != null &&
+          ws?.tareWeightKg != null &&
+          !Number.isNaN(ws.grossWeightKg) &&
+          !Number.isNaN(ws.tareWeightKg)
+        )
+          return sum + (ws.grossWeightKg - ws.tareWeightKg);
+        return sum;
+      }, 0) || 0;
+    const wastagePass =
+      netProductKgTotal > 0 ? netProductKgTotal - totalGradedWeightKg : '—';
+    const groupSize = incomingRefs.length;
+
+    for (let i = 0; i < incomingRefs.length; i++) {
+      const ref = incomingRefs[i]!;
+      const weightSlip = ref.weightSlip;
+      const grossKg = weightSlip?.grossWeightKg;
+      const tareKg = weightSlip?.tareWeightKg;
+      const netProductKg =
+        grossKg != null &&
+        tareKg != null &&
+        !Number.isNaN(grossKg) &&
+        !Number.isNaN(tareKg)
+          ? grossKg - tareKg
+          : '—';
+      rows.push({
+        id: `${pass._id}-${i}`,
+        gradingPassGroupSize: groupSize,
+        farmerName,
+        accountNumber,
+        farmerMobile: '—',
+        farmerAddress: '—',
+        incomingGatePassNo: ref.gatePassNo ?? '—',
+        incomingManualNo: ref.manualGatePassNumber ?? '—',
+        incomingGatePassDate: ref.date ? formatDate(ref.date) : '—',
+        variety,
+        bagsReceived: ref.bagsReceived ?? '—',
+        netProductKg,
+        gatePassNo,
+        manualGatePassNumber: pass.manualGatePassNumber ?? '—',
+        date,
+        totalGradedBags,
+        totalGradedWeightKg,
+        wastageKg: wastagePass,
+        grader,
+        remarks,
+        grossWeightKg: (grossKg as number | string) ?? '—',
+        netWeightKg:
+          typeof netProductKg === 'number' ? netProductKg : netProductKg,
+      });
+    }
   }
   return rows;
 }

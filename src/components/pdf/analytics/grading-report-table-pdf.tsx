@@ -270,10 +270,20 @@ function GroupedTableBody({ group, columns }: GroupedTableBodyProps) {
                 {group.map((row, rowIdx) => (
                   <View
                     key={rowIdx}
-                    style={{
-                      minHeight: PDF_ROW_HEIGHT,
-                      justifyContent: 'center',
-                    }}
+                    style={[
+                      {
+                        minHeight: PDF_ROW_HEIGHT,
+                        justifyContent: 'center',
+                      },
+                      ...(rowIdx < group.length - 1
+                        ? [
+                            {
+                              borderBottomWidth: 0.5,
+                              borderBottomColor: '#666',
+                            },
+                          ]
+                        : []),
+                    ]}
                   >
                     <Text
                       style={[

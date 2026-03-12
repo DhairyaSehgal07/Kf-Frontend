@@ -33,16 +33,16 @@ export const GRADING_COLUMN_LABELS: Record<string, string> = {
   netWeightKg: 'Net (kg)',
 };
 
-/** Column ids that span the whole grading-pass group in the PDF (one cell per group). */
+/** Column ids that span the whole grading-pass group in the PDF (one merged cell per group). Incoming-pass columns (incomingGatePassNo, incomingManualNo, incomingGatePassDate, bagsReceived, netProductKg) are not spanned so each incoming pass gets its own row. */
 export const GRADING_REPORT_ROW_SPAN_COLUMN_IDS: string[] = [
   'farmerName',
   'accountNumber',
-  'incomingGatePassNo',
-  'incomingManualNo',
-  'incomingGatePassDate',
   'variety',
   'gatePassNo',
   'date',
+  'totalGradedBags',
+  'totalGradedWeightKg',
+  'wastageKg',
   'grader',
   'remarks',
 ];
