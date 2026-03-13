@@ -18,6 +18,7 @@ export const GRADING_COLUMN_LABELS: Record<string, string> = {
   incomingGatePassNo: 'Incoming GP no.',
   incomingManualNo: 'Incoming manual no.',
   incomingGatePassDate: 'Incoming GP date',
+  incomingTruckNumber: 'Truck no.',
   variety: 'Variety',
   bagsReceived: 'Bags rec.',
   netProductKg: 'Net product (kg)',

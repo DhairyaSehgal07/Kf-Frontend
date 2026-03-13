@@ -330,6 +330,12 @@ const ALL_COLUMNS: {
     width: '6%',
     align: 'center',
   },
+  {
+    key: 'incomingTruckNumber',
+    label: 'Truck no.',
+    width: '6%',
+    align: 'center',
+  },
   { key: 'variety', label: 'Variety', width: '6%', align: 'left' },
   { key: 'bagsReceived', label: 'Bags rec.', width: '4%', align: 'center' },
   {

@@ -43,7 +43,7 @@ function getStorageGatePassErrorMessage(
 /**
  * Hook to create a storage gate pass.
  * POST /storage-gate-pass
- * Payload may include optional manualGatePassNumber (number).
+ * Payload may include optional manualGatePassNumber (number) and storageCategory (string).
  */
 export function useCreateStorageGatePass() {
   return useMutation<

@@ -96,6 +96,7 @@ function mapGradingGatePassesToRows(
         incomingGatePassDate: firstIncoming?.date
           ? formatDate(firstIncoming.date)
           : '—',
+        incomingTruckNumber: firstIncoming?.truckNumber ?? '—',
         variety,
         bagsReceived: firstIncoming?.bagsReceived ?? '—',
         netProductKg,
@@ -152,6 +153,7 @@ function mapGradingGatePassesToRows(
         incomingGatePassNo: ref.gatePassNo ?? '—',
         incomingManualNo: ref.manualGatePassNumber ?? '—',
         incomingGatePassDate: ref.date ? formatDate(ref.date) : '—',
+        incomingTruckNumber: ref.truckNumber ?? '—',
         variety,
         bagsReceived: ref.bagsReceived ?? '—',
         netProductKg,

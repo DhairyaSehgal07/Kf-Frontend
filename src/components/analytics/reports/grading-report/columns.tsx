@@ -11,6 +11,7 @@ export type GradingReportRow = {
   incomingGatePassNo: number | string;
   incomingManualNo: number | string;
   incomingGatePassDate: string;
+  incomingTruckNumber: string;
   variety: string;
   bagsReceived: number | string;
   netProductKg: number | string;
@@ -67,6 +68,15 @@ export const columns: ColumnDef<GradingReportRow>[] = [
   {
     accessorKey: 'incomingGatePassDate',
     header: () => <span className="font-custom">Incoming GP date</span>,
+  },
+  {
+    accessorKey: 'incomingTruckNumber',
+    header: () => <span className="font-custom">Truck no.</span>,
+    cell: ({ row }) => (
+      <span className="font-custom">
+        {String(row.getValue('incomingTruckNumber') ?? '—')}
+      </span>
+    ),
   },
   {
     accessorKey: 'variety',

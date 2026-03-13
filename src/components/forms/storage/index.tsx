@@ -50,6 +50,12 @@ type FieldErrors = Array<{ message?: string } | undefined>;
 const DIRECT_PASS_ID = '_direct';
 const EXTRA_ROW_KEY_PREFIX = 'extra:';
 
+const STORAGE_CATEGORY_OPTIONS = [
+  'OWNED',
+  'PURCHASED',
+  'CONTRACT FARMING',
+] as const;
+
 export type ExtraQuantityRow = {
   id: string;
   size: string;
@@ -70,6 +76,7 @@ const formSchema = z
     farmerStorageLinkId: z.string().min(1, 'Please select a farmer'),
     date: z.string().min(1, 'Date is required'),
     variety: z.string().min(1, 'Please select a variety'),
+    storageCategory: z.string().optional(),
     sizeQuantities: z.record(z.string(), z.number().min(0)),
     sizeBagTypes: z.record(z.string(), z.string()),
     extraQuantityRows: z.array(
@@ -179,6 +186,7 @@ const StorageGatePassForm = memo(function StorageGatePassForm({
       farmerStorageLinkId: initialFarmerStorageLinkId ?? '',
       date: formatDate(new Date()),
       variety: '',
+      storageCategory: '',
       sizeQuantities: defaultSizeQuantities,
       sizeBagTypes: defaultSizeBagTypes,
       extraQuantityRows: [] as ExtraQuantityRow[],
@@ -241,6 +249,7 @@ const StorageGatePassForm = memo(function StorageGatePassForm({
               date: formatDateToISO(value.date),
               variety: value.variety.trim(),
               bagSizes,
+              storageCategory: value.storageCategory?.trim() || undefined,
               remarks: value.remarks?.trim() || undefined,
             },
           ],
@@ -528,6 +537,38 @@ const StorageGatePassForm = memo(function StorageGatePassForm({
                     </Field>
                   );
                 }}
+              />
+
+              <form.Field
+                name="storageCategory"
+                children={(field) => (
+                  <Field>
+                    <FieldLabel
+                      htmlFor="storage-category-select"
+                      className="font-custom mb-2 block text-base font-semibold"
+                    >
+                      Storage Category
+                      <span className="font-custom text-muted-foreground ml-1 font-normal">
+                        (optional)
+                      </span>
+                    </FieldLabel>
+                    <select
+                      id="storage-category-select"
+                      aria-label="Storage category"
+                      value={field.state.value ?? ''}
+                      onBlur={field.handleBlur}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      className="border-input bg-background text-foreground font-custom focus-visible:ring-primary h-10 w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <option value="">Select category</option>
+                      {STORAGE_CATEGORY_OPTIONS.map((opt) => (
+                        <option key={opt} value={opt}>
+                          {opt}
+                        </option>
+                      ))}
+                    </select>
+                  </Field>
+                )}
               />
 
               <form.Field

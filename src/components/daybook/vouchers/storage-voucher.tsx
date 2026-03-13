@@ -70,7 +70,16 @@ const StorageVoucher = memo(function StorageVoucher({
               </p>
             </div>
 
-            <div className="flex shrink-0 items-center gap-1.5">
+            <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
+              {voucher.storageCategory != null &&
+                voucher.storageCategory.trim() !== '' && (
+                  <Badge
+                    variant="outline"
+                    className="border-primary/40 bg-primary/5 text-primary px-2 py-0.5 text-[10px] font-medium"
+                  >
+                    {voucher.storageCategory}
+                  </Badge>
+                )}
               <Badge
                 variant="secondary"
                 className="px-2 py-0.5 text-[10px] font-medium"

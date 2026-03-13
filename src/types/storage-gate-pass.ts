@@ -34,6 +34,8 @@ export interface CreateStorageGatePassInput {
   date: string;
   variety: string;
   bagSizes: CreateStorageGatePassBagSize[];
+  /** Category name for the storage gate pass */
+  storageCategory?: string;
   remarks?: string;
 }
 
@@ -117,6 +119,8 @@ export interface StorageGatePassWithLink {
   gatePassNo: number;
   date: string;
   variety: string;
+  /** e.g. OWNED, PURCHASED, CONTRACT FARMING */
+  storageCategory?: string;
   bagSizes: StorageGatePassBagSize[];
   editHistory: unknown[];
   remarks?: string;
