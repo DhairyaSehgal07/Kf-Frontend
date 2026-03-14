@@ -159,7 +159,9 @@ const DaybookPage = memo(function DaybookPage() {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
-  const [sortBy, setSortBy] = useState<'Date' | 'Voucher Number'>('Date');
+  const [sortBy, setSortBy] = useState<'Date' | 'Voucher Number'>(
+    'Voucher Number'
+  );
   const [incomingStatusFilter, setIncomingStatusFilter] = useState<
     'graded' | 'ungraded' | undefined
   >(undefined);
@@ -188,6 +190,7 @@ const DaybookPage = memo(function DaybookPage() {
     page,
     limit,
     sortOrder,
+    sortBy: 'gatePassNo',
     gatePassNo: debouncedSearch.trim() || undefined,
     status: incomingStatusFilter,
   });
@@ -201,6 +204,7 @@ const DaybookPage = memo(function DaybookPage() {
     page,
     limit,
     sortOrder,
+    sortBy: 'gatePassNo',
     gatePassNo: debouncedSearch.trim() || undefined,
   });
 

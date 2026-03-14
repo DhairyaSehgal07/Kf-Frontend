@@ -122,6 +122,8 @@ export interface GetGradingGatePassesParams {
   page?: number;
   limit?: number;
   sortOrder?: 'asc' | 'desc';
+  /** Sort field; when not set, backend may default to date */
+  sortBy?: 'date' | 'gatePassNo';
   gatePassNo?: number | string;
   dateFrom?: string;
   dateTo?: string;

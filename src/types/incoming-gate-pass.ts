@@ -119,6 +119,8 @@ export interface GetIncomingGatePassesParams {
   page?: number;
   limit?: number;
   sortOrder?: 'asc' | 'desc';
+  /** Sort field; when not set, backend may default to date */
+  sortBy?: 'date' | 'gatePassNo';
   gatePassNo?: number | string;
   /** Filter by grading status */
   status?: 'graded' | 'ungraded';

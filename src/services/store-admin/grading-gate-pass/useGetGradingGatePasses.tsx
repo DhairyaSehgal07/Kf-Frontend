@@ -28,6 +28,7 @@ function listKey(params: GetGradingGatePassesParams = {}) {
     params.page,
     params.limit,
     params.sortOrder,
+    params.sortBy ?? '',
     params.gatePassNo ?? '',
     params.dateFrom ?? '',
     params.dateTo ?? '',
@@ -59,6 +60,7 @@ async function fetchGradingGatePasses(
   if (params.page != null) searchParams.set('page', String(params.page));
   if (params.limit != null) searchParams.set('limit', String(params.limit));
   if (params.sortOrder != null) searchParams.set('sortOrder', params.sortOrder);
+  if (params.sortBy != null) searchParams.set('sortBy', params.sortBy);
   if (params.gatePassNo != null)
     searchParams.set('gatePassNo', String(params.gatePassNo));
   if (params.dateFrom != null) searchParams.set('dateFrom', params.dateFrom);

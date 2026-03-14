@@ -23,6 +23,7 @@ function listKey(params: GetIncomingGatePassesParams = {}) {
     params.page,
     params.limit,
     params.sortOrder,
+    params.sortBy ?? '',
     params.gatePassNo ?? '',
     params.status ?? '',
     params.dateFrom ?? '',
@@ -50,6 +51,7 @@ async function fetchIncomingGatePasses(
   if (params.page != null) searchParams.set('page', String(params.page));
   if (params.limit != null) searchParams.set('limit', String(params.limit));
   if (params.sortOrder != null) searchParams.set('sortOrder', params.sortOrder);
+  if (params.sortBy != null) searchParams.set('sortBy', params.sortBy);
   if (params.gatePassNo != null)
     searchParams.set('gatePassNo', String(params.gatePassNo));
   if (params.status != null) searchParams.set('status', params.status);
