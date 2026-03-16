@@ -197,3 +197,17 @@ export interface CreateBulkStorageGatePassApiResponse {
   message: string;
   data: CreatedStorageGatePass[];
 }
+
+/** Request body for PUT /storage-gate-pass/:id */
+export interface EditStorageGatePassInput {
+  manualGatePassNumber?: number;
+  storageCategory?: string;
+  date?: string;
+}
+
+/** API response for PUT /storage-gate-pass/:id */
+export interface EditStorageGatePassApiResponse {
+  success?: boolean;
+  data?: StorageGatePassWithLink | CreatedStorageGatePass | null;
+  message?: string;
+}

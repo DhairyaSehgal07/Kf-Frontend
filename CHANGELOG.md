@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.17] - 2026-03-16
+
+### Added
+- Storage gate pass edit: `useEditStorageGatePass` hook for `PUT /storage-gate-pass/:id` with optional `manualGatePassNumber`, `storageCategory`, and `date`; types `EditStorageGatePassInput`, `EditStorageGatePassApiResponse` in `storage-gate-pass.ts`
+- Storage voucher (daybook): Edit action with dialog to update manual gate pass number, date, and storage category; success toast and cache invalidation on edit
+
+### Changed
+- Storage voucher: Edit button and dialog integrated with `useEditStorageGatePass`; date and category options (OWNED, PURCHASED, CONTRACT FARMING) in edit form
+
 ## [0.10.16] - 2026-03-16
 
 ### Added
