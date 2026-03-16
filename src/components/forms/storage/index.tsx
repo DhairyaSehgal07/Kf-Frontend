@@ -246,6 +246,9 @@ const StorageGatePassForm = memo(function StorageGatePassForm({
             {
               farmerStorageLinkId: value.farmerStorageLinkId,
               gatePassNo: voucherNumber,
+              ...(value.manualGatePassNumber != null && {
+                manualGatePassNumber: value.manualGatePassNumber,
+              }),
               date: formatDateToISO(value.date),
               variety: value.variety.trim(),
               bagSizes,

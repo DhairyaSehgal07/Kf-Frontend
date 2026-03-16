@@ -2,6 +2,7 @@ import { memo } from 'react';
 import { useSearch } from '@tanstack/react-router';
 import IncomingReportTable from './incoming-report';
 import GradingReportTable from './grading-report';
+import StorageReportTable from './storage-report';
 import PlaceholderReport from './placeholder-report';
 
 function ReportsScreenInner() {
@@ -34,6 +35,10 @@ function ReportsScreenInner() {
 
   if (report === 'grading') {
     return <GradingReportTable />;
+  }
+
+  if (report === 'stored') {
+    return <StorageReportTable />;
   }
 
   return <PlaceholderReport reportType={report} />;

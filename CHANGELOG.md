@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.16] - 2026-03-16
+
+### Added
+- Analytics Reports: Storage report at `/store-admin/analytics/reports?report=stored` with date filters, data table (columns, sort, column visibility), and PDF export via `storage-report-table-pdf`
+- Storage report: `StorageReportTable` with storage gate pass list data; columns and constants for storage report; snapshot-based PDF generation
+- Storage form: optional `storageCategory` field (category name for the storage gate pass)
+
+### Changed
+- Reports screen: routes `report=stored` to `StorageReportTable`; placeholder hint updated with storage report URL example
+- Storage gate pass types: `storageCategory` optional on `CreateStorageGatePassInput` and storage gate pass response types
+
 ## [0.10.15] - 2026-03-14
 
 ### Changed

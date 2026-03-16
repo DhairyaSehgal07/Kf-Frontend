@@ -31,6 +31,8 @@ export interface CreateStorageGatePassBagSize {
 export interface CreateStorageGatePassInput {
   farmerStorageLinkId: string;
   gatePassNo: number;
+  /** Optional manual gate pass number (e.g. from physical book) */
+  manualGatePassNumber?: number;
   date: string;
   variety: string;
   bagSizes: CreateStorageGatePassBagSize[];
