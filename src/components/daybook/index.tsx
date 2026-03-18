@@ -221,25 +221,19 @@ const DaybookPage = memo(function DaybookPage() {
   );
 
   const filteredAndSortedStoragePasses = useMemo(() => {
-    const q = debouncedSearch.trim().toLowerCase();
+    const trimmed = debouncedSearch.trim();
     let list = storageGatePasses;
-    if (q) {
-      list = list.filter((pass: StorageGatePassWithLink) => {
-        const gatePassNo = String(pass.gatePassNo ?? '').toLowerCase();
-        const date = pass.date
-          ? new Date(pass.date).toLocaleDateString('en-IN').toLowerCase()
-          : '';
-        const variety = (pass.variety ?? '').toLowerCase();
-        const farmerName = (
-          pass.farmerStorageLinkId?.farmerId?.name ?? ''
-        ).toLowerCase();
-        return (
-          gatePassNo.includes(q) ||
-          date.includes(q) ||
-          variety.includes(q) ||
-          farmerName.includes(q)
+    if (trimmed) {
+      // Exact gate pass number only (e.g. "3" matches 3, not 13 or 23)
+      if (!/^\d+$/.test(trimmed)) {
+        list = [];
+      } else {
+        const num = Number(trimmed);
+        list = list.filter(
+          (pass: StorageGatePassWithLink) =>
+            pass.gatePassNo === num || pass.manualGatePassNumber === num
         );
-      });
+      }
     }
     const sorted = [...list].sort((a, b) => {
       const aVal =

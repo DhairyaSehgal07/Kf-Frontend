@@ -1,6 +1,7 @@
 import { memo } from 'react';
 import { useSearch } from '@tanstack/react-router';
 import IncomingReportTable from './incoming-report';
+import UngradedReportTable from './ungraded-report';
 import GradingReportTable from './grading-report';
 import StorageReportTable from './storage-report';
 import PlaceholderReport from './placeholder-report';
@@ -31,6 +32,10 @@ function ReportsScreenInner() {
 
   if (report === 'incoming') {
     return <IncomingReportTable />;
+  }
+
+  if (report === 'ungraded') {
+    return <UngradedReportTable />;
   }
 
   if (report === 'grading') {

@@ -54,6 +54,7 @@ const STORAGE_CATEGORY_OPTIONS = [
   'OWNED',
   'PURCHASED',
   'CONTRACT FARMING',
+  'RENTAL',
 ] as const;
 
 export type ExtraQuantityRow = {
@@ -175,6 +176,16 @@ const StorageGatePassForm = memo(function StorageGatePassForm({
         searchableText: `${link.farmerId.name} ${link.accountNumber} ${link.farmerId.mobileNumber} ${link.farmerId.address}`,
       }));
   }, [farmerLinks]);
+
+  const storageCategoryOptions: Option<string>[] = useMemo(
+    () =>
+      STORAGE_CATEGORY_OPTIONS.map((opt) => ({
+        value: opt,
+        label: opt,
+        searchableText: opt,
+      })),
+    []
+  );
 
   const [step, setStep] = useState<1 | 2>(1);
   const [summaryOpen, setSummaryOpen] = useState(false);
@@ -555,21 +566,17 @@ const StorageGatePassForm = memo(function StorageGatePassForm({
                         (optional)
                       </span>
                     </FieldLabel>
-                    <select
+                    <SearchSelector
                       id="storage-category-select"
-                      aria-label="Storage category"
+                      options={storageCategoryOptions}
+                      placeholder="Select category"
+                      searchPlaceholder="Search category..."
+                      onSelect={(v) => field.handleChange(v ?? '')}
                       value={field.state.value ?? ''}
-                      onBlur={field.handleBlur}
-                      onChange={(e) => field.handleChange(e.target.value)}
-                      className="border-input bg-background text-foreground font-custom focus-visible:ring-primary h-10 w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      <option value="">Select category</option>
-                      {STORAGE_CATEGORY_OPTIONS.map((opt) => (
-                        <option key={opt} value={opt}>
-                          {opt}
-                        </option>
-                      ))}
-                    </select>
+                      emptyMessage="No categories found"
+                      className="w-full"
+                      buttonClassName="w-full justify-between"
+                    />
                   </Field>
                 )}
               />

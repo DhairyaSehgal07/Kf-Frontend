@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.18] - 2026-03-19
+
+### Added
+- Analytics Reports: Ungraded gate pass report at `/store-admin/analytics/reports?report=ungraded` with date filters, ungraded-only filtering, and PDF export
+
+### Changed
+- Analytics Reports: reports screen route `report=ungraded` to the Ungraded report table
+- Daybook: storage gate pass search now matches exact gate pass number for numeric queries
+- Incoming form: simplified default export to `IncomingForm` (type switcher removed)
+- Storage form: storage category selector now includes `RENTAL` and uses `SearchSelector` for searchable selection
+
 ## [0.10.17] - 2026-03-16
 
 ### Added
