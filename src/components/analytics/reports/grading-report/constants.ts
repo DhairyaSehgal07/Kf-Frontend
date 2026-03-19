@@ -30,6 +30,7 @@ export const GRADING_COLUMN_LABELS: Record<string, string> = {
   totalGradedBags: 'Graded bags',
   totalGradedWeightKg: 'Graded wt (kg)',
   wastageKg: 'Wastage (kg)',
+  wastagePercent: 'Wastage (%)',
   grader: 'Grader',
   remarks: 'Remarks',
   grossWeightKg: 'Gross (kg)',
@@ -49,6 +50,7 @@ export const GRADING_REPORT_ROW_SPAN_COLUMN_IDS: string[] = [
   'totalGradedBags',
   'totalGradedWeightKg',
   'wastageKg',
+  'wastagePercent',
   'grader',
   'remarks',
 ];

@@ -229,7 +229,7 @@ const SPAN_COLUMN_SET = new Set<string>(GRADING_REPORT_ROW_SPAN_COLUMN_IDS);
 interface GroupedTableBodyProps {
   group: GradingReportRow[];
   columns: {
-    key: keyof GradingReportRow;
+    key: string;
     label: string;
     width: string;
     align: 'left' | 'center';
@@ -244,7 +244,8 @@ function GroupedTableBody({ group, columns }: GroupedTableBodyProps) {
   return (
     <View style={[styles.tableRow, { minHeight: groupHeight }]}>
       {columns.map((col, i) => {
-        const isSpan = SPAN_COLUMN_SET.has(col.key);
+        const isSpan =
+          SPAN_COLUMN_SET.has(col.key) || col.key.startsWith('bagSize:');
         return (
           <View
             key={col.key}
@@ -263,7 +264,10 @@ function GroupedTableBody({ group, columns }: GroupedTableBodyProps) {
                 ]}
                 wrap
               >
-                {formatCell(first[col.key], col.key)}
+                {formatCell(
+                  (first as Record<string, unknown>)[col.key],
+                  col.key
+                )}
               </Text>
             ) : (
               <View style={{ flexDirection: 'column' }}>
@@ -292,7 +296,10 @@ function GroupedTableBody({ group, columns }: GroupedTableBodyProps) {
                       ]}
                       wrap
                     >
-                      {formatCell(row[col.key], col.key)}
+                      {formatCell(
+                        (row as Record<string, unknown>)[col.key],
+                        col.key
+                      )}
                     </Text>
                   </View>
                 ))}
@@ -306,7 +313,7 @@ function GroupedTableBody({ group, columns }: GroupedTableBodyProps) {
 }
 
 const ALL_COLUMNS: {
-  key: keyof GradingReportRow;
+  key: string;
   label: string;
   width: string;
   align: 'left' | 'center';
@@ -395,29 +402,41 @@ const ALL_COLUMNS: {
     align: 'center',
   },
   { key: 'wastageKg', label: 'Wastage (kg)', width: '5%', align: 'center' },
+  { key: 'wastagePercent', label: 'Wastage (%)', width: '5%', align: 'center' },
   { key: 'grader', label: 'Grader', width: '6%', align: 'left' },
   { key: 'remarks', label: 'Remarks', width: '8%', align: 'left' },
 ];
+
+function getDynamicColumnLabel(columnId: string): string {
+  if (columnId.startsWith('bagSize:')) return columnId.replace('bagSize:', '');
+  return columnId;
+}
 
 function getColumnsForPdf(
   visibleColumnIds: string[],
   excludeGrouping?: string[]
 ): {
-  key: keyof GradingReportRow;
+  key: string;
   label: string;
   width: string;
   align: 'left' | 'center';
 }[] {
-  const visible = new Set(
+  const requestedColumns =
     visibleColumnIds.length > 0
-      ? visibleColumnIds
-      : ALL_COLUMNS.map((c) => c.key)
-  );
+      ? visibleColumnIds.map((columnId) => {
+          const base = ALL_COLUMNS.find((c) => c.key === columnId);
+          if (base) return base;
+          return {
+            key: columnId,
+            label: getDynamicColumnLabel(columnId),
+            width: '5%',
+            align: 'center' as const,
+          };
+        })
+      : ALL_COLUMNS;
   const exclude = new Set(excludeGrouping ?? []);
-  const filtered = ALL_COLUMNS.filter(
-    (c) => visible.has(c.key) && !exclude.has(c.key)
-  );
-  if (filtered.length === 0) return ALL_COLUMNS;
+  const filtered = requestedColumns.filter((c) => !exclude.has(c.key));
+  if (filtered.length === 0) return requestedColumns;
   const totalPercent = filtered.reduce(
     (sum, c) => sum + parseFloat(c.width),
     0
@@ -443,6 +462,39 @@ const INTEGER_COLUMN_KEYS = new Set<string>([
 /** Format value for PDF display. Gate pass numbers and counts as integers; other numbers to 2 decimal places. */
 function formatCell(value: unknown, columnKey?: string): string {
   if (value == null || value === '') return '—';
+  if (columnKey?.startsWith('bagSize:')) {
+    if (typeof value === 'object' && value !== null) {
+      const bagCell = value as { quantity?: unknown; weightPerBagKg?: unknown };
+      const quantity =
+        typeof bagCell.quantity === 'number'
+          ? bagCell.quantity
+          : typeof bagCell.quantity === 'string'
+            ? Number(bagCell.quantity)
+            : Number.NaN;
+      if (Number.isNaN(quantity)) return '—';
+      const quantityLabel = quantity.toLocaleString();
+      const weight =
+        typeof bagCell.weightPerBagKg === 'number'
+          ? bagCell.weightPerBagKg
+          : typeof bagCell.weightPerBagKg === 'string'
+            ? Number(bagCell.weightPerBagKg)
+            : Number.NaN;
+      if (Number.isNaN(weight)) return quantityLabel;
+      return `${quantityLabel}\n(${weight})`;
+    }
+    const n = typeof value === 'number' ? value : Number(value);
+    return Number.isNaN(n) ? '—' : n.toLocaleString();
+  }
+  if (columnKey === 'wastagePercent') {
+    const n =
+      typeof value === 'number'
+        ? value
+        : typeof value === 'string'
+          ? Number(value)
+          : Number.NaN;
+    if (Number.isNaN(n)) return String(value);
+    return `${n.toFixed(2)}%`;
+  }
   const asInteger = columnKey != null && INTEGER_COLUMN_KEYS.has(columnKey);
   if (typeof value === 'number') {
     if (Number.isNaN(value)) return '—';
@@ -475,7 +527,7 @@ function ReportHeader({
   );
 }
 
-const TOTAL_KEYS: (keyof GradingReportRow)[] = [
+const TOTAL_KEYS: string[] = [
   'bagsReceived',
   'totalGradedBags',
   'totalGradedWeightKg',
@@ -501,7 +553,7 @@ function TotalsRow({
 }: {
   totals: Record<string, number>;
   columns: {
-    key: keyof GradingReportRow;
+    key: string;
     label: string;
     width: string;
     align: 'left' | 'center';
@@ -677,10 +729,17 @@ interface FarmerSummaryRow {
   wastageKg: number;
 }
 
+interface VarietyBagSizeSummaryRow {
+  variety: string;
+  bagSize: string;
+  quantity: number;
+}
+
 /** Computed report summary from grading report rows */
 interface GradingReportTableSummary {
   byVariety: VarietySummaryRow[];
   byFarmer: FarmerSummaryRow[];
+  byVarietyAndBagSize: VarietyBagSizeSummaryRow[];
   overall: SummaryRowTotals;
 }
 
@@ -689,6 +748,7 @@ function computeGradingReportSummary(
 ): GradingReportTableSummary {
   const varietyMap = new Map<string, SummaryRowTotals>();
   const farmerMap = new Map<string, SummaryRowTotals>();
+  const varietyBagMap = new Map<string, VarietyBagSizeSummaryRow>();
   const overall: SummaryRowTotals = {
     count: 0,
     bagsReceived: 0,
@@ -704,18 +764,20 @@ function computeGradingReportSummary(
   };
 
   for (const row of rows) {
-    const bagsReceived =
-      typeof row.bagsReceived === 'number' ? row.bagsReceived : 0;
-    const totalGradedBags =
-      typeof row.totalGradedBags === 'number' ? row.totalGradedBags : 0;
-    const totalGradedWeightKg =
-      typeof row.totalGradedWeightKg === 'number' ? row.totalGradedWeightKg : 0;
+    const isGradingPassRow = (row.gradingPassRowIndex ?? 0) === 0;
+    if (!isGradingPassRow) continue;
+
+    const totalGradedBags = num(row.totalGradedBags);
+    const totalGradedWeightKg = num(row.totalGradedWeightKg);
     const wastageKg = num(row.wastageKg);
+    // For summary totals, use grading quantities only (initial graded bags),
+    // not per-incoming bags received from expanded rows.
+    const gradingQuantity = totalGradedBags;
     const variety = (row.variety ?? '').trim() || '—';
     const farmerName = (row.farmerName ?? '').trim() || '—';
 
     overall.count += 1;
-    overall.bagsReceived += bagsReceived;
+    overall.bagsReceived += gradingQuantity;
     overall.totalGradedBags += totalGradedBags;
     overall.totalGradedWeightKg += totalGradedWeightKg;
     overall.wastageKg += wastageKg;
@@ -723,14 +785,14 @@ function computeGradingReportSummary(
     const v = varietyMap.get(variety);
     if (v) {
       v.count += 1;
-      v.bagsReceived += bagsReceived;
+      v.bagsReceived += gradingQuantity;
       v.totalGradedBags += totalGradedBags;
       v.totalGradedWeightKg += totalGradedWeightKg;
       v.wastageKg += wastageKg;
     } else {
       varietyMap.set(variety, {
         count: 1,
-        bagsReceived,
+        bagsReceived: gradingQuantity,
         totalGradedBags,
         totalGradedWeightKg,
         wastageKg,
@@ -740,18 +802,49 @@ function computeGradingReportSummary(
     const f = farmerMap.get(farmerName);
     if (f) {
       f.count += 1;
-      f.bagsReceived += bagsReceived;
+      f.bagsReceived += gradingQuantity;
       f.totalGradedBags += totalGradedBags;
       f.totalGradedWeightKg += totalGradedWeightKg;
       f.wastageKg += wastageKg;
     } else {
       farmerMap.set(farmerName, {
         count: 1,
-        bagsReceived,
+        bagsReceived: gradingQuantity,
         totalGradedBags,
         totalGradedWeightKg,
         wastageKg,
       });
+    }
+
+    const rowRecord = row as Record<string, unknown>;
+    for (const [columnId, rawValue] of Object.entries(rowRecord)) {
+      if (!columnId.startsWith('bagSize:')) continue;
+      const bagSize = columnId.slice('bagSize:'.length);
+      if (!bagSize) continue;
+      let quantity = 0;
+      if (typeof rawValue === 'object' && rawValue !== null) {
+        const bagCell = rawValue as { quantity?: unknown };
+        quantity = num(
+          typeof bagCell.quantity === 'number' ||
+            typeof bagCell.quantity === 'string'
+            ? bagCell.quantity
+            : undefined
+        );
+      } else {
+        quantity = num(
+          typeof rawValue === 'number' || typeof rawValue === 'string'
+            ? rawValue
+            : undefined
+        );
+      }
+      if (quantity === 0) continue;
+      const key = `${variety}||${bagSize}`;
+      const existing = varietyBagMap.get(key);
+      if (existing) {
+        existing.quantity += quantity;
+      } else {
+        varietyBagMap.set(key, { variety, bagSize, quantity });
+      }
     }
   }
 
@@ -761,8 +854,15 @@ function computeGradingReportSummary(
   const byFarmer: FarmerSummaryRow[] = Array.from(farmerMap.entries())
     .map(([farmerName, t]) => ({ farmerName, ...t }))
     .sort((a, b) => a.farmerName.localeCompare(b.farmerName));
+  const byVarietyAndBagSize: VarietyBagSizeSummaryRow[] = Array.from(
+    varietyBagMap.values()
+  ).sort((a, b) => {
+    const v = a.variety.localeCompare(b.variety);
+    if (v !== 0) return v;
+    return a.bagSize.localeCompare(b.bagSize);
+  });
 
-  return { byVariety, byFarmer, overall };
+  return { byVariety, byFarmer, byVarietyAndBagSize, overall };
 }
 
 const SUMMARY_COLUMNS = [
@@ -773,6 +873,162 @@ const SUMMARY_COLUMNS = [
   { key: 'totalGradedWeightKg', label: 'Graded wt (kg)', width: '16%' },
   { key: 'wastageKg', label: 'Wastage (kg)', width: '16%' },
 ];
+
+function SummaryVarietyBagTable({
+  rows,
+}: {
+  rows: VarietyBagSizeSummaryRow[];
+}) {
+  const bagSizes = Array.from(new Set(rows.map((r) => r.bagSize))).sort(
+    (a, b) => a.localeCompare(b)
+  );
+  const varieties = Array.from(new Set(rows.map((r) => r.variety))).sort(
+    (a, b) => a.localeCompare(b)
+  );
+
+  const qtyByVariety = new Map<string, Map<string, number>>();
+  for (const row of rows) {
+    const byBag = qtyByVariety.get(row.variety) ?? new Map<string, number>();
+    byBag.set(row.bagSize, (byBag.get(row.bagSize) ?? 0) + row.quantity);
+    qtyByVariety.set(row.variety, byBag);
+  }
+
+  const colWidths = {
+    variety: 32,
+    total: 13,
+    bag: bagSizes.length > 0 ? (100 - 32 - 13) / bagSizes.length : 55,
+  };
+
+  const columnTotals: Record<string, number> = {};
+  for (const size of bagSizes) columnTotals[size] = 0;
+  for (const variety of varieties) {
+    const byBag = qtyByVariety.get(variety);
+    for (const size of bagSizes) {
+      const qty = byBag?.get(size) ?? 0;
+      columnTotals[size] += qty;
+    }
+  }
+
+  const fmtInt = (n: number) => n.toLocaleString();
+  const overallQuantity = rows.reduce((sum, row) => sum + row.quantity, 0);
+
+  return (
+    <View style={styles.summarySection}>
+      <Text style={styles.summaryTitle}>Variety + bag size wise summary</Text>
+      <View style={styles.summaryTable}>
+        <View style={styles.summaryTableHeader}>
+          <Text
+            style={[styles.summaryCellLeft, { width: `${colWidths.variety}%` }]}
+          >
+            Varieties
+          </Text>
+          {bagSizes.map((bagSize) => (
+            <Text
+              key={bagSize}
+              style={[styles.summaryCell, { width: `${colWidths.bag}%` }]}
+            >
+              {bagSize}
+            </Text>
+          ))}
+          <Text
+            style={[
+              styles.summaryCell,
+              styles.summaryCellLast,
+              { width: `${colWidths.total}%` },
+            ]}
+          >
+            Total
+          </Text>
+        </View>
+        {varieties.length === 0 ? (
+          <View style={styles.summaryTableRow}>
+            <Text
+              style={[
+                styles.summaryCellLeft,
+                styles.summaryCellLast,
+                { width: '100%', paddingVertical: 4 },
+              ]}
+            >
+              No data
+            </Text>
+          </View>
+        ) : (
+          <>
+            {varieties.map((variety) => {
+              const byBag = qtyByVariety.get(variety);
+              const rowTotal = bagSizes.reduce(
+                (sum, size) => sum + (byBag?.get(size) ?? 0),
+                0
+              );
+              return (
+                <View key={variety} style={styles.summaryTableRow}>
+                  <Text
+                    style={[
+                      styles.summaryCellLeft,
+                      { width: `${colWidths.variety}%` },
+                    ]}
+                  >
+                    {variety}
+                  </Text>
+                  {bagSizes.map((size) => {
+                    const qty = byBag?.get(size) ?? 0;
+                    return (
+                      <Text
+                        key={`${variety}-${size}`}
+                        style={[
+                          styles.summaryCell,
+                          { width: `${colWidths.bag}%` },
+                        ]}
+                      >
+                        {fmtInt(qty)}
+                      </Text>
+                    );
+                  })}
+                  <Text
+                    style={[
+                      styles.summaryCell,
+                      styles.summaryCellLast,
+                      { width: `${colWidths.total}%` },
+                    ]}
+                  >
+                    {fmtInt(rowTotal)}
+                  </Text>
+                </View>
+              );
+            })}
+            <View style={styles.summaryTableRowTotal}>
+              <Text
+                style={[
+                  styles.summaryCellLeft,
+                  { width: `${colWidths.variety}%` },
+                ]}
+              >
+                Bag Total
+              </Text>
+              {bagSizes.map((size) => (
+                <Text
+                  key={`bag-total-${size}`}
+                  style={[styles.summaryCell, { width: `${colWidths.bag}%` }]}
+                >
+                  {fmtInt(columnTotals[size] ?? 0)}
+                </Text>
+              ))}
+              <Text
+                style={[
+                  styles.summaryCell,
+                  styles.summaryCellLast,
+                  { width: `${colWidths.total}%` },
+                ]}
+              >
+                {fmtInt(overallQuantity)}
+              </Text>
+            </View>
+          </>
+        )}
+      </View>
+    </View>
+  );
+}
 
 function ReportSummaryPage({
   companyName,
@@ -787,7 +1043,7 @@ function ReportSummaryPage({
 }) {
   const fmt = (n: number) => n.toFixed(2);
   return (
-    <Page size="A4" style={styles.summaryPage}>
+    <Page size="A4" orientation="landscape" style={styles.summaryPage}>
       <ReportHeader
         companyName={companyName}
         dateRangeLabel={dateRangeLabel}
@@ -1141,6 +1397,7 @@ function ReportSummaryPage({
           </View>
         </View>
       </View>
+      <SummaryVarietyBagTable rows={summary.byVarietyAndBagSize} />
     </Page>
   );
 }
@@ -1182,7 +1439,7 @@ export const GradingReportTablePdf = ({
     const columnsForTable = getColumnsForPdf(visibleColumnIds, grouping);
     return (
       <Document>
-        <Page size="A4" style={styles.page}>
+        <Page size="A4" orientation="landscape" style={styles.page}>
           <ReportHeader
             companyName={companyName}
             dateRangeLabel={dateRangeLabel}
@@ -1307,7 +1564,7 @@ export const GradingReportTablePdf = ({
 
   return (
     <Document>
-      <Page size="A4" style={styles.page}>
+      <Page size="A4" orientation="landscape" style={styles.page}>
         <ReportHeader
           companyName={companyName}
           dateRangeLabel={dateRangeLabel}

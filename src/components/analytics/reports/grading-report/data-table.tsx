@@ -1,7 +1,12 @@
 'use client';
 
 import type { Ref } from 'react';
-import React, { forwardRef, useImperativeHandle, useState } from 'react';
+import React, {
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useState,
+} from 'react';
 import type { Row, ColumnDef, VisibilityState } from '@tanstack/react-table';
 import {
   flexRender,
@@ -78,6 +83,8 @@ interface DataTableProps<TData, TValue> {
   toolbarLeftContent?: React.ReactNode;
   /** Optional content to render on the right side of the toolbar (e.g. primary action) */
   toolbarRightContent?: React.ReactNode;
+  /** Render subtotal row at the end of each expanded grouped section */
+  showGroupedSubtotals?: boolean;
 }
 
 /** Human-readable labels for column visibility toggle */
@@ -102,7 +109,7 @@ const COLUMN_LABELS: Record<string, string> = {
   totalGradedBags: 'Graded bags',
   totalGradedWeightKg: 'Total graded weight (kg)',
   wastageKg: 'Wastage (kg)',
-  grader: 'Grader',
+  wastagePercent: 'Wastage (%)',
   remarks: 'Remarks',
   accountNumber: 'Account No.',
 };
@@ -147,6 +154,7 @@ const DataTableInner = forwardRef(function DataTableInner<TData, TValue>(
     rowSpanColumnIds,
     toolbarLeftContent,
     toolbarRightContent,
+    showGroupedSubtotals = false,
   }: DataTableProps<TData, TValue>,
   ref: Ref<GradingReportDataTableRef<TData>>
 ) {
@@ -182,6 +190,22 @@ const DataTableInner = forwardRef(function DataTableInner<TData, TValue>(
     },
     groupedColumnMode: 'reorder',
   });
+
+  useEffect(() => {
+    const availableColumnIds = new Set(
+      table.getAllLeafColumns().map((column) => column.id)
+    );
+
+    setGrouping((prev) => {
+      const next = prev.filter((id) => availableColumnIds.has(id));
+      return next.length === prev.length ? prev : next;
+    });
+
+    setSorting((prev) => {
+      const next = prev.filter((sort) => availableColumnIds.has(sort.id));
+      return next.length === prev.length ? prev : next;
+    });
+  }, [table, columns]);
 
   const groupedIds = table.getState().grouping ?? [];
 
@@ -277,6 +301,15 @@ const DataTableInner = forwardRef(function DataTableInner<TData, TValue>(
     return acc;
   })();
 
+  const formatTotalCell = (value: number): string => {
+    return Number.isInteger(value)
+      ? value.toLocaleString()
+      : value.toLocaleString(undefined, {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        });
+  };
+
   return (
     <div className="space-y-4">
       <Item
@@ -312,8 +345,8 @@ const DataTableInner = forwardRef(function DataTableInner<TData, TValue>(
                   {groupedIds.length === 0 ? (
                     <p className="text-muted-foreground text-sm">
                       No groups applied. Use the 3-dot menu on a column header
-                      (Farmer, Variety, Date, Incoming gate pass date, Grader)
-                      to group by that column.
+                      (Farmer, Variety, Date, Incoming gate pass date) to group
+                      by that column.
                     </p>
                   ) : (
                     <ul className="space-y-1">
@@ -425,83 +458,146 @@ const DataTableInner = forwardRef(function DataTableInner<TData, TValue>(
           </TableHeader>
           <TableBody>
             {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => {
-                if (row.getIsGrouped()) {
-                  return (
-                    <TableRow
-                      key={row.id}
-                      data-state={row.getIsSelected() && 'selected'}
-                      data-depth={row.depth}
-                      className={`border-border border-b transition-colors last:border-b-0 ${
-                        row.getIsGrouped()
-                          ? 'bg-primary/15 hover:bg-primary/20'
-                          : row.depth > 0
-                            ? 'bg-secondary/40 hover:bg-secondary/50'
-                            : 'hover:bg-muted/50'
-                      }`}
-                    >
-                      {row.getVisibleCells().map((cell) => (
-                        <TableCell
-                          key={cell.id}
-                          className="border-border text-foreground border-r px-4 py-3 last:border-r-0"
+              (() => {
+                const renderedRows: React.ReactNode[] = [];
+                const modelRows = table.getRowModel().rows;
+                const openGroupedRows: Row<TData>[] = [];
+
+                for (let i = 0; i < modelRows.length; i += 1) {
+                  const row = modelRows[i];
+                  const rowClassName = `border-border border-b transition-colors last:border-b-0 ${
+                    row.getIsGrouped()
+                      ? 'bg-primary/15 hover:bg-primary/20'
+                      : row.depth > 0
+                        ? 'bg-secondary/40 hover:bg-secondary/50'
+                        : 'hover:bg-muted/50'
+                  }`;
+
+                  if (row.getIsGrouped()) {
+                    renderedRows.push(
+                      <TableRow
+                        key={row.id}
+                        data-state={row.getIsSelected() && 'selected'}
+                        data-depth={row.depth}
+                        className={rowClassName}
+                      >
+                        {row.getVisibleCells().map((cell) => (
+                          <TableCell
+                            key={cell.id}
+                            className="border-border text-foreground border-r px-4 py-3 last:border-r-0"
+                          >
+                            {flexRender(
+                              cell.column.columnDef.cell,
+                              cell.getContext()
+                            )}
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    );
+
+                    if (
+                      showGroupedSubtotals &&
+                      row.getIsExpanded() &&
+                      row.getLeafRows().length > 0
+                    ) {
+                      openGroupedRows.push(row);
+                    }
+                  } else {
+                    const original =
+                      row.original as unknown as RowWithGradingGroupMeta;
+                    const rowIndex = original.gradingPassRowIndex ?? 0;
+                    const groupSize = original.gradingPassGroupSize ?? 1;
+                    const spanColumnSet =
+                      rowSpanColumnIds != null && rowSpanColumnIds.length > 0
+                        ? new Set(rowSpanColumnIds)
+                        : null;
+
+                    renderedRows.push(
+                      <TableRow
+                        key={row.id}
+                        data-state={row.getIsSelected() && 'selected'}
+                        data-depth={row.depth}
+                        className={rowClassName}
+                      >
+                        {row.getVisibleCells().map((cell) => {
+                          const isSpanColumn =
+                            spanColumnSet != null &&
+                            spanColumnSet.has(cell.column.id);
+                          if (isSpanColumn && rowIndex > 0) {
+                            return null;
+                          }
+                          const rowSpan =
+                            isSpanColumn && rowIndex === 0
+                              ? groupSize
+                              : undefined;
+                          return (
+                            <TableCell
+                              key={cell.id}
+                              rowSpan={rowSpan}
+                              className="border-border text-foreground border-r px-4 py-3 last:border-r-0"
+                            >
+                              {flexRender(
+                                cell.column.columnDef.cell,
+                                cell.getContext()
+                              )}
+                            </TableCell>
+                          );
+                        })}
+                      </TableRow>
+                    );
+                  }
+
+                  if (showGroupedSubtotals && openGroupedRows.length > 0) {
+                    const nextDepth = modelRows[i + 1]?.depth ?? -1;
+                    while (
+                      openGroupedRows.length > 0 &&
+                      nextDepth <=
+                        openGroupedRows[openGroupedRows.length - 1]!.depth
+                    ) {
+                      const closingGroup = openGroupedRows.pop()!;
+                      const leafRows = closingGroup.getLeafRows();
+                      const groupTotals: Record<string, number> = {};
+                      for (const id of totalColumnIds) groupTotals[id] = 0;
+                      for (const leaf of leafRows) {
+                        const record = leaf.original as Record<string, unknown>;
+                        for (const id of totalColumnIds) {
+                          groupTotals[id] += toNum(record[id]);
+                        }
+                      }
+                      const visibleCells = closingGroup.getVisibleCells();
+                      renderedRows.push(
+                        <TableRow
+                          key={`${closingGroup.id}-subtotal`}
+                          className="border-border bg-muted/40 border-b"
                         >
-                          {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext()
-                          )}
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  );
+                          {visibleCells.map((cell, idx) => {
+                            const total = groupTotals[cell.column.id];
+                            const isTotalCol = total !== undefined;
+                            return (
+                              <TableCell
+                                key={`${cell.id}-subtotal`}
+                                className="border-border text-foreground border-r px-4 py-2.5 font-semibold last:border-r-0"
+                              >
+                                {idx === 0 ? (
+                                  <span className="font-custom">Subtotal</span>
+                                ) : isTotalCol ? (
+                                  <div className="font-custom text-right font-semibold">
+                                    {formatTotalCell(total)}
+                                  </div>
+                                ) : (
+                                  ''
+                                )}
+                              </TableCell>
+                            );
+                          })}
+                        </TableRow>
+                      );
+                    }
+                  }
                 }
 
-                const original =
-                  row.original as unknown as RowWithGradingGroupMeta;
-                const rowIndex = original.gradingPassRowIndex ?? 0;
-                const groupSize = original.gradingPassGroupSize ?? 1;
-                const spanColumnSet =
-                  rowSpanColumnIds != null && rowSpanColumnIds.length > 0
-                    ? new Set(rowSpanColumnIds)
-                    : null;
-
-                return (
-                  <TableRow
-                    key={row.id}
-                    data-state={row.getIsSelected() && 'selected'}
-                    data-depth={row.depth}
-                    className={`border-border border-b transition-colors last:border-b-0 ${
-                      row.getIsGrouped()
-                        ? 'bg-primary/15 hover:bg-primary/20'
-                        : row.depth > 0
-                          ? 'bg-secondary/40 hover:bg-secondary/50'
-                          : 'hover:bg-muted/50'
-                    }`}
-                  >
-                    {row.getVisibleCells().map((cell) => {
-                      const isSpanColumn =
-                        spanColumnSet != null &&
-                        spanColumnSet.has(cell.column.id);
-                      if (isSpanColumn && rowIndex > 0) {
-                        return null;
-                      }
-                      const rowSpan =
-                        isSpanColumn && rowIndex === 0 ? groupSize : undefined;
-                      return (
-                        <TableCell
-                          key={cell.id}
-                          rowSpan={rowSpan}
-                          className="border-border text-foreground border-r px-4 py-3 last:border-r-0"
-                        >
-                          {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext()
-                          )}
-                        </TableCell>
-                      );
-                    })}
-                  </TableRow>
-                );
-              })
+                return renderedRows;
+              })()
             ) : (
               <TableRow className="border-border border-b hover:bg-transparent">
                 <TableCell

@@ -6,6 +6,7 @@ import {
   useGetGradingGatePasses,
   gradingGatePassesQueryOptions,
 } from '@/services/store-admin/grading-gate-pass/useGetGradingGatePasses';
+import type { ColumnDef } from '@tanstack/react-table';
 import type {
   GradingGatePass,
   GradingGatePassIncomingRef,
@@ -34,6 +35,11 @@ import {
   computeGradingOrderTotals,
   computeIncomingNetProductKg,
 } from '@/components/daybook/vouchers/grading-voucher-calculations';
+
+type GradingBagCellValue = {
+  quantity: number;
+  weightPerBagKg?: number;
+};
 
 function formatDate(iso: string | undefined): string {
   if (!iso) return '—';
@@ -184,7 +190,7 @@ function resolveIncomingsForPass(
  * Map grading gate passes to table rows. Each grading pass has
  * incomingGatePassIds[]; when there are multiple incomings they are grouped:
  * one row per incoming with that incoming's details; grading pass details
- * (gate pass no., date, total graded bags/weight, wastage, grader, remarks)
+ * (gate pass no., date, total graded bags/weight, wastage, wastage %, remarks)
  * appear on the first row of the group only. Wastage is computed at group level
  * (combined effective incoming net product − total graded weight).
  */
@@ -205,6 +211,20 @@ function mapGradingPassesToRows(passes: GradingGatePass[]): GradingReportRow[] {
           0
         )
       : 0;
+    const orderDetailsBySize: Partial<
+      Record<`bagSize:${string}`, GradingBagCellValue>
+    > = {};
+    for (const detail of pass.orderDetails ?? []) {
+      if (!detail.size) continue;
+      const key = `bagSize:${detail.size}` as const;
+      const qty = detail.initialQuantity ?? detail.currentQuantity ?? 0;
+      const weightPerBagKg = detail.weightPerBagKg ?? undefined;
+      const existing = orderDetailsBySize[key];
+      orderDetailsBySize[key] = {
+        quantity: (existing?.quantity ?? 0) + qty,
+        weightPerBagKg: existing?.weightPerBagKg ?? weightPerBagKg,
+      };
+    }
     const { totalGradedWeightKg } = computeGradingOrderTotals(
       pass.orderDetails as Parameters<typeof computeGradingOrderTotals>[0]
     );
@@ -233,11 +253,27 @@ function mapGradingPassesToRows(passes: GradingGatePass[]): GradingReportRow[] {
       groupEffectiveIncomingNetProductKg > 0
         ? Math.max(0, groupEffectiveIncomingNetProductKg - totalGradedWeightKg)
         : undefined;
+    const wastagePercent =
+      wastageKg != null &&
+      groupEffectiveIncomingNetProductKg != null &&
+      groupEffectiveIncomingNetProductKg > 0
+        ? (wastageKg / groupEffectiveIncomingNetProductKg) * 100
+        : undefined;
 
-    incomings.forEach((inc, idx) => {
-      const { grossWeightKg, tareWeightKg } = getGrossTareNet(pass, inc);
-      const totalIncomingBags = getBagsReceived(pass, inc);
-      const effectiveIncomingNetKg = getIncomingNetKg(pass, inc);
+    const rowsPerPass = incomings.length;
+    for (let rowIndex = 0; rowIndex < rowsPerPass; rowIndex += 1) {
+      const inc = incomings[rowIndex];
+      const hasIncoming = inc != null;
+      const isFirstRow = rowIndex === 0;
+      const isIncomingContinuationRow = !hasIncoming;
+
+      const { grossWeightKg, tareWeightKg } = hasIncoming
+        ? getGrossTareNet(pass, inc)
+        : { grossWeightKg: undefined, tareWeightKg: undefined };
+      const totalIncomingBags = hasIncoming ? getBagsReceived(pass, inc) : 0;
+      const effectiveIncomingNetKg = hasIncoming
+        ? getIncomingNetKg(pass, inc)
+        : undefined;
       const effectiveIncomingNetProductKg =
         effectiveIncomingNetKg != null
           ? computeIncomingNetProductKg(
@@ -246,41 +282,43 @@ function mapGradingPassesToRows(passes: GradingGatePass[]): GradingReportRow[] {
             )
           : undefined;
 
-      const isFirstRow = idx === 0;
       rows.push({
-        id: incomings.length > 1 ? `${pass._id}-${idx}` : pass._id,
-        farmerName: getFarmerName(pass, inc),
-        accountNumber: getAccountNumber(pass, inc),
-        farmerAddress: getFarmerAddress(pass, inc),
-        farmerMobile: getFarmerMobile(pass, inc),
+        id: rowsPerPass > 1 ? `${pass._id}-${rowIndex}` : pass._id,
+        isIncomingContinuationRow,
+        farmerName: hasIncoming ? getFarmerName(pass, inc) : '',
+        accountNumber: hasIncoming ? getAccountNumber(pass, inc) : '',
+        farmerAddress: hasIncoming ? getFarmerAddress(pass, inc) : '',
+        farmerMobile: hasIncoming ? getFarmerMobile(pass, inc) : '',
         createdByName,
         gatePassNo: isFirstRow ? (pass.gatePassNo ?? '—') : '—',
         manualGatePassNumber: isFirstRow
           ? (pass.manualGatePassNumber ?? '—')
           : '—',
-        incomingGatePassNo: getIncomingGatePassNo(pass, inc),
-        incomingManualNo: getIncomingManualNo(pass, inc),
-        incomingGatePassDate: getIncomingGatePassDate(pass, inc),
+        incomingGatePassNo: hasIncoming ? getIncomingGatePassNo(pass, inc) : '',
+        incomingManualNo: hasIncoming ? getIncomingManualNo(pass, inc) : '',
+        incomingGatePassDate: hasIncoming
+          ? getIncomingGatePassDate(pass, inc)
+          : '',
         date: isFirstRow ? formatDate(pass.date) : '—',
-        variety: inc.variety ?? pass.variety ?? '—',
-        truckNumber: getTruckNumber(pass, inc),
-        bagsReceived: totalIncomingBags,
-        grossWeightKg: grossWeightKg ?? '—',
-        tareWeightKg: tareWeightKg ?? '—',
-        netWeightKg: effectiveIncomingNetKg ?? '—',
-        netProductKg:
-          effectiveIncomingNetProductKg != null
-            ? effectiveIncomingNetProductKg
-            : '—',
+        variety: hasIncoming ? (inc.variety ?? pass.variety ?? '—') : '',
+        bagType: '—',
+        truckNumber: hasIncoming ? getTruckNumber(pass, inc) : '',
+        bagsReceived: hasIncoming ? totalIncomingBags : 0,
+        grossWeightKg: hasIncoming ? (grossWeightKg ?? '—') : 0,
+        tareWeightKg: hasIncoming ? (tareWeightKg ?? '—') : 0,
+        netWeightKg: hasIncoming ? (effectiveIncomingNetKg ?? '—') : 0,
+        netProductKg: hasIncoming ? (effectiveIncomingNetProductKg ?? '—') : 0,
         totalGradedBags: isFirstRow ? totalGradedBags : 0,
+        ...(isFirstRow ? orderDetailsBySize : {}),
         totalGradedWeightKg: isFirstRow ? totalGradedWeightKg : 0,
         wastageKg: isFirstRow ? (wastageKg ?? '—') : '—',
+        wastagePercent: isFirstRow ? (wastagePercent ?? '—') : '—',
         grader: isFirstRow ? (pass.grader ?? '—') : '—',
         remarks: isFirstRow ? (pass.remarks ?? '—') : '—',
-        gradingPassRowIndex: idx,
-        gradingPassGroupSize: incomings.length,
+        gradingPassRowIndex: rowIndex,
+        gradingPassGroupSize: rowsPerPass,
       });
-    });
+    }
   }
 
   return rows;
@@ -298,19 +336,20 @@ const GRADING_REPORT_DEFAULT_COLUMN_VISIBILITY: VisibilityState = {
   grossWeightKg: false,
   tareWeightKg: false,
   gatePassNo: true,
-  manualGatePassNumber: true,
+  manualGatePassNumber: false,
   date: true,
   variety: true,
+  bagType: true,
   totalGradedBags: true,
   totalGradedWeightKg: true,
   wastageKg: true,
-  grader: true,
+  wastagePercent: true,
   remarks: false,
   farmerName: true,
   farmerAddress: false,
   farmerMobile: false,
   createdByName: false,
-  accountNumber: true,
+  accountNumber: false,
 };
 
 const GRADING_REPORT_FETCH_LIMIT = 5000;
@@ -336,6 +375,95 @@ const GradingReportTable = () => {
     const list = data?.list ?? [];
     return mapGradingPassesToRows(list);
   }, [data]);
+
+  const gradingBagSizeColumnIds = useMemo((): string[] => {
+    const list = data?.list ?? [];
+    const seen = new Set<string>();
+    const ordered: string[] = [];
+    for (const pass of list) {
+      for (const detail of pass.orderDetails ?? []) {
+        if (!detail.size || seen.has(detail.size)) continue;
+        seen.add(detail.size);
+        ordered.push(`bagSize:${detail.size}`);
+      }
+    }
+    return ordered;
+  }, [data]);
+
+  const gradingColumns = useMemo((): ColumnDef<GradingReportRow>[] => {
+    const baseColumns = columns.filter(
+      (c) => (c as { accessorKey?: string }).accessorKey !== 'grader'
+    );
+    if (gradingBagSizeColumnIds.length === 0) return baseColumns;
+
+    const gradingBagSizeColumnDefs: ColumnDef<GradingReportRow>[] =
+      gradingBagSizeColumnIds.map((columnId) => ({
+        id: columnId,
+        accessorKey: columnId,
+        header: () => (
+          <div className="font-custom text-right">
+            {columnId.replace('bagSize:', '')}
+          </div>
+        ),
+        cell: ({ row, getValue }) => {
+          if (row.getIsGrouped()) {
+            return (
+              <div className="font-custom text-right" aria-hidden>
+                —
+              </div>
+            );
+          }
+
+          const value = getValue<GradingBagCellValue | undefined>();
+          if (value == null) {
+            return <div className="font-custom text-right" aria-hidden />;
+          }
+
+          return (
+            <div className="text-right">
+              <div className="font-custom font-medium">
+                {value.quantity.toLocaleString()}
+              </div>
+              {value.weightPerBagKg != null ? (
+                <div className="text-muted-foreground font-custom text-xs">
+                  ({value.weightPerBagKg})
+                </div>
+              ) : null}
+            </div>
+          );
+        },
+        aggregationFn: () => null,
+        enableGrouping: false,
+        enableSorting: false,
+      }));
+
+    const gradedBagsIdx = baseColumns.findIndex(
+      (c) => (c as { accessorKey?: string }).accessorKey === 'totalGradedBags'
+    );
+    if (gradedBagsIdx < 0) return [...baseColumns, ...gradingBagSizeColumnDefs];
+    return [
+      ...baseColumns.slice(0, gradedBagsIdx + 1),
+      ...gradingBagSizeColumnDefs,
+      ...baseColumns.slice(gradedBagsIdx + 1),
+    ];
+  }, [gradingBagSizeColumnIds]);
+
+  const initialColumnVisibility = useMemo((): VisibilityState => {
+    if (gradingBagSizeColumnIds.length === 0)
+      return GRADING_REPORT_DEFAULT_COLUMN_VISIBILITY;
+    const dynamicVisibility = Object.fromEntries(
+      gradingBagSizeColumnIds.map((columnId) => [columnId, true])
+    ) as VisibilityState;
+    return {
+      ...GRADING_REPORT_DEFAULT_COLUMN_VISIBILITY,
+      ...dynamicVisibility,
+    };
+  }, [gradingBagSizeColumnIds]);
+
+  const rowSpanColumnIds = useMemo(
+    () => [...GRADING_REPORT_ROW_SPAN_COLUMN_IDS, ...gradingBagSizeColumnIds],
+    [gradingBagSizeColumnIds]
+  );
 
   const reportContentRef = useRef<HTMLDivElement>(null);
 
@@ -481,10 +609,11 @@ const GradingReportTable = () => {
         </h2>
         <DataTable
           ref={tableRef}
-          columns={columns}
+          columns={gradingColumns}
           data={rows}
-          initialColumnVisibility={GRADING_REPORT_DEFAULT_COLUMN_VISIBILITY}
-          rowSpanColumnIds={GRADING_REPORT_ROW_SPAN_COLUMN_IDS}
+          initialColumnVisibility={initialColumnVisibility}
+          rowSpanColumnIds={rowSpanColumnIds}
+          showGroupedSubtotals
           toolbarLeftContent={
             <>
               <DatePicker

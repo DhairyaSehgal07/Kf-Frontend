@@ -16,6 +16,7 @@ export type GradingReportRow = {
   id: string;
   gradingPassRowIndex?: number;
   gradingPassGroupSize?: number;
+  isIncomingContinuationRow?: boolean;
   farmerName: string;
   accountNumber: number | string;
   farmerAddress: string;
@@ -28,6 +29,7 @@ export type GradingReportRow = {
   incomingGatePassDate: string;
   date: string;
   variety: string;
+  bagType: string;
   truckNumber: string;
   bagsReceived: number;
   grossWeightKg: number | string;
@@ -37,6 +39,7 @@ export type GradingReportRow = {
   totalGradedBags: number;
   totalGradedWeightKg: number;
   wastageKg: number | string;
+  wastagePercent: number | string;
   grader: string;
   remarks: string;
 };
@@ -117,7 +120,9 @@ function SortableHeader({
           <DropdownMenuItem
             onSelect={(e) => {
               e.preventDefault();
-              column.toggleSorting(false);
+              table.options.onSortingChange?.(() => [
+                { id: columnId, desc: false },
+              ]);
             }}
           >
             Sort ascending
@@ -125,7 +130,9 @@ function SortableHeader({
           <DropdownMenuItem
             onSelect={(e) => {
               e.preventDefault();
-              column.toggleSorting(true);
+              table.options.onSortingChange?.(() => [
+                { id: columnId, desc: true },
+              ]);
             }}
           >
             Sort descending
@@ -197,7 +204,9 @@ function GroupableSortableHeader({
           <DropdownMenuItem
             onSelect={(e) => {
               e.preventDefault();
-              column.toggleSorting(false);
+              table.options.onSortingChange?.(() => [
+                { id: columnId, desc: false },
+              ]);
             }}
           >
             Sort ascending
@@ -205,7 +214,9 @@ function GroupableSortableHeader({
           <DropdownMenuItem
             onSelect={(e) => {
               e.preventDefault();
-              column.toggleSorting(true);
+              table.options.onSortingChange?.(() => [
+                { id: columnId, desc: true },
+              ]);
             }}
           >
             Sort descending
@@ -268,9 +279,17 @@ function GroupableCell({
 }
 
 function formatNum(value: number | string): string {
+  if (value === '' || value === '—') return '';
   const n = typeof value === 'number' ? value : Number(value);
   if (Number.isNaN(n)) return '—';
   return n.toLocaleString();
+}
+
+function formatPercent(value: number | string): string {
+  if (value === '' || value === '—') return '';
+  const n = typeof value === 'number' ? value : Number(value);
+  if (Number.isNaN(n)) return '—';
+  return `${n.toFixed(2)}%`;
 }
 
 export const columns: ColumnDef<GradingReportRow>[] = [
@@ -287,8 +306,9 @@ export const columns: ColumnDef<GradingReportRow>[] = [
     ),
     cell: ({ row }) => (
       <div className="font-custom text-right">
-        {row.getIsGrouped()
-          ? '—'
+        {row.getIsGrouped() ||
+        (row.original as GradingReportRow).isIncomingContinuationRow
+          ? ''
           : String(row.getValue('accountNumber') ?? '—')}
       </div>
     ),
@@ -304,6 +324,13 @@ export const columns: ColumnDef<GradingReportRow>[] = [
   {
     accessorKey: 'farmerMobile',
     header: () => <span className="font-custom">Mobile</span>,
+    cell: ({ row }) => (
+      <div className="font-custom">
+        {(row.original as GradingReportRow).isIncomingContinuationRow
+          ? ''
+          : String(row.getValue('farmerMobile') ?? '—')}
+      </div>
+    ),
   },
   {
     accessorKey: 'createdByName',
@@ -320,8 +347,9 @@ export const columns: ColumnDef<GradingReportRow>[] = [
     ),
     cell: ({ row }) => (
       <div className="font-custom text-right">
-        {row.getIsGrouped()
-          ? '—'
+        {row.getIsGrouped() ||
+        (row.original as GradingReportRow).isIncomingContinuationRow
+          ? ''
           : String(row.getValue('incomingGatePassNo') ?? '—')}
       </div>
     ),
@@ -339,8 +367,9 @@ export const columns: ColumnDef<GradingReportRow>[] = [
     ),
     cell: ({ row }) => (
       <div className="font-custom text-right">
-        {row.getIsGrouped()
-          ? '—'
+        {row.getIsGrouped() ||
+        (row.original as GradingReportRow).isIncomingContinuationRow
+          ? ''
           : String(row.getValue('incomingManualNo') ?? '—')}
       </div>
     ),
@@ -363,6 +392,13 @@ export const columns: ColumnDef<GradingReportRow>[] = [
   {
     accessorKey: 'truckNumber',
     header: () => <span className="font-custom">Truck no.</span>,
+    cell: ({ row }) => (
+      <div className="font-custom">
+        {(row.original as GradingReportRow).isIncomingContinuationRow
+          ? ''
+          : String(row.getValue('truckNumber') ?? '—')}
+      </div>
+    ),
   },
   {
     accessorKey: 'variety',
@@ -375,8 +411,9 @@ export const columns: ColumnDef<GradingReportRow>[] = [
     header: () => <div className="font-custom text-right">Bags rec.</div>,
     cell: ({ row }) => (
       <div className="font-custom text-right font-medium">
-        {row.getIsGrouped()
-          ? '—'
+        {row.getIsGrouped() ||
+        (row.original as GradingReportRow).isIncomingContinuationRow
+          ? ''
           : formatNum(row.getValue('bagsReceived') as number | string)}
       </div>
     ),
@@ -387,8 +424,9 @@ export const columns: ColumnDef<GradingReportRow>[] = [
     header: () => <div className="font-custom text-right">Gross (kg)</div>,
     cell: ({ row }) => (
       <div className="font-custom text-right font-medium">
-        {row.getIsGrouped()
-          ? '—'
+        {row.getIsGrouped() ||
+        (row.original as GradingReportRow).isIncomingContinuationRow
+          ? ''
           : formatNum(row.getValue('grossWeightKg') as number | string)}
       </div>
     ),
@@ -399,8 +437,9 @@ export const columns: ColumnDef<GradingReportRow>[] = [
     header: () => <div className="font-custom text-right">Tare (kg)</div>,
     cell: ({ row }) => (
       <div className="font-custom text-right font-medium">
-        {row.getIsGrouped()
-          ? '—'
+        {row.getIsGrouped() ||
+        (row.original as GradingReportRow).isIncomingContinuationRow
+          ? ''
           : formatNum(row.getValue('tareWeightKg') as number | string)}
       </div>
     ),
@@ -411,8 +450,9 @@ export const columns: ColumnDef<GradingReportRow>[] = [
     header: () => <div className="font-custom text-right">Net (kg)</div>,
     cell: ({ row }) => (
       <div className="font-custom text-right font-medium">
-        {row.getIsGrouped()
-          ? '—'
+        {row.getIsGrouped() ||
+        (row.original as GradingReportRow).isIncomingContinuationRow
+          ? ''
           : formatNum(row.getValue('netWeightKg') as number | string)}
       </div>
     ),
@@ -425,8 +465,9 @@ export const columns: ColumnDef<GradingReportRow>[] = [
     ),
     cell: ({ row }) => (
       <div className="font-custom text-right font-medium">
-        {row.getIsGrouped()
-          ? '—'
+        {row.getIsGrouped() ||
+        (row.original as GradingReportRow).isIncomingContinuationRow
+          ? ''
           : formatNum(row.getValue('netProductKg') as number | string)}
       </div>
     ),
@@ -504,6 +545,18 @@ export const columns: ColumnDef<GradingReportRow>[] = [
       </div>
     ),
     aggregationFn: 'sum',
+  },
+  {
+    accessorKey: 'wastagePercent',
+    header: () => <div className="font-custom text-right">Wastage (%)</div>,
+    cell: ({ row }) => (
+      <div className="font-custom text-right font-medium">
+        {row.getIsGrouped()
+          ? '—'
+          : formatPercent(row.getValue('wastagePercent') as number | string)}
+      </div>
+    ),
+    aggregationFn: () => null,
   },
   {
     accessorKey: 'grader',
