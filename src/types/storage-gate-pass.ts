@@ -170,6 +170,11 @@ export interface GetStorageGatePassesApiResponse {
   message?: string;
 }
 
+/** Payload for GET /storage-gate-pass/farmer-storage-link/:id */
+export interface GetStorageGatePassesByFarmerData {
+  storageGatePasses: StorageGatePassWithLink[];
+}
+
 /** One group from GET /storage-gate-pass/grouped (by manualGatePassNumber and date) */
 export interface GroupedStorageGatePassGroup {
   manualGatePassNumber: number | null;

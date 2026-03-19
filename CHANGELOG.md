@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.20] - 2026-03-20
+
+### Added
+- People (farmer storage) detail: storage tab now uses real data via `useGetStorageGatePassesOfSingleFarmer` with search, sort, pagination, refresh, and voucher rendering
+- Storage gate pass types: `GetStorageGatePassesByFarmerData` for `GET /storage-gate-pass/farmer-storage-link/:id`
+
+### Changed
+- People (farmer storage) detail: header Storage summary now totals `bagSizes.initialQuantity` from storage gate passes; removed "View Stock Ledger" CTA/dialog from the page for now
+- Analytics Reports (grading): pass total columns into shared table totals logic, including dynamic bag-size columns
+
+### Fixed
+- Grading report totals (table + PDF): numeric parsing now handles object-shaped values with `quantity`, and grouped sections render per-group totals consistently
+
 ## [0.10.19] - 2026-03-19
 
 ### Changed

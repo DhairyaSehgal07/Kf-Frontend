@@ -61,6 +61,16 @@ function toNum(value: unknown): number {
     const n = Number(value);
     return Number.isNaN(n) ? 0 : n;
   }
+  if (typeof value === 'object' && value !== null && 'quantity' in value) {
+    const quantity = (value as { quantity?: unknown }).quantity;
+    if (typeof quantity === 'number' && !Number.isNaN(quantity)) {
+      return quantity;
+    }
+    if (typeof quantity === 'string') {
+      const n = Number(quantity);
+      return Number.isNaN(n) ? 0 : n;
+    }
+  }
   return 0;
 }
 

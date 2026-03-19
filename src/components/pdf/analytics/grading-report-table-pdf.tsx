@@ -544,7 +544,31 @@ function toNum(value: unknown): number {
     const n = Number(value);
     return Number.isNaN(n) ? 0 : n;
   }
+  if (typeof value === 'object' && value !== null && 'quantity' in value) {
+    const quantity = (value as { quantity?: unknown }).quantity;
+    if (typeof quantity === 'number' && !Number.isNaN(quantity))
+      return quantity;
+    if (typeof quantity === 'string') {
+      const n = Number(quantity);
+      return Number.isNaN(n) ? 0 : n;
+    }
+  }
   return 0;
+}
+
+function computeTotalsForColumns(
+  sourceRows: GradingReportRow[],
+  columnKeys: string[]
+): Record<string, number> {
+  const totals: Record<string, number> = {};
+  for (const key of columnKeys) totals[key] = 0;
+  for (const row of sourceRows) {
+    const record = row as Record<string, unknown>;
+    for (const key of columnKeys) {
+      totals[key] += toNum(record[key]);
+    }
+  }
+  return totals;
 }
 
 function TotalsRow({
@@ -1409,16 +1433,6 @@ export const GradingReportTablePdf = ({
   rows,
   tableSnapshot,
 }: GradingReportTablePdfProps) => {
-  const totals: Record<string, number> = {};
-  for (const key of TOTAL_KEYS) {
-    totals[key] = 0;
-  }
-  for (const row of rows) {
-    for (const key of TOTAL_KEYS) {
-      totals[key] += toNum((row as Record<string, unknown>)[key]);
-    }
-  }
-
   const summary = computeGradingReportSummary(rows);
 
   const useSnapshot =
@@ -1431,6 +1445,13 @@ export const GradingReportTablePdf = ({
     useSnapshot && tableSnapshot!.visibleColumnIds.length > 0
       ? tableSnapshot!.visibleColumnIds
       : ALL_COLUMNS.map((c) => c.key);
+  const totalKeysForVisibleColumns = Array.from(
+    new Set([
+      ...TOTAL_KEYS,
+      ...visibleColumnIds.filter((id) => id.startsWith('bagSize:')),
+    ])
+  );
+  const totals = computeTotalsForColumns(rows, totalKeysForVisibleColumns);
 
   const grouping = useSnapshot ? tableSnapshot!.grouping : [];
 
@@ -1515,13 +1536,24 @@ export const GradingReportTablePdf = ({
                         </Text>
                       </View>
                     ) : (
-                      getGradingPassGroups(section.leaves).map((group, gi) => (
-                        <GroupedTableBody
-                          key={group[0]?.id ?? gi}
-                          group={group}
+                      <>
+                        {getGradingPassGroups(section.leaves).map(
+                          (group, gi) => (
+                            <GroupedTableBody
+                              key={group[0]?.id ?? gi}
+                              group={group}
+                              columns={columnsForTable}
+                            />
+                          )
+                        )}
+                        <TotalsRow
+                          totals={computeTotalsForColumns(
+                            section.leaves,
+                            totalKeysForVisibleColumns
+                          )}
                           columns={columnsForTable}
                         />
-                      ))
+                      </>
                     )}
                   </View>
                 </View>

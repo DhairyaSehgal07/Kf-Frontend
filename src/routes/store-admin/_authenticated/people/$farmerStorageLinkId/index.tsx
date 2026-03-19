@@ -18,13 +18,6 @@ import {
 } from '@/components/ui/table';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -35,26 +28,22 @@ import {
   Truck,
   ArrowDownToLine,
   Hash,
-  Package,
   Edit,
-  FileSpreadsheet,
-  FileText,
   Clock,
 } from 'lucide-react';
 import type { FarmerStorageLink } from '@/types/farmer';
-import type { StockLedgerRow } from '@/components/pdf/stockLedgerPdfTypes';
 import type { IncomingGatePassWithLink } from '@/types/incoming-gate-pass';
 import type { IncomingVoucherData } from '@/components/daybook/vouchers/types';
 import type { GradingGatePass } from '@/types/grading-gate-pass';
 import { ContractTabPanel } from '@/components/daybook/ContractTabPanel';
 import { IncomingVoucher } from '@/components/daybook/vouchers/incoming-voucher';
 import { GradingVoucher } from '@/components/daybook/vouchers/grading-voucher';
+import { StorageVoucher } from '@/components/daybook/vouchers/storage-voucher';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Spinner } from '@/components/ui/spinner';
-import { downloadStockLedgerExcel } from '@/utils/stockLedgerExcel';
 import { EditFarmerModal } from '@/components/forms/edit-farmer-modal';
 import { useGetIncomingGatePassesOfSingleFarmer } from '@/services/store-admin/incoming-gate-pass/useGetIncomingGatePassesOfSingleFarmer';
 import { useGetGradingPassesOfSingleFarmer } from '@/services/store-admin/grading-gate-pass/useGetGradingPassesOfSingleFarmer';
+import { useGetStorageGatePassesOfSingleFarmer } from '@/services/store-admin/storage-gate-pass/useGetStorageGatePassesOfSingleFarmer';
 import { JUTE_BAG_WEIGHT } from '@/components/forms/grading/constants';
 import { computeGradingOrderTotals } from '@/components/daybook/vouchers/grading-voucher-calculations';
 
@@ -81,8 +70,6 @@ const EMPTY_AGGREGATE_BAGS: AggregateBags = {
   totalBagsNikasi: 0,
   totalBagsOutgoing: 0,
 };
-
-const EMPTY_STOCK_LEDGER_ROWS: StockLedgerRow[] = [];
 
 /** Format date as "27th February , 2026" */
 function formatLongDate(dateInput: string | Date | undefined): string {
@@ -200,39 +187,6 @@ function PeopleDetailPage() {
   });
 
   const [editModalOpen, setEditModalOpen] = useState(false);
-  const [isPdfOpening, setIsPdfOpening] = useState(false);
-  const [stockLedgerDialogOpen, setStockLedgerDialogOpen] = useState(false);
-
-  const openStockLedgerPdf = useCallback(() => {
-    if (!link) return;
-    const farmerName = link.farmerId.name;
-    const win = window.open('', '_blank');
-    if (win) {
-      win.document.write(
-        '<html><body style="font-family:sans-serif;padding:2rem;text-align:center;color:#666;">Generating PDF…</body></html>'
-      );
-    }
-    setIsPdfOpening(true);
-    Promise.all([
-      import('@react-pdf/renderer'),
-      import('@/components/pdf/StockLedgerPdf'),
-    ])
-      .then(([{ pdf }, { StockLedgerPdf: StockLedgerPdfComponent }]) => {
-        return pdf(
-          <StockLedgerPdfComponent
-            farmerName={farmerName}
-            rows={EMPTY_STOCK_LEDGER_ROWS}
-          />
-        ).toBlob();
-      })
-      .then((blob) => {
-        const url = URL.createObjectURL(blob);
-        if (win) win.location.href = url;
-        else window.location.href = url;
-        setTimeout(() => URL.revokeObjectURL(url), 60_000);
-      })
-      .finally(() => setIsPdfOpening(false));
-  }, [link]);
 
   // Get initials for avatar
   const getInitials = (name: string) => {
@@ -259,11 +213,6 @@ function PeopleDetailPage() {
           link={link}
           getInitials={getInitials}
           setEditModalOpen={setEditModalOpen}
-          setStockLedgerDialogOpen={setStockLedgerDialogOpen}
-          stockLedgerDialogOpen={stockLedgerDialogOpen}
-          isPdfOpening={isPdfOpening}
-          openStockLedgerPdf={openStockLedgerPdf}
-          downloadStockLedgerExcel={downloadStockLedgerExcel}
         />
       </div>
 
@@ -281,11 +230,6 @@ type PersonalInfoCardProps = {
   getInitials: (name: string) => string;
   aggregateBags: AggregateBags;
   setEditModalOpen: (open: boolean) => void;
-  setStockLedgerDialogOpen: (open: boolean) => void;
-  stockLedgerDialogOpen: boolean;
-  isPdfOpening: boolean;
-  openStockLedgerPdf: () => void;
-  downloadStockLedgerExcel: (farmerName: string) => void;
 };
 
 function PersonalInfoCard({
@@ -293,11 +237,6 @@ function PersonalInfoCard({
   getInitials,
   aggregateBags,
   setEditModalOpen,
-  setStockLedgerDialogOpen,
-  stockLedgerDialogOpen,
-  isPdfOpening,
-  openStockLedgerPdf,
-  downloadStockLedgerExcel,
 }: PersonalInfoCardProps) {
   return (
     <Card className="overflow-hidden rounded-2xl shadow-lg">
@@ -330,79 +269,6 @@ function PersonalInfoCard({
               <Edit className="h-4 w-4" />
             </Button>
           </div>
-
-          <div className="flex flex-wrap gap-3">
-            <Button
-              variant="default"
-              className="gap-2 rounded-xl"
-              disabled={isPdfOpening}
-              onClick={() => setStockLedgerDialogOpen(true)}
-            >
-              {isPdfOpening ? (
-                <>
-                  <Spinner className="h-4 w-4" />
-                  Generating PDF…
-                </>
-              ) : (
-                <>
-                  <Package className="h-4 w-4" />
-                  View Stock Ledger
-                </>
-              )}
-            </Button>
-          </div>
-
-          <Dialog
-            open={stockLedgerDialogOpen}
-            onOpenChange={setStockLedgerDialogOpen}
-          >
-            <DialogContent
-              className="font-custom sm:max-w-md"
-              showCloseButton={true}
-            >
-              <DialogHeader>
-                <DialogTitle>Stock Ledger</DialogTitle>
-              </DialogHeader>
-              <p className="font-custom text-muted-foreground text-sm">
-                Choose how you want to view or download the stock ledger.
-              </p>
-              <DialogFooter className="gap-2 sm:gap-0">
-                <Button
-                  variant="default"
-                  className="gap-2"
-                  disabled={isPdfOpening}
-                  onClick={() => {
-                    setStockLedgerDialogOpen(false);
-                    openStockLedgerPdf();
-                  }}
-                >
-                  {isPdfOpening ? (
-                    <>
-                      <Spinner className="h-4 w-4" />
-                      Generating…
-                    </>
-                  ) : (
-                    <>
-                      <FileText className="h-4 w-4" />
-                      View PDF
-                    </>
-                  )}
-                </Button>
-                <Button
-                  variant="outline"
-                  className="gap-2"
-                  onClick={() => {
-                    if (!link) return;
-                    setStockLedgerDialogOpen(false);
-                    downloadStockLedgerExcel(link.farmerId.name);
-                  }}
-                >
-                  <FileSpreadsheet className="h-4 w-4" />
-                  Download Excel
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
 
           <Separator />
 
@@ -776,20 +642,142 @@ function ContractGradingContent({ link }: { link: FarmerStorageLink }) {
   );
 }
 
+function ContractStorageContent({ link }: { link: FarmerStorageLink }) {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+
+  const {
+    data: storagePasses = [],
+    isLoading,
+    isFetching,
+    refetch,
+  } = useGetStorageGatePassesOfSingleFarmer(link._id);
+
+  const filteredAndSorted = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    let list = storagePasses;
+    if (q) {
+      list = list.filter((pass) => {
+        const gatePassNo = String(pass.gatePassNo ?? '').toLowerCase();
+        const manual = String(pass.manualGatePassNumber ?? '').toLowerCase();
+        return gatePassNo.includes(q) || manual.includes(q);
+      });
+    }
+    const sorted = [...list].sort((a, b) => {
+      const aDate = new Date(a.date ?? 0).getTime();
+      const bDate = new Date(b.date ?? 0).getTime();
+      const aNo = Number(a.gatePassNo ?? 0);
+      const bNo = Number(b.gatePassNo ?? 0);
+      if (sortOrder === 'asc') {
+        return aDate !== bDate ? aDate - bDate : aNo - bNo;
+      }
+      return aDate !== bDate ? bDate - aDate : bNo - aNo;
+    });
+    return sorted;
+  }, [storagePasses, searchQuery, sortOrder]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredAndSorted.length / limit));
+  const hasPrev = page > 1;
+  const hasNext = page < totalPages;
+  const paginated = useMemo(
+    () => filteredAndSorted.slice((page - 1) * limit, page * limit),
+    [filteredAndSorted, page, limit]
+  );
+
+  const setLimitAndResetPage = useCallback((newLimit: number) => {
+    setLimit(newLimit);
+    setPage(1);
+  }, []);
+
+  return (
+    <ContractTabPanel
+      addButtonLabel="Add Storage"
+      addButtonTo="/store-admin/storage"
+      placeholderCount={filteredAndSorted.length}
+      isRefreshing={isFetching}
+      onRefresh={() => refetch()}
+      searchQuery={searchQuery}
+      onSearchChange={setSearchQuery}
+      sortOrderOnly
+      sortOrder={sortOrder}
+      onSortOrderChange={setSortOrder}
+      onSortPageReset={() => setPage(1)}
+      limit={limit}
+      setLimitAndResetPage={setLimitAndResetPage}
+      page={page}
+      totalPages={totalPages}
+      hasPrev={hasPrev}
+      hasNext={hasNext}
+      setPage={setPage}
+    >
+      {isLoading ? (
+        <div className="space-y-6">
+          {[...Array(3)].map((_, i) => (
+            <Card key={i} className="overflow-hidden p-0">
+              <div className="border-border bg-muted/30 px-3 py-2 sm:px-4 sm:py-2.5">
+                <div className="flex items-center justify-between gap-2">
+                  <Skeleton className="h-4 w-16" />
+                  <Skeleton className="h-4 w-8" />
+                </div>
+                <Skeleton className="mt-1.5 h-2 w-full rounded-full" />
+              </div>
+              <div className="space-y-2 border-b px-4 py-3">
+                <div className="flex gap-4">
+                  {[...Array(4)].map((__, j) => (
+                    <Skeleton key={j} className="h-4 w-14" />
+                  ))}
+                </div>
+              </div>
+              <div className="p-4">
+                <div className="flex gap-2">
+                  <Skeleton className="h-9 w-24 rounded-lg" />
+                  <Skeleton className="h-9 w-9 rounded-lg" />
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
+      ) : paginated.length === 0 ? (
+        <Card>
+          <CardContent className="py-8 pt-6 text-center">
+            <p className="font-custom text-muted-foreground">
+              No storage gate passes yet.
+            </p>
+            <Button className="font-custom mt-4" asChild>
+              <Link to="/store-admin/storage">Add Storage Gate Pass</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-6">
+          {paginated.map((pass) => (
+            <StorageVoucher
+              key={pass._id}
+              voucher={pass}
+              farmerName={link.farmerId.name}
+              farmerAccount={link.accountNumber}
+            />
+          ))}
+        </div>
+      )}
+    </ContractTabPanel>
+  );
+}
+
 function ContractTabContent({
   link,
   getInitials,
   setEditModalOpen,
-  setStockLedgerDialogOpen,
-  stockLedgerDialogOpen,
-  isPdfOpening,
-  openStockLedgerPdf,
-  downloadStockLedgerExcel,
 }: Omit<PersonalInfoCardProps, 'aggregateBags'>) {
   const { data: incomingPasses = [] } = useGetIncomingGatePassesOfSingleFarmer(
     link._id
   );
   const { data: gradingPasses = [] } = useGetGradingPassesOfSingleFarmer(
+    link._id
+  );
+  const { data: storagePasses = [] } = useGetStorageGatePassesOfSingleFarmer(
     link._id
   );
 
@@ -810,8 +798,15 @@ function ContractTabContent({
         );
         return sum + passInitial;
       }, 0),
+      totalBagsStored: storagePasses.reduce((sum, pass) => {
+        const passInitial = (pass.bagSizes ?? []).reduce(
+          (s, bag) => s + (bag.initialQuantity ?? 0),
+          0
+        );
+        return sum + passInitial;
+      }, 0),
     }),
-    [incomingPasses, gradingPasses]
+    [incomingPasses, gradingPasses, storagePasses]
   );
 
   /** Format wastage to 2 decimal places */
@@ -1231,11 +1226,6 @@ function ContractTabContent({
         getInitials={getInitials}
         aggregateBags={aggregateBags}
         setEditModalOpen={setEditModalOpen}
-        setStockLedgerDialogOpen={setStockLedgerDialogOpen}
-        stockLedgerDialogOpen={stockLedgerDialogOpen}
-        isPdfOpening={isPdfOpening}
-        openStockLedgerPdf={openStockLedgerPdf}
-        downloadStockLedgerExcel={downloadStockLedgerExcel}
       />
 
       <Card className="border-border rounded-xl shadow-sm">
@@ -1617,13 +1607,7 @@ function ContractTabContent({
           <ContractGradingContent link={link} />
         </TabsContent>
         <TabsContent value="storage" className="mt-4 outline-none">
-          <Card>
-            <CardContent className="py-8 pt-6 text-center">
-              <p className="font-custom text-muted-foreground">
-                No storage gate passes yet.
-              </p>
-            </CardContent>
-          </Card>
+          <ContractStorageContent link={link} />
         </TabsContent>
         <TabsContent value="dispatch" className="mt-4 outline-none">
           <Card>

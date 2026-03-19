@@ -16,6 +16,7 @@ import {
   type GradingReportRow,
   GRADING_REPORT_ROW_SPAN_COLUMN_IDS,
 } from './columns';
+import { GRADING_TOTAL_COLUMN_IDS } from './constants';
 import {
   DataTable,
   type GradingReportDataTableRef,
@@ -464,6 +465,10 @@ const GradingReportTable = () => {
     () => [...GRADING_REPORT_ROW_SPAN_COLUMN_IDS, ...gradingBagSizeColumnIds],
     [gradingBagSizeColumnIds]
   );
+  const totalColumnIds = useMemo(
+    () => [...GRADING_TOTAL_COLUMN_IDS, ...gradingBagSizeColumnIds],
+    [gradingBagSizeColumnIds]
+  );
 
   const reportContentRef = useRef<HTMLDivElement>(null);
 
@@ -611,6 +616,7 @@ const GradingReportTable = () => {
           ref={tableRef}
           columns={gradingColumns}
           data={rows}
+          totalColumnIds={totalColumnIds}
           initialColumnVisibility={initialColumnVisibility}
           rowSpanColumnIds={rowSpanColumnIds}
           showGroupedSubtotals
