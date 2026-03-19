@@ -2,6 +2,7 @@
 
 import { useMemo, useRef, useState } from 'react';
 import { format, parseISO } from 'date-fns';
+import type { ColumnDef } from '@tanstack/react-table';
 import { useGetStorageGatePasses } from '@/services/store-admin/storage-gate-pass/useGetStorageGatePasses';
 import type { StorageGatePassWithLink } from '@/types/storage-gate-pass';
 import { columns, type StorageReportRow } from './columns';
@@ -51,6 +52,50 @@ function mapStorageGatePassesToRows(
       (sum, b) => sum + (b.initialQuantity ?? b.currentQuantity ?? 0),
       0
     );
+
+    const bagSizesQuantities = (pass.bagSizes ?? []).reduce(
+      (acc, b) => {
+        const size = b.size;
+        if (!size) return acc;
+        const qty = b.currentQuantity ?? b.initialQuantity ?? 0;
+        acc[size] = (acc[size] ?? 0) + qty;
+        return acc;
+      },
+      {} as Record<string, number>
+    );
+
+    const bagSizeColumnValues = (pass.bagSizes ?? []).reduce(
+      (acc, b) => {
+        const size = b.size;
+        if (!size) return acc;
+        const qty = b.currentQuantity ?? b.initialQuantity ?? 0;
+        const key = `bagSize:${size}` as const;
+        acc[key] = (acc[key] ?? 0) + qty;
+        return acc;
+      },
+      {} as Partial<Record<`bagSize:${string}`, number>>
+    );
+
+    const bagSizesLocations = (pass.bagSizes ?? []).reduce(
+      (acc, b) => {
+        const size = b.size;
+        if (!size) return acc;
+        const loc = [b.chamber, b.floor, b.row].filter(Boolean).join('-');
+        if (!loc) return acc;
+        const existing = acc[size];
+        if (!existing) {
+          acc[size] = loc;
+          return acc;
+        }
+        const parts = existing.split(', ');
+        if (!parts.includes(loc)) {
+          acc[size] = `${existing}, ${loc}`;
+        }
+        return acc;
+      },
+      {} as Record<string, string>
+    );
+
     const locations = (pass.bagSizes ?? [])
       .map((b) => [b.chamber, b.floor, b.row].filter(Boolean).join('-'))
       .filter(Boolean);
@@ -71,6 +116,9 @@ function mapStorageGatePassesToRows(
       variety: pass.variety ?? '—',
       storageCategory: pass.storageCategory ?? '—',
       totalBags,
+      ...bagSizeColumnValues,
+      bagSizesQuantities,
+      bagSizesLocations,
       location,
       remarks: pass.remarks ?? '—',
       createdAt: formatDateTime(pass.createdAt),
@@ -118,6 +166,80 @@ const StorageReportTable = () => {
     return mapStorageGatePassesToRows(data.list);
   }, [data]);
 
+  const bagSizes = useMemo((): string[] => {
+    if (!data?.list) return [];
+    const seen = new Set<string>();
+    const ordered: string[] = [];
+    for (const pass of data.list) {
+      for (const b of pass.bagSizes ?? []) {
+        if (!b.size) continue;
+        if (seen.has(b.size)) continue;
+        seen.add(b.size);
+        ordered.push(b.size);
+      }
+    }
+    return ordered;
+  }, [data]);
+
+  const bagSizeColumnDefs = useMemo(() => {
+    return bagSizes.map(
+      (size): ColumnDef<StorageReportRow> => ({
+        id: `bagSize:${size}`,
+        accessorKey: `bagSize:${size}`,
+        header: () => <div className="font-custom text-right">{size}</div>,
+        cell: ({ row, getValue }) => {
+          if (row.getIsGrouped()) {
+            return (
+              <div className="font-custom text-right" aria-hidden>
+                —
+              </div>
+            );
+          }
+
+          const value = getValue<number | undefined>();
+          if (value == null) {
+            return <div className="font-custom text-right" aria-hidden />;
+          }
+
+          const location = row.original.bagSizesLocations?.[size];
+          return (
+            <div className="text-right">
+              <div className="font-custom font-medium">
+                {value.toLocaleString()}
+              </div>
+              {location ? (
+                <div className="text-muted-foreground font-custom text-xs">
+                  {location}
+                </div>
+              ) : null}
+            </div>
+          );
+        },
+        enableGrouping: false,
+        enableSorting: false,
+      })
+    );
+  }, [bagSizes]);
+
+  const storageColumns = useMemo(() => {
+    const totalIdx = columns.findIndex(
+      (c) => (c as { accessorKey?: string }).accessorKey === 'totalBags'
+    );
+    if (totalIdx < 0) return [...columns, ...bagSizeColumnDefs];
+    return [
+      ...columns.slice(0, totalIdx + 1),
+      ...bagSizeColumnDefs,
+      ...columns.slice(totalIdx + 1),
+    ];
+  }, [bagSizeColumnDefs]);
+
+  const storageColumnLabels = useMemo(() => {
+    const bagLabels = Object.fromEntries(
+      bagSizes.map((size) => [`bagSize:${size}`, size])
+    ) as Record<string, string>;
+    return { ...STORAGE_COLUMN_LABELS, ...bagLabels };
+  }, [bagSizes]);
+
   const rows = useMemo((): StorageReportRow[] => {
     return filterRowsByDateRange(
       allRows,
@@ -125,6 +247,11 @@ const StorageReportTable = () => {
       appliedRange.dateTo
     );
   }, [allRows, appliedRange.dateFrom, appliedRange.dateTo]);
+
+  const totalColumnIds = useMemo((): string[] => {
+    const bagTotals = bagSizes.map((size) => `bagSize:${size}`);
+    return [...STORAGE_TOTAL_COLUMN_IDS, ...bagTotals];
+  }, [bagSizes]);
 
   const handleApplyDates = () => {
     if (!fromDate && !toDate) return;
@@ -242,10 +369,10 @@ const StorageReportTable = () => {
         </h2>
         <DataTable
           ref={tableRef}
-          columns={columns}
+          columns={storageColumns}
           data={rows}
-          totalColumnIds={STORAGE_TOTAL_COLUMN_IDS}
-          columnLabels={STORAGE_COLUMN_LABELS}
+          totalColumnIds={totalColumnIds}
+          columnLabels={storageColumnLabels}
           toolbarLeftContent={
             <>
               <DatePicker

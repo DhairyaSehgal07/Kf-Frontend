@@ -250,6 +250,19 @@ export type StorageReportRow = {
   variety: string;
   storageCategory: string;
   totalBags: number;
+  /**
+   * Per gate-pass quantities keyed by bag `size` (e.g. "Ration", "Seed").
+   * Used to render dynamic columns for each bag size.
+   */
+  bagSizesQuantities: Record<string, number>;
+  /** Per bag-size location text keyed by bag `size` (e.g. "2-3-B"). */
+  bagSizesLocations: Record<string, string>;
+  /**
+   * Dynamic bag-size columns use ids like `bagSize:${size}`.
+   * The UI table footer sums `row[id]` directly, so we also store each
+   * bag size quantity as a direct numeric property.
+   */
+  [key: `bagSize:${string}`]: number | undefined;
   location: string;
   remarks: string;
   createdAt: string;
