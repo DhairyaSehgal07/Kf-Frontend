@@ -55,6 +55,7 @@ const STORAGE_CATEGORY_OPTIONS = [
   'PURCHASED',
   'CONTRACT FARMING',
   'RENTAL',
+  'FAZALPUR',
 ] as const;
 
 export type ExtraQuantityRow = {
