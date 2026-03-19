@@ -85,7 +85,11 @@ export interface StorageGatePass {
   /** Present when returned from GET /storage-gate-pass/grouped */
   manualGatePassNumber?: number;
   farmerStorageLinkId?: string;
-  createdBy?: string;
+  createdBy?: string | StorageGatePassCreatedBy;
+}
+
+export interface StorageGatePassCreatedBy {
+  name?: string;
 }
 
 /** Admin user who linked the farmer–storage pair in GET /storage-gate-pass response */
@@ -117,7 +121,7 @@ export interface StorageGatePassBagSize {
 export interface StorageGatePassWithLink {
   _id: string;
   farmerStorageLinkId: StorageGatePassFarmerStorageLink;
-  createdBy: string;
+  createdBy?: string | StorageGatePassCreatedBy;
   gatePassNo: number;
   date: string;
   variety: string;
@@ -132,10 +136,37 @@ export interface StorageGatePassWithLink {
   manualGatePassNumber?: number;
 }
 
+/** Query params for GET /storage-gate-pass (pagination, sort, filters) */
+export interface GetStorageGatePassesParams {
+  page?: number;
+  limit?: number;
+  sortOrder?: 'asc' | 'desc';
+  /** Sort field; when not set, backend may default to date */
+  sortBy?: 'date' | 'gatePassNo';
+  gatePassNo?: number | string;
+  dateFrom?: string;
+  dateTo?: string;
+  variety?: string;
+}
+
+/** Pagination as returned in GET /storage-gate-pass */
+export interface StorageGatePassPagination {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}
+
+/** Paginated payload inside GET /storage-gate-pass response (data field) */
+export interface GetStorageGatePassesListData {
+  storageGatePasses: StorageGatePassWithLink[];
+  pagination: StorageGatePassPagination;
+}
+
 /** API response for GET /storage-gate-pass */
 export interface GetStorageGatePassesApiResponse {
   success: boolean;
-  data: StorageGatePassWithLink[];
+  data: GetStorageGatePassesListData | StorageGatePassWithLink[];
   message?: string;
 }
 

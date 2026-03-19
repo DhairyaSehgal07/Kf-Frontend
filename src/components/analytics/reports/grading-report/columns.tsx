@@ -1,31 +1,271 @@
-import type { ColumnDef } from '@tanstack/react-table';
+/* eslint-disable react-refresh/only-export-components -- column defs export columns + type; header/cell helpers are local */
+import type { ColumnDef, CellContext } from '@tanstack/react-table';
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { ChevronDown, ChevronRight, MoreVertical } from 'lucide-react';
 
-/** Row shape for the grading report table and PDF. One row per order-detail line; grouping uses gradingPassGroupSize. */
+export { GRADING_REPORT_ROW_SPAN_COLUMN_IDS } from './constants';
+
 export type GradingReportRow = {
   id: string;
+  gradingPassRowIndex?: number;
   gradingPassGroupSize?: number;
   farmerName: string;
   accountNumber: number | string;
-  farmerMobile: string;
   farmerAddress: string;
+  farmerMobile: string;
+  createdByName: string;
+  gatePassNo: number | string;
+  manualGatePassNumber: number | string;
   incomingGatePassNo: number | string;
   incomingManualNo: number | string;
   incomingGatePassDate: string;
-  incomingTruckNumber: string;
-  variety: string;
-  bagsReceived: number | string;
-  netProductKg: number | string;
-  gatePassNo: number | string;
-  manualGatePassNumber?: number | string;
   date: string;
-  totalGradedBags: number | string;
-  totalGradedWeightKg: number | string;
+  variety: string;
+  truckNumber: string;
+  bagsReceived: number;
+  grossWeightKg: number | string;
+  tareWeightKg: number | string;
+  netWeightKg: number | string;
+  netProductKg: number | string;
+  totalGradedBags: number;
+  totalGradedWeightKg: number;
   wastageKg: number | string;
   grader: string;
   remarks: string;
-  grossWeightKg?: number | string;
-  netWeightKg?: number | string;
 };
+
+type SortState = { id: string; desc: boolean }[];
+
+function GroupableHeader({
+  column,
+  label,
+}: {
+  column: { getIsGrouped: () => boolean; toggleGrouping: () => void };
+  label: string;
+}) {
+  return (
+    <div className="flex items-center gap-1">
+      <span className="font-custom">{label}</span>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="focus-visible:ring-primary h-8 w-8 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+            aria-label={`${label} column options`}
+          >
+            <MoreVertical className="h-4 w-4 text-gray-600" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start">
+          <DropdownMenuItem
+            onSelect={() => {
+              column.toggleGrouping();
+            }}
+          >
+            {column.getIsGrouped()
+              ? `Ungroup by ${label}`
+              : `Group by ${label}`}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  );
+}
+
+function SortableHeader({
+  column,
+  table,
+  label,
+}: {
+  column: {
+    id: string;
+    getIsSorted: () => false | 'asc' | 'desc';
+    toggleSorting: (desc?: boolean) => void;
+  };
+  table: {
+    options: {
+      onSortingChange?: (updater: (prev: SortState) => SortState) => void;
+    };
+  };
+  label: string;
+}) {
+  const isSorted = column.getIsSorted();
+  const columnId = column.id;
+  return (
+    <div className="flex items-center justify-end gap-1">
+      <span className="font-custom">{label}</span>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="focus-visible:ring-primary h-8 w-8 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+            aria-label={`${label} column options`}
+          >
+            <MoreVertical className="h-4 w-4 text-gray-600" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem
+            onSelect={(e) => {
+              e.preventDefault();
+              column.toggleSorting(false);
+            }}
+          >
+            Sort ascending
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onSelect={(e) => {
+              e.preventDefault();
+              column.toggleSorting(true);
+            }}
+          >
+            Sort descending
+          </DropdownMenuItem>
+          {isSorted && (
+            <DropdownMenuItem
+              onSelect={(e) => {
+                e.preventDefault();
+                table.options.onSortingChange?.((prev) =>
+                  prev.filter((s) => s.id !== columnId)
+                );
+              }}
+            >
+              Clear sort
+            </DropdownMenuItem>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  );
+}
+
+function GroupableSortableHeader({
+  column,
+  table,
+  label,
+}: {
+  column: {
+    id: string;
+    getIsGrouped: () => boolean;
+    toggleGrouping: () => void;
+    getIsSorted: () => false | 'asc' | 'desc';
+    toggleSorting: (desc?: boolean) => void;
+  };
+  table: {
+    options: {
+      onSortingChange?: (updater: (prev: SortState) => SortState) => void;
+    };
+  };
+  label: string;
+}) {
+  const isSorted = column.getIsSorted();
+  const columnId = column.id;
+  return (
+    <div className="flex items-center gap-1">
+      <span className="font-custom">{label}</span>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="focus-visible:ring-primary h-8 w-8 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+            aria-label={`${label} column options`}
+          >
+            <MoreVertical className="h-4 w-4 text-gray-600" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start">
+          <DropdownMenuItem
+            onSelect={() => {
+              column.toggleGrouping();
+            }}
+          >
+            {column.getIsGrouped()
+              ? `Ungroup by ${label}`
+              : `Group by ${label}`}
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            onSelect={(e) => {
+              e.preventDefault();
+              column.toggleSorting(false);
+            }}
+          >
+            Sort ascending
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onSelect={(e) => {
+              e.preventDefault();
+              column.toggleSorting(true);
+            }}
+          >
+            Sort descending
+          </DropdownMenuItem>
+          {isSorted && (
+            <DropdownMenuItem
+              onSelect={(e) => {
+                e.preventDefault();
+                table.options.onSortingChange?.((prev) =>
+                  prev.filter((s) => s.id !== columnId)
+                );
+              }}
+            >
+              Clear sort
+            </DropdownMenuItem>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  );
+}
+
+function GroupableCell({
+  row,
+  column,
+  table,
+}: CellContext<GradingReportRow, unknown>) {
+  const isGrouped = row.getIsGrouped();
+  const canExpand = row.getCanExpand();
+  const grouping = table.getState().grouping ?? [];
+  const groupingColumnId = grouping[row.depth];
+  const isThisColumnGrouping = groupingColumnId === column.id;
+  const showExpandCollapse = isGrouped && canExpand && isThisColumnGrouping;
+  const value = String(row.getValue(column.id) ?? '—');
+  return (
+    <div className="font-custom flex items-center gap-1">
+      {showExpandCollapse ? (
+        <button
+          type="button"
+          onClick={row.getToggleExpandedHandler()}
+          className="text-muted-foreground focus-visible:ring-primary hover:bg-primary/10 hover:text-primary inline-flex shrink-0 rounded p-0.5 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+          aria-label={row.getIsExpanded() ? 'Collapse group' : 'Expand group'}
+        >
+          {row.getIsExpanded() ? (
+            <ChevronDown className="h-4 w-4" />
+          ) : (
+            <ChevronRight className="h-4 w-4" />
+          )}
+        </button>
+      ) : null}
+      <span
+        style={{
+          paddingLeft: showExpandCollapse ? 0 : row.depth * 20,
+        }}
+      >
+        {value}
+      </span>
+    </div>
+  );
+}
 
 function formatNum(value: number | string): string {
   const n = typeof value === 'number' ? value : Number(value);
@@ -36,60 +276,147 @@ function formatNum(value: number | string): string {
 export const columns: ColumnDef<GradingReportRow>[] = [
   {
     accessorKey: 'farmerName',
-    header: () => <span className="font-custom">Farmer</span>,
+    header: ({ column }) => <GroupableHeader column={column} label="Farmer" />,
+    cell: GroupableCell,
+    enableGrouping: true,
   },
   {
     accessorKey: 'accountNumber',
-    header: () => <span className="font-custom">Account No.</span>,
+    header: ({ column, table }) => (
+      <SortableHeader column={column} table={table} label="Account No." />
+    ),
     cell: ({ row }) => (
       <div className="font-custom text-right">
-        {String(row.getValue('accountNumber') ?? '—')}
+        {row.getIsGrouped()
+          ? '—'
+          : String(row.getValue('accountNumber') ?? '—')}
       </div>
     ),
+    aggregationFn: () => null,
+    enableSorting: true,
+  },
+  {
+    accessorKey: 'farmerAddress',
+    header: ({ column }) => <GroupableHeader column={column} label="Address" />,
+    cell: GroupableCell,
+    enableGrouping: true,
+  },
+  {
+    accessorKey: 'farmerMobile',
+    header: () => <span className="font-custom">Mobile</span>,
+  },
+  {
+    accessorKey: 'createdByName',
+    header: ({ column }) => (
+      <GroupableHeader column={column} label="Created by" />
+    ),
+    cell: GroupableCell,
+    enableGrouping: true,
   },
   {
     accessorKey: 'incomingGatePassNo',
-    header: () => <span className="font-custom">Incoming GP no.</span>,
+    header: ({ column, table }) => (
+      <SortableHeader column={column} table={table} label="Incoming GP no." />
+    ),
     cell: ({ row }) => (
       <div className="font-custom text-right">
-        {String(row.getValue('incomingGatePassNo') ?? '—')}
+        {row.getIsGrouped()
+          ? '—'
+          : String(row.getValue('incomingGatePassNo') ?? '—')}
       </div>
     ),
+    aggregationFn: () => null,
+    enableSorting: true,
   },
   {
     accessorKey: 'incomingManualNo',
-    header: () => <span className="font-custom">Incoming manual no.</span>,
+    header: ({ column, table }) => (
+      <SortableHeader
+        column={column}
+        table={table}
+        label="Incoming manual no."
+      />
+    ),
     cell: ({ row }) => (
       <div className="font-custom text-right">
-        {String(row.getValue('incomingManualNo') ?? '—')}
+        {row.getIsGrouped()
+          ? '—'
+          : String(row.getValue('incomingManualNo') ?? '—')}
       </div>
     ),
+    aggregationFn: () => null,
+    enableSorting: true,
   },
   {
     accessorKey: 'incomingGatePassDate',
-    header: () => <span className="font-custom">Incoming GP date</span>,
+    header: ({ column, table }) => (
+      <GroupableSortableHeader
+        column={column}
+        table={table}
+        label="Incoming GP date"
+      />
+    ),
+    cell: GroupableCell,
+    enableGrouping: true,
+    enableSorting: true,
   },
   {
-    accessorKey: 'incomingTruckNumber',
+    accessorKey: 'truckNumber',
     header: () => <span className="font-custom">Truck no.</span>,
-    cell: ({ row }) => (
-      <span className="font-custom">
-        {String(row.getValue('incomingTruckNumber') ?? '—')}
-      </span>
-    ),
   },
   {
     accessorKey: 'variety',
-    header: () => <span className="font-custom">Variety</span>,
+    header: ({ column }) => <GroupableHeader column={column} label="Variety" />,
+    cell: GroupableCell,
+    enableGrouping: true,
   },
   {
     accessorKey: 'bagsReceived',
     header: () => <div className="font-custom text-right">Bags rec.</div>,
     cell: ({ row }) => (
       <div className="font-custom text-right font-medium">
-        {formatNum(row.getValue('bagsReceived') as number | string)}
+        {row.getIsGrouped()
+          ? '—'
+          : formatNum(row.getValue('bagsReceived') as number | string)}
       </div>
     ),
+    aggregationFn: 'sum',
+  },
+  {
+    accessorKey: 'grossWeightKg',
+    header: () => <div className="font-custom text-right">Gross (kg)</div>,
+    cell: ({ row }) => (
+      <div className="font-custom text-right font-medium">
+        {row.getIsGrouped()
+          ? '—'
+          : formatNum(row.getValue('grossWeightKg') as number | string)}
+      </div>
+    ),
+    aggregationFn: 'sum',
+  },
+  {
+    accessorKey: 'tareWeightKg',
+    header: () => <div className="font-custom text-right">Tare (kg)</div>,
+    cell: ({ row }) => (
+      <div className="font-custom text-right font-medium">
+        {row.getIsGrouped()
+          ? '—'
+          : formatNum(row.getValue('tareWeightKg') as number | string)}
+      </div>
+    ),
+    aggregationFn: 'sum',
+  },
+  {
+    accessorKey: 'netWeightKg',
+    header: () => <div className="font-custom text-right">Net (kg)</div>,
+    cell: ({ row }) => (
+      <div className="font-custom text-right font-medium">
+        {row.getIsGrouped()
+          ? '—'
+          : formatNum(row.getValue('netWeightKg') as number | string)}
+      </div>
+    ),
+    aggregationFn: 'sum',
   },
   {
     accessorKey: 'netProductKg',
@@ -98,53 +425,91 @@ export const columns: ColumnDef<GradingReportRow>[] = [
     ),
     cell: ({ row }) => (
       <div className="font-custom text-right font-medium">
-        {formatNum(row.getValue('netProductKg') as number | string)}
+        {row.getIsGrouped()
+          ? '—'
+          : formatNum(row.getValue('netProductKg') as number | string)}
       </div>
     ),
+    aggregationFn: 'sum',
   },
   {
     accessorKey: 'gatePassNo',
-    header: () => <span className="font-custom">GP no.</span>,
+    header: ({ column, table }) => (
+      <SortableHeader column={column} table={table} label="GP no." />
+    ),
     cell: ({ row }) => (
       <div className="font-custom text-right">
-        {String(row.getValue('gatePassNo') ?? '—')}
+        {row.getIsGrouped() ? '—' : String(row.getValue('gatePassNo') ?? '—')}
       </div>
     ),
+    aggregationFn: () => null,
+    enableSorting: true,
+  },
+  {
+    accessorKey: 'manualGatePassNumber',
+    header: ({ column, table }) => (
+      <SortableHeader column={column} table={table} label="Manual GP no." />
+    ),
+    cell: ({ row }) => (
+      <div className="font-custom text-right">
+        {row.getIsGrouped()
+          ? '—'
+          : String(row.getValue('manualGatePassNumber') ?? '—')}
+      </div>
+    ),
+    aggregationFn: () => null,
+    enableSorting: true,
   },
   {
     accessorKey: 'date',
-    header: () => <span className="font-custom">Date</span>,
+    header: ({ column, table }) => (
+      <GroupableSortableHeader column={column} table={table} label="Date" />
+    ),
+    cell: GroupableCell,
+    enableGrouping: true,
+    enableSorting: true,
   },
   {
     accessorKey: 'totalGradedBags',
     header: () => <div className="font-custom text-right">Graded bags</div>,
     cell: ({ row }) => (
       <div className="font-custom text-right font-medium">
-        {formatNum(row.getValue('totalGradedBags') as number | string)}
+        {row.getIsGrouped()
+          ? '—'
+          : formatNum(row.getValue('totalGradedBags') as number | string)}
       </div>
     ),
+    aggregationFn: 'sum',
   },
   {
     accessorKey: 'totalGradedWeightKg',
     header: () => <div className="font-custom text-right">Graded wt (kg)</div>,
     cell: ({ row }) => (
       <div className="font-custom text-right font-medium">
-        {formatNum(row.getValue('totalGradedWeightKg') as number | string)}
+        {row.getIsGrouped()
+          ? '—'
+          : formatNum(row.getValue('totalGradedWeightKg') as number | string)}
       </div>
     ),
+    aggregationFn: 'sum',
   },
   {
     accessorKey: 'wastageKg',
     header: () => <div className="font-custom text-right">Wastage (kg)</div>,
     cell: ({ row }) => (
       <div className="font-custom text-right font-medium">
-        {formatNum(row.getValue('wastageKg') as number | string)}
+        {row.getIsGrouped()
+          ? '—'
+          : formatNum(row.getValue('wastageKg') as number | string)}
       </div>
     ),
+    aggregationFn: 'sum',
   },
   {
     accessorKey: 'grader',
-    header: () => <span className="font-custom">Grader</span>,
+    header: ({ column }) => <GroupableHeader column={column} label="Grader" />,
+    cell: GroupableCell,
+    enableGrouping: true,
   },
   {
     accessorKey: 'remarks',

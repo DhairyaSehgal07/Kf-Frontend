@@ -107,11 +107,15 @@ const StorageReportTable = () => {
     dateTo?: string;
   }>({});
 
-  const { data, isLoading, error } = useGetStorageGatePasses();
+  const { data, isLoading, error } = useGetStorageGatePasses({
+    limit: 10_000,
+    page: 1,
+    sortOrder: 'desc',
+  });
 
   const allRows = useMemo((): StorageReportRow[] => {
-    if (!data) return [];
-    return mapStorageGatePassesToRows(data);
+    if (!data?.list) return [];
+    return mapStorageGatePassesToRows(data.list);
   }, [data]);
 
   const rows = useMemo((): StorageReportRow[] => {

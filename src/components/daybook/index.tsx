@@ -19,8 +19,6 @@ import { useGetGradingGatePasses } from '@/services/store-admin/grading-gate-pas
 import { useGetStorageGatePasses } from '@/services/store-admin/storage-gate-pass/useGetStorageGatePasses';
 import type { IncomingGatePassWithLink } from '@/types/incoming-gate-pass';
 import type { GradingGatePass } from '@/types/grading-gate-pass';
-import type { StorageGatePassWithLink } from '@/types/storage-gate-pass';
-
 /** Map API response to props for IncomingVoucher (handles populated or plain link) */
 function mapIncomingPassToVoucherProps(pass: IncomingGatePassWithLink) {
   const rawLink = pass.farmerStorageLinkId;
@@ -209,45 +207,29 @@ const DaybookPage = memo(function DaybookPage() {
   });
 
   const {
-    data: storageGatePassesRaw = [],
+    data: storageData,
     isLoading: storageLoading,
     isFetching: storageFetching,
     refetch: refetchStorage,
-  } = useGetStorageGatePasses();
+  } = useGetStorageGatePasses({
+    page,
+    limit,
+    sortOrder,
+    // Keep storage sorting aligned with incoming/grading tabs.
+    // Their list APIs sort primarily by `gatePassNo` while toggling asc/desc.
+    sortBy: 'gatePassNo',
+    gatePassNo: debouncedSearch.trim() || undefined,
+  });
 
   const storageGatePasses = useMemo(
-    () => (Array.isArray(storageGatePassesRaw) ? storageGatePassesRaw : []),
-    [storageGatePassesRaw]
+    () => storageData?.list ?? [],
+    [storageData]
   );
 
-  const filteredAndSortedStoragePasses = useMemo(() => {
-    const trimmed = debouncedSearch.trim();
-    let list = storageGatePasses;
-    if (trimmed) {
-      // Exact gate pass number only (e.g. "3" matches 3, not 13 or 23)
-      if (!/^\d+$/.test(trimmed)) {
-        list = [];
-      } else {
-        const num = Number(trimmed);
-        list = list.filter(
-          (pass: StorageGatePassWithLink) =>
-            pass.gatePassNo === num || pass.manualGatePassNumber === num
-        );
-      }
-    }
-    const sorted = [...list].sort((a, b) => {
-      const aVal =
-        sortBy === 'Date'
-          ? new Date(a.date ?? 0).getTime()
-          : Number(a.gatePassNo ?? 0);
-      const bVal =
-        sortBy === 'Date'
-          ? new Date(b.date ?? 0).getTime()
-          : Number(b.gatePassNo ?? 0);
-      return sortOrder === 'asc' ? aVal - bVal : bVal - aVal;
-    });
-    return sorted;
-  }, [storageGatePasses, debouncedSearch, sortBy, sortOrder]);
+  const storagePagination = storageData?.pagination;
+  const storageTotalPages = storagePagination?.totalPages ?? 1;
+  const storageHasPrev = page > 1;
+  const storageHasNext = page < storageTotalPages;
 
   const incomingGatePasses = useMemo(
     () => incomingData?.list ?? [],
@@ -494,22 +476,23 @@ const DaybookPage = memo(function DaybookPage() {
             <ContractTabPanel
               addButtonLabel="Add Storage"
               addButtonTo="/store-admin/storage"
-              placeholderCount={filteredAndSortedStoragePasses.length}
+              placeholderCount={
+                storagePagination?.total ?? storageGatePasses.length
+              }
               isRefreshing={storageFetching}
               onRefresh={() => refetchStorage()}
               searchQuery={searchQuery}
               onSearchChange={setSearchQuery}
-              sortBy={sortBy}
+              sortOrderOnly
               sortOrder={sortOrder}
-              onSortByChange={setSortBy}
               onSortOrderChange={setSortOrder}
               onSortPageReset={() => setPage(1)}
               limit={limit}
               setLimitAndResetPage={setLimitAndResetPage}
               page={page}
-              totalPages={totalPages}
-              hasPrev={hasPrev}
-              hasNext={hasNext}
+              totalPages={storageTotalPages}
+              hasPrev={storageHasPrev}
+              hasNext={storageHasNext}
               setPage={setPage}
             >
               {storageLoading ? (
@@ -539,7 +522,7 @@ const DaybookPage = memo(function DaybookPage() {
                     </Card>
                   ))}
                 </div>
-              ) : filteredAndSortedStoragePasses.length === 0 ? (
+              ) : storageGatePasses.length === 0 ? (
                 <Card>
                   <CardContent className="py-8 pt-6 text-center">
                     <p className="font-custom text-muted-foreground">
@@ -554,7 +537,7 @@ const DaybookPage = memo(function DaybookPage() {
                 </Card>
               ) : (
                 <div className="space-y-6">
-                  {filteredAndSortedStoragePasses.map((pass) => (
+                  {storageGatePasses.map((pass) => (
                     <StorageVoucher key={pass._id} voucher={pass} />
                   ))}
                 </div>

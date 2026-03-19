@@ -7,6 +7,7 @@ export const GRADING_TOTAL_COLUMN_IDS = [
   'netProductKg',
   'grossWeightKg',
   'netWeightKg',
+  'tareWeightKg',
 ] as const;
 
 /** Human-readable labels for grading report column visibility / Group by. */
@@ -15,10 +16,11 @@ export const GRADING_COLUMN_LABELS: Record<string, string> = {
   accountNumber: 'Account No.',
   farmerMobile: 'Mobile',
   farmerAddress: 'Address',
+  createdByName: 'Created by',
   incomingGatePassNo: 'Incoming GP no.',
   incomingManualNo: 'Incoming manual no.',
   incomingGatePassDate: 'Incoming GP date',
-  incomingTruckNumber: 'Truck no.',
+  truckNumber: 'Truck no.',
   variety: 'Variety',
   bagsReceived: 'Bags rec.',
   netProductKg: 'Net product (kg)',
@@ -31,15 +33,18 @@ export const GRADING_COLUMN_LABELS: Record<string, string> = {
   grader: 'Grader',
   remarks: 'Remarks',
   grossWeightKg: 'Gross (kg)',
+  tareWeightKg: 'Tare (kg)',
   netWeightKg: 'Net (kg)',
 };
 
-/** Column ids that span the whole grading-pass group in the PDF (one merged cell per group). Incoming-pass columns (incomingGatePassNo, incomingManualNo, incomingGatePassDate, bagsReceived, netProductKg) are not spanned so each incoming pass gets its own row. */
+/**
+ * Columns merged vertically for one grading pass when multiple incoming rows exist.
+ * Matches fields shown only on the first row of each pass group.
+ */
 export const GRADING_REPORT_ROW_SPAN_COLUMN_IDS: string[] = [
-  'farmerName',
-  'accountNumber',
-  'variety',
+  'createdByName',
   'gatePassNo',
+  'manualGatePassNumber',
   'date',
   'totalGradedBags',
   'totalGradedWeightKg',

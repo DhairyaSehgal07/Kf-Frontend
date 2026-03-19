@@ -97,6 +97,10 @@ const StorageVoucher = memo(function StorageVoucher({
     farmerNameProp ?? voucher.farmerStorageLinkId?.farmerId?.name;
   const farmerAccount =
     farmerAccountProp ?? voucher.farmerStorageLinkId?.accountNumber;
+  const createdByName =
+    typeof voucher.createdBy === 'string'
+      ? voucher.createdBy
+      : voucher.createdBy?.name;
 
   const bagSizes = useMemo(() => voucher.bagSizes ?? [], [voucher.bagSizes]);
   const bags = totalBagsFromBagSizes(bagSizes);
@@ -164,6 +168,9 @@ const StorageVoucher = memo(function StorageVoucher({
           )}
           {farmerAccount != null && (
             <DetailRow label="Account" value={`#${farmerAccount}`} />
+          )}
+          {createdByName != null && createdByName !== '' && (
+            <DetailRow label="Created By" value={createdByName} icon={User} />
           )}
           <DetailRow
             label="Variety"

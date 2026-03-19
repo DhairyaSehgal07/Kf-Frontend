@@ -311,7 +311,13 @@ const ALL_COLUMNS: {
   width: string;
   align: 'left' | 'center';
 }[] = [
-  { key: 'farmerName', label: 'Farmer', width: '8%', align: 'left' },
+  { key: 'farmerName', label: 'Farmer', width: '7%', align: 'left' },
+  {
+    key: 'accountNumber',
+    label: 'Account No.',
+    width: '4%',
+    align: 'center',
+  },
   {
     key: 'incomingGatePassNo',
     label: 'Incoming GP no.',
@@ -331,13 +337,31 @@ const ALL_COLUMNS: {
     align: 'center',
   },
   {
-    key: 'incomingTruckNumber',
+    key: 'truckNumber',
     label: 'Truck no.',
-    width: '6%',
+    width: '5%',
     align: 'center',
   },
-  { key: 'variety', label: 'Variety', width: '6%', align: 'left' },
+  { key: 'variety', label: 'Variety', width: '5%', align: 'left' },
   { key: 'bagsReceived', label: 'Bags rec.', width: '4%', align: 'center' },
+  {
+    key: 'grossWeightKg',
+    label: 'Gross (kg)',
+    width: '5%',
+    align: 'center',
+  },
+  {
+    key: 'tareWeightKg',
+    label: 'Tare (kg)',
+    width: '5%',
+    align: 'center',
+  },
+  {
+    key: 'netWeightKg',
+    label: 'Net (kg)',
+    width: '5%',
+    align: 'center',
+  },
   {
     key: 'netProductKg',
     label: 'Net product (kg)',
@@ -345,22 +369,34 @@ const ALL_COLUMNS: {
     align: 'center',
   },
   { key: 'gatePassNo', label: 'GP no.', width: '4%', align: 'center' },
-  { key: 'date', label: 'Date', width: '6%', align: 'center' },
+  {
+    key: 'manualGatePassNumber',
+    label: 'Manual GP no.',
+    width: '4%',
+    align: 'center',
+  },
+  { key: 'date', label: 'Date', width: '5%', align: 'center' },
+  {
+    key: 'createdByName',
+    label: 'Created by',
+    width: '6%',
+    align: 'left',
+  },
   {
     key: 'totalGradedBags',
     label: 'Graded bags',
-    width: '5%',
+    width: '4%',
     align: 'center',
   },
   {
     key: 'totalGradedWeightKg',
     label: 'Graded wt (kg)',
-    width: '6%',
+    width: '5%',
     align: 'center',
   },
   { key: 'wastageKg', label: 'Wastage (kg)', width: '5%', align: 'center' },
-  { key: 'grader', label: 'Grader', width: '8%', align: 'left' },
-  { key: 'remarks', label: 'Remarks', width: '10%', align: 'left' },
+  { key: 'grader', label: 'Grader', width: '6%', align: 'left' },
+  { key: 'remarks', label: 'Remarks', width: '8%', align: 'left' },
 ];
 
 function getColumnsForPdf(
@@ -445,6 +481,7 @@ const TOTAL_KEYS: (keyof GradingReportRow)[] = [
   'totalGradedWeightKg',
   'wastageKg',
   'grossWeightKg',
+  'tareWeightKg',
   'netWeightKg',
   'netProductKg',
 ];
@@ -603,10 +640,12 @@ function GenericBlockHeader({
 
 const GROUP_LABELS: Record<string, string> = {
   farmerName: 'Farmer',
+  accountNumber: 'Account No.',
   variety: 'Variety',
   date: 'Date',
   incomingGatePassDate: 'Incoming gate pass date',
   grader: 'Grader',
+  createdByName: 'Created by',
 };
 
 /** Aggregate totals for summary rows */

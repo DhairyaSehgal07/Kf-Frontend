@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.19] - 2026-03-19
+
+### Changed
+- Analytics Reports: grading report and storage report table refinements (columns/sorting/PDF export)
+- Daybook: storage voucher and gate pass search refinements
+
+### Removed
+- Rental incoming: removed rental incoming form components and service hooks
+
+### Fixed
+- Store admin rental route: render an “unavailable” placeholder instead of importing removed rental form code
+
 ## [0.10.18] - 2026-03-19
 
 ### Added
