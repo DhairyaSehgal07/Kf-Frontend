@@ -11,6 +11,7 @@ export const POTATO_VARIETIES: { label: string; value: string }[] = [
   { label: 'Colomba', value: 'Colomba' },
   { label: 'Desiree', value: 'Desiree' },
   { label: 'Diamond', value: 'Diamond' },
+  { label: 'Suriya', value: 'Suriya' },
   { label: 'FC - 11', value: 'FC - 11' },
   { label: 'FC - 12', value: 'FC - 12' },
   { label: 'FC - 5', value: 'FC - 5' },

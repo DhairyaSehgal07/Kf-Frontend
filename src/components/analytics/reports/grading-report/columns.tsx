@@ -559,12 +559,6 @@ export const columns: ColumnDef<GradingReportRow>[] = [
     aggregationFn: () => null,
   },
   {
-    accessorKey: 'grader',
-    header: ({ column }) => <GroupableHeader column={column} label="Grader" />,
-    cell: GroupableCell,
-    enableGrouping: true,
-  },
-  {
     accessorKey: 'remarks',
     header: () => <span className="font-custom">Remarks</span>,
   },
