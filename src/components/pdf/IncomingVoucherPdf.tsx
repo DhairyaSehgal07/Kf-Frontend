@@ -191,6 +191,10 @@ export function IncomingVoucherPdf({
   const dateStr = formatVoucherDate(voucher.date);
   const bags = voucher.bagsReceived ?? 0;
   const status = (voucher.status ?? '—').toString().replace(/_/g, ' ');
+  const stage =
+    voucher.stage != null && voucher.stage !== ''
+      ? voucher.stage.replace(/_/g, ' ')
+      : null;
   const manualNo = voucher.manualGatePassNumber;
   const netWeight =
     (voucher.weightSlip?.grossWeightKg ?? 0) -
@@ -260,6 +264,12 @@ export function IncomingVoucherPdf({
               <Text style={styles.detailLabel}>Status:</Text>
               <Text style={styles.detailValue}>{status}</Text>
             </View>
+            {stage != null && (
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabel}>Stage:</Text>
+                <Text style={styles.detailValue}>{stage}</Text>
+              </View>
+            )}
             <View style={styles.detailRow}>
               <Text style={styles.detailLabel}>Created By:</Text>
               <Text style={styles.detailValue}>

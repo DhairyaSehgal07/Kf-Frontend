@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.21] - 2026-03-22
+
+### Added
+- Incoming gate pass: `stage` field with `INCOMING_GATE_PASS_STAGES` and related types on create/list payloads
+- Incoming form: required **Stage** selector (`SearchSelector`) and summary row; stage included on submit
+- Daybook incoming voucher: **Edit** dialog to update manual gate pass number, stage, and date via `useEditIncomingGatePass` (`PUT /incoming-gate-pass/:id`); stage badge and expanded detail row
+- `useEditIncomingGatePass` mutation hook with daybook/incoming query invalidation and toasts
+
+### Changed
+- `IncomingVoucherPdf`: shows **Stage** when present
+
 ## [0.10.20] - 2026-03-20
 
 ### Added

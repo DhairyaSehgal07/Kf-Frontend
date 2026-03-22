@@ -1,12 +1,23 @@
-import { memo, useState } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
 import { Card, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
   ChevronDown,
   ChevronUp,
   Printer,
+  Pencil,
   MapPin,
   User,
   Truck,
@@ -17,6 +28,14 @@ import { DetailRow } from './detail-row';
 import { formatVoucherDate } from './format-date';
 import type { IncomingVoucherData } from './types';
 import type { VoucherFarmerInfo } from './types';
+import { useEditIncomingGatePass } from '@/services/store-admin/incoming-gate-pass/useEditIncomingGatePass';
+import { DatePicker } from '@/components/forms/date-picker';
+import {
+  SearchSelector,
+  type Option,
+} from '@/components/forms/search-selector';
+import { formatDate, formatDateToISO } from '@/lib/helpers';
+import { INCOMING_GATE_PASS_STAGES } from '@/types/incoming-gate-pass';
 
 export interface IncomingVoucherProps extends VoucherFarmerInfo {
   voucher: IncomingVoucherData;
@@ -33,8 +52,97 @@ const IncomingVoucher = memo(function IncomingVoucher({
 }: IncomingVoucherProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isPrinting, setIsPrinting] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [manualInput, setManualInput] = useState('');
+  const [stageInput, setStageInput] = useState('');
+  /** dd.mm.yyyy — matches DatePicker */
+  const [editDateValue, setEditDateValue] = useState(() =>
+    voucher.date ? formatDate(new Date(voucher.date)) : formatDate(new Date())
+  );
+
+  const { mutate: editIncomingGatePass, isPending: isEditPending } =
+    useEditIncomingGatePass();
+
+  const canEdit = Boolean(voucher._id);
+
+  const editStageOptions: Option<string>[] = useMemo(() => {
+    const base = INCOMING_GATE_PASS_STAGES.map((value) => ({
+      value,
+      label: value,
+      searchableText: value,
+    }));
+    const stage = voucher.stage?.trim();
+    const allowedStages = INCOMING_GATE_PASS_STAGES as readonly string[];
+    if (stage && !allowedStages.includes(stage)) {
+      return [
+        {
+          value: stage,
+          label: `${stage} (legacy)`,
+          searchableText: stage,
+        },
+        ...base,
+      ];
+    }
+    return base;
+  }, [voucher.stage]);
+
+  const resetEditFormFromVoucher = useCallback(() => {
+    setManualInput(
+      voucher.manualGatePassNumber != null
+        ? String(voucher.manualGatePassNumber)
+        : ''
+    );
+    setStageInput(voucher.stage ?? '');
+    setEditDateValue(
+      voucher.date ? formatDate(new Date(voucher.date)) : formatDate(new Date())
+    );
+  }, [voucher.manualGatePassNumber, voucher.stage, voucher.date]);
+
+  const handleEditOpenChange = (open: boolean) => {
+    setEditOpen(open);
+    if (open) resetEditFormFromVoucher();
+  };
+
+  const handleSaveEdit = () => {
+    if (!voucher._id || isEditPending) return;
+
+    const payload: {
+      manualGatePassNumber?: number;
+      stage?: string;
+      date?: string;
+    } = {};
+
+    const trimmedManual = manualInput.trim();
+    if (trimmedManual !== '') {
+      const n = Number(trimmedManual);
+      if (!Number.isNaN(n)) payload.manualGatePassNumber = n;
+    }
+
+    const trimmedStage = stageInput.trim();
+    if (trimmedStage !== '') payload.stage = trimmedStage;
+
+    if (editDateValue.trim() !== '') {
+      payload.date = formatDateToISO(editDateValue.trim());
+    }
+
+    editIncomingGatePass(
+      {
+        incomingGatePassId: voucher._id,
+        ...payload,
+      },
+      {
+        onSuccess: (res) => {
+          if (res.success) setEditOpen(false);
+        },
+      }
+    );
+  };
 
   const bags = voucher.bagsReceived ?? 0;
+  const stageLabel =
+    voucher.stage != null && voucher.stage !== ''
+      ? voucher.stage.replace(/_/g, ' ')
+      : null;
 
   const handlePrint = async () => {
     // Open window synchronously so mobile popup blockers allow it
@@ -97,6 +205,14 @@ const IncomingVoucher = memo(function IncomingVoucher({
             </div>
 
             <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
+              {stageLabel != null && (
+                <Badge
+                  variant="outline"
+                  className="border-primary/40 bg-primary/5 text-primary px-2 py-0.5 text-[10px] font-medium capitalize"
+                >
+                  {stageLabel}
+                </Badge>
+              )}
               {voucher.category != null && voucher.category !== '' && (
                 <Badge
                   variant="default"
@@ -158,21 +274,126 @@ const IncomingVoucher = memo(function IncomingVoucher({
             )}
           </Button>
 
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handlePrint}
-            disabled={isPrinting}
-            className="h-8 w-8 p-0"
-            aria-label={isPrinting ? 'Generating PDF…' : 'Print gate pass'}
-          >
-            {isPrinting ? (
-              <Spinner className="h-3.5 w-3.5" />
-            ) : (
-              <Printer className="h-3.5 w-3.5" />
+          <div className="flex items-center gap-1">
+            {canEdit && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleEditOpenChange(true)}
+                className="h-8 w-8 p-0"
+                aria-label="Edit incoming gate pass"
+              >
+                <Pencil className="h-3.5 w-3.5" />
+              </Button>
             )}
-          </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handlePrint}
+              disabled={isPrinting}
+              className="h-8 w-8 p-0"
+              aria-label={isPrinting ? 'Generating PDF…' : 'Print gate pass'}
+            >
+              {isPrinting ? (
+                <Spinner className="h-3.5 w-3.5" />
+              ) : (
+                <Printer className="h-3.5 w-3.5" />
+              )}
+            </Button>
+          </div>
         </div>
+
+        <Dialog open={editOpen} onOpenChange={handleEditOpenChange}>
+          <DialogContent className="font-custom sm:max-w-md" showCloseButton>
+            <DialogHeader>
+              <DialogTitle className="font-custom text-xl font-bold">
+                Edit incoming gate pass
+              </DialogTitle>
+              <DialogDescription className="font-custom text-muted-foreground/80 text-sm">
+                Update manual gate pass number, stage, and date. Empty fields
+                are not sent to the server.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4 py-2">
+              <div className="space-y-2">
+                <Label
+                  htmlFor="igp-manual-number"
+                  className="font-custom text-foreground/90 text-sm font-medium"
+                >
+                  Manual gate pass number
+                </Label>
+                <Input
+                  id="igp-manual-number"
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  step={1}
+                  placeholder="Optional"
+                  value={manualInput}
+                  onChange={(e) => setManualInput(e.target.value)}
+                  className="font-custom [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label
+                  htmlFor="igp-stage"
+                  className="font-custom text-foreground/90 text-sm font-medium"
+                >
+                  Stage
+                </Label>
+                <SearchSelector
+                  id="igp-stage"
+                  options={editStageOptions}
+                  placeholder="Select stage (optional)"
+                  searchPlaceholder="Search stage..."
+                  onSelect={(value) => setStageInput(value)}
+                  value={stageInput}
+                  className="w-full"
+                  buttonClassName="w-full justify-between font-custom"
+                />
+              </div>
+
+              <div className="font-custom">
+                <DatePicker
+                  id="igp-date"
+                  label="Date"
+                  value={editDateValue}
+                  onChange={(v) => setEditDateValue(v)}
+                />
+              </div>
+            </div>
+
+            <DialogFooter className="gap-2 sm:gap-0">
+              <Button
+                type="button"
+                variant="outline"
+                className="font-custom"
+                onClick={() => setEditOpen(false)}
+                disabled={isEditPending}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                variant="default"
+                className="font-custom font-bold"
+                onClick={handleSaveEdit}
+                disabled={isEditPending}
+              >
+                {isEditPending ? (
+                  <>
+                    <Spinner className="mr-2 h-4 w-4" />
+                    Saving…
+                  </>
+                ) : (
+                  'Save changes'
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         {isExpanded && (
           <>
@@ -206,6 +427,9 @@ const IncomingVoucher = memo(function IncomingVoucher({
                 <div className="bg-muted/30 grid grid-cols-1 gap-3 rounded-lg p-3 sm:grid-cols-2 lg:grid-cols-3">
                   {voucher.category != null && voucher.category !== '' && (
                     <DetailRow label="Category" value={voucher.category} />
+                  )}
+                  {stageLabel != null && (
+                    <DetailRow label="Stage" value={stageLabel} />
                   )}
                   <DetailRow
                     label="Pass Number"

@@ -15,6 +15,8 @@ export interface IncomingVoucherData {
   variety?: string;
   truckNumber?: string;
   bagsReceived?: number;
+  /** Workflow stage from API (e.g. incoming pipeline step). */
+  stage?: string;
   status?: string;
   weightSlip?: WeightSlipData;
   remarks?: string;

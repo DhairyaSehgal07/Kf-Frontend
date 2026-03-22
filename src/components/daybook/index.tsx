@@ -44,6 +44,7 @@ function mapIncomingPassToVoucherProps(pass: IncomingGatePassWithLink) {
       variety: pass.variety,
       truckNumber: pass.truckNumber,
       bagsReceived: pass.bagsReceived,
+      stage: pass.stage,
       status: pass.status,
       weightSlip: pass.weightSlip,
       remarks: pass.remarks,

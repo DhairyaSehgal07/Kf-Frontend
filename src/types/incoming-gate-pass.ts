@@ -13,6 +13,18 @@ export const IncomingGatePassCategory = {
 export type IncomingGatePassCategory =
   (typeof IncomingGatePassCategory)[keyof typeof IncomingGatePassCategory];
 
+/** Allowed stage values for incoming gate pass (create / edit) */
+export const INCOMING_GATE_PASS_STAGES = [
+  'G0',
+  'G1',
+  'G2',
+  'G3',
+  'Ration',
+  'Unspecial',
+] as const;
+
+export type IncomingGatePassStage = (typeof INCOMING_GATE_PASS_STAGES)[number];
+
 /** Weight slip sub-object for incoming gate pass */
 export interface IncomingGatePassWeightSlip {
   slipNumber: string;
@@ -40,6 +52,8 @@ export interface CreateIncomingGatePassInput {
   remarks?: string;
   manualGatePassNumber?: number;
   category?: string; // One of IncomingGatePassCategory values
+  /** Pipeline stage (e.g. G0–G3, Ration, Unspecial) */
+  stage?: string;
 }
 
 /** Grading summary on an incoming gate pass */
@@ -69,6 +83,20 @@ export interface IncomingGatePass {
 export interface CreateIncomingGatePassApiResponse {
   success: boolean;
   data: IncomingGatePass | null;
+  message: string;
+}
+
+/** Request body for PUT /incoming-gate-pass/:id */
+export interface EditIncomingGatePassInput {
+  manualGatePassNumber?: number;
+  stage?: string;
+  date?: string; // ISO date string
+}
+
+/** API response for PUT /incoming-gate-pass/:id */
+export interface EditIncomingGatePassApiResponse {
+  success: boolean;
+  data: Record<string, unknown>;
   message: string;
 }
 
@@ -103,6 +131,8 @@ export interface IncomingGatePassWithLink {
   bagsReceived: number;
   weightSlip?: IncomingGatePassWeightSlip;
   status: string;
+  /** Workflow stage (daybook / pipeline). */
+  stage?: string;
   gradingSummary: IncomingGatePassGradingSummary;
   remarks?: string;
   category?: string;
