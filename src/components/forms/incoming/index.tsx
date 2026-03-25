@@ -73,15 +73,14 @@ export const IncomingForm = memo(function IncomingForm() {
     []
   );
 
-  const stageOptions: Option<string>[] = useMemo(
-    () =>
-      INCOMING_GATE_PASS_STAGES.map((value) => ({
-        value,
-        label: value,
-        searchableText: value,
-      })),
-    []
-  );
+  const stageOptions: Option<string>[] = useMemo(() => {
+    const stages = Array.from(new Set([...INCOMING_GATE_PASS_STAGES, 'BR']));
+    return stages.map((value) => ({
+      value,
+      label: value,
+      searchableText: value,
+    }));
+  }, []);
 
   const formSchema = useMemo(
     () =>
