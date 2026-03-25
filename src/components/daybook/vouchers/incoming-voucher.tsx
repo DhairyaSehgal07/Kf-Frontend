@@ -66,14 +66,17 @@ const IncomingVoucher = memo(function IncomingVoucher({
   const canEdit = Boolean(voucher._id);
 
   const editStageOptions: Option<string>[] = useMemo(() => {
-    const base = INCOMING_GATE_PASS_STAGES.map((value) => ({
+    const stages = Array.from(
+      new Set([...INCOMING_GATE_PASS_STAGES, 'BR'])
+    ) as readonly string[];
+
+    const base = stages.map((value) => ({
       value,
       label: value,
       searchableText: value,
     }));
     const stage = voucher.stage?.trim();
-    const allowedStages = INCOMING_GATE_PASS_STAGES as readonly string[];
-    if (stage && !allowedStages.includes(stage)) {
+    if (stage && !stages.includes(stage)) {
       return [
         {
           value: stage,
