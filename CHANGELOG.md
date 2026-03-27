@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.22] - 2026-03-27
+
+### Added
+- Storage summary sheets (create and edit): farmer name and manual gate pass number metadata in pass headers
+- Storage gate pass edit input type: optional `farmerStorageLinkId` support for relinking pass ownership
+
+### Changed
+- Storage gate pass edit form: reason is now optional (UI label/placeholder and submit payload)
+- Edit submit payload: includes optional `farmerStorageLinkId` and trims optional `reason` safely
+- `useEditStorageGatePass` docs: expanded payload contract and added detailed cURL example
+
 ## [0.10.21] - 2026-03-22
 
 ### Added

@@ -318,9 +318,14 @@ const StorageGatePassForm = memo(function StorageGatePassForm({
         };
       });
     const allocations = [...fixedAllocations, ...extraAllocations];
+    const farmerLabel =
+      farmerOptions.find((opt) => opt.value === formValues.farmerStorageLinkId)
+        ?.label ?? '';
     return {
       passes: [
         {
+          farmerName: farmerLabel,
+          manualGatePassNumber: formValues.manualGatePassNumber,
           date: formValues.date,
           variety: formValues.variety,
           remarks: formValues.remarks ?? '',
@@ -342,6 +347,9 @@ const StorageGatePassForm = memo(function StorageGatePassForm({
     formValues.date,
     formValues.variety,
     formValues.remarks,
+    formValues.farmerStorageLinkId,
+    formValues.manualGatePassNumber,
+    farmerOptions,
     voucherNumber,
   ]);
 

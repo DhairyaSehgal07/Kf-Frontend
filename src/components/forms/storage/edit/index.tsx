@@ -87,7 +87,7 @@ const formSchema = z
       })
     ),
     remarks: z.string().max(500).default(''),
-    reason: z.string().min(1, 'Reason is required').max(500),
+    reason: z.string().max(500).optional().default(''),
   })
   .refine(
     (data) => {
@@ -284,6 +284,7 @@ const EditStorageGatePassForm = memo(function EditStorageGatePassForm() {
       editStorageGatePass(
         {
           storageGatePassId: gatePass._id,
+          farmerStorageLinkId: value.farmerStorageLinkId,
           gatePassNo: gatePass.gatePassNo,
           manualGatePassNumber: value.manualGatePassNumber,
           date: formatDateToISO(value.date),
@@ -291,7 +292,7 @@ const EditStorageGatePassForm = memo(function EditStorageGatePassForm() {
           storageCategory: value.storageCategory?.trim() || undefined,
           bagSizes: [...bagSizesFromFixed, ...bagSizesFromExtra],
           remarks: value.remarks?.trim() || undefined,
-          reason: value.reason.trim(),
+          reason: value.reason?.trim() || undefined,
         },
         {
           onSuccess: (resp) => {
@@ -336,6 +337,10 @@ const EditStorageGatePassForm = memo(function EditStorageGatePassForm() {
 
     return {
       gatePassNo: gatePass?.gatePassNo,
+      farmerName:
+        farmerOptions.find((opt) => opt.value === values.farmerStorageLinkId)
+          ?.label ?? '',
+      manualGatePassNumber: values.manualGatePassNumber,
       date: values.date,
       variety: values.variety,
       storageCategory: values.storageCategory ?? '',
@@ -343,7 +348,7 @@ const EditStorageGatePassForm = memo(function EditStorageGatePassForm() {
       reason: values.reason ?? '',
       rows,
     };
-  }, [form.state.values, gatePass?.gatePassNo]);
+  }, [form.state.values, gatePass?.gatePassNo, farmerOptions]);
 
   if (!gatePass?._id) {
     return (
@@ -896,20 +901,17 @@ const EditStorageGatePassForm = memo(function EditStorageGatePassForm() {
                   <Field>
                     <FieldLabel className="font-custom mb-2 block text-base font-semibold">
                       Reason
+                      <span className="font-custom text-muted-foreground ml-1 font-normal">
+                        (optional)
+                      </span>
                     </FieldLabel>
                     <textarea
                       value={field.state.value ?? ''}
                       onChange={(e) => field.handleChange(e.target.value)}
                       className="border-input bg-background text-foreground font-custom placeholder:text-muted-foreground focus-visible:ring-ring focus-visible:ring-offset-background w-full rounded-md border p-2 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
                       rows={3}
-                      placeholder="Enter reason for editing this gate pass"
+                      placeholder="Optional reason for editing this gate pass"
                     />
-                    {!field.state.meta.isValid &&
-                      field.state.meta.isTouched && (
-                        <FieldError
-                          errors={field.state.meta.errors as FieldErrors}
-                        />
-                      )}
                   </Field>
                 )}
               />

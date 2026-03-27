@@ -47,8 +47,46 @@ export type EditStorageGatePassVariables = {
 /**
  * Hook to edit a storage gate pass.
  * PUT /storage-gate-pass/:id
- * Payload supports the updated edit body including bagSizes entries:
- * { size, bagType, currentQuantity, initialQuantity, chamber, floor, row }.
+ * Payload supports:
+ * - farmerStorageLinkId (optional, for relinking to a different farmer-storage account)
+ * - gatePassNo, manualGatePassNumber, date, storageCategory, variety
+ * - bagSizes[] entries: { size, bagType, currentQuantity, initialQuantity, chamber, floor, row }
+ * - remarks and reason (both optional)
+ *
+ * Example:
+ * curl -X PUT "http://localhost:3000/api/v1/storage-gate-pass/<STORAGE_GATE_PASS_ID>" \
+ *   -H "Content-Type: application/json" \
+ *   -H "Authorization: Bearer <YOUR_JWT_TOKEN>" \
+ *   -d '{
+ *     "farmerStorageLinkId": "<NEW_FARMER_STORAGE_LINK_ID>",
+ *     "gatePassNo": 1234,
+ *     "manualGatePassNumber": 5678,
+ *     "date": "2026-03-27T10:30:00.000Z",
+ *     "storageCategory": "Cold Storage",
+ *     "variety": "Kufri Jyoti",
+ *     "bagSizes": [
+ *       {
+ *         "size": "50kg",
+ *         "bagType": "JUTE",
+ *         "currentQuantity": 100,
+ *         "initialQuantity": 120,
+ *         "chamber": "C1",
+ *         "floor": "F1",
+ *         "row": "R1"
+ *       },
+ *       {
+ *         "size": "25kg",
+ *         "bagType": "LENO",
+ *         "currentQuantity": 40,
+ *         "initialQuantity": 50,
+ *         "chamber": "C2",
+ *         "floor": "F1",
+ *         "row": "R3"
+ *       }
+ *     ],
+ *     "remarks": "Updated bag type, location, and link",
+ *     "reason": "Corrected mapping to proper farmer storage link"
+ *   }'
  */
 export function useEditStorageGatePass() {
   return useMutation<

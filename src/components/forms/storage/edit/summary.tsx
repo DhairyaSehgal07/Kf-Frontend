@@ -20,6 +20,8 @@ type EditStorageSummaryRow = {
 
 export type EditStorageSummaryFormValues = {
   gatePassNo?: number;
+  farmerName: string;
+  manualGatePassNumber?: number;
   date: string;
   variety: string;
   storageCategory: string;
@@ -71,6 +73,18 @@ export const EditStorageSummarySheet = memo(function EditStorageSummarySheet({
               </p>
               <p className="font-custom text-base font-semibold">
                 #{formValues.gatePassNo ?? '—'}
+              </p>
+              <p className="font-custom text-muted-foreground mt-2 text-xs uppercase">
+                Farmer
+              </p>
+              <p className="font-custom text-sm font-medium">
+                {formValues.farmerName || '—'}
+              </p>
+              <p className="font-custom text-muted-foreground mt-2 text-xs uppercase">
+                Manual GP No.
+              </p>
+              <p className="font-custom text-sm font-medium">
+                {formValues.manualGatePassNumber ?? '—'}
               </p>
             </div>
 

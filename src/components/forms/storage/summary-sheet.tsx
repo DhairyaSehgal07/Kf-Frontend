@@ -35,6 +35,8 @@ export interface StorageSummaryGradingEntry extends Omit<
 
 /** One pass in the summary (for bulk create) */
 export interface StorageSummaryPassValues {
+  farmerName: string;
+  manualGatePassNumber?: number;
   date: string;
   variety: string;
   remarks: string;
@@ -170,7 +172,14 @@ export const StorageSummarySheet = memo(function StorageSummarySheet({
 
           <div className="flex-1 overflow-y-auto px-4 py-5 sm:px-6">
             {passList.map((pass, passIndex) => {
-              const { date, variety, remarks, gradingGatePasses } = pass;
+              const {
+                farmerName,
+                manualGatePassNumber,
+                date,
+                variety,
+                remarks,
+                gradingGatePasses,
+              } = pass;
               const passBags = gradingGatePasses.reduce(
                 (sum, entry) =>
                   sum +
@@ -186,6 +195,15 @@ export const StorageSummarySheet = memo(function StorageSummarySheet({
                   className="mb-6 overflow-hidden rounded-xl border border-zinc-600/50 bg-zinc-800/60"
                 >
                   <div className="flex flex-wrap gap-x-6 gap-y-3 border-b border-zinc-600/50 px-4 py-3 sm:px-5">
+                    <SummaryMetaRow
+                      label="Farmer"
+                      value={farmerName || '—'}
+                      icon={FileText}
+                    />
+                    <SummaryMetaRow
+                      label="Manual GP No."
+                      value={manualGatePassNumber ?? '—'}
+                    />
                     <SummaryMetaRow label="Date" value={date} icon={Calendar} />
                     <SummaryMetaRow
                       label="Variety"

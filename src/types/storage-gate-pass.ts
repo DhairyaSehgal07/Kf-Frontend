@@ -247,6 +247,7 @@ export interface EditStorageGatePassBagSizeInput {
 
 /** Request body for PUT /storage-gate-pass/:id */
 export interface EditStorageGatePassInput {
+  farmerStorageLinkId?: string;
   gatePassNo?: number;
   manualGatePassNumber?: number;
   date?: string;
