@@ -47,7 +47,8 @@ export type EditStorageGatePassVariables = {
 /**
  * Hook to edit a storage gate pass.
  * PUT /storage-gate-pass/:id
- * Payload may include optional manualGatePassNumber, storageCategory, and date.
+ * Payload supports the updated edit body including bagSizes entries:
+ * { size, bagType, currentQuantity, initialQuantity, chamber, floor, row }.
  */
 export function useEditStorageGatePass() {
   return useMutation<

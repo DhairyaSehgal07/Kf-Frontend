@@ -235,10 +235,26 @@ export interface CreateBulkStorageGatePassApiResponse {
 }
 
 /** Request body for PUT /storage-gate-pass/:id */
+export interface EditStorageGatePassBagSizeInput {
+  size: string;
+  bagType: string;
+  currentQuantity: number;
+  initialQuantity: number;
+  chamber: string;
+  floor: string;
+  row: string;
+}
+
+/** Request body for PUT /storage-gate-pass/:id */
 export interface EditStorageGatePassInput {
+  gatePassNo?: number;
   manualGatePassNumber?: number;
-  storageCategory?: string;
   date?: string;
+  storageCategory?: string;
+  variety?: string;
+  bagSizes?: EditStorageGatePassBagSizeInput[];
+  remarks?: string;
+  reason?: string;
 }
 
 /** API response for PUT /storage-gate-pass/:id */

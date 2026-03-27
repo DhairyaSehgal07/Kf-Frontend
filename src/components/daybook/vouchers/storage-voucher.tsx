@@ -3,24 +3,7 @@ import { Card, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { Field, FieldLabel } from '@/components/ui/field';
-import { Input } from '@/components/ui/input';
-import { DatePicker } from '@/components/forms/date-picker';
-import {
-  ChevronDown,
-  ChevronUp,
-  Pencil,
-  Printer,
-  User,
-  Package,
-} from 'lucide-react';
+import { ChevronDown, ChevronUp, Printer, User, Package } from 'lucide-react';
 import { DetailRow } from './detail-row';
 import { formatVoucherDate } from './format-date';
 import {
@@ -29,24 +12,10 @@ import {
   type VoucherFarmerInfo,
 } from './types';
 import type { StorageGatePassWithLink } from '@/types/storage-gate-pass';
-import { useEditStorageGatePass } from '@/services/store-admin/storage-gate-pass/useEditStorageGatePass';
-import { formatDate, formatDateToISO } from '@/lib/helpers';
-
-const STORAGE_CATEGORY_OPTIONS = [
-  'OWNED',
-  'PURCHASED',
-  'CONTRACT FARMING',
-] as const;
 
 export interface StorageVoucherProps extends Partial<VoucherFarmerInfo> {
   /** Storage gate pass in the new API format (with populated farmerStorageLinkId and bagSizes) */
   voucher: StorageGatePassWithLink;
-}
-
-function voucherDateToDDMMYYYY(dateStr: string | undefined): string {
-  if (!dateStr) return formatDate(new Date());
-  const d = new Date(dateStr);
-  return isNaN(d.getTime()) ? formatDate(new Date()) : formatDate(d);
 }
 
 const StorageVoucher = memo(function StorageVoucher({
@@ -55,43 +24,6 @@ const StorageVoucher = memo(function StorageVoucher({
   farmerAccount: farmerAccountProp,
 }: StorageVoucherProps) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const [editOpen, setEditOpen] = useState(false);
-  const [editManualGatePassNumber, setEditManualGatePassNumber] = useState<
-    number | ''
-  >('');
-  const [editDate, setEditDate] = useState('');
-  const [editStorageCategory, setEditStorageCategory] = useState('');
-
-  const { mutate: editStorageGatePass, isPending: isEditPending } =
-    useEditStorageGatePass();
-
-  const openEditDialog = () => {
-    setEditManualGatePassNumber(voucher.manualGatePassNumber ?? '');
-    setEditDate(voucherDateToDDMMYYYY(voucher.date));
-    setEditStorageCategory(voucher.storageCategory ?? '');
-    setEditOpen(true);
-  };
-
-  const handleEditSubmit = () => {
-    editStorageGatePass(
-      {
-        storageGatePassId: voucher._id,
-        ...(editManualGatePassNumber !== '' && {
-          manualGatePassNumber:
-            typeof editManualGatePassNumber === 'number'
-              ? editManualGatePassNumber
-              : parseInt(String(editManualGatePassNumber), 10),
-        }),
-        date: formatDateToISO(editDate),
-        ...(editStorageCategory.trim() !== '' && {
-          storageCategory: editStorageCategory.trim(),
-        }),
-      },
-      {
-        onSuccess: () => setEditOpen(false),
-      }
-    );
-  };
 
   const farmerName =
     farmerNameProp ?? voucher.farmerStorageLinkId?.farmerId?.name;
@@ -200,15 +132,6 @@ const StorageVoucher = memo(function StorageVoucher({
           </Button>
 
           <div className="flex shrink-0 items-center gap-1.5">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={openEditDialog}
-              className="h-8 w-8 p-0"
-              aria-label="Edit gate pass"
-            >
-              <Pencil className="h-3.5 w-3.5" />
-            </Button>
             <Button
               variant="outline"
               size="sm"
@@ -331,104 +254,6 @@ const StorageVoucher = memo(function StorageVoucher({
           </>
         )}
       </div>
-
-      <Dialog open={editOpen} onOpenChange={setEditOpen}>
-        <DialogContent className="font-custom sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="font-custom">
-              Edit storage gate pass
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            <Field>
-              <FieldLabel
-                htmlFor="edit-manual-gate-pass"
-                className="font-custom mb-2 block text-base font-semibold"
-              >
-                Manual Gate Pass Number
-                <span className="font-custom text-muted-foreground ml-1 font-normal">
-                  (optional)
-                </span>
-              </FieldLabel>
-              <Input
-                id="edit-manual-gate-pass"
-                type="number"
-                min={0}
-                value={
-                  editManualGatePassNumber === ''
-                    ? ''
-                    : editManualGatePassNumber
-                }
-                onChange={(e) => {
-                  const raw = e.target.value;
-                  if (raw === '') {
-                    setEditManualGatePassNumber('');
-                    return;
-                  }
-                  const parsed = parseInt(raw, 10);
-                  setEditManualGatePassNumber(
-                    Number.isNaN(parsed) ? '' : parsed
-                  );
-                }}
-                placeholder="e.g. 101"
-                className="font-custom [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-              />
-            </Field>
-            <Field>
-              <DatePicker
-                value={editDate}
-                onChange={setEditDate}
-                label="Date"
-                id="edit-storage-date"
-              />
-            </Field>
-            <Field>
-              <FieldLabel
-                htmlFor="edit-storage-category"
-                className="font-custom mb-2 block text-base font-semibold"
-              >
-                Storage Category
-                <span className="font-custom text-muted-foreground ml-1 font-normal">
-                  (optional)
-                </span>
-              </FieldLabel>
-              <select
-                id="edit-storage-category"
-                aria-label="Storage category"
-                value={editStorageCategory}
-                onChange={(e) => setEditStorageCategory(e.target.value)}
-                className="border-input bg-background text-foreground font-custom focus-visible:ring-primary h-10 w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <option value="">Select category</option>
-                {STORAGE_CATEGORY_OPTIONS.map((opt) => (
-                  <option key={opt} value={opt}>
-                    {opt}
-                  </option>
-                ))}
-              </select>
-            </Field>
-          </div>
-          <DialogFooter showCloseButton={false} className="gap-2 sm:gap-0">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setEditOpen(false)}
-              className="font-custom"
-            >
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              variant="default"
-              onClick={handleEditSubmit}
-              disabled={isEditPending}
-              className="font-custom"
-            >
-              {isEditPending ? 'Saving...' : 'Save'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </Card>
   );
 });

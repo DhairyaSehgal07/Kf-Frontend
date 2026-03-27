@@ -153,6 +153,23 @@ const DaybookEntryCard = memo(function DaybookEntryCard({
 export { DaybookEntryCard };
 
 const DaybookPage = memo(function DaybookPage() {
+  const DAYBOOK_ACTIVE_TAB_KEY = 'daybook.activeTab';
+  const DAYBOOK_TABS = [
+    'incoming',
+    'grading',
+    'storage',
+    'dispatch',
+    'outgoing',
+  ] as const;
+  type DaybookTab = (typeof DAYBOOK_TABS)[number];
+  const isDaybookTab = (value: string): value is DaybookTab =>
+    (DAYBOOK_TABS as readonly string[]).includes(value);
+
+  const [activeTab, setActiveTab] = useState<DaybookTab>(() => {
+    if (typeof window === 'undefined') return 'incoming';
+    const storedTab = window.localStorage.getItem(DAYBOOK_ACTIVE_TAB_KEY);
+    return storedTab && isDaybookTab(storedTab) ? storedTab : 'incoming';
+  });
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [page, setPage] = useState(1);
@@ -267,10 +284,22 @@ const DaybookPage = memo(function DaybookPage() {
     return () => clearTimeout(t);
   }, []);
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem(DAYBOOK_ACTIVE_TAB_KEY, activeTab);
+  }, [activeTab, DAYBOOK_ACTIVE_TAB_KEY]);
+
   return (
     <main className="mx-auto max-w-7xl p-3 sm:p-4 lg:p-6">
       <div className="space-y-4 sm:space-y-6">
-        <Tabs defaultValue="incoming" className="w-full">
+        <Tabs
+          value={activeTab}
+          onValueChange={(value) => {
+            if (!isDaybookTab(value)) return;
+            setActiveTab(value);
+          }}
+          className="w-full"
+        >
           <TabsList className="font-custom flex h-auto w-full flex-nowrap overflow-x-auto">
             <TabsTrigger
               value="incoming"
