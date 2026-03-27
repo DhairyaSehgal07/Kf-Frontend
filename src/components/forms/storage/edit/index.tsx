@@ -655,6 +655,32 @@ const EditStorageGatePassForm = memo(function EditStorageGatePassForm() {
                                       </option>
                                     ))}
                                   </select>
+                                  <Input
+                                    type="number"
+                                    min={0}
+                                    disabled={quantitiesDisabled}
+                                    value={
+                                      row.quantity === 0
+                                        ? ''
+                                        : String(row.quantity)
+                                    }
+                                    onChange={(e) => {
+                                      const raw = e.target.value;
+                                      const quantity =
+                                        raw === ''
+                                          ? 0
+                                          : Math.max(0, parseInt(raw, 10) || 0);
+                                      form.setFieldValue(
+                                        'extraQuantityRows' as never,
+                                        extraQuantityRows.map((r) =>
+                                          r.id === row.id
+                                            ? { ...r, quantity }
+                                            : r
+                                        ) as never
+                                      );
+                                    }}
+                                    className="w-full [appearance:textfield] sm:w-24 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                                  />
                                   <select
                                     value={row.bagType ?? 'JUTE'}
                                     disabled={quantitiesDisabled}
@@ -693,30 +719,6 @@ const EditStorageGatePassForm = memo(function EditStorageGatePassForm() {
                                     <Trash2 className="h-4 w-4" />
                                   </Button>
                                 </div>
-                                <Input
-                                  type="number"
-                                  min={0}
-                                  disabled={quantitiesDisabled}
-                                  value={
-                                    row.quantity === 0
-                                      ? ''
-                                      : String(row.quantity)
-                                  }
-                                  onChange={(e) => {
-                                    const raw = e.target.value;
-                                    const quantity =
-                                      raw === ''
-                                        ? 0
-                                        : Math.max(0, parseInt(raw, 10) || 0);
-                                    form.setFieldValue(
-                                      'extraQuantityRows' as never,
-                                      extraQuantityRows.map((r) =>
-                                        r.id === row.id ? { ...r, quantity } : r
-                                      ) as never
-                                    );
-                                  }}
-                                  className="w-full [appearance:textfield] sm:w-24 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-                                />
                               </div>
                             ))}
 

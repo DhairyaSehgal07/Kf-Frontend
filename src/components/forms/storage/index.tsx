@@ -755,6 +755,28 @@ const StorageGatePassForm = memo(function StorageGatePassForm({
                                         </option>
                                       ))}
                                     </select>
+                                    <Input
+                                      type="number"
+                                      min={0}
+                                      placeholder="Qty"
+                                      disabled={quantitiesDisabled}
+                                      value={displayValue}
+                                      onChange={(e) => {
+                                        const raw = e.target.value;
+                                        const num =
+                                          raw === ''
+                                            ? 0
+                                            : Math.max(
+                                                0,
+                                                parseInt(raw, 10) || 0
+                                              );
+                                        updateExtraRow(row.id, {
+                                          quantity: num,
+                                        });
+                                      }}
+                                      onWheel={(e) => e.currentTarget.blur()}
+                                      className="w-full [appearance:textfield] sm:w-24 sm:text-right [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                                    />
                                     <select
                                       aria-label={`Bag type for ${row.size}`}
                                       disabled={quantitiesDisabled}
@@ -783,23 +805,6 @@ const StorageGatePassForm = memo(function StorageGatePassForm({
                                       <Trash2 className="h-4 w-4" />
                                     </Button>
                                   </div>
-                                  <Input
-                                    type="number"
-                                    min={0}
-                                    placeholder="Qty"
-                                    disabled={quantitiesDisabled}
-                                    value={displayValue}
-                                    onChange={(e) => {
-                                      const raw = e.target.value;
-                                      const num =
-                                        raw === ''
-                                          ? 0
-                                          : Math.max(0, parseInt(raw, 10) || 0);
-                                      updateExtraRow(row.id, { quantity: num });
-                                    }}
-                                    onWheel={(e) => e.currentTarget.blur()}
-                                    className="w-full [appearance:textfield] sm:w-24 sm:text-right [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-                                  />
                                 </div>
                               );
                             })}
