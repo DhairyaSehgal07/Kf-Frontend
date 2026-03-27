@@ -1,9 +1,17 @@
 import { memo, useMemo, useState } from 'react';
+import { useNavigate } from '@tanstack/react-router';
 import { Card, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { ChevronDown, ChevronUp, Printer, User, Package } from 'lucide-react';
+import {
+  ChevronDown,
+  ChevronUp,
+  Package,
+  Pencil,
+  Printer,
+  User,
+} from 'lucide-react';
 import { DetailRow } from './detail-row';
 import { formatVoucherDate } from './format-date';
 import {
@@ -23,6 +31,7 @@ const StorageVoucher = memo(function StorageVoucher({
   farmerName: farmerNameProp,
   farmerAccount: farmerAccountProp,
 }: StorageVoucherProps) {
+  const navigate = useNavigate();
   const [isExpanded, setIsExpanded] = useState(false);
 
   const farmerName =
@@ -132,6 +141,20 @@ const StorageVoucher = memo(function StorageVoucher({
           </Button>
 
           <div className="flex shrink-0 items-center gap-1.5">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                navigate({
+                  to: '/store-admin/storage/edit',
+                  state: { gatePass: voucher } as Record<string, unknown>,
+                })
+              }
+              className="h-8 w-8 p-0"
+              aria-label="Edit gate pass"
+            >
+              <Pencil className="h-3.5 w-3.5" />
+            </Button>
             <Button
               variant="outline"
               size="sm"
