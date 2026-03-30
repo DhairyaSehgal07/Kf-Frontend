@@ -232,6 +232,7 @@ const ALL_COLUMNS: {
   { key: 'farmerMobile', label: 'Mobile', width: '6%', align: 'center' },
   { key: 'createdByName', label: 'Created by', width: '8%', align: 'left' },
   { key: 'category', label: 'Category', width: '8%', align: 'left' },
+  { key: 'stage', label: 'Stage', width: '6%', align: 'left' },
   { key: 'gatePassNo', label: 'Gate pass no.', width: '5%', align: 'center' },
   {
     key: 'manualGatePassNumber',
@@ -519,6 +520,7 @@ const GROUP_LABELS: Record<string, string> = {
   farmerMobile: 'Mobile',
   createdByName: 'Created by',
   category: 'Category',
+  stage: 'Stage',
   date: 'Date',
   variety: 'Variety',
   status: 'Status',
@@ -1059,6 +1061,25 @@ export function IncomingReportTablePdf({
           />
           {sections.map((section, sectionIndex) => {
             const isFirstSection = sectionIndex === 0;
+
+            // Totals for this specific group (matches the UI total columns).
+            const sectionTotalBags = section.leaves.reduce(
+              (sum, r) => sum + (typeof r.bags === 'number' ? r.bags : 0),
+              0
+            );
+            const sectionTotalGross = section.leaves.reduce((sum, r) => {
+              const v = r.grossWeightKg;
+              return sum + (typeof v === 'number' && !Number.isNaN(v) ? v : 0);
+            }, 0);
+            const sectionTotalTare = section.leaves.reduce((sum, r) => {
+              const v = r.tareWeightKg;
+              return sum + (typeof v === 'number' && !Number.isNaN(v) ? v : 0);
+            }, 0);
+            const sectionTotalNet = section.leaves.reduce((sum, r) => {
+              const v = r.netWeightKg;
+              return sum + (typeof v === 'number' && !Number.isNaN(v) ? v : 0);
+            }, 0);
+
             return (
               <View
                 key={sectionIndex}
@@ -1137,6 +1158,19 @@ export function IncomingReportTablePdf({
                     )}
                   </View>
                 </View>
+                {section.leaves.length > 0 && (
+                  <View style={styles.tableContainer}>
+                    <View style={styles.table}>
+                      <TotalsRow
+                        totalBags={sectionTotalBags}
+                        totalGross={sectionTotalGross}
+                        totalTare={sectionTotalTare}
+                        totalNet={sectionTotalNet}
+                        columns={columnsForTable}
+                      />
+                    </View>
+                  </View>
+                )}
               </View>
             );
           })}

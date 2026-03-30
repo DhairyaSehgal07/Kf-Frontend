@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.23] - 2026-03-30
+
+### Added
+- Storage gate pass form: incoming-variety validation integration for OWNED category via `useIncomingVarietyCheck`
+- Incoming report (table + PDF): **Stage** column support, including grouping labels and row mapping from gate pass data
+
+### Changed
+- Storage gate pass form: `storageCategory` is now required; category is shown before variety and must be selected to proceed
+- Storage gate pass form: variety options now depend on category (OWNED uses incoming-variety list; other categories use default potato varieties)
+- Analytics report PDFs (incoming, grading, storage): grouped sections now render totals in a dedicated table block for consistent layout
+
 ## [0.10.22] - 2026-03-27
 
 ### Added

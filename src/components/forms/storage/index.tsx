@@ -1,4 +1,4 @@
-import { memo, useMemo, useRef, useState } from 'react';
+import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { useForm } from '@tanstack/react-form';
 import { useNavigate } from '@tanstack/react-router';
 import * as z from 'zod';
@@ -28,13 +28,14 @@ import { AddFarmerModal } from '@/components/forms/add-farmer-modal';
 import { useGetReceiptVoucherNumber } from '@/services/store-admin/functions/useGetVoucherNumber';
 import { useGetAllFarmers } from '@/services/store-admin/functions/useGetAllFarmers';
 import { useCreateBulkStorageGatePasses } from '@/services/store-admin/storage-gate-pass/useCreateBulkStorageGatePasses';
+import { useIncomingVarietyCheck } from '@/services/store-admin/storage-gate-pass/useIncomingVarietyCheck';
 import { toast } from 'sonner';
 import { formatDate, formatDateToISO } from '@/lib/helpers';
 
 import {
-  POTATO_VARIETIES,
   GRADING_SIZES,
   BAG_TYPES,
+  POTATO_VARIETIES,
 } from '@/components/forms/grading/constants';
 import type { StorageGatePassFormProps } from '@/components/forms/storage/storage-form-types';
 import {
@@ -78,7 +79,7 @@ const formSchema = z
     farmerStorageLinkId: z.string().min(1, 'Please select a farmer'),
     date: z.string().min(1, 'Date is required'),
     variety: z.string().min(1, 'Please select a variety'),
-    storageCategory: z.string().optional(),
+    storageCategory: z.string().min(1, 'Please select a category'),
     sizeQuantities: z.record(z.string(), z.number().min(0)),
     sizeBagTypes: z.record(z.string(), z.string()),
     extraQuantityRows: z.array(
@@ -187,9 +188,19 @@ const StorageGatePassForm = memo(function StorageGatePassForm({
       })),
     []
   );
+  const defaultVarietyOptions: Option<string>[] = useMemo(
+    () =>
+      POTATO_VARIETIES.map((variety) => ({
+        value: variety.value,
+        label: variety.label,
+        searchableText: `${variety.label} ${variety.value}`,
+      })),
+    []
+  );
 
   const [step, setStep] = useState<1 | 2>(1);
   const [summaryOpen, setSummaryOpen] = useState(false);
+  const [selectedStorageCategory, setSelectedStorageCategory] = useState('');
   const openSheetRef = useRef(false);
 
   const form = useForm({
@@ -264,7 +275,7 @@ const StorageGatePassForm = memo(function StorageGatePassForm({
               date: formatDateToISO(value.date),
               variety: value.variety.trim(),
               bagSizes,
-              storageCategory: value.storageCategory?.trim() || undefined,
+              storageCategory: value.storageCategory.trim(),
               remarks: value.remarks?.trim() || undefined,
             },
           ],
@@ -272,6 +283,7 @@ const StorageGatePassForm = memo(function StorageGatePassForm({
         {
           onSuccess: () => {
             form.reset();
+            setSelectedStorageCategory('');
             setStep(1);
             setSummaryOpen(false);
             navigate({ to: '/store-admin/daybook' });
@@ -280,6 +292,36 @@ const StorageGatePassForm = memo(function StorageGatePassForm({
       );
     },
   });
+
+  const isOwnedCategory = selectedStorageCategory === 'OWNED';
+  const {
+    varieties: incomingVarieties,
+    isLoading: isLoadingIncomingVarieties,
+  } = useIncomingVarietyCheck(undefined, { enabled: isOwnedCategory });
+  const incomingVarietyOptions: Option<string>[] = useMemo(
+    () =>
+      incomingVarieties.map((variety) => ({
+        value: variety,
+        label: variety,
+        searchableText: variety,
+      })),
+    [incomingVarieties]
+  );
+  const varietyOptions = isOwnedCategory
+    ? incomingVarietyOptions
+    : defaultVarietyOptions;
+  const isLoadingVarieties = isOwnedCategory && isLoadingIncomingVarieties;
+
+  useEffect(() => {
+    const currentVariety = form.state.values.variety?.trim();
+    if (!currentVariety) return;
+    const isCurrentVarietyValid = varietyOptions.some(
+      (opt) => opt.value === currentVariety
+    );
+    if (!isCurrentVarietyValid) {
+      form.setFieldValue('variety', '');
+    }
+  }, [form, varietyOptions]);
 
   const voucherNumberDisplay =
     voucherNumber != null ? `#${voucherNumber}` : null;
@@ -362,6 +404,10 @@ const StorageGatePassForm = memo(function StorageGatePassForm({
     if (step === 1) {
       if (!values.farmerStorageLinkId?.trim()) {
         toast.error('Please select a farmer.');
+        return;
+      }
+      if (!values.storageCategory?.trim()) {
+        toast.error('Please select a category.');
         return;
       }
       if (!values.variety?.trim()) {
@@ -524,6 +570,52 @@ const StorageGatePassForm = memo(function StorageGatePassForm({
               />
 
               <form.Field
+                name="storageCategory"
+                children={(field) => {
+                  const hasSubmitError = Boolean(
+                    field.state.meta.errorMap &&
+                    'onSubmit' in field.state.meta.errorMap &&
+                    field.state.meta.errorMap.onSubmit
+                  );
+                  const isInvalid =
+                    (hasSubmitError ||
+                      (field.state.meta.isTouched &&
+                        !field.state.meta.isValid)) &&
+                    !field.state.value;
+                  return (
+                    <Field data-invalid={isInvalid}>
+                      <FieldLabel
+                        htmlFor="storage-category-select"
+                        className="font-custom mb-2 block text-base font-semibold"
+                      >
+                        Storage Category
+                      </FieldLabel>
+                      <SearchSelector
+                        id="storage-category-select"
+                        options={storageCategoryOptions}
+                        placeholder="Select category"
+                        searchPlaceholder="Search category..."
+                        onSelect={(v) => {
+                          const nextCategory = v ?? '';
+                          field.handleChange(nextCategory);
+                          setSelectedStorageCategory(nextCategory);
+                        }}
+                        value={field.state.value ?? ''}
+                        emptyMessage="No categories found"
+                        className="w-full"
+                        buttonClassName="w-full justify-between"
+                      />
+                      {isInvalid && (
+                        <FieldError
+                          errors={field.state.meta.errors as FieldErrors}
+                        />
+                      )}
+                    </Field>
+                  );
+                }}
+              />
+
+              <form.Field
                 name="variety"
                 children={(field) => {
                   const hasSubmitError = Boolean(
@@ -545,11 +637,18 @@ const StorageGatePassForm = memo(function StorageGatePassForm({
                         Choose the potato variety for this order
                       </p>
                       <SearchSelector
-                        options={POTATO_VARIETIES}
+                        options={varietyOptions}
                         placeholder="Select a variety"
                         searchPlaceholder="Search variety..."
                         onSelect={(v) => field.handleChange(v ?? '')}
                         value={field.state.value}
+                        loading={isLoadingVarieties}
+                        loadingMessage="Loading varieties..."
+                        emptyMessage={
+                          isOwnedCategory
+                            ? 'No incoming varieties found'
+                            : 'No varieties found'
+                        }
                         buttonClassName="w-full justify-between"
                       />
                       {isInvalid && (
@@ -560,34 +659,6 @@ const StorageGatePassForm = memo(function StorageGatePassForm({
                     </Field>
                   );
                 }}
-              />
-
-              <form.Field
-                name="storageCategory"
-                children={(field) => (
-                  <Field>
-                    <FieldLabel
-                      htmlFor="storage-category-select"
-                      className="font-custom mb-2 block text-base font-semibold"
-                    >
-                      Storage Category
-                      <span className="font-custom text-muted-foreground ml-1 font-normal">
-                        (optional)
-                      </span>
-                    </FieldLabel>
-                    <SearchSelector
-                      id="storage-category-select"
-                      options={storageCategoryOptions}
-                      placeholder="Select category"
-                      searchPlaceholder="Search category..."
-                      onSelect={(v) => field.handleChange(v ?? '')}
-                      value={field.state.value ?? ''}
-                      emptyMessage="No categories found"
-                      className="w-full"
-                      buttonClassName="w-full justify-between"
-                    />
-                  </Field>
-                )}
               />
 
               <form.Field
@@ -1098,6 +1169,7 @@ const StorageGatePassForm = memo(function StorageGatePassForm({
                 variant="outline"
                 onClick={() => {
                   form.reset();
+                  setSelectedStorageCategory('');
                   toast.info('Form reset');
                 }}
                 className="font-custom"
@@ -1120,14 +1192,16 @@ const StorageGatePassForm = memo(function StorageGatePassForm({
               );
               return {
                 farmerStorageLinkId: state.values.farmerStorageLinkId,
+                storageCategory: state.values.storageCategory,
                 variety: state.values.variety,
                 totalQty: fixedQty + extraQty,
               };
             }}
           >
-            {({ farmerStorageLinkId, variety, totalQty }) => {
+            {({ farmerStorageLinkId, storageCategory, variety, totalQty }) => {
               const canProceedFromStep1 =
                 Boolean(farmerStorageLinkId?.trim()) &&
+                Boolean(storageCategory?.trim()) &&
                 Boolean(variety?.trim()) &&
                 totalQty > 0;
               return (

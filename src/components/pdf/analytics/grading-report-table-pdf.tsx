@@ -1546,17 +1546,23 @@ export const GradingReportTablePdf = ({
                             />
                           )
                         )}
-                        <TotalsRow
-                          totals={computeTotalsForColumns(
-                            section.leaves,
-                            totalKeysForVisibleColumns
-                          )}
-                          columns={columnsForTable}
-                        />
                       </>
                     )}
                   </View>
                 </View>
+                {section.leaves.length > 0 && (
+                  <View style={styles.tableContainer}>
+                    <View style={styles.table}>
+                      <TotalsRow
+                        totals={computeTotalsForColumns(
+                          section.leaves,
+                          totalKeysForVisibleColumns
+                        )}
+                        columns={columnsForTable}
+                      />
+                    </View>
+                  </View>
+                )}
               </View>
             );
           })}

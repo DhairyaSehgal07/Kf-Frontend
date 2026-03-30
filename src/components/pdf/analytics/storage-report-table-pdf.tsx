@@ -1178,28 +1178,34 @@ export function StorageReportTablePdf({
                             columns={columnsForGroupedTable}
                           />
                         ))}
-                        <TotalsRow
-                          totalBags={section.leaves.reduce(
-                            (sum, r) => sum + (r.totalBags ?? 0),
-                            0
-                          )}
-                          bagSizeTotals={section.leaves.reduce(
-                            (acc, r) => {
-                              for (const [size, qty] of Object.entries(
-                                r.bagSizesQuantities ?? {}
-                              )) {
-                                acc[size] = (acc[size] ?? 0) + qty;
-                              }
-                              return acc;
-                            },
-                            {} as Record<string, number>
-                          )}
-                          columns={columnsForGroupedTable}
-                        />
                       </>
                     )}
                   </View>
                 </View>
+                {section.leaves.length > 0 && (
+                  <View style={styles.tableContainer}>
+                    <View style={styles.table}>
+                      <TotalsRow
+                        totalBags={section.leaves.reduce(
+                          (sum, r) => sum + (r.totalBags ?? 0),
+                          0
+                        )}
+                        bagSizeTotals={section.leaves.reduce(
+                          (acc, r) => {
+                            for (const [size, qty] of Object.entries(
+                              r.bagSizesQuantities ?? {}
+                            )) {
+                              acc[size] = (acc[size] ?? 0) + qty;
+                            }
+                            return acc;
+                          },
+                          {} as Record<string, number>
+                        )}
+                        columns={columnsForGroupedTable}
+                      />
+                    </View>
+                  </View>
+                )}
               </View>
             );
           })}

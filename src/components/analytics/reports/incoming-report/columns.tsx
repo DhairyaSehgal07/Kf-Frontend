@@ -248,6 +248,7 @@ export type IncomingReportRow = {
   farmerMobile: string;
   createdByName: string;
   category: string;
+  stage: string;
   gatePassNo: number | string;
   manualGatePassNumber: number | string;
   date: string;
@@ -311,6 +312,12 @@ export const columns: ColumnDef<IncomingReportRow>[] = [
     header: ({ column }) => (
       <GroupableHeader column={column} label="Category" />
     ),
+    cell: GroupableCell,
+    enableGrouping: true,
+  },
+  {
+    accessorKey: 'stage',
+    header: ({ column }) => <GroupableHeader column={column} label="Stage" />,
     cell: GroupableCell,
     enableGrouping: true,
   },

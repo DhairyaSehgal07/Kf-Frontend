@@ -97,6 +97,7 @@ const COLUMN_LABELS: Record<string, string> = {
   farmerMobile: 'Mobile',
   createdByName: 'Created by',
   category: 'Category',
+  stage: 'Stage',
   gatePassNo: 'Gate pass no.',
   manualGatePassNumber: 'Manual GP no.',
   date: 'Date',
@@ -295,8 +296,8 @@ export const DataTable = forwardRef(function DataTableInner<TData, TValue>(
                   {groupedIds.length === 0 ? (
                     <p className="text-muted-foreground text-sm">
                       No groups applied. Use the 3-dot menu on a column header
-                      (Farmer, Address, Category, Date, Variety, Status) to
-                      group by that column.
+                      (Farmer, Address, Category, Stage, Date, Variety, Status)
+                      to group by that column.
                     </p>
                   ) : (
                     <ul className="space-y-1">
