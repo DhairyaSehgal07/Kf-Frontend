@@ -218,6 +218,40 @@ const styles = StyleSheet.create({
   summaryCellLast: {
     borderRightWidth: 0,
   },
+  totalsTransposeHeader: {
+    flexDirection: 'row',
+    backgroundColor: '#E8E8E8',
+    fontWeight: 'bold',
+    borderBottomWidth: 1,
+    borderBottomColor: '#000',
+    paddingVertical: 3,
+  },
+  totalsTransposeRow: {
+    flexDirection: 'row',
+    borderBottomWidth: 0.5,
+    borderBottomColor: '#666',
+    paddingVertical: 2,
+  },
+  totalsTransposeFieldCell: {
+    width: '45%',
+    paddingHorizontal: 3,
+    fontSize: 7,
+    textAlign: 'left',
+    borderRightWidth: 0.5,
+    borderRightColor: '#666',
+  },
+  totalsTransposeValueCell: {
+    width: '55%',
+    paddingHorizontal: 3,
+    fontSize: 7,
+    textAlign: 'left',
+  },
+  totalsHeading: {
+    fontSize: 8,
+    fontWeight: 'bold',
+    marginBottom: 4,
+    paddingHorizontal: 3,
+  },
 });
 
 const ALL_COLUMNS: {
@@ -361,53 +395,48 @@ function TotalsRow({
   }[];
 }) {
   const fmt = (n: number) => (Number.isNaN(n) ? '—' : n.toFixed(2));
+  type TotalsByKey = Partial<Record<keyof IncomingReportRow, string | number>>;
+  const totalsByKey: TotalsByKey = {
+    bags: totalBags,
+    grossWeightKg: fmt(totalGross),
+    tareWeightKg: fmt(totalTare),
+    netWeightKg: fmt(totalNet),
+  };
+  const totalFields = columns
+    .filter(
+      (col) =>
+        col.key === 'bags' ||
+        col.key === 'grossWeightKg' ||
+        col.key === 'tareWeightKg' ||
+        col.key === 'netWeightKg'
+    )
+    .map((col) => ({
+      key: col.key,
+      label: col.label,
+      value: totalsByKey[col.key] ?? '—',
+    }));
+
+  if (totalFields.length === 0) return null;
+
   return (
-    <View style={styles.tableRowTotal}>
-      {columns.map((col, i) => {
-        if (col.key === 'bags')
-          return (
-            <Text key={col.key} style={[styles.cell, { width: col.width }]}>
-              {totalBags}
-            </Text>
-          );
-        if (col.key === 'grossWeightKg')
-          return (
-            <Text key={col.key} style={[styles.cell, { width: col.width }]}>
-              {fmt(totalGross)}
-            </Text>
-          );
-        if (col.key === 'tareWeightKg')
-          return (
-            <Text key={col.key} style={[styles.cell, { width: col.width }]}>
-              {fmt(totalTare)}
-            </Text>
-          );
-        if (col.key === 'netWeightKg')
-          return (
-            <Text
-              key={col.key}
-              style={[
-                styles.cell,
-                i === columns.length - 1 ? styles.cellLast : {},
-                { width: col.width },
-              ]}
-            >
-              {fmt(totalNet)}
-            </Text>
-          );
-        return (
-          <Text
-            key={col.key}
-            style={[
-              col.align === 'left' ? styles.cellLeft : styles.cell,
-              i === columns.length - 1 ? styles.cellLast : {},
-              { width: col.width },
-            ]}
-          >
-            {i === 0 ? 'Total' : ''}
-          </Text>
-        );
-      })}
+    <View>
+      <Text style={styles.totalsHeading}>Toal of group</Text>
+      <View style={styles.totalsTransposeHeader}>
+        <Text style={styles.totalsTransposeFieldCell}>Field</Text>
+        <Text style={styles.totalsTransposeValueCell}>Value</Text>
+      </View>
+      {totalFields.map((field, index) => (
+        <View
+          key={field.key}
+          style={[
+            styles.totalsTransposeRow,
+            index === totalFields.length - 1 ? { borderBottomWidth: 0 } : {},
+          ]}
+        >
+          <Text style={styles.totalsTransposeFieldCell}>{field.label}</Text>
+          <Text style={styles.totalsTransposeValueCell}>{field.value}</Text>
+        </View>
+      ))}
     </View>
   );
 }

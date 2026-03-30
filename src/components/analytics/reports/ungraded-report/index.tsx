@@ -41,6 +41,7 @@ type IncomingPass = IncomingGatePassWithLink & {
   bagsReceived?: number;
   manualGatePassNumber?: number;
   truckNumber?: string;
+  stage?: string;
   status?: string;
   gradingSummary?: { totalGradedBags?: number; graded?: boolean };
   bagSizes?: { initialQuantity?: number }[];
@@ -99,6 +100,7 @@ function mapGatePassesToRows(gatePasses: IncomingPass[]): IncomingReportRow[] {
       farmerMobile: farmer?.mobileNumber ?? '—',
       createdByName,
       category: pass.category ?? '—',
+      stage: pass.stage ?? '—',
       gatePassNo: pass.gatePassNo ?? '—',
       manualGatePassNumber: pass.manualGatePassNumber ?? '—',
       date: formatDate(pass.date),
