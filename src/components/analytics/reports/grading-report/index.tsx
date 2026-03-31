@@ -301,6 +301,7 @@ function mapGradingPassesToRows(passes: GradingGatePass[]): GradingReportRow[] {
           ? getIncomingGatePassDate(pass, inc)
           : '',
         date: isFirstRow ? formatDate(pass.date) : '—',
+        stage: hasIncoming ? (inc.stage ?? pass.stage ?? '—') : '',
         variety: hasIncoming ? (inc.variety ?? pass.variety ?? '—') : '',
         bagType: '—',
         truckNumber: hasIncoming ? getTruckNumber(pass, inc) : '',
@@ -339,6 +340,7 @@ const GRADING_REPORT_DEFAULT_COLUMN_VISIBILITY: VisibilityState = {
   gatePassNo: true,
   manualGatePassNumber: false,
   date: true,
+  stage: true,
   variety: true,
   bagType: true,
   totalGradedBags: true,

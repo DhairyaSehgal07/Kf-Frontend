@@ -27,6 +27,7 @@ export const GRADING_COLUMN_LABELS: Record<string, string> = {
   gatePassNo: 'GP no.',
   manualGatePassNumber: 'Manual GP no.',
   date: 'Date',
+  stage: 'Stage',
   totalGradedBags: 'Graded bags',
   totalGradedWeightKg: 'Graded wt (kg)',
   wastageKg: 'Wastage (kg)',

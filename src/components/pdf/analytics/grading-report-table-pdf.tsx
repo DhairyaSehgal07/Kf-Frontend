@@ -349,6 +349,7 @@ const ALL_COLUMNS: {
     width: '5%',
     align: 'center',
   },
+  { key: 'stage', label: 'Stage', width: '5%', align: 'left' },
   { key: 'variety', label: 'Variety', width: '5%', align: 'left' },
   { key: 'bagsReceived', label: 'Bags rec.', width: '4%', align: 'center' },
   {
@@ -718,6 +719,7 @@ const GROUP_LABELS: Record<string, string> = {
   farmerName: 'Farmer',
   accountNumber: 'Account No.',
   variety: 'Variety',
+  stage: 'Stage',
   date: 'Date',
   incomingGatePassDate: 'Incoming gate pass date',
   grader: 'Grader',
@@ -759,10 +761,21 @@ interface VarietyBagSizeSummaryRow {
   quantity: number;
 }
 
+interface VarietyStageSummaryRow {
+  variety: string;
+  stage: string;
+  count: number;
+  bagsReceived: number;
+  totalGradedBags: number;
+  totalGradedWeightKg: number;
+  wastageKg: number;
+}
+
 /** Computed report summary from grading report rows */
 interface GradingReportTableSummary {
   byVariety: VarietySummaryRow[];
   byFarmer: FarmerSummaryRow[];
+  byVarietyAndStage: VarietyStageSummaryRow[];
   byVarietyAndBagSize: VarietyBagSizeSummaryRow[];
   overall: SummaryRowTotals;
 }
@@ -772,6 +785,7 @@ function computeGradingReportSummary(
 ): GradingReportTableSummary {
   const varietyMap = new Map<string, SummaryRowTotals>();
   const farmerMap = new Map<string, SummaryRowTotals>();
+  const varietyStageMap = new Map<string, VarietyStageSummaryRow>();
   const varietyBagMap = new Map<string, VarietyBagSizeSummaryRow>();
   const overall: SummaryRowTotals = {
     count: 0,
@@ -798,6 +812,7 @@ function computeGradingReportSummary(
     // not per-incoming bags received from expanded rows.
     const gradingQuantity = totalGradedBags;
     const variety = (row.variety ?? '').trim() || '—';
+    const stage = (row.stage ?? '').trim() || '—';
     const farmerName = (row.farmerName ?? '').trim() || '—';
 
     overall.count += 1;
@@ -832,6 +847,26 @@ function computeGradingReportSummary(
       f.wastageKg += wastageKg;
     } else {
       farmerMap.set(farmerName, {
+        count: 1,
+        bagsReceived: gradingQuantity,
+        totalGradedBags,
+        totalGradedWeightKg,
+        wastageKg,
+      });
+    }
+
+    const varietyStageKey = `${variety}||${stage}`;
+    const vs = varietyStageMap.get(varietyStageKey);
+    if (vs) {
+      vs.count += 1;
+      vs.bagsReceived += gradingQuantity;
+      vs.totalGradedBags += totalGradedBags;
+      vs.totalGradedWeightKg += totalGradedWeightKg;
+      vs.wastageKg += wastageKg;
+    } else {
+      varietyStageMap.set(varietyStageKey, {
+        variety,
+        stage,
         count: 1,
         bagsReceived: gradingQuantity,
         totalGradedBags,
@@ -878,6 +913,13 @@ function computeGradingReportSummary(
   const byFarmer: FarmerSummaryRow[] = Array.from(farmerMap.entries())
     .map(([farmerName, t]) => ({ farmerName, ...t }))
     .sort((a, b) => a.farmerName.localeCompare(b.farmerName));
+  const byVarietyAndStage: VarietyStageSummaryRow[] = Array.from(
+    varietyStageMap.values()
+  ).sort((a, b) => {
+    const varietyComparison = a.variety.localeCompare(b.variety);
+    if (varietyComparison !== 0) return varietyComparison;
+    return a.stage.localeCompare(b.stage);
+  });
   const byVarietyAndBagSize: VarietyBagSizeSummaryRow[] = Array.from(
     varietyBagMap.values()
   ).sort((a, b) => {
@@ -886,7 +928,13 @@ function computeGradingReportSummary(
     return a.bagSize.localeCompare(b.bagSize);
   });
 
-  return { byVariety, byFarmer, byVarietyAndBagSize, overall };
+  return {
+    byVariety,
+    byFarmer,
+    byVarietyAndStage,
+    byVarietyAndBagSize,
+    overall,
+  };
 }
 
 const SUMMARY_COLUMNS = [
@@ -897,6 +945,190 @@ const SUMMARY_COLUMNS = [
   { key: 'totalGradedWeightKg', label: 'Graded wt (kg)', width: '16%' },
   { key: 'wastageKg', label: 'Wastage (kg)', width: '16%' },
 ];
+
+const VARIETY_STAGE_SUMMARY_COLUMNS = [
+  { key: 'variety', label: 'Variety', width: '20%' },
+  { key: 'stage', label: 'Stage', width: '16%' },
+  { key: 'count', label: 'Count', width: '12%' },
+  { key: 'bagsReceived', label: 'Bags rec.', width: '14%' },
+  { key: 'totalGradedBags', label: 'Graded bags', width: '14%' },
+  { key: 'totalGradedWeightKg', label: 'Graded wt (kg)', width: '12%' },
+  { key: 'wastageKg', label: 'Wastage (kg)', width: '12%' },
+];
+
+function SummaryVarietyStageTable({
+  rows,
+  overall,
+}: {
+  rows: VarietyStageSummaryRow[];
+  overall: SummaryRowTotals;
+}) {
+  const fmt = (n: number) => n.toFixed(2);
+  return (
+    <View style={styles.summarySection}>
+      <Text style={styles.summaryTitle}>Variety + stage wise total</Text>
+      <View style={styles.summaryTable}>
+        <View style={styles.summaryTableHeader}>
+          {VARIETY_STAGE_SUMMARY_COLUMNS.map((col, i) => (
+            <Text
+              key={col.key}
+              style={[
+                col.key === 'variety' || col.key === 'stage'
+                  ? styles.summaryCellLeft
+                  : styles.summaryCell,
+                i === VARIETY_STAGE_SUMMARY_COLUMNS.length - 1
+                  ? styles.summaryCellLast
+                  : {},
+                { width: col.width },
+              ]}
+            >
+              {col.label}
+            </Text>
+          ))}
+        </View>
+        {rows.length === 0 ? (
+          <View style={styles.summaryTableRow}>
+            <Text
+              style={[
+                styles.summaryCellLeft,
+                styles.summaryCellLast,
+                { width: '100%', paddingVertical: 4 },
+              ]}
+            >
+              No data
+            </Text>
+          </View>
+        ) : (
+          <>
+            {rows.map((row) => (
+              <View
+                key={`${row.variety}-${row.stage}`}
+                style={styles.summaryTableRow}
+              >
+                <Text
+                  style={[
+                    styles.summaryCellLeft,
+                    { width: VARIETY_STAGE_SUMMARY_COLUMNS[0].width },
+                  ]}
+                >
+                  {row.variety}
+                </Text>
+                <Text
+                  style={[
+                    styles.summaryCellLeft,
+                    { width: VARIETY_STAGE_SUMMARY_COLUMNS[1].width },
+                  ]}
+                >
+                  {row.stage}
+                </Text>
+                <Text
+                  style={[
+                    styles.summaryCell,
+                    { width: VARIETY_STAGE_SUMMARY_COLUMNS[2].width },
+                  ]}
+                >
+                  {fmt(row.count)}
+                </Text>
+                <Text
+                  style={[
+                    styles.summaryCell,
+                    { width: VARIETY_STAGE_SUMMARY_COLUMNS[3].width },
+                  ]}
+                >
+                  {fmt(row.bagsReceived)}
+                </Text>
+                <Text
+                  style={[
+                    styles.summaryCell,
+                    { width: VARIETY_STAGE_SUMMARY_COLUMNS[4].width },
+                  ]}
+                >
+                  {fmt(row.totalGradedBags)}
+                </Text>
+                <Text
+                  style={[
+                    styles.summaryCell,
+                    { width: VARIETY_STAGE_SUMMARY_COLUMNS[5].width },
+                  ]}
+                >
+                  {fmt(row.totalGradedWeightKg)}
+                </Text>
+                <Text
+                  style={[
+                    styles.summaryCell,
+                    styles.summaryCellLast,
+                    { width: VARIETY_STAGE_SUMMARY_COLUMNS[6].width },
+                  ]}
+                >
+                  {fmt(row.wastageKg)}
+                </Text>
+              </View>
+            ))}
+            <View style={styles.summaryTableRowTotal}>
+              <Text
+                style={[
+                  styles.summaryCellLeft,
+                  { width: VARIETY_STAGE_SUMMARY_COLUMNS[0].width },
+                ]}
+              >
+                Total
+              </Text>
+              <Text
+                style={[
+                  styles.summaryCellLeft,
+                  { width: VARIETY_STAGE_SUMMARY_COLUMNS[1].width },
+                ]}
+              >
+                —
+              </Text>
+              <Text
+                style={[
+                  styles.summaryCell,
+                  { width: VARIETY_STAGE_SUMMARY_COLUMNS[2].width },
+                ]}
+              >
+                {fmt(overall.count)}
+              </Text>
+              <Text
+                style={[
+                  styles.summaryCell,
+                  { width: VARIETY_STAGE_SUMMARY_COLUMNS[3].width },
+                ]}
+              >
+                {fmt(overall.bagsReceived)}
+              </Text>
+              <Text
+                style={[
+                  styles.summaryCell,
+                  { width: VARIETY_STAGE_SUMMARY_COLUMNS[4].width },
+                ]}
+              >
+                {fmt(overall.totalGradedBags)}
+              </Text>
+              <Text
+                style={[
+                  styles.summaryCell,
+                  { width: VARIETY_STAGE_SUMMARY_COLUMNS[5].width },
+                ]}
+              >
+                {fmt(overall.totalGradedWeightKg)}
+              </Text>
+              <Text
+                style={[
+                  styles.summaryCell,
+                  styles.summaryCellLast,
+                  { width: VARIETY_STAGE_SUMMARY_COLUMNS[6].width },
+                ]}
+              >
+                {fmt(overall.wastageKg)}
+              </Text>
+            </View>
+          </>
+        )}
+      </View>
+    </View>
+  );
+}
 
 function SummaryVarietyBagTable({
   rows,
@@ -1421,6 +1653,10 @@ function ReportSummaryPage({
           </View>
         </View>
       </View>
+      <SummaryVarietyStageTable
+        rows={summary.byVarietyAndStage}
+        overall={summary.overall}
+      />
       <SummaryVarietyBagTable rows={summary.byVarietyAndBagSize} />
     </Page>
   );

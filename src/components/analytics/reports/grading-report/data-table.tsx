@@ -109,6 +109,7 @@ const COLUMN_LABELS: Record<string, string> = {
   incomingManualNo: 'Incoming manual no.',
   incomingGatePassDate: 'Incoming gate pass date',
   date: 'Date',
+  stage: 'Stage',
   variety: 'Variety',
   truckNumber: 'Truck no.',
   bagsReceived: 'Bags received',
@@ -355,8 +356,8 @@ const DataTableInner = forwardRef(function DataTableInner<TData, TValue>(
                   {groupedIds.length === 0 ? (
                     <p className="text-muted-foreground text-sm">
                       No groups applied. Use the 3-dot menu on a column header
-                      (Farmer, Variety, Date, Incoming gate pass date) to group
-                      by that column.
+                      (Farmer, Stage, Variety, Date, Incoming gate pass date) to
+                      group by that column.
                     </p>
                   ) : (
                     <ul className="space-y-1">

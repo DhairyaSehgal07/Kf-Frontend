@@ -56,6 +56,8 @@ export interface GradingGatePassIncomingRef {
     | GradingGatePassFarmerStorageLinkMinimal;
   /** Present when populated (incoming gate pass date) */
   date?: string;
+  /** Present when populated (incoming gate pass stage) */
+  stage?: string;
   /** Present when populated (variety from incoming) */
   variety?: string;
 }
@@ -106,6 +108,7 @@ export interface GradingGatePass {
   gatePassNo: number;
   manualGatePassNumber?: number;
   date: string;
+  stage?: string;
   variety: string;
   orderDetails: GradingGatePassOrderDetail[];
   allocationStatus: string;

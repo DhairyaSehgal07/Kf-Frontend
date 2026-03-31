@@ -28,6 +28,7 @@ export type GradingReportRow = {
   incomingManualNo: number | string;
   incomingGatePassDate: string;
   date: string;
+  stage: string;
   variety: string;
   bagType: string;
   truckNumber: string;
@@ -399,6 +400,12 @@ export const columns: ColumnDef<GradingReportRow>[] = [
           : String(row.getValue('truckNumber') ?? '—')}
       </div>
     ),
+  },
+  {
+    accessorKey: 'stage',
+    header: ({ column }) => <GroupableHeader column={column} label="Stage" />,
+    cell: GroupableCell,
+    enableGrouping: true,
   },
   {
     accessorKey: 'variety',
