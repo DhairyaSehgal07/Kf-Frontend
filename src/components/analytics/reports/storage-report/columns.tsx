@@ -258,6 +258,11 @@ export type StorageReportRow = {
   /** Per bag-size location text keyed by bag `size` (e.g. "2-3-B"). */
   bagSizesLocations: Record<string, string>;
   /**
+   * Per bag line (same gate pass, same size, different storage): quantity and display location.
+   * Used for PDF / table cells that stack multiple storages like the farmer ledger.
+   */
+  bagSizesQtyLocList?: Record<string, { qty: number; loc: string }[]>;
+  /**
    * Dynamic bag-size columns use ids like `bagSize:${size}`.
    * The UI table footer sums `row[id]` directly, so we also store each
    * bag size quantity as a direct numeric property.

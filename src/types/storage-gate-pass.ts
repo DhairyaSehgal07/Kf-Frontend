@@ -143,6 +143,7 @@ export interface GetStorageGatePassesParams {
   sortOrder?: 'asc' | 'desc';
   /** Sort field; when not set, backend may default to date */
   sortBy?: 'date' | 'gatePassNo';
+  /** Matches system gate pass number or manual gate pass number (same query param name). */
   gatePassNo?: number | string;
   dateFrom?: string;
   dateTo?: string;

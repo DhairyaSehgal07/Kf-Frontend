@@ -90,6 +90,20 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     justifyContent: 'center',
   },
+  cellQtyLoc: {
+    paddingVertical: 1,
+    alignItems: 'center',
+  },
+  cellQtyLocBlock: {
+    marginBottom: 3,
+    alignItems: 'center',
+    width: '100%',
+  },
+  cellLocText: {
+    fontSize: 5,
+    color: '#444',
+    textAlign: 'center',
+  },
   cellText: {
     fontSize: 6,
     width: '100%',
@@ -359,13 +373,59 @@ function getPdfValue(row: StorageReportRow, col: PdfColumn): unknown {
 }
 
 function getPdfCellText(row: StorageReportRow, col: PdfColumn): string {
-  if (col.bagSize) {
-    const qty = row.bagSizesQuantities?.[col.bagSize];
-    if (qty == null) return '';
-    const location = row.bagSizesLocations?.[col.bagSize];
-    return location ? `${qty}\n${location}` : String(qty);
-  }
   return formatCell(getPdfValue(row, col));
+}
+
+/** Stacked qty + (location) blocks for one bag-size column — matches farmer ledger PDF. */
+function BagSizePdfCell({
+  row,
+  bagSize,
+}: {
+  row: StorageReportRow;
+  bagSize: string;
+}) {
+  const list = row.bagSizesQtyLocList?.[bagSize];
+  const totalQty = row.bagSizesQuantities?.[bagSize];
+
+  if (list && list.length > 0) {
+    return (
+      <View style={[styles.cellQtyLoc, { width: '100%' }]}>
+        {list.map((item, i) => (
+          <View
+            key={i}
+            style={[
+              styles.cellQtyLocBlock,
+              i === list.length - 1 ? { marginBottom: 0 } : {},
+            ]}
+          >
+            <Text
+              style={[styles.cell, styles.cellText, { textAlign: 'center' }]}
+            >
+              {item.qty}
+            </Text>
+            {item.loc ? (
+              <Text style={styles.cellLocText}>{item.loc}</Text>
+            ) : null}
+          </View>
+        ))}
+      </View>
+    );
+  }
+
+  if (totalQty == null || totalQty === 0) {
+    return <Text style={[styles.cell, styles.cellText]}>—</Text>;
+  }
+  const location = row.bagSizesLocations?.[bagSize];
+  return (
+    <View style={[styles.cellQtyLoc, { width: '100%' }]}>
+      <View style={[styles.cellQtyLocBlock, { marginBottom: 0 }]}>
+        <Text style={[styles.cell, styles.cellText, { textAlign: 'center' }]}>
+          {totalQty}
+        </Text>
+        {location ? <Text style={styles.cellLocText}>{location}</Text> : null}
+      </View>
+    </View>
+  );
 }
 
 function ReportHeader({
@@ -403,15 +463,19 @@ function TableRow({ row, columns }: TableRowProps) {
             { width: col.width, minWidth: 0 },
           ]}
         >
-          <Text
-            style={[
-              col.align === 'left' ? styles.cellLeft : styles.cell,
-              styles.cellText,
-            ]}
-            wrap
-          >
-            {getPdfCellText(row, col)}
-          </Text>
+          {col.bagSize ? (
+            <BagSizePdfCell row={row} bagSize={col.bagSize} />
+          ) : (
+            <Text
+              style={[
+                col.align === 'left' ? styles.cellLeft : styles.cell,
+                styles.cellText,
+              ]}
+              wrap
+            >
+              {getPdfCellText(row, col)}
+            </Text>
+          )}
         </View>
       ))}
     </View>

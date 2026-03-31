@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.24] - 2026-03-31
+
+### Added
+- Storage report row model: `bagSizesQtyLocList` for per bag line (same gate pass and size, multiple storages) with quantity and display location
+
+### Changed
+- Storage report (table + PDF): bag-size cells stack multiple quantity and chamber-floor-row location blocks when a pass has several lines, aligned with farmer-ledger style; PDF uses dedicated `BagSizePdfCell` rendering
+- `GetStorageGatePassesParams`: JSDoc clarifying `gatePassNo` matches system or manual gate pass number
+
 ## [0.10.23] - 2026-03-30
 
 ### Added

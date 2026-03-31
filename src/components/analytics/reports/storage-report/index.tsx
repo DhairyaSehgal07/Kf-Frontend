@@ -96,6 +96,20 @@ function mapStorageGatePassesToRows(
       {} as Record<string, string>
     );
 
+    const bagSizesQtyLocList = (pass.bagSizes ?? []).reduce(
+      (acc, b) => {
+        const size = b.size;
+        if (!size) return acc;
+        const qty = b.currentQuantity ?? b.initialQuantity ?? 0;
+        const locParts = [b.chamber, b.floor, b.row].filter(Boolean).join('-');
+        const loc = locParts ? `(${locParts})` : '';
+        if (!acc[size]) acc[size] = [];
+        acc[size].push({ qty, loc });
+        return acc;
+      },
+      {} as Record<string, { qty: number; loc: string }[]>
+    );
+
     const locations = (pass.bagSizes ?? [])
       .map((b) => [b.chamber, b.floor, b.row].filter(Boolean).join('-'))
       .filter(Boolean);
@@ -119,6 +133,7 @@ function mapStorageGatePassesToRows(
       ...bagSizeColumnValues,
       bagSizesQuantities,
       bagSizesLocations,
+      bagSizesQtyLocList,
       location,
       remarks: pass.remarks ?? '—',
       createdAt: formatDateTime(pass.createdAt),
@@ -201,6 +216,30 @@ const StorageReportTable = () => {
             return <div className="font-custom text-right" aria-hidden />;
           }
 
+          const entries = row.original.bagSizesQtyLocList?.[size];
+          if (entries && entries.length > 0) {
+            return (
+              <div className="text-right">
+                {entries.map((e, idx) => (
+                  <div
+                    key={`${size}-${idx}`}
+                    className={
+                      idx > 0 ? 'border-border/60 mt-1.5 border-t pt-1.5' : ''
+                    }
+                  >
+                    <div className="font-custom font-medium">
+                      {e.qty.toLocaleString()}
+                    </div>
+                    {e.loc ? (
+                      <div className="text-muted-foreground font-custom text-xs">
+                        {e.loc}
+                      </div>
+                    ) : null}
+                  </div>
+                ))}
+              </div>
+            );
+          }
           const location = row.original.bagSizesLocations?.[size];
           return (
             <div className="text-right">
