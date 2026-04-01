@@ -4,6 +4,7 @@
 
 export const POTATO_VARIETIES: { label: string; value: string }[] = [
   { label: 'Atlantic', value: 'Atlantic' },
+  { label: 'ATL', value: 'ATL' },
   { label: 'Cardinal', value: 'Cardinal' },
   { label: 'Chipsona 1', value: 'Chipsona 1' },
   { label: 'Chipsona 2', value: 'Chipsona 2' },
