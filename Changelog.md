@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.1] - 2026-05-18
+
+Authentication flow, shared API client, and supporting UI for the login experience.
+
+### Added
+
+- **Authentication** — Login feature with TanStack Form + Zod validation, React Query mutations (`useLogin`, `useLogout`), and a Zustand auth store for access tokens and user session state.
+- **API client** — Axios instance with bearer-token request interceptor, 401 handling (clear session + redirect), and typed env config (`VITE_API_BASE_URL`, `VITE_APP_NAME`) via `src/lib/env.ts`.
+- **UI** — shadcn `Card`, `Field`, `Input`, `Label`, and `Separator` components; Sonner toasts for login feedback; theme provider (`next-themes`) with system/light/dark support.
+- **Devtools** — Unified TanStack devtools panel (router, query, and form) in development.
+- **Config** — `.env.example` documenting required `VITE_` variables; `.gitignore` entries for `.env` and local env overrides.
+
+### Changed
+
+- Home route (`/`) renders the login form instead of the starter demo.
+- Router setup extracted to `src/router.ts`; providers wrap the app with `ThemeProvider`, `Toaster`, and consolidated devtools.
+- Root layout simplified to route outlet only.
+
+### Removed
+
+- Example `useBearStore` Zustand demo store.
+
 ## [0.1.0] - 2026-05-17
 
 First application scaffold for the Kapur frontend (`kf-frontend`).
@@ -29,4 +51,5 @@ First application scaffold for the Kapur frontend (`kf-frontend`).
 
 - Default Vite starter styles (`App.css`) and demo application UI from the initial template.
 
+[0.1.1]: https://github.com/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/compare/v0.0.0...v0.1.0

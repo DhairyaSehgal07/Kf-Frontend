@@ -1,30 +1,19 @@
 import { QueryClientProvider } from '@tanstack/react-query';
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
-import { RouterProvider, createRouter } from '@tanstack/react-router';
+import { RouterProvider } from '@tanstack/react-router';
+import { TanStackAppDevtools } from '@/components/tanstack-devtools';
+import { ThemeProvider } from '@/components/theme-provider';
+import { Toaster } from '@/components/ui/sonner';
 import { queryClient } from './lib/queryClient';
-import { routeTree } from './routeTree.gen';
-
-const router = createRouter({
-  routeTree,
-  context: {
-    queryClient,
-  },
-  defaultPreload: 'intent',
-});
-
-declare module '@tanstack/react-router' {
-  interface Register {
-    router: typeof router;
-  }
-}
+import { router } from './router';
 
 export function Providers() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
-      {import.meta.env.DEV ? (
-        <ReactQueryDevtools initialIsOpen={false} buttonPosition="bottom-left" />
-      ) : null}
-    </QueryClientProvider>
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />
+        <Toaster />
+        {import.meta.env.DEV ? <TanStackAppDevtools router={router} /> : null}
+      </QueryClientProvider>
+    </ThemeProvider>
   );
 }

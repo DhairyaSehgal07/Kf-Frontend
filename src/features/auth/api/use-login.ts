@@ -1,0 +1,39 @@
+import { useMutation } from "@tanstack/react-query"
+import apiClient, { getApiErrorMessage } from "@/lib/api-client"
+import { useAuthStore } from "../store/use-auth-store"
+import type { AuthResponse, LoginCredentials } from "../types"
+
+async function loginRequest(credentials: LoginCredentials): Promise<AuthResponse> {
+  try {
+    const { data } = await apiClient.post<AuthResponse>(
+      "/store-admin/login",
+      credentials,
+    )
+
+    if (
+      !data.success ||
+      !data.data?.token ||
+      !data.data.coldStorageId?._id
+    ) {
+      throw new Error(data.message ?? "Login failed")
+    }
+
+    return data
+  } catch (error) {
+    throw new Error(getApiErrorMessage(error, "Login failed"), { cause: error })
+  }
+}
+
+export function useLogin() {
+  const setAuth = useAuthStore((s) => s.setAuth)
+
+  return useMutation({
+    mutationFn: loginRequest,
+    onSuccess: ({ data }) => {
+      if (!data) return
+
+      const { token, ...user } = data
+      setAuth(user, token)
+    },
+  })
+}

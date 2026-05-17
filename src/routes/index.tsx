@@ -1,16 +1,7 @@
-import { Button } from '@/components/ui/button';
 import { createFileRoute } from '@tanstack/react-router';
+import { LoginForm } from '@/features/auth/components/login-form';
 
 
 export const Route = createFileRoute('/')({
-  component: Index,
+  component: LoginForm,
 });
-
-function Index() {
-  return (
-    <>
-      <div>This is the main file</div>
-      <Button>click me</Button>
-    </>
-  )
-}
