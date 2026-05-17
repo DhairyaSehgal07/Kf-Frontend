@@ -1,4 +1,5 @@
 import { useMutation } from "@tanstack/react-query"
+import { useRouter } from "@tanstack/react-router"
 import apiClient, { getApiErrorMessage } from "@/lib/api-client"
 import { useAuthStore } from "../store/use-auth-store"
 import type { AuthResponse, LoginCredentials } from "../types"
@@ -26,6 +27,7 @@ async function loginRequest(credentials: LoginCredentials): Promise<AuthResponse
 
 export function useLogin() {
   const setAuth = useAuthStore((s) => s.setAuth)
+  const router = useRouter()
 
   return useMutation({
     mutationFn: loginRequest,
@@ -34,6 +36,14 @@ export function useLogin() {
 
       const { token, ...user } = data
       setAuth(user, token)
+
+      const redirectTo = router.state.location.search.redirect
+      if (redirectTo) {
+        router.history.push(redirectTo)
+        return
+      }
+
+      router.navigate({ to: "/daybook" })
     },
   })
 }

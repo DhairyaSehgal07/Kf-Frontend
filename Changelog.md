@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.2] - 2026-05-18
+
+Authenticated app shell with sidebar navigation, top bar, and the first protected route.
+
+### Added
+
+- **Authenticated layout** — `/_authenticated` route guard (redirects unauthenticated users to login with return URL), shared layout with collapsible sidebar and top bar (`AppSidebar`, `AppTopbar`).
+- **Daybook route** — `/daybook` as the first protected page under the authenticated layout.
+- **Router auth context** — `auth` on router context (`isAuthenticated`, `user`, `accessToken`) supplied from `Providers` via the auth store.
+- **UI** — shadcn `Sidebar` (and related primitives), `Avatar`, `Badge`, `Breadcrumb`, `Calendar`, `DropdownMenu`, `Popover`, `Sheet`, `Skeleton`, and `Tooltip`; `use-mobile` hook for responsive sidebar behavior.
+- **Dependencies** — `date-fns` and `react-day-picker` for calendar/date UI.
+
+### Changed
+
+- Login success navigates to `/daybook` (or `?redirect=` when present); authenticated users visiting `/` are redirected to daybook or the redirect target.
+- Home route validates optional `redirect` search param via Zod.
+
 ## [0.1.1] - 2026-05-18
 
 Authentication flow, shared API client, and supporting UI for the login experience.
@@ -51,5 +68,6 @@ First application scaffold for the Kapur frontend (`kf-frontend`).
 
 - Default Vite starter styles (`App.css`) and demo application UI from the initial template.
 
+[0.1.2]: https://github.com/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/compare/v0.0.0...v0.1.0

@@ -6,6 +6,11 @@ export const router = createRouter({
   routeTree,
   context: {
     queryClient,
+    auth: {
+      isAuthenticated: false,
+      user: null,
+      accessToken: null,
+    },
   },
   defaultPreload: 'intent',
 });
