@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.3] - 2026-05-18
+
+ERP-aligned UI polish, consistent authenticated page spacing, and configurable devtools.
+
+### Added
+
+- **Daybook feature** — `src/features/daybook/` with route wired from `/_authenticated/daybook`.
+- **Devtools toggle** — `VITE_ENABLE_DEVTOOLS` in `.env.example` and `env.enableDevtools` so TanStack Router/Query/Form devtools can be turned on without relying on `import.meta.env.DEV` alone.
+- **Typography** — Global `font-heading` on `h1`–`h3` in `index.css`.
+
+### Changed
+
+- **Authenticated layout** — Shared `<section>` shell with style-guide padding (`p-4 sm:p-6`), `max-w-7xl` content width, and vertical rhythm (`gap-4 sm:gap-6`) for all protected routes.
+- **Login form** — Touch-friendly inputs, tabular mobile number, app name in description, and ERP-consistent card styling.
+- **Chrome** — Sidebar group label, cold-storage branding truncation, and topbar page title (`font-heading`, `title` tooltip).
+- **Theme** — Tighter `--radius`, neutral chart palette for light/dark.
+- **Devtools** — Panel stays visible when enabled (`hideUntilHover: false`).
+
+### Removed
+
+- Empty `src/features/auth/index.tsx` barrel file.
+
 ## [0.1.2] - 2026-05-18
 
 Authenticated app shell with sidebar navigation, top bar, and the first protected route.
@@ -68,6 +90,7 @@ First application scaffold for the Kapur frontend (`kf-frontend`).
 
 - Default Vite starter styles (`App.css`) and demo application UI from the initial template.
 
+[0.1.3]: https://github.com/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/compare/v0.0.0...v0.1.0

@@ -138,7 +138,10 @@ export function AppTopbar() {
           orientation="vertical"
           className="mx-2 !h-4 w-px !self-center shrink-0 bg-border"
         />
-        <h1 className="truncate text-base font-semibold tracking-tight text-foreground">
+        <h1
+          className="truncate font-heading text-base font-semibold tracking-tight text-foreground sm:text-lg"
+          title={pageTitle}
+        >
           {pageTitle}
         </h1>
       </div>
@@ -150,7 +153,7 @@ export function AppTopbar() {
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
-              className="h-9 gap-2 rounded-full px-2 text-foreground hover:bg-accent hover:text-accent-foreground"
+              className="h-9 gap-2 rounded-md px-2 text-foreground hover:bg-accent hover:text-accent-foreground"
             >
               <Avatar className="size-7">
                 <AvatarFallback className="bg-primary text-primary-foreground text-xs">
@@ -168,7 +171,7 @@ export function AppTopbar() {
                 <p className="text-sm font-medium text-foreground">
                   {user?.name ?? 'User'}
                 </p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs tabular-nums text-muted-foreground">
                   {user?.mobileNumber}
                 </p>
                 <Badge variant="secondary" className="w-fit">

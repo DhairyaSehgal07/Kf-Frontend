@@ -14,7 +14,7 @@ export function TanStackAppDevtools({ router }: TanStackAppDevtoolsProps) {
     <TanStackDevtools
       config={{
         position: 'bottom-right',
-        hideUntilHover: true,
+        hideUntilHover: false,
       }}
       plugins={[
         {

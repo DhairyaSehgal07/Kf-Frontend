@@ -4,6 +4,7 @@ import { TanStackAppDevtools } from '@/components/tanstack-devtools';
 import { ThemeProvider } from '@/components/theme-provider';
 import { Toaster } from '@/components/ui/sonner';
 import { useAuthStore } from '@/features/auth/store/use-auth-store';
+import { env } from './lib/env';
 import { queryClient } from './lib/queryClient';
 import { router } from './router';
 
@@ -26,7 +27,7 @@ export function Providers() {
           }}
         />
         <Toaster />
-        {import.meta.env.DEV ? <TanStackAppDevtools router={router} /> : null}
+        {env.enableDevtools ? <TanStackAppDevtools router={router} /> : null}
       </QueryClientProvider>
     </ThemeProvider>
   );

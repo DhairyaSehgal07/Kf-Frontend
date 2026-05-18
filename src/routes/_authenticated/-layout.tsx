@@ -11,11 +11,11 @@ export function AuthenticatedLayout() {
         <AppSidebar />
         <SidebarInset className="!mt-0 md:!mt-0 md:rounded-t-none">
           <AppTopbar />
-          <div className="flex flex-1 flex-col gap-6 p-6 pt-0">
-            <div className="mx-auto w-full max-w-7xl flex-1">
+          <section className="flex min-h-0 flex-1 flex-col p-4 sm:p-6">
+            <div className="mx-auto flex w-full min-w-0 max-w-7xl flex-1 flex-col gap-4 sm:gap-6">
               <Outlet />
             </div>
-          </div>
+          </section>
         </SidebarInset>
       </TooltipProvider>
     </SidebarProvider>

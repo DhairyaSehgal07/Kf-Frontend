@@ -46,7 +46,9 @@ function NavMain() {
 
   return (
     <SidebarGroup>
-      <SidebarGroupLabel>Core Operations</SidebarGroupLabel>
+      <SidebarGroupLabel className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+        Core Operations
+      </SidebarGroupLabel>
       <SidebarGroupContent>
         <SidebarMenu>
           {coreNavItems.map((item) => {
@@ -93,11 +95,16 @@ export function AppSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
               <Link to="/daybook">
-                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
+                <div className="flex aspect-square size-8 shrink-0 items-center justify-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground">
                   <Building2 className="size-4" />
                 </div>
-                <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">{coldStorageName}</span>
+                <div className="grid min-w-0 flex-1 text-left text-sm leading-tight">
+                  <span
+                    className="truncate font-heading font-semibold text-sidebar-foreground"
+                    title={coldStorageName}
+                  >
+                    {coldStorageName}
+                  </span>
                   <span className="truncate text-xs text-muted-foreground">
                     {userRole ?? 'Operations'}
                   </span>
