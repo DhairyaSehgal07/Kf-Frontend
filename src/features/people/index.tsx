@@ -8,6 +8,8 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs"
 
+import { preserveScroll } from "@/lib/preserve-scroll"
+
 import type { PeopleTab } from "./search"
 import DispatchLedgerTab from "./components/dispatch-ledger-tab"
 import PeopleTabContent from "./components/people-tab"
@@ -21,6 +23,7 @@ const PeoplePage = () => {
   const handleTabChange = (value: string) => {
     navigate({
       search: { tab: value as PeopleTab },
+      ...preserveScroll,
     })
   }
 

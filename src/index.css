@@ -138,3 +138,14 @@
     @apply font-heading text-foreground;
     }
 }
+
+/* Lift, shadow, ring, and top accent line on hover — use on interactive cards */
+@utility card-hover {
+  @apply relative transition-all duration-200 ease-out;
+  @apply hover:-translate-y-0.5 hover:shadow-lg;
+  @apply hover:ring-primary/20 dark:hover:ring-primary/30;
+  @apply before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:h-px;
+  @apply before:bg-linear-to-r before:from-transparent before:via-primary/40 before:to-transparent;
+  @apply before:opacity-0 before:transition-opacity before:duration-200;
+  @apply hover:before:opacity-100;
+}

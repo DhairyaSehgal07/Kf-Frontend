@@ -97,12 +97,22 @@ function SummaryCard({ metric }: { metric: SummaryMetric }) {
   const TrendIcon = trendIcon[metric.trend.direction]
 
   return (
-    <Card size="sm" className="gap-0 transition-shadow hover:shadow-lg">
+    <Card size="sm" className={cn("card-hover gap-0")}>
       <CardHeader className="pb-2">
-        <CardDescription>{metric.label}</CardDescription>
+        <CardDescription className="transition-colors duration-200 group-hover/card:text-foreground/80">
+          {metric.label}
+        </CardDescription>
         <CardAction>
-          <div className="flex size-9 items-center justify-center rounded-xl bg-primary/10">
-            <Icon className="size-4 text-primary" aria-hidden />
+          <div
+            className={cn(
+              "flex size-9 items-center justify-center rounded-xl bg-primary/10",
+              "transition-colors duration-200 group-hover/card:bg-primary/15"
+            )}
+          >
+            <Icon
+              className="size-4 text-primary transition-transform duration-200 group-hover/card:scale-105"
+              aria-hidden
+            />
           </div>
         </CardAction>
       </CardHeader>

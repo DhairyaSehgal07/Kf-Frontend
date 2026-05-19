@@ -144,10 +144,10 @@ export function GatePassCard({
   return (
     <Card
       className={cn(
-        "relative overflow-hidden transition-all duration-200 ease-in-out hover:shadow-md",
-        isCancelledGatePass
-          ? "border-border/40 bg-muted/20 opacity-70 saturate-50"
-          : "border-border/60 hover:border-primary/30"
+        "overflow-hidden",
+        !isCancelledGatePass && "card-hover border-border/60",
+        isCancelledGatePass &&
+          "border-border/40 bg-muted/20 opacity-70 saturate-50"
       )}
     >
       {isCancelledGatePass && (

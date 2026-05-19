@@ -1,8 +1,24 @@
 import { useState } from "react"
-import { BarChart3, RefreshCw } from "lucide-react"
+import { getRouteApi } from "@tanstack/react-router"
+import {
+  ArrowLeftRight,
+  BarChart3,
+  Inbox,
+  PackageCheck,
+  RefreshCw,
+  Scale,
+  Sprout,
+} from "lucide-react"
 
 import { DatePickerInput } from "@/components/date-picker"
 import { Button } from "@/components/ui/button"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
 import {
   Item,
   ItemActions,
@@ -10,11 +26,55 @@ import {
   ItemMedia,
   ItemTitle,
 } from "@/components/ui/item"
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs"
+
+import { preserveScroll } from "@/lib/preserve-scroll"
+
 import Overview from "./components/overview"
+import type { AnalyticsTab } from "./search"
+
+const analyticsRouteApi = getRouteApi("/_authenticated/analytics")
+
+const TAB_PLACEHOLDER: Record<AnalyticsTab, string> = {
+  incoming: "Show Incoming Analytics here",
+  grading: "Show Grading Analytics here",
+  storage: "Show Storage Analytics here",
+  "dispatch-pre-storage": "Show Dispatch (pre-storage) Analytics here",
+  "dispatch-post-storage": "Show Dispatch (post-storage) Analytics here",
+}
+
+function AnalyticsTabPlaceholder({ tab }: { tab: AnalyticsTab }) {
+  return (
+    <Card className="card-hover">
+      <CardHeader>
+        <CardTitle>Analytics</CardTitle>
+        <CardDescription>Placeholder content for this section</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <p className="text-sm text-muted-foreground">{TAB_PLACEHOLDER[tab]}</p>
+      </CardContent>
+    </Card>
+  )
+}
 
 const AnalyticsPage = () => {
+  const { tab } = analyticsRouteApi.useSearch()
+  const navigate = analyticsRouteApi.useNavigate()
+
   const [fromDate, setFromDate] = useState<Date | undefined>()
   const [toDate, setToDate] = useState<Date | undefined>()
+
+  const handleTabChange = (value: string) => {
+    navigate({
+      search: { tab: value as AnalyticsTab },
+      ...preserveScroll,
+    })
+  }
 
   const handleApply = () => {
     // TODO: load analytics for the selected date range
@@ -82,8 +142,57 @@ const AnalyticsPage = () => {
       </div>
 
       <section>
-        <Overview/>
-     </section>
+        <Overview />
+      </section>
+
+      <Tabs value={tab} onValueChange={handleTabChange} className="w-full gap-4">
+        <TabsList className="h-11 w-full">
+          <TabsTrigger value="incoming">
+            <Sprout className="h-5 w-5 sm:hidden" />
+            <span className="hidden sm:block">Incoming</span>
+          </TabsTrigger>
+
+          <TabsTrigger value="grading">
+            <Inbox className="h-5 w-5 sm:hidden" />
+            <span className="hidden sm:block">Grading</span>
+          </TabsTrigger>
+
+          <TabsTrigger value="storage">
+            <Scale className="h-5 w-5 sm:hidden" />
+            <span className="hidden sm:block">Storage</span>
+          </TabsTrigger>
+
+          <TabsTrigger value="dispatch-pre-storage">
+            <PackageCheck className="h-5 w-5 sm:hidden" />
+            <span className="hidden sm:block">Dispatch (pre-storage)</span>
+          </TabsTrigger>
+
+          <TabsTrigger value="dispatch-post-storage">
+            <ArrowLeftRight className="h-5 w-5 sm:hidden" />
+            <span className="hidden sm:block">Dispatch (post-storage)</span>
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="incoming" className="min-w-0">
+          <AnalyticsTabPlaceholder tab="incoming" />
+        </TabsContent>
+
+        <TabsContent value="grading" className="min-w-0">
+          <AnalyticsTabPlaceholder tab="grading" />
+        </TabsContent>
+
+        <TabsContent value="storage" className="min-w-0">
+          <AnalyticsTabPlaceholder tab="storage" />
+        </TabsContent>
+
+        <TabsContent value="dispatch-pre-storage" className="min-w-0">
+          <AnalyticsTabPlaceholder tab="dispatch-pre-storage" />
+        </TabsContent>
+
+        <TabsContent value="dispatch-post-storage" className="min-w-0">
+          <AnalyticsTabPlaceholder tab="dispatch-post-storage" />
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }

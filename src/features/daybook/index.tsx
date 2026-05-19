@@ -14,6 +14,8 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs"
 
+import { preserveScroll } from "@/lib/preserve-scroll"
+
 import type { DaybookTab } from "./search"
 import DaybookDispatchPostStorageTab from "./components/dispatch-post-storage-tab"
 import DaybookDispatchPreStorageTab from "./components/dispatch-pre-storage-tab"
@@ -30,6 +32,7 @@ const DaybookPage = () => {
   const handleTabChange = (value: string) => {
     navigate({
       search: { tab: value as DaybookTab },
+      ...preserveScroll,
     })
   }
 
