@@ -16,7 +16,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Separator } from '@/components/ui/separator';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import {
   Tooltip,
@@ -29,6 +28,9 @@ import { cn } from '@/lib/utils';
 
 const routeTitles: Record<string, string> = {
   '/daybook': 'Daybook',
+  '/people': 'People',
+  '/analytics': 'Analytics',
+  '/additional': 'Additional',
 };
 
 function getInitials(name?: string) {
@@ -66,8 +68,8 @@ function ThemeToggle() {
 
   if (!isClient) {
     return (
-      <Button variant="ghost" size="icon-sm" disabled aria-label="Theme">
-        <Sun className="size-4 text-muted-foreground" />
+      <Button variant="ghost" size="icon" disabled aria-label="Theme">
+        <Sun className="h-4 w-4 text-muted-foreground" />
       </Button>
     );
   }
@@ -81,14 +83,14 @@ function ThemeToggle() {
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
-              size="icon-sm"
+              size="icon"
               className="text-muted-foreground hover:bg-accent hover:text-accent-foreground"
               aria-label="Change theme"
             >
               {isDark ? (
-                <Moon className="size-4" />
+                <Moon className="h-4 w-4" />
               ) : (
-                <Sun className="size-4" />
+                <Sun className="h-4 w-4" />
               )}
             </Button>
           </DropdownMenuTrigger>
@@ -96,20 +98,18 @@ function ThemeToggle() {
         <TooltipContent side="bottom">Theme</TooltipContent>
       </Tooltip>
       <DropdownMenuContent align="end" className="w-40">
-        <DropdownMenuLabel className="text-foreground">
-          Appearance
-        </DropdownMenuLabel>
+        <DropdownMenuLabel>Appearance</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuRadioGroup
           value={resolvedMode}
           onValueChange={(value) => setTheme(value)}
         >
           <DropdownMenuRadioItem value="light">
-            <Sun className="size-4" />
+            <Sun className="mr-2 h-4 w-4" />
             Light
           </DropdownMenuRadioItem>
           <DropdownMenuRadioItem value="dark">
-            <Moon className="size-4" />
+            <Moon className="mr-2 h-4 w-4" />
             Dark
           </DropdownMenuRadioItem>
         </DropdownMenuRadioGroup>
@@ -129,17 +129,18 @@ export function AppTopbar() {
   return (
     <header
       className={cn(
-        'flex h-14 shrink-0 items-center border-b border-border bg-background px-4 text-foreground',
+        'flex h-14 shrink-0 items-center border-b bg-background px-4',
       )}
     >
-      <div className="flex min-w-0 flex-1 items-center gap-2">
-        <SidebarTrigger className="-ml-1 text-foreground" />
-        <Separator
-          orientation="vertical"
-          className="mx-2 !h-4 w-px !self-center shrink-0 bg-border"
+      <div className="flex min-w-0 flex-1 items-center gap-1">
+        <SidebarTrigger className="-ml-1" />
+        <div
+          role="separator"
+          aria-orientation="vertical"
+          className="mx-2 h-6 w-px shrink-0 rounded-full bg-muted-foreground/25"
         />
         <h1
-          className="truncate font-heading text-base font-semibold tracking-tight text-foreground sm:text-lg"
+          className="truncate text-lg font-semibold tracking-tight"
           title={pageTitle}
         >
           {pageTitle}
@@ -153,9 +154,9 @@ export function AppTopbar() {
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
-              className="h-9 gap-2 rounded-md px-2 text-foreground hover:bg-accent hover:text-accent-foreground"
+              className="h-9 gap-2 rounded-md px-2 hover:bg-accent hover:text-accent-foreground"
             >
-              <Avatar className="size-7">
+              <Avatar className="h-7 w-7">
                 <AvatarFallback className="bg-primary text-primary-foreground text-xs">
                   {getInitials(user?.name)}
                 </AvatarFallback>
@@ -168,13 +169,13 @@ export function AppTopbar() {
           <DropdownMenuContent className="w-56" align="end" forceMount>
             <DropdownMenuLabel className="font-normal">
               <div className="flex flex-col gap-1">
-                <p className="text-sm font-medium text-foreground">
+                <p className="text-sm font-medium">
                   {user?.name ?? 'User'}
                 </p>
-                <p className="text-xs tabular-nums text-muted-foreground">
+                <p className="text-xs text-muted-foreground tabular-nums">
                   {user?.mobileNumber}
                 </p>
-                <Badge variant="secondary" className="w-fit">
+                <Badge variant="secondary" className="w-fit mt-1">
                   {user?.role}
                 </Badge>
               </div>
@@ -182,20 +183,20 @@ export function AppTopbar() {
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem disabled>
-                <User className="size-4" />
+                <User className="mr-2 h-4 w-4" />
                 Profile
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem
-              variant="destructive"
               disabled={isLoggingOut}
               onClick={() => logout()}
+              className="text-destructive focus:bg-destructive focus:text-destructive-foreground"
             >
               {isLoggingOut ? (
-                <Loader2 className="size-4 animate-spin" />
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               ) : (
-                <LogOut className="size-4" />
+                <LogOut className="mr-2 h-4 w-4" />
               )}
               {isLoggingOut ? 'Signing out…' : 'Log out'}
             </DropdownMenuItem>
