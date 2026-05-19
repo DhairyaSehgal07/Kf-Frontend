@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.4] - 2026-05-19
+
+Daybook incoming tab with gate pass cards, filters, and supporting UI primitives.
+
+### Added
+
+- **Daybook incoming tab** — Search, sort/status filters, pagination shell, empty state, and mock gate pass list wired into the daybook page.
+- **Gate pass card** — `GatePassCard` (`incoming-gate-pass-card.tsx`) with expandable details, farmer/weight-slip info, and action buttons.
+- **UI** — shadcn `Empty`, `Item`, `Pagination`, and `Select` components.
+
+### Changed
+
+- **Sidebar** — Primary-accent active and hover styles for default menu buttons; focus ring aligned with app theme.
+- **Daybook tabs** — Simplified tab trigger markup; incoming tab renders `DaybookIncomingTab` instead of placeholder card content.
+
 ## [0.1.3] - 2026-05-18
 
 ERP-aligned UI polish, consistent authenticated page spacing, and configurable devtools.
@@ -90,6 +105,7 @@ First application scaffold for the Kapur frontend (`kf-frontend`).
 
 - Default Vite starter styles (`App.css`) and demo application UI from the initial template.
 
+[0.1.4]: https://github.com/compare/v0.1.3...v0.1.4
 [0.1.3]: https://github.com/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/compare/v0.1.0...v0.1.1
