@@ -8,12 +8,6 @@ import {
 } from "lucide-react"
 
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-import {
   Tabs,
   TabsContent,
   TabsList,
@@ -21,7 +15,11 @@ import {
 } from "@/components/ui/tabs"
 
 import type { DaybookTab } from "./search"
+import DaybookDispatchPostStorageTab from "./components/dispatch-post-storage-tab"
+import DaybookDispatchPreStorageTab from "./components/dispatch-pre-storage-tab"
+import DaybookGradingTab from "./components/grading-tab"
 import DaybookIncomingTab from "./components/incoming-tab"
+import DaybookStorageTab from "./components/storage-tab"
 
 const daybookRouteApi = getRouteApi("/_authenticated/daybook")
 
@@ -75,55 +73,19 @@ const DaybookPage = () => {
         </TabsContent>
 
         <TabsContent value="grading" className="min-w-0">
-          <Card>
-            <CardHeader>
-              <CardTitle className="font-semibold text-foreground">
-                Grading tab
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="text-sm text-muted-foreground">
-              Show Grading tab content
-            </CardContent>
-          </Card>
+          <DaybookGradingTab />
         </TabsContent>
 
         <TabsContent value="storage" className="min-w-0">
-          <Card>
-            <CardHeader>
-              <CardTitle className="font-semibold text-foreground">
-                Storage tab
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="text-sm text-muted-foreground">
-              Show Storage tab content
-            </CardContent>
-          </Card>
+          <DaybookStorageTab />
         </TabsContent>
 
         <TabsContent value="dispatch-pre-storage" className="min-w-0">
-          <Card>
-            <CardHeader>
-              <CardTitle className="font-semibold text-foreground">
-                Dispatch pre storage tab
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="text-sm text-muted-foreground">
-              Show Dispatch pre storage tab content
-            </CardContent>
-          </Card>
+          <DaybookDispatchPreStorageTab />
         </TabsContent>
 
         <TabsContent value="dispatch-post-storage" className="min-w-0">
-          <Card>
-            <CardHeader>
-              <CardTitle className="font-semibold text-foreground">
-                Dispatch post storage tab
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="text-sm text-muted-foreground">
-              Show Dispatch post storage tab content
-            </CardContent>
-          </Card>
+          <DaybookDispatchPostStorageTab />
         </TabsContent>
 
       </Tabs>
