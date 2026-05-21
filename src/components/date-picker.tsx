@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
 
-export function formatDate(date: Date | undefined) {
+function formatDate(date: Date | undefined) {
   if (!date) {
     return ""
   }
@@ -28,7 +28,7 @@ export function formatDate(date: Date | undefined) {
   })
 }
 
-export function isValidDate(date: Date | undefined) {
+function isValidDate(date: Date | undefined) {
   if (!date) {
     return false
   }
@@ -42,9 +42,11 @@ export type DatePickerInputProps = {
   value?: Date
   defaultValue?: Date
   onChange?: (date: Date | undefined) => void
+  onBlur?: React.FocusEventHandler<HTMLInputElement>
   className?: string
   disabled?: boolean
   required?: boolean
+  "aria-invalid"?: boolean
 }
 
 export function DatePickerInput({
@@ -54,9 +56,11 @@ export function DatePickerInput({
   value: valueProp,
   defaultValue,
   onChange,
+  onBlur,
   className,
   disabled,
   required,
+  "aria-invalid": ariaInvalid,
 }: DatePickerInputProps) {
   const generatedId = React.useId()
   const id = idProp ?? generatedId
@@ -81,12 +85,14 @@ export function DatePickerInput({
     [isControlled, onChange]
   )
 
-  React.useEffect(() => {
+  const [prevDate, setPrevDate] = React.useState(date)
+  if (date !== prevDate) {
+    setPrevDate(date)
     setInputValue(formatDate(date))
     if (date) {
       setMonth(date)
     }
-  }, [date])
+  }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const nextValue = e.target.value
@@ -109,11 +115,14 @@ export function DatePickerInput({
     <InputGroup>
       <InputGroupInput
         id={id}
+        name={id}
         value={inputValue}
         placeholder={placeholder}
         disabled={disabled}
         required={required}
+        aria-invalid={ariaInvalid}
         onChange={handleInputChange}
+        onBlur={onBlur}
         onKeyDown={(e) => {
           if (e.key === "ArrowDown") {
             e.preventDefault()

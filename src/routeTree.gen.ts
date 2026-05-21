@@ -14,6 +14,8 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedPeopleRouteImport } from './routes/_authenticated/people'
 import { Route as AuthenticatedDaybookRouteImport } from './routes/_authenticated/daybook'
 import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
+import { Route as AuthenticatedIncomingIndexRouteImport } from './routes/_authenticated/incoming/index'
+import { Route as AuthenticatedIncomingEditRouteImport } from './routes/_authenticated/incoming/edit'
 
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
   id: '/_authenticated',
@@ -39,18 +41,34 @@ const AuthenticatedAnalyticsRoute = AuthenticatedAnalyticsRouteImport.update({
   path: '/analytics',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedIncomingIndexRoute =
+  AuthenticatedIncomingIndexRouteImport.update({
+    id: '/incoming/',
+    path: '/incoming/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedIncomingEditRoute =
+  AuthenticatedIncomingEditRouteImport.update({
+    id: '/incoming/edit',
+    path: '/incoming/edit',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/analytics': typeof AuthenticatedAnalyticsRoute
   '/daybook': typeof AuthenticatedDaybookRoute
   '/people': typeof AuthenticatedPeopleRoute
+  '/incoming/edit': typeof AuthenticatedIncomingEditRoute
+  '/incoming/': typeof AuthenticatedIncomingIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/analytics': typeof AuthenticatedAnalyticsRoute
   '/daybook': typeof AuthenticatedDaybookRoute
   '/people': typeof AuthenticatedPeopleRoute
+  '/incoming/edit': typeof AuthenticatedIncomingEditRoute
+  '/incoming': typeof AuthenticatedIncomingIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -59,12 +77,26 @@ export interface FileRoutesById {
   '/_authenticated/analytics': typeof AuthenticatedAnalyticsRoute
   '/_authenticated/daybook': typeof AuthenticatedDaybookRoute
   '/_authenticated/people': typeof AuthenticatedPeopleRoute
+  '/_authenticated/incoming/edit': typeof AuthenticatedIncomingEditRoute
+  '/_authenticated/incoming/': typeof AuthenticatedIncomingIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/analytics' | '/daybook' | '/people'
+  fullPaths:
+    | '/'
+    | '/analytics'
+    | '/daybook'
+    | '/people'
+    | '/incoming/edit'
+    | '/incoming/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/analytics' | '/daybook' | '/people'
+  to:
+    | '/'
+    | '/analytics'
+    | '/daybook'
+    | '/people'
+    | '/incoming/edit'
+    | '/incoming'
   id:
     | '__root__'
     | '/'
@@ -72,6 +104,8 @@ export interface FileRouteTypes {
     | '/_authenticated/analytics'
     | '/_authenticated/daybook'
     | '/_authenticated/people'
+    | '/_authenticated/incoming/edit'
+    | '/_authenticated/incoming/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -116,6 +150,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAnalyticsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/incoming/': {
+      id: '/_authenticated/incoming/'
+      path: '/incoming'
+      fullPath: '/incoming/'
+      preLoaderRoute: typeof AuthenticatedIncomingIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/incoming/edit': {
+      id: '/_authenticated/incoming/edit'
+      path: '/incoming/edit'
+      fullPath: '/incoming/edit'
+      preLoaderRoute: typeof AuthenticatedIncomingEditRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
   }
 }
 
@@ -123,12 +171,16 @@ interface AuthenticatedRouteChildren {
   AuthenticatedAnalyticsRoute: typeof AuthenticatedAnalyticsRoute
   AuthenticatedDaybookRoute: typeof AuthenticatedDaybookRoute
   AuthenticatedPeopleRoute: typeof AuthenticatedPeopleRoute
+  AuthenticatedIncomingEditRoute: typeof AuthenticatedIncomingEditRoute
+  AuthenticatedIncomingIndexRoute: typeof AuthenticatedIncomingIndexRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAnalyticsRoute: AuthenticatedAnalyticsRoute,
   AuthenticatedDaybookRoute: AuthenticatedDaybookRoute,
   AuthenticatedPeopleRoute: AuthenticatedPeopleRoute,
+  AuthenticatedIncomingEditRoute: AuthenticatedIncomingEditRoute,
+  AuthenticatedIncomingIndexRoute: AuthenticatedIncomingIndexRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(

@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { useNavigate } from "@tanstack/react-router"
 import {
   ArrowUpFromLine,
   NotebookText,
@@ -102,6 +103,7 @@ const MOCK_INCOMING_GATE_PASSES: GatePassData[] = [
 ]
 
 const DaybookIncomingTab = () => {
+  const navigate = useNavigate()
   const [incomingGatePasses] = useState<GatePassData[]>(MOCK_INCOMING_GATE_PASSES)
 
   // Temporary placeholder states/values
@@ -119,6 +121,10 @@ const DaybookIncomingTab = () => {
 
   const handlePrevPage = () => {}
   const handleNextPage = () => {}
+
+  const handleAddIncoming = () => {
+    navigate({ to: "/incoming" })
+  }
 
   return (
     <div className="flex w-full flex-col gap-4">
@@ -189,7 +195,10 @@ const DaybookIncomingTab = () => {
               <span className="hidden sm:inline">Incoming Edit History</span>
             </Button>
 
-            <Button className="min-w-0 px-2.5 sm:px-3">
+            <Button
+              className="min-w-0 px-2.5 sm:px-3"
+              onClick={handleAddIncoming}
+            >
               <ArrowUpFromLine className="h-4 w-4 shrink-0 sm:mr-2" />
               <span className="truncate">Add Incoming</span>
             </Button>

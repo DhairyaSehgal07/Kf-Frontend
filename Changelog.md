@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.6] - 2026-05-21
+
+Incoming gate pass creation flow, form-ready date picker, and combobox/checkbox UI.
+
+### Added
+
+- **Incoming** — `/incoming` route with `CreateIncomingForm` (TanStack Form + Zod) for gate pass details, farmer link, variety/category/stage, weights, and remarks (mock options until API is connected).
+- **Incoming edit route** — `/incoming/edit` route shell for future edit flow.
+- **UI** — shadcn `Checkbox` and Base UI–backed `Combobox` components.
+- **Dependencies** — `@base-ui/react` for combobox primitives.
+
+### Changed
+
+- **Daybook incoming tab** — “Add Incoming” navigates to `/incoming`.
+- **Date picker** — `onBlur`, `aria-invalid`, and controlled sync without effect-driven updates; helpers kept module-private for form use.
+- **Styles** — Hide number input spin buttons in WebKit and Firefox.
+- **Vite** — Dev server listens on port 3000.
+
 ## [0.1.5] - 2026-05-20
 
 Analytics and People pages, daybook workflow tab shells, and shared date/input UI.
@@ -122,6 +140,7 @@ First application scaffold for the Kapur frontend (`kf-frontend`).
 
 - Default Vite starter styles (`App.css`) and demo application UI from the initial template.
 
+[0.1.6]: https://github.com/compare/v0.1.5...v0.1.6
 [0.1.5]: https://github.com/compare/v0.1.4...v0.1.5
 [0.1.4]: https://github.com/compare/v0.1.3...v0.1.4
 [0.1.3]: https://github.com/compare/v0.1.2...v0.1.3

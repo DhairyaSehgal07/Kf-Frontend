@@ -139,6 +139,18 @@
     }
 }
 
+/* Chrome, Safari, Edge, Opera */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Firefox */
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
 /* Lift, shadow, ring, and top accent line on hover — use on interactive cards */
 @utility card-hover {
   @apply relative transition-all duration-200 ease-out;
