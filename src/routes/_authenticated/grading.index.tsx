@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
-import SetupWizardForm from '@/features/grading/forms/multi-step-example'
+import CreateGradingForm from '@/features/grading/forms/create-grading-form'
 
 export const Route = createFileRoute('/_authenticated/grading/')({
-  component: SetupWizardForm,
+  component: CreateGradingForm,
 })

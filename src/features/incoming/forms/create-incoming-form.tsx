@@ -212,7 +212,7 @@ const CreateIncomingForm = () => {
   return (
     <Card className="w-full max-w-4xl mx-auto shadow-sm">
       <CardHeader className="border-b bg-muted/30 pb-6">
-        <CardTitle className="text-2xl">Incoming Gate Pass</CardTitle>
+        <CardTitle className="text-2xl">Incoming Gate Pass <span className="text-primary text-2xl">#1024</span></CardTitle>
         <CardDescription className="text-base">
           Record transport, crop, and weighbridge details for a new incoming gate pass.
         </CardDescription>

@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedPeopleRouteImport } from './routes/_authenticated/people'
+import { Route as AuthenticatedExampleRouteImport } from './routes/_authenticated/example'
 import { Route as AuthenticatedDaybookRouteImport } from './routes/_authenticated/daybook'
 import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
 import { Route as AuthenticatedIncomingIndexRouteImport } from './routes/_authenticated/incoming.index'
@@ -31,6 +32,11 @@ const IndexRoute = IndexRouteImport.update({
 const AuthenticatedPeopleRoute = AuthenticatedPeopleRouteImport.update({
   id: '/people',
   path: '/people',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedExampleRoute = AuthenticatedExampleRouteImport.update({
+  id: '/example',
+  path: '/example',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedDaybookRoute = AuthenticatedDaybookRouteImport.update({
@@ -70,6 +76,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/analytics': typeof AuthenticatedAnalyticsRoute
   '/daybook': typeof AuthenticatedDaybookRoute
+  '/example': typeof AuthenticatedExampleRoute
   '/people': typeof AuthenticatedPeopleRoute
   '/grading/$id': typeof AuthenticatedGradingIdRoute
   '/incoming/$id': typeof AuthenticatedIncomingIdRoute
@@ -80,6 +87,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/analytics': typeof AuthenticatedAnalyticsRoute
   '/daybook': typeof AuthenticatedDaybookRoute
+  '/example': typeof AuthenticatedExampleRoute
   '/people': typeof AuthenticatedPeopleRoute
   '/grading/$id': typeof AuthenticatedGradingIdRoute
   '/incoming/$id': typeof AuthenticatedIncomingIdRoute
@@ -92,6 +100,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/_authenticated/analytics': typeof AuthenticatedAnalyticsRoute
   '/_authenticated/daybook': typeof AuthenticatedDaybookRoute
+  '/_authenticated/example': typeof AuthenticatedExampleRoute
   '/_authenticated/people': typeof AuthenticatedPeopleRoute
   '/_authenticated/grading/$id': typeof AuthenticatedGradingIdRoute
   '/_authenticated/incoming/$id': typeof AuthenticatedIncomingIdRoute
@@ -104,6 +113,7 @@ export interface FileRouteTypes {
     | '/'
     | '/analytics'
     | '/daybook'
+    | '/example'
     | '/people'
     | '/grading/$id'
     | '/incoming/$id'
@@ -114,6 +124,7 @@ export interface FileRouteTypes {
     | '/'
     | '/analytics'
     | '/daybook'
+    | '/example'
     | '/people'
     | '/grading/$id'
     | '/incoming/$id'
@@ -125,6 +136,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/_authenticated/analytics'
     | '/_authenticated/daybook'
+    | '/_authenticated/example'
     | '/_authenticated/people'
     | '/_authenticated/grading/$id'
     | '/_authenticated/incoming/$id'
@@ -158,6 +170,13 @@ declare module '@tanstack/react-router' {
       path: '/people'
       fullPath: '/people'
       preLoaderRoute: typeof AuthenticatedPeopleRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/example': {
+      id: '/_authenticated/example'
+      path: '/example'
+      fullPath: '/example'
+      preLoaderRoute: typeof AuthenticatedExampleRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/daybook': {
@@ -208,6 +227,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteChildren {
   AuthenticatedAnalyticsRoute: typeof AuthenticatedAnalyticsRoute
   AuthenticatedDaybookRoute: typeof AuthenticatedDaybookRoute
+  AuthenticatedExampleRoute: typeof AuthenticatedExampleRoute
   AuthenticatedPeopleRoute: typeof AuthenticatedPeopleRoute
   AuthenticatedGradingIdRoute: typeof AuthenticatedGradingIdRoute
   AuthenticatedIncomingIdRoute: typeof AuthenticatedIncomingIdRoute
@@ -218,6 +238,7 @@ interface AuthenticatedRouteChildren {
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAnalyticsRoute: AuthenticatedAnalyticsRoute,
   AuthenticatedDaybookRoute: AuthenticatedDaybookRoute,
+  AuthenticatedExampleRoute: AuthenticatedExampleRoute,
   AuthenticatedPeopleRoute: AuthenticatedPeopleRoute,
   AuthenticatedGradingIdRoute: AuthenticatedGradingIdRoute,
   AuthenticatedIncomingIdRoute: AuthenticatedIncomingIdRoute,
