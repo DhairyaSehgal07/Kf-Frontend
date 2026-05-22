@@ -3,10 +3,8 @@ import type { LucideIcon } from 'lucide-react';
 import {
   BarChart3,
   BookOpen,
-  Boxes,
   Building2,
-  FileText,
-  Home,
+  Layers,
   Settings,
   Users,
 } from 'lucide-react';
@@ -28,17 +26,16 @@ import { useAuthStore } from '@/features/auth/store/use-auth-store';
 type NavItem = {
   name: string;
   icon: LucideIcon;
-  to?: '/daybook';
+  to?: string;
   disabled?: boolean;
 };
 
+// Updated navigation items
 const coreNavItems: NavItem[] = [
   { name: 'Daybook', icon: BookOpen, to: '/daybook' },
-  { name: 'Master Data', icon: Users, disabled: true },
-  { name: 'Inventory', icon: Boxes, disabled: true },
-  { name: 'Ledgers', icon: Home, disabled: true },
-  { name: 'Reports', icon: FileText, disabled: true },
-  { name: 'Analytics', icon: BarChart3, disabled: true },
+  { name: 'People', icon: Users, to: '/people' },
+  { name: 'Analytics', icon: BarChart3, to: '/analytics' },
+  { name: 'Additional', icon: Layers, to: '/additional' },
 ];
 
 function NavMain() {
@@ -94,13 +91,13 @@ export function AppSidebar() {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
-              <Link to="/daybook">
+              <Link to="/daybook" search={{ tab: "incoming" }}>
                 <div className="flex aspect-square size-8 shrink-0 items-center justify-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground">
                   <Building2 className="size-4" />
                 </div>
                 <div className="grid min-w-0 flex-1 text-left text-sm leading-tight">
                   <span
-                    className="truncate font-heading font-semibold text-sidebar-foreground"
+                    className="truncate font-semibold text-sidebar-foreground"
                     title={coldStorageName}
                   >
                     {coldStorageName}

@@ -1,8 +1,6 @@
-import { useState } from "react"
-import { useNavigate } from "@tanstack/react-router"
 import {
   ArrowUpFromLine,
-  NotebookText,
+  Scale,
   RefreshCw,
   Search,
 } from "lucide-react"
@@ -41,77 +39,9 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty"
-import {
-  GatePassCard,
-  type GatePassData,
-} from "@/components/incoming-gate-pass-card"
 
-const MOCK_INCOMING_GATE_PASSES: GatePassData[] = [
-  {
-    _id:"d18ef34a-cbb1-407c-a14f-e7411b8f8f6a",
-    gatePassNo: 1042,
-    manualGatePassNumber: 88,
-    date: "2026-05-18T09:30:00.000Z",
-    variety: "Potato",
-    category: "A",
-    location: "Karnal Cold Store",
-    truckNumber: "HR-26-DK-4521",
-    bagsReceived: 120,
-    status: "Pending",
-    stage: "Incoming",
-    remarks: "Bags in good condition. Farmer requested early grading.",
-    farmerStorageLinkId: {
-      accountNumber: 12045,
-      farmerId: {
-        name: "Rajesh Sehgal",
-        address: "Village Kheri, Karnal, Haryana 132001",
-        mobileNumber: "9876543210",
-      },
-    },
-    createdBy: { name: "Amit Sharma" },
-    weightSlip: {
-      slipNumber: "WS-2026-1842",
-      grossWeightKg: 12450,
-      tareWeightKg: 3450,
-    },
-  },
-  {
-    _id:"d4ba8d75-71f9-4514-a79c-9b37c2b72e9c",
-    gatePassNo: 1041,
-    date: "2026-05-17T14:15:00.000Z",
-    variety: "Potato",
-    category: "B",
-    location: "Ludhiana Yard",
-    truckNumber: "PB-03-AB-7789",
-    bagsReceived: 95,
-    status: "Completed",
-    stage: "Grading",
-    remarks: "Standard delivery.",
-    farmerStorageLinkId: {
-      accountNumber: 9821,
-      farmerId: {
-        name: "Gurpreet Singh",
-        address: "Near Grain Market, Ludhiana, Punjab 141001",
-        mobileNumber: "9123456780",
-      },
-    },
-    createdBy: { name: "Priya Verma" },
-    weightSlip: {
-      slipNumber: "WS-2026-1841",
-      grossWeightKg: 9850,
-      tareWeightKg: 2920,
-    },
-  },
-]
-
-const DaybookIncomingTab = () => {
-  const navigate = useNavigate()
-  const [incomingGatePasses] = useState<GatePassData[]>(MOCK_INCOMING_GATE_PASSES)
-
-  // Temporary placeholder states/values
-  const canReadIncomingGatePass = true
-  const emptyTitle = "No incoming gate passes found"
-  const emptyDescription = "There are no incoming gate passes available."
+const DaybookStorageTab = () => {
+  const gatePassCount = 0
 
   const itemsPerPage = 10
   const currentPage = 1
@@ -124,24 +54,17 @@ const DaybookIncomingTab = () => {
   const handlePrevPage = () => {}
   const handleNextPage = () => {}
 
-  const handleAddIncoming = () => {
-    navigate({ to: "/incoming" })
-  }
-
   return (
     <div className="flex w-full flex-col gap-4">
-      {/* Header */}
       <Item variant="outline" size="sm">
         <ItemMedia variant="icon">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-            <NotebookText className="h-5 w-5 text-primary" />
+            <Scale className="h-5 w-5 text-primary" />
           </div>
         </ItemMedia>
 
         <ItemContent>
-          <ItemTitle>
-            {incomingGatePasses.length} incoming gate passes
-          </ItemTitle>
+          <ItemTitle>{gatePassCount} storage gate passes</ItemTitle>
         </ItemContent>
 
         <ItemActions>
@@ -152,9 +75,7 @@ const DaybookIncomingTab = () => {
         </ItemActions>
       </Item>
 
-      {/* Filters */}
       <div className="flex flex-col gap-3 rounded-xl border bg-card p-3 text-card-foreground shadow-sm sm:gap-4 sm:p-4">
-        {/* Search */}
         <div className="relative w-full">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
 
@@ -164,9 +85,8 @@ const DaybookIncomingTab = () => {
           />
         </div>
 
-        {/* Controls — 2×2 grid on mobile, horizontal row on desktop */}
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
-          <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-row">
+          <div>
             <Select>
               <SelectTrigger className="w-full min-w-0 sm:w-[150px]">
                 <SelectValue placeholder="Sort by" />
@@ -177,70 +97,37 @@ const DaybookIncomingTab = () => {
                 <SelectItem value="oldest">Oldest First</SelectItem>
               </SelectContent>
             </Select>
-
-            <Select>
-              <SelectTrigger className="w-full min-w-0 sm:w-[150px]">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-
-              <SelectContent>
-                <SelectItem value="all">All</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
 
           <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-row sm:shrink-0">
             <Button variant="secondary" className="min-w-0 px-2.5 sm:px-3">
               <span className="truncate sm:hidden">Edit History</span>
-              <span className="hidden sm:inline">Incoming Edit History</span>
+              <span className="hidden sm:inline">Storage Edit History</span>
             </Button>
 
-            <Button
-              className="min-w-0 px-2.5 sm:px-3"
-              onClick={handleAddIncoming}
-            >
+            <Button className="min-w-0 px-2.5 sm:px-3">
               <ArrowUpFromLine className="h-4 w-4 shrink-0 sm:mr-2" />
-              <span className="truncate">Add Incoming</span>
+              <span className="truncate">Add Storage</span>
             </Button>
           </div>
         </div>
       </div>
 
-      {/* List / Empty State */}
-      {incomingGatePasses.length > 0 ? (
-        <div className="space-y-6">
-          {incomingGatePasses.map((gatePass) => (
-            <GatePassCard
-              key={gatePass._id}
-              data={gatePass}
-            />
-          ))}
-        </div>
-      ) : (
-        <Empty className="rounded-xl border bg-muted/10">
-          <EmptyHeader>
-            <EmptyMedia variant="icon">
-              <NotebookText />
-            </EmptyMedia>
+      <Empty className="rounded-xl border bg-muted/10">
+        <EmptyHeader>
+          <EmptyMedia variant="icon">
+            <Scale />
+          </EmptyMedia>
 
-            <EmptyTitle>
-              {canReadIncomingGatePass
-                ? emptyTitle
-                : "Access restricted for incoming gate passes"}
-            </EmptyTitle>
+          <EmptyTitle>Storage list coming soon</EmptyTitle>
 
-            <EmptyDescription>
-              {canReadIncomingGatePass
-                ? emptyDescription
-                : "You do not have read permission for incoming gate passes."}
-            </EmptyDescription>
-          </EmptyHeader>
-        </Empty>
-      )}
+          <EmptyDescription>
+            Gate pass cards and storage details will appear here once this tab
+            is connected to the API.
+          </EmptyDescription>
+        </EmptyHeader>
+      </Empty>
 
-      {/* Pagination */}
       <Item
         variant="outline"
         size="sm"
@@ -292,4 +179,4 @@ const DaybookIncomingTab = () => {
   )
 }
 
-export default DaybookIncomingTab
+export default DaybookStorageTab

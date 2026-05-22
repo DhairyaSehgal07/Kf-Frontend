@@ -11,7 +11,11 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedPeopleRouteImport } from './routes/_authenticated/people'
 import { Route as AuthenticatedDaybookRouteImport } from './routes/_authenticated/daybook'
+import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
+import { Route as AuthenticatedIncomingIndexRouteImport } from './routes/_authenticated/incoming.index'
+import { Route as AuthenticatedIncomingIdRouteImport } from './routes/_authenticated/incoming.$id'
 
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
   id: '/_authenticated',
@@ -22,32 +26,85 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedPeopleRoute = AuthenticatedPeopleRouteImport.update({
+  id: '/people',
+  path: '/people',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedDaybookRoute = AuthenticatedDaybookRouteImport.update({
   id: '/daybook',
   path: '/daybook',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedAnalyticsRoute = AuthenticatedAnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedIncomingIndexRoute =
+  AuthenticatedIncomingIndexRouteImport.update({
+    id: '/incoming/',
+    path: '/incoming/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedIncomingIdRoute = AuthenticatedIncomingIdRouteImport.update({
+  id: '/incoming/$id',
+  path: '/incoming/$id',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/analytics': typeof AuthenticatedAnalyticsRoute
   '/daybook': typeof AuthenticatedDaybookRoute
+  '/people': typeof AuthenticatedPeopleRoute
+  '/incoming/$id': typeof AuthenticatedIncomingIdRoute
+  '/incoming/': typeof AuthenticatedIncomingIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/analytics': typeof AuthenticatedAnalyticsRoute
   '/daybook': typeof AuthenticatedDaybookRoute
+  '/people': typeof AuthenticatedPeopleRoute
+  '/incoming/$id': typeof AuthenticatedIncomingIdRoute
+  '/incoming': typeof AuthenticatedIncomingIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
+  '/_authenticated/analytics': typeof AuthenticatedAnalyticsRoute
   '/_authenticated/daybook': typeof AuthenticatedDaybookRoute
+  '/_authenticated/people': typeof AuthenticatedPeopleRoute
+  '/_authenticated/incoming/$id': typeof AuthenticatedIncomingIdRoute
+  '/_authenticated/incoming/': typeof AuthenticatedIncomingIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/daybook'
+  fullPaths:
+    | '/'
+    | '/analytics'
+    | '/daybook'
+    | '/people'
+    | '/incoming/$id'
+    | '/incoming/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/daybook'
-  id: '__root__' | '/' | '/_authenticated' | '/_authenticated/daybook'
+  to:
+    | '/'
+    | '/analytics'
+    | '/daybook'
+    | '/people'
+    | '/incoming/$id'
+    | '/incoming'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/_authenticated/analytics'
+    | '/_authenticated/daybook'
+    | '/_authenticated/people'
+    | '/_authenticated/incoming/$id'
+    | '/_authenticated/incoming/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -71,6 +128,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/people': {
+      id: '/_authenticated/people'
+      path: '/people'
+      fullPath: '/people'
+      preLoaderRoute: typeof AuthenticatedPeopleRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/daybook': {
       id: '/_authenticated/daybook'
       path: '/daybook'
@@ -78,15 +142,44 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDaybookRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/analytics': {
+      id: '/_authenticated/analytics'
+      path: '/analytics'
+      fullPath: '/analytics'
+      preLoaderRoute: typeof AuthenticatedAnalyticsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/incoming/': {
+      id: '/_authenticated/incoming/'
+      path: '/incoming'
+      fullPath: '/incoming/'
+      preLoaderRoute: typeof AuthenticatedIncomingIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/incoming/$id': {
+      id: '/_authenticated/incoming/$id'
+      path: '/incoming/$id'
+      fullPath: '/incoming/$id'
+      preLoaderRoute: typeof AuthenticatedIncomingIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
   }
 }
 
 interface AuthenticatedRouteChildren {
+  AuthenticatedAnalyticsRoute: typeof AuthenticatedAnalyticsRoute
   AuthenticatedDaybookRoute: typeof AuthenticatedDaybookRoute
+  AuthenticatedPeopleRoute: typeof AuthenticatedPeopleRoute
+  AuthenticatedIncomingIdRoute: typeof AuthenticatedIncomingIdRoute
+  AuthenticatedIncomingIndexRoute: typeof AuthenticatedIncomingIndexRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedAnalyticsRoute: AuthenticatedAnalyticsRoute,
   AuthenticatedDaybookRoute: AuthenticatedDaybookRoute,
+  AuthenticatedPeopleRoute: AuthenticatedPeopleRoute,
+  AuthenticatedIncomingIdRoute: AuthenticatedIncomingIdRoute,
+  AuthenticatedIncomingIndexRoute: AuthenticatedIncomingIndexRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(

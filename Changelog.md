@@ -5,6 +5,76 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.7] - 2026-05-22
+
+Incoming review sheet, param-based edit route, and gate pass card navigation by ID.
+
+### Added
+
+- **Incoming summary sheet** — `IncomingSummarySheet` for reviewing gate pass details (truck, farmer, variety, weights, remarks) before final submit on create and edit forms.
+- **Edit incoming form** — Full `EditIncomingForm` on `/incoming/$id` with the same fields, validation, and review flow as create.
+
+### Changed
+
+- **Create incoming form** — “Review” validates the form and opens the summary sheet; confirm submit runs from the sheet instead of an immediate toast.
+- **Incoming routes** — Edit moves from `/incoming/edit` to `/incoming/$id`; index route files use flat `incoming.index` / `incoming.$id` naming.
+- **Gate pass card** — Edit navigates to `/incoming/$id` using `_id`; mock daybook data includes IDs for list keys and navigation.
+- **Sheet** — Drops unnecessary `"use client"` directive.
+
+### Removed
+
+- **Incoming edit shell** — Placeholder `/incoming/edit` route replaced by the `$id` edit route.
+
+## [0.1.6] - 2026-05-21
+
+Incoming gate pass creation flow, form-ready date picker, and combobox/checkbox UI.
+
+### Added
+
+- **Incoming** — `/incoming` route with `CreateIncomingForm` (TanStack Form + Zod) for gate pass details, farmer link, variety/category/stage, weights, and remarks (mock options until API is connected).
+- **Incoming edit route** — `/incoming/edit` route shell for future edit flow.
+- **UI** — shadcn `Checkbox` and Base UI–backed `Combobox` components.
+- **Dependencies** — `@base-ui/react` for combobox primitives.
+
+### Changed
+
+- **Daybook incoming tab** — “Add Incoming” navigates to `/incoming`.
+- **Date picker** — `onBlur`, `aria-invalid`, and controlled sync without effect-driven updates; helpers kept module-private for form use.
+- **Styles** — Hide number input spin buttons in WebKit and Firefox.
+- **Vite** — Dev server listens on port 3000.
+
+## [0.1.5] - 2026-05-20
+
+Analytics and People pages, daybook workflow tab shells, and shared date/input UI.
+
+### Added
+
+- **Analytics** — `/analytics` route with from/to date pickers, apply/reset actions, and an overview grid of summary metric cards (placeholder data until API is connected).
+- **People** — `/people` route with URL-synced tabs for People and Dispatch ledger, each with search/filter toolbars and empty-state shells.
+- **Daybook tabs** — Grading, Storage, Dispatch pre-storage, and Dispatch post-storage tab components with list toolbars, pagination, and empty states wired into the daybook page.
+- **Date picker** — `DatePickerInput` built on calendar popover and `InputGroup`.
+- **UI** — shadcn `InputGroup` and `Textarea` components.
+
+### Changed
+
+- **Daybook** — Replaces placeholder card content for grading, storage, and dispatch tabs with dedicated tab components.
+- **Popover** — Drops unnecessary `"use client"` directive.
+
+## [0.1.4] - 2026-05-19
+
+Daybook incoming tab with gate pass cards, filters, and supporting UI primitives.
+
+### Added
+
+- **Daybook incoming tab** — Search, sort/status filters, pagination shell, empty state, and mock gate pass list wired into the daybook page.
+- **Gate pass card** — `GatePassCard` (`incoming-gate-pass-card.tsx`) with expandable details, farmer/weight-slip info, and action buttons.
+- **UI** — shadcn `Empty`, `Item`, `Pagination`, and `Select` components.
+
+### Changed
+
+- **Sidebar** — Primary-accent active and hover styles for default menu buttons; focus ring aligned with app theme.
+- **Daybook tabs** — Simplified tab trigger markup; incoming tab renders `DaybookIncomingTab` instead of placeholder card content.
+
 ## [0.1.3] - 2026-05-18
 
 ERP-aligned UI polish, consistent authenticated page spacing, and configurable devtools.
@@ -90,6 +160,10 @@ First application scaffold for the Kapur frontend (`kf-frontend`).
 
 - Default Vite starter styles (`App.css`) and demo application UI from the initial template.
 
+[0.1.7]: https://github.com/compare/v0.1.6...v0.1.7
+[0.1.6]: https://github.com/compare/v0.1.5...v0.1.6
+[0.1.5]: https://github.com/compare/v0.1.4...v0.1.5
+[0.1.4]: https://github.com/compare/v0.1.3...v0.1.4
 [0.1.3]: https://github.com/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/compare/v0.1.0...v0.1.1

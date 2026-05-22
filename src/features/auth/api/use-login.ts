@@ -43,7 +43,7 @@ export function useLogin() {
         return
       }
 
-      router.navigate({ to: "/daybook" })
+      router.navigate({ to: "/daybook", search: { tab: "incoming" } })
     },
   })
 }

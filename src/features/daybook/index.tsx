@@ -1,11 +1,12 @@
 import { getRouteApi } from "@tanstack/react-router"
-
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
+  Sprout,
+  Inbox,
+  Scale,
+  PackageCheck,
+  ArrowLeftRight
+} from "lucide-react"
+
 import {
   Tabs,
   TabsContent,
@@ -13,7 +14,14 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs"
 
-import { DAYBOOK_TABS, type DaybookTab } from "./search"
+import { preserveScroll } from "@/lib/preserve-scroll"
+
+import type { DaybookTab } from "./search"
+import DaybookDispatchPostStorageTab from "./components/dispatch-post-storage-tab"
+import DaybookDispatchPreStorageTab from "./components/dispatch-pre-storage-tab"
+import DaybookGradingTab from "./components/grading-tab"
+import DaybookIncomingTab from "./components/incoming-tab"
+import DaybookStorageTab from "./components/storage-tab"
 
 const daybookRouteApi = getRouteApi("/_authenticated/daybook")
 
@@ -24,34 +32,65 @@ const DaybookPage = () => {
   const handleTabChange = (value: string) => {
     navigate({
       search: { tab: value as DaybookTab },
+      ...preserveScroll,
     })
   }
 
   return (
     <main className="flex min-w-0 flex-1 flex-col gap-4 sm:gap-6">
       <Tabs value={tab} onValueChange={handleTabChange} className="w-full gap-4">
+
+        {/* Tab Triggers */}
         <TabsList className="h-11 w-full">
-          {DAYBOOK_TABS.map((item) => (
-            <TabsTrigger key={item.value} value={item.value}>
-              {item.label}
-            </TabsTrigger>
-          ))}
+
+          <TabsTrigger value="incoming">
+            <Sprout className="h-5 w-5 sm:hidden" />
+            <span className="hidden sm:block">Incoming</span>
+          </TabsTrigger>
+
+          <TabsTrigger value="grading">
+            <Inbox className="h-5 w-5 sm:hidden" />
+            <span className="hidden sm:block">Grading</span>
+          </TabsTrigger>
+
+          <TabsTrigger value="storage">
+            <Scale className="h-5 w-5 sm:hidden" />
+            <span className="hidden sm:block">Storage</span>
+          </TabsTrigger>
+
+          <TabsTrigger value="dispatch-pre-storage">
+            <PackageCheck className="h-5 w-5 sm:hidden" />
+            <span className="hidden sm:block">Dispatch (pre-storage)</span>
+          </TabsTrigger>
+
+          <TabsTrigger value="dispatch-post-storage">
+            <ArrowLeftRight className="h-5 w-5 sm:hidden" />
+            <span className="hidden sm:block">Dispatch (post-storage)</span>
+          </TabsTrigger>
+
         </TabsList>
 
-        {DAYBOOK_TABS.map((item) => (
-          <TabsContent key={item.value} value={item.value} className="min-w-0">
-            <Card>
-              <CardHeader>
-                <CardTitle className="font-semibold text-foreground">
-                  {item.heading}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="text-sm text-muted-foreground">
-                Show {item.heading} content
-              </CardContent>
-            </Card>
-          </TabsContent>
-        ))}
+        {/* Tab Contents */}
+        <TabsContent value="incoming" className="min-w-0">
+         <DaybookIncomingTab/>
+        </TabsContent>
+
+        <TabsContent value="grading" className="min-w-0">
+          <DaybookGradingTab />
+        </TabsContent>
+
+        <TabsContent value="storage" className="min-w-0">
+          <DaybookStorageTab />
+        </TabsContent>
+
+        <TabsContent value="dispatch-pre-storage" className="min-w-0">
+          <DaybookDispatchPreStorageTab />
+        </TabsContent>
+
+        <TabsContent value="dispatch-post-storage" className="min-w-0">
+          <DaybookDispatchPostStorageTab />
+        </TabsContent>
+
       </Tabs>
     </main>
   )

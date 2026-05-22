@@ -20,7 +20,7 @@ export const Route = createFileRoute('/')({
       throw redirect({ href: search.redirect });
     }
 
-    throw redirect({ to: '/daybook' });
+    throw redirect({ to: '/daybook', search: { tab: 'incoming' } });
   },
   component: LoginForm,
 });

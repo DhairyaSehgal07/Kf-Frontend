@@ -1,5 +1,5 @@
 import { useForm } from '@tanstack/react-form';
-import { EyeIcon, EyeOffIcon } from 'lucide-react';
+import { EyeIcon, EyeOffIcon, Lock } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import * as z from 'zod';
@@ -57,10 +57,10 @@ export function LoginForm() {
 
   return (
     <div className="flex min-h-screen w-full items-center justify-center bg-background px-4 py-8">
-      <Card className="w-full max-w-sm border border-border shadow-sm">
-        <CardHeader className="space-y-1 pb-4">
-          <CardTitle className="text-xl font-semibold tracking-tight sm:text-2xl">
-            Welcome back
+      <Card className="w-full max-w-sm">
+        <CardHeader>
+          <CardTitle className="text-2xl font-semibold tracking-tight">
+            Account Access
           </CardTitle>
           <CardDescription>
             Sign in to {env.appName} with your mobile number and password.
@@ -74,12 +74,15 @@ export function LoginForm() {
               e.stopPropagation();
               form.handleSubmit();
             }}
+            className="space-y-4"
           >
-            <FieldGroup className="gap-4">
+            <FieldGroup className="space-y-4">
               <form.Field name="mobileNumber">
                 {(field) => (
                   <Field>
-                    <FieldLabel htmlFor={field.name}>Mobile Number</FieldLabel>
+                    <FieldLabel htmlFor={field.name}>
+                      Mobile Number
+                    </FieldLabel>
                     <Input
                       id={field.name}
                       name={field.name}
@@ -91,11 +94,12 @@ export function LoginForm() {
                       maxLength={10}
                       inputMode="numeric"
                       autoComplete="tel"
-                      className="h-11 text-base tabular-nums"
                     />
-                    <FieldDescription>
-                      Enter your 10-digit Indian mobile number.
-                    </FieldDescription>
+                    {field.state.meta.errors.length === 0 && (
+                       <FieldDescription>
+                         Enter your 10-digit Indian mobile number.
+                       </FieldDescription>
+                    )}
                     {field.state.meta.errors.length > 0 && (
                       <FieldError>
                         {field.state.meta.errors[0]?.message}
@@ -108,7 +112,18 @@ export function LoginForm() {
               <form.Field name="password">
                 {(field) => (
                   <Field>
-                    <FieldLabel htmlFor={field.name}>Password</FieldLabel>
+                    <div className="flex items-center justify-between">
+                      <FieldLabel htmlFor={field.name}>
+                        Password
+                      </FieldLabel>
+                      <a
+                        href="/forgot-password"
+                        className="text-sm font-medium text-primary hover:underline"
+                        tabIndex={-1}
+                      >
+                        Forgot?
+                      </a>
+                    </div>
                     <div className="relative">
                       <Input
                         id={field.name}
@@ -119,19 +134,19 @@ export function LoginForm() {
                         placeholder="••••••••"
                         type={showPassword ? 'text' : 'password'}
                         autoComplete="current-password"
-                        className="h-11 pr-10 text-base"
+                        className="pr-10"
                       />
                       <Button
                         type="button"
                         variant="ghost"
-                        size="icon-sm"
-                        className="absolute top-1/2 right-1 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                        size="icon"
+                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent text-muted-foreground"
                         onClick={() => setShowPassword((prev) => !prev)}
                         aria-label={
                           showPassword ? 'Hide password' : 'Show password'
                         }
                       >
-                        {showPassword ? <EyeOffIcon /> : <EyeIcon />}
+                        {showPassword ? <EyeOffIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
                       </Button>
                     </div>
                     {field.state.meta.errors.length > 0 && (
@@ -144,15 +159,22 @@ export function LoginForm() {
               </form.Field>
             </FieldGroup>
 
-            <div className="mt-6">
+            <div className="pt-2">
               <form.Subscribe selector={(state) => state.canSubmit}>
                 {(canSubmit) => (
                   <Button
                     type="submit"
                     disabled={!canSubmit || isPending}
-                    className="h-11 w-full text-base font-medium"
+                    className="w-full"
                   >
-                    {isPending ? 'Signing in…' : 'Sign In'}
+                    {isPending ? (
+                      'Authenticating…'
+                    ) : (
+                      <>
+                        <Lock className="mr-2 h-4 w-4" />
+                        Sign In
+                      </>
+                    )}
                   </Button>
                 )}
               </form.Subscribe>
@@ -160,7 +182,7 @@ export function LoginForm() {
           </form>
         </CardContent>
 
-        <CardFooter className="flex justify-center pt-0 pb-6">
+        <CardFooter className="flex justify-center">
           <p className="text-sm text-muted-foreground">
             Don&apos;t have an account?{' '}
             <a
