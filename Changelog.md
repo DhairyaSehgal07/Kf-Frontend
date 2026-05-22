@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.9] - 2026-05-23
+
+Grading create form review sheet, per-step validation, and scroll restoration for multi-step flows.
+
+### Added
+
+- **Grading summary sheet** — `GradingSummarySheet` to review selected gate passes, graded quantities, and totals before final submit on the create grading form.
+- **Grading form schema** — Unified `gradingFormSchema` with per-step Zod schemas (`gradingSelectStepSchema`, `gradingFillDetailsSchema`) and shared `GRADING_FORM_STEPS` metadata.
+- **Incoming gate passes summary card** — `IncomingGatePassesSummaryCard` for the review flow.
+- **Grading constants & mock data** — Shared farmer link options and `MOCK_INCOMING_GATE_PASSES` module for gate pass selection and summary resolution.
+- **Scroll helper** — `scrollMainToTop` scrolls the window and `data-main-scroll` containers after wizard step changes.
+
+### Changed
+
+- **Create grading form** — “Review” validates and opens the summary sheet; confirm submit runs from the sheet; per-step Next validation; Reset action; scroll to top when entering fill details.
+- **Select gate passes step** — Parent-owned form instance; table uses shared mock data module.
+- **Fill details step** — Wired to the parent form instance.
+- **useCreateGradingForm** — Separate review vs submit submit actions with sheet open/close callbacks.
+- **Data table** — Refinements for grading gate pass selection (sorting, layout, and mobile behavior).
+- **Authenticated layout** — Main content uses `data-main-scroll` with vertical overflow for nested scroll restoration.
+- **Router** — `scrollToTopSelectors` includes `[data-main-scroll]`.
+
+### Removed
+
+- **Multi-step example** — Demo wizard form (`multi-step-example.tsx`) and `/example` route.
+
 ## [0.1.7] - 2026-05-22
 
 Incoming review sheet, param-based edit route, and gate pass card navigation by ID.
@@ -160,6 +186,7 @@ First application scaffold for the Kapur frontend (`kf-frontend`).
 
 - Default Vite starter styles (`App.css`) and demo application UI from the initial template.
 
+[0.1.9]: https://github.com/compare/v0.1.7...v0.1.9
 [0.1.7]: https://github.com/compare/v0.1.6...v0.1.7
 [0.1.6]: https://github.com/compare/v0.1.5...v0.1.6
 [0.1.5]: https://github.com/compare/v0.1.4...v0.1.5

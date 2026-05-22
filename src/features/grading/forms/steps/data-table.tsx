@@ -2,9 +2,11 @@ import * as React from "react"
 import {
   type ColumnDef,
   type ColumnFiltersState,
+  type OnChangeFn,
   type PaginationState,
   type RowSelectionState,
   type SortingState,
+  type Updater,
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
@@ -39,6 +41,14 @@ interface DataTableProps<TData, TValue> {
   data: TData[]
   getRowId?: (row: TData) => string
   isLoading?: boolean
+  rowSelection?: RowSelectionState
+  onRowSelectionChange?: OnChangeFn<RowSelectionState>
+}
+
+function resolveUpdater<T>(updater: Updater<T>, previous: T): T {
+  return typeof updater === "function"
+    ? (updater as (old: T) => T)(previous)
+    : updater
 }
 
 export function DataTable<TData, TValue>({
@@ -46,12 +56,32 @@ export function DataTable<TData, TValue>({
   data,
   getRowId,
   isLoading = false,
+  rowSelection: controlledRowSelection,
+  onRowSelectionChange: controlledOnRowSelectionChange,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
   )
-  const [rowSelection, setRowSelection] = React.useState<RowSelectionState>({})
+  const [internalRowSelection, setInternalRowSelection] =
+    React.useState<RowSelectionState>({})
+
+  const isRowSelectionControlled = controlledRowSelection !== undefined
+  const rowSelection = isRowSelectionControlled
+    ? controlledRowSelection
+    : internalRowSelection
+
+  const handleRowSelectionChange = React.useCallback<OnChangeFn<RowSelectionState>>(
+    (updater) => {
+      const next = resolveUpdater(updater, rowSelection)
+      if (controlledOnRowSelectionChange) {
+        controlledOnRowSelectionChange(next)
+      } else {
+        setInternalRowSelection(next)
+      }
+    },
+    [controlledOnRowSelectionChange, rowSelection]
+  )
   const [pagination, setPagination] = React.useState<PaginationState>({
     pageIndex: 0,
     pageSize: 10,
@@ -67,7 +97,7 @@ export function DataTable<TData, TValue>({
     getPaginationRowModel: getPaginationRowModel(),
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
-    onRowSelectionChange: setRowSelection,
+    onRowSelectionChange: handleRowSelectionChange,
     onPaginationChange: setPagination,
     enableRowSelection: true,
     autoResetPageIndex: true,

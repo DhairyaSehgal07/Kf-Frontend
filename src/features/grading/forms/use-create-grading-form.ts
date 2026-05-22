@@ -1,25 +1,49 @@
 import { useForm } from "@tanstack/react-form"
 import {
   createDefaultQuantities,
-  gradingFillDetailsSchema,
-} from "@/features/grading/schemas/grading-fill-details-schema"
+  gradingFormSchema,
+  type GradingFormValues,
+} from "@/features/grading/schemas/grading-form-schema"
+import {
+  defaultGradingSubmitMeta,
+  type GradingSubmitMeta,
+} from "@/features/grading/types"
 
-export function useCreateGradingForm() {
+export type { GradingFormValues }
+
+type UseCreateGradingFormOptions = {
+  onOpenReview?: () => void
+  onCloseReview?: () => void
+}
+
+export function useCreateGradingForm(options: UseCreateGradingFormOptions = {}) {
   const todayIso = new Date().toISOString()
 
   return useForm({
     defaultValues: {
+      farmerStorageLinkId: "",
+      variety: "",
+      selectedIncomingGatePassIds: [] as string[],
       manualGatePassNumber: undefined as number | undefined,
       date: todayIso,
       quantities: createDefaultQuantities(),
       remarks: "",
     },
     validators: {
-      onChange: gradingFillDetailsSchema,
-      onSubmit: gradingFillDetailsSchema,
+      onChange: gradingFormSchema,
+      onSubmit: gradingFormSchema,
     },
-    onSubmit: async ({ value }) => {
-      console.log(value)
+    onSubmitMeta: defaultGradingSubmitMeta,
+    onSubmit: async ({ value, meta }) => {
+      const parsed = gradingFormSchema.parse(value)
+
+      if ((meta as GradingSubmitMeta).submitAction === "review") {
+        options.onOpenReview?.()
+        return
+      }
+
+      console.log(parsed)
+      options.onCloseReview?.()
     },
   })
 }

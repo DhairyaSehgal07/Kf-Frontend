@@ -1,6 +1,11 @@
-import { useState } from "react"
-import { ArrowLeft, ArrowRight, Check } from "lucide-react"
+import { useEffect, useRef, useState } from "react"
+import { ArrowLeft, ArrowRight } from "lucide-react"
 import { useCreateGradingForm } from "@/features/grading/forms/use-create-grading-form"
+import { GradingSummarySheet } from "@/features/grading/forms/grading-summary-sheet"
+import {
+  GRADING_FORM_STEPS,
+  gradingFormSchema,
+} from "@/features/grading/schemas/grading-form-schema"
 
 import { Stepper } from "@/components/stepper"
 import {
@@ -13,35 +18,84 @@ import {
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { FillDetailsStep } from "@/features/grading/forms/steps/fill-details-step"
+import { GRADING_MOCK_FARMER_LINKS } from "@/features/grading/constants/grading-form.constants"
 import { SelectGatePassesStep } from "@/features/grading/forms/steps/select-gate-passes-step"
+import type { GradingFormValues } from "@/features/grading/schemas/grading-form-schema"
+import { scrollMainToTop } from "@/lib/scroll-to-top"
 
-type StepMeta = {
-  id: string
-  title: string
-  description: string
-}
+const STEPS = GRADING_FORM_STEPS
 
-const STEPS: readonly StepMeta[] = [
-  {
-    id: "select-gate-passes",
-    title: "Select Gate Passes",
-    description: "Choose incoming gate passes",
-  },
-  {
-    id: "fill-details",
-    title: "Fill Details",
-    description: "Enter graded bag counts",
-  },
-]
+const FILL_DETAILS_STEP_INDEX = 1
 
 const CreateGradingForm = () => {
   const [currentStep, setCurrentStep] = useState(0)
+  const [reviewOpen, setReviewOpen] = useState(false)
+  const formTopRef = useRef<HTMLDivElement>(null)
   const isFirst = currentStep === 0
   const isLast = currentStep === STEPS.length - 1
-  const form = useCreateGradingForm()
+  const form = useCreateGradingForm({
+    onOpenReview: () => setReviewOpen(true),
+    onCloseReview: () => setReviewOpen(false),
+  })
+
+  const handleOpenReview = () => {
+    void form.handleSubmit({ submitAction: "review" })
+  }
+
+  const handleConfirmSubmit = () => {
+    void form.handleSubmit({ submitAction: "submit" })
+  }
+
+  const handleReset = () => {
+    form.reset()
+    setCurrentStep(0)
+  }
+
+  const touchSelectStepFields = () => {
+    void form.validateField("farmerStorageLinkId", "change")
+    void form.validateField("variety", "change")
+    void form.validateField("selectedIncomingGatePassIds", "change")
+    form.setFieldMeta("farmerStorageLinkId", (prev) => ({
+      ...prev,
+      isTouched: true,
+    }))
+    form.setFieldMeta("variety", (prev) => ({
+      ...prev,
+      isTouched: true,
+    }))
+    form.setFieldMeta("selectedIncomingGatePassIds", (prev) => ({
+      ...prev,
+      isTouched: true,
+    }))
+  }
+
+  useEffect(() => {
+    if (currentStep !== FILL_DETAILS_STEP_INDEX) return
+
+    const frame = requestAnimationFrame(() => {
+      scrollMainToTop()
+      formTopRef.current?.scrollIntoView({ block: "start", behavior: "instant" })
+    })
+
+    return () => cancelAnimationFrame(frame)
+  }, [currentStep])
+
+  const handleNext = (values: GradingFormValues) => {
+    const isCurrentStepValid = STEPS[currentStep].schema.safeParse(values).success
+    if (isCurrentStepValid) {
+      setCurrentStep((s) => Math.min(STEPS.length - 1, s + 1))
+      return
+    }
+    if (currentStep === 0) {
+      touchSelectStepFields()
+    }
+  }
 
   return (
-    <Card className="mx-auto w-full max-w-4xl shadow-sm">
+    <Card
+      ref={formTopRef}
+      className="mx-auto w-full max-w-4xl scroll-mt-4 shadow-sm"
+    >
       <CardHeader className="border-b bg-muted/30 pb-6">
         <CardTitle className="text-2xl">
           Grading Gate Pass{" "}
@@ -63,13 +117,10 @@ const CreateGradingForm = () => {
         onSubmit={(e) => {
           e.preventDefault()
           e.stopPropagation()
-          if (isLast) {
-            void form.handleSubmit()
-          }
         }}
       >
         <CardContent className="pt-8 pb-8">
-          {currentStep === 0 && <SelectGatePassesStep />}
+          {currentStep === 0 && <SelectGatePassesStep form={form} />}
           {currentStep === 1 && <FillDetailsStep form={form} />}
         </CardContent>
 
@@ -84,32 +135,63 @@ const CreateGradingForm = () => {
             Back
           </Button>
 
-          {isLast ? (
+          <div className="flex gap-3">
+            <Button type="button" variant="outline" onClick={handleReset}>
+              Reset
+            </Button>
+
             <form.Subscribe
               selector={(state) => ({
-                canSubmit: state.canSubmit,
+                values: state.values,
                 isSubmitting: state.isSubmitting,
               })}
-              children={({ canSubmit, isSubmitting }) => (
-                <Button type="submit" disabled={!canSubmit || isSubmitting}>
-                  <Check className="mr-2 size-4" />
-                  {isSubmitting ? "Submitting…" : "Submit"}
-                </Button>
-              )}
-            />
-          ) : (
-            <Button
-              type="button"
-              onClick={() =>
-                setCurrentStep((s) => Math.min(STEPS.length - 1, s + 1))
+              children={({ values, isSubmitting }) =>
+                isLast ? (
+                  <Button
+                    type="button"
+                    disabled={isSubmitting}
+                    onClick={handleOpenReview}
+                  >
+                    {isSubmitting ? "Validating…" : "Review"}
+                  </Button>
+                ) : (
+                  <Button
+                    type="button"
+                    onClick={() => handleNext(values)}
+                  >
+                    Next
+                    <ArrowRight className="ml-2 size-4" />
+                  </Button>
+                )
               }
-            >
-              Next
-              <ArrowRight className="ml-2 size-4" />
-            </Button>
-          )}
+            />
+          </div>
         </CardFooter>
       </form>
+
+      <form.Subscribe
+        selector={(state) => ({
+          values: state.values,
+          canSubmit: state.canSubmit,
+          isSubmitting: state.isSubmitting,
+        })}
+        children={({ values, canSubmit, isSubmitting }) => {
+          const parsed = gradingFormSchema.safeParse(values)
+
+          return (
+            <GradingSummarySheet
+              open={reviewOpen}
+              onOpenChange={setReviewOpen}
+              values={parsed.success ? parsed.data : null}
+              farmerOptions={[...GRADING_MOCK_FARMER_LINKS]}
+              onBack={() => setReviewOpen(false)}
+              onSubmit={handleConfirmSubmit}
+              canSubmit={canSubmit}
+              isSubmitting={isSubmitting}
+            />
+          )
+        }}
+      />
     </Card>
   )
 }

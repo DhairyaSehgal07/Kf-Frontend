@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
+import { IncomingGatePassesSummaryCard } from "@/features/grading/components/incoming-gate-passes-summary-card"
 import type { CreateGradingFormApi } from "@/features/grading/forms/use-create-grading-form"
 import {
   createDefaultQuantities,
@@ -80,7 +81,6 @@ export function FillDetailsStep({ form }: FillDetailsStepProps) {
                     }
                     aria-invalid={isInvalid}
                     placeholder="e.g. 1024 (optional)"
-                    className="h-11 text-base"
                   />
                   <FieldDescription>
                     Leave blank if no manual slip number was issued.
@@ -135,6 +135,16 @@ export function FillDetailsStep({ form }: FillDetailsStepProps) {
           quantity are ignored on submit.
         </FieldDescription>
 
+        <form.Subscribe
+          selector={(state) => state.values.selectedIncomingGatePassIds}
+          children={(selectedIncomingGatePassIds) => (
+            <IncomingGatePassesSummaryCard
+              className="mt-4"
+              selectedIds={selectedIncomingGatePassIds}
+            />
+          )}
+        />
+
         <div className="mt-5 rounded-lg border border-border">
           <div className="hidden border-b border-border bg-muted/50 px-3 py-2.5 md:grid md:grid-cols-12 md:gap-3">
             <div className="col-span-3 text-sm font-medium text-muted-foreground">
@@ -185,7 +195,7 @@ export function FillDetailsStep({ form }: FillDetailsStepProps) {
                                 >
                                   <SelectTrigger
                                     id={subField.name}
-                                    className="h-11 w-full text-base"
+                                    className="w-full"
                                     onBlur={subField.handleBlur}
                                     aria-invalid={isInvalid}
                                   >
@@ -242,7 +252,7 @@ export function FillDetailsStep({ form }: FillDetailsStepProps) {
                                     )
                                   }
                                   aria-invalid={isInvalid}
-                                  className="h-11 text-base tabular-nums"
+                                  className="tabular-nums"
                                 />
                                 {isInvalid && (
                                   <FieldError
@@ -277,7 +287,7 @@ export function FillDetailsStep({ form }: FillDetailsStepProps) {
                                 >
                                   <SelectTrigger
                                     id={subField.name}
-                                    className="h-11 w-full text-base"
+                                    className="w-full"
                                     onBlur={subField.handleBlur}
                                     aria-invalid={isInvalid}
                                   >
@@ -339,7 +349,7 @@ export function FillDetailsStep({ form }: FillDetailsStepProps) {
                                       )
                                     }
                                     aria-invalid={isInvalid}
-                                    className="h-11 text-base tabular-nums md:text-right"
+                                    className="tabular-nums md:text-right"
                                   />
                                   {isInvalid && (
                                     <FieldError

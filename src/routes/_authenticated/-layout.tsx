@@ -9,7 +9,10 @@ export function AuthenticatedLayout() {
       <AppSidebar />
       <SidebarInset className="!mt-0 md:!mt-0 md:rounded-t-none">
         <AppTopbar />
-        <section className="flex min-h-0 flex-1 flex-col p-4 sm:p-6">
+        <section
+          data-main-scroll
+          className="flex min-h-0 flex-1 flex-col overflow-y-auto p-4 sm:p-6"
+        >
           <div className="mx-auto flex w-full min-w-0 max-w-7xl flex-1 flex-col gap-4 sm:gap-6">
             <Outlet />
           </div>
