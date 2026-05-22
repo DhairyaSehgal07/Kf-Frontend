@@ -1,4 +1,3 @@
-import * as z from "zod"
 import { useEffect, useMemo, useState } from "react"
 import { useForm } from "@tanstack/react-form"
 import {
@@ -26,13 +25,12 @@ import { Textarea } from "@/components/ui/textarea"
 import { DatePickerInput } from "@/components/date-picker"
 import { useAuthStore } from "@/features/auth/store/use-auth-store"
 import {
-  Combobox,
-  ComboboxContent,
-  ComboboxEmpty,
-  ComboboxInput,
-  ComboboxItem,
-  ComboboxList,
-} from "@/components/ui/combobox"
+  SearchableOptionCombobox,
+  filterAndSortOptions,
+  type ComboboxOption,
+} from "@/components/searchable-option-combobox"
+import { incomingFormSchema } from "@/features/incoming/schemas/incoming-form-schema"
+import { defaultSubmitMeta } from "@/features/incoming/types"
 const VARIETY_ITEMS = ["Himalini", "K. Pukhraj", "K. Jyoti"].map((value) => ({
   id: value,
   label: value,
@@ -98,159 +96,6 @@ const MOCK_FARMER_LINKS = [
     label: "Navjot Singh — Acct #4467",
   },
 ] as const
-
-type ComboboxOption = {
-  id: string
-  label: string
-}
-
-function filterAndSortOptions(
-  query: string,
-  options: ComboboxOption[]
-): ComboboxOption[] {
-  const normalized = query.trim().toLowerCase()
-
-  if (!normalized) {
-    return options
-  }
-
-  const filtered = options.filter((option) =>
-    option.label.toLowerCase().includes(normalized)
-  )
-
-  return filtered.sort((a, b) => {
-    const aStarts = a.label.toLowerCase().startsWith(normalized)
-    const bStarts = b.label.toLowerCase().startsWith(normalized)
-    if (aStarts && !bStarts) return -1
-    if (!aStarts && bStarts) return 1
-    return a.label.localeCompare(b.label)
-  })
-}
-
-type SearchableOptionComboboxProps = {
-  id: string
-  name: string
-  value: string
-  onValueChange: (value: string) => void
-  onBlur: () => void
-  isInvalid: boolean
-  placeholder: string
-  emptyMessage: string
-  options: ComboboxOption[]
-  sortedOptions: ComboboxOption[]
-  search: string
-  setSearch: (value: string) => void
-  open: boolean
-  setOpen: (open: boolean) => void
-}
-
-function SearchableOptionCombobox({
-  id,
-  name,
-  value,
-  onValueChange,
-  onBlur,
-  isInvalid,
-  placeholder,
-  emptyMessage,
-  options,
-  sortedOptions,
-  search,
-  setSearch,
-  open,
-  setOpen,
-}: SearchableOptionComboboxProps) {
-  const selected =
-    options.find((option) => option.id === value) ?? null
-
-  return (
-    <Combobox
-      items={sortedOptions}
-      itemToStringValue={(option) => option.label}
-      value={selected}
-      inputValue={search}
-      open={open}
-      onOpenChange={setOpen}
-      autoHighlight={"always" as unknown as boolean}
-      onInputValueChange={(inputValue) => {
-        setSearch(inputValue)
-        const matches = filterAndSortOptions(inputValue, options)
-        if (!inputValue.trim()) {
-          onValueChange("")
-          return
-        }
-        onValueChange(matches[0]?.id ?? "")
-      }}
-      onValueChange={(val) => {
-        onValueChange(val ? val.id : "")
-        setSearch(val ? val.label : "")
-      }}
-    >
-      <ComboboxInput
-        id={id}
-        name={name}
-        placeholder={placeholder}
-        aria-invalid={isInvalid}
-        onFocus={() => setOpen(true)}
-        onBlur={onBlur}
-        className="w-full"
-      />
-      <ComboboxContent>
-        <ComboboxEmpty>{emptyMessage}</ComboboxEmpty>
-        <ComboboxList>
-          {(option) => (
-            <ComboboxItem key={option.id} value={option}>
-              {option.label}
-            </ComboboxItem>
-          )}
-        </ComboboxList>
-      </ComboboxContent>
-    </Combobox>
-  )
-}
-
-const objectId = z
-  .string()
-  .length(24, "Select a valid record from the list.")
-
-const incomingFormSchema = z.object({
-  manualGatePassNumber: z.union([
-    z.undefined(),
-    z.number().positive("Enter a positive gate pass number."),
-  ]),
-  truckNumber: z
-    .string()
-    .min(1, "Truck number is required.")
-    .transform((val) => val.toUpperCase()),
-  farmerStorageLinkId: objectId,
-  createdBy: objectId,
-  variety: z.string().min(1, "Select a variety."),
-  category: z.string().min(1, "Select a category."),
-  stage: z.string().min(1, "Select a stage."),
-  date: z.string().datetime("Select a valid date."),
-  bagsReceived: z
-    .number()
-    .positive("Bags received must be greater than zero."),
-  weightSlip: z.object({
-    slipNumber: z.string().min(1, "Slip number is required."),
-    grossWeightKg: z
-      .number()
-      .positive("Gross weight must be greater than zero."),
-    tareWeightKg: z
-      .number()
-      .nonnegative("Tare weight cannot be negative."),
-  }),
-  status: z.string().min(1, "Select a status."),
-  remarks: z.string(),
-})
-
-type IncomingSubmitMeta = {
-  submitAction: "review" | "submit"
-}
-
-const defaultSubmitMeta: IncomingSubmitMeta = {
-  submitAction: "review",
-}
 
 function isFieldInvalid(
   meta: { isTouched: boolean; isValid: boolean }

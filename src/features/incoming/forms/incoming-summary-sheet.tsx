@@ -1,18 +1,19 @@
 import type { ReactNode } from "react"
 import {
+  ArrowLeft,
   Calendar,
+  CheckCircle2,
   ClipboardCheck,
   FileText,
-  Package,
+  Package2,
   Scale,
   Truck,
-  User,
+  User2,
   Weight,
   type LucideIcon,
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Separator } from "@/components/ui/separator"
 import {
   Sheet,
   SheetContent,
@@ -55,7 +56,6 @@ function formatReviewDate(iso: string) {
   if (!iso) return "—"
   const date = new Date(iso)
   if (Number.isNaN(date.getTime())) return "—"
-
   return new Intl.DateTimeFormat("en-IN", {
     weekday: "short",
     day: "2-digit",
@@ -68,60 +68,77 @@ function formatKg(value: number) {
   return `${value.toLocaleString("en-IN")} kg`
 }
 
-function SummaryInfoBlock({
+/** A single label → value row used in the detail list */
+function DetailRow({
   label,
   value,
   icon: Icon,
   valueClassName,
-  className,
 }: {
   label: string
   value: ReactNode
   icon?: LucideIcon
   valueClassName?: string
-  className?: string
 }) {
   return (
-    <div className={cn("space-y-1.5", className)}>
-      <span className="flex items-center gap-1.5 text-[11px] font-medium tracking-wider text-muted-foreground uppercase">
+    <div className="flex items-start justify-between gap-4 py-2.5">
+      <span className="flex items-center gap-1.5 text-xs text-muted-foreground shrink-0">
         {Icon && <Icon className="size-3.5 shrink-0" />}
         {label}
       </span>
-      <p
+      <span
         className={cn(
-          "text-sm font-semibold text-foreground wrap-break-word",
+          "text-sm font-medium text-right text-foreground",
           valueClassName
         )}
       >
         {value ?? "—"}
-      </p>
+      </span>
     </div>
   )
 }
 
-function SummarySection({
-  title,
+/** Thin section title with primary-tinted icon */
+function SectionLabel({
   icon: Icon,
   children,
 }: {
-  title: string
   icon: LucideIcon
   children: ReactNode
 }) {
   return (
-    <section className="space-y-3">
-      <h3 className="flex items-center gap-2 text-sm font-semibold tracking-tight text-foreground">
-        <span className="flex size-7 items-center justify-center rounded-lg bg-primary/10 text-primary">
-          <Icon className="size-3.5" />
-        </span>
-        {title}
-      </h3>
-      {children}
-    </section>
+    <div className="flex items-center gap-2 mb-1">
+      <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+        <Icon className="size-3.5" />
+      </span>
+      <span className="text-[11px] font-bold tracking-widest uppercase text-foreground/70">
+        {children}
+      </span>
+    </div>
   )
 }
 
-function WeightReceipt({
+/** Card wrapper — thin border, very subtle background */
+function Card({
+  children,
+  className,
+}: {
+  children: ReactNode
+  className?: string
+}) {
+  return (
+    <div
+      className={cn(
+        "rounded-xl border border-border/50 bg-card divide-y divide-border/40 px-4",
+        className
+      )}
+    >
+      {children}
+    </div>
+  )
+}
+
+function WeightCard({
   slipNumber,
   grossWeightKg,
   tareWeightKg,
@@ -133,38 +150,34 @@ function WeightReceipt({
   const netWeightKg = grossWeightKg - tareWeightKg
 
   return (
-    <div className="rounded-xl border border-border/60 bg-card p-4 shadow-sm">
-      <div className="mb-3 flex items-center justify-between gap-2">
-        <span className="text-xs font-medium text-muted-foreground">
-          Weighbridge slip
-        </span>
-        <Badge variant="outline" className="bg-muted/30 font-mono text-xs">
+    <Card>
+      {/* slip number header */}
+      <div className="flex items-center justify-between py-2.5">
+        <span className="text-xs text-muted-foreground">Slip no.</span>
+        <span className="font-mono text-xs font-medium text-foreground">
           #{slipNumber}
-        </Badge>
+        </span>
       </div>
-
-      <div className="space-y-2.5 text-sm">
-        <div className="flex items-center justify-between gap-4">
-          <span className="text-muted-foreground">Gross weight</span>
-          <span className="font-medium tabular-nums text-foreground">
-            {formatKg(grossWeightKg)}
-          </span>
-        </div>
-        <div className="flex items-center justify-between gap-4">
-          <span className="text-muted-foreground">Tare weight</span>
-          <span className="tabular-nums text-muted-foreground">
-            − {tareWeightKg.toLocaleString("en-IN")} kg
-          </span>
-        </div>
-        <Separator className="my-1" />
-        <div className="flex items-center justify-between gap-4 pt-0.5">
-          <span className="font-medium text-foreground">Net weight</span>
-          <span className="text-base font-bold tabular-nums text-primary">
-            {formatKg(netWeightKg)}
-          </span>
-        </div>
+      <div className="flex items-center justify-between py-2.5">
+        <span className="text-xs text-muted-foreground">Gross weight</span>
+        <span className="text-sm font-medium tabular-nums">
+          {formatKg(grossWeightKg)}
+        </span>
       </div>
-    </div>
+      <div className="flex items-center justify-between py-2.5">
+        <span className="text-xs text-muted-foreground">Tare weight</span>
+        <span className="text-sm tabular-nums text-muted-foreground">
+          −&thinsp;{tareWeightKg.toLocaleString("en-IN")} kg
+        </span>
+      </div>
+      {/* net — slightly elevated */}
+      <div className="flex items-center justify-between py-3">
+        <span className="text-sm font-semibold text-foreground">Net weight</span>
+        <span className="text-base font-bold tabular-nums text-primary">
+          {formatKg(netWeightKg)}
+        </span>
+      </div>
+    </Card>
   )
 }
 
@@ -176,85 +189,85 @@ function IncomingReviewSummary({
   farmerLabel: string
 }) {
   return (
-    <div className="space-y-8">
-      {/* Hero */}
-      <div className="rounded-xl border border-border/50 bg-linear-to-br from-muted/50 via-muted/20 to-transparent p-4">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="min-w-0 space-y-1">
-            <div className="flex items-center gap-2">
-              <span className="flex size-8 items-center justify-center rounded-lg bg-primary/15 text-primary">
-                <Truck className="size-4" />
-              </span>
-              <p className="truncate font-heading text-lg font-semibold tracking-tight uppercase">
-                {values.truckNumber}
-              </p>
-            </div>
-            <p className="flex items-center gap-1.5 pl-10 text-xs text-muted-foreground">
-              <Calendar className="size-3.5 shrink-0" />
+    <div className="space-y-7">
+      {/* ── Hero pill ─────────────────────────────────────────── */}
+      <div className="flex items-center justify-between gap-3 rounded-xl border border-border/40 bg-muted/30 px-4 py-3.5">
+        <div className="flex items-center gap-3 min-w-0">
+          <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 border border-primary/20 text-primary">
+            <Truck className="size-4" />
+          </span>
+          <div className="min-w-0">
+            <p className="text-sm font-semibold tracking-tight uppercase truncate">
+              {values.truckNumber}
+            </p>
+            <p className="flex items-center gap-1 text-[11px] text-muted-foreground mt-0.5">
+              <Calendar className="size-3 shrink-0" />
               {formatReviewDate(values.date)}
             </p>
           </div>
+        </div>
+        <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
           {values.manualGatePassNumber != null && (
-            <Badge variant="outline" className="shrink-0 bg-background text-[10px] uppercase">
-              Manual #{values.manualGatePassNumber}
+            <Badge
+              variant="outline"
+              className="font-mono text-[10px] h-5 px-1.5"
+            >
+              #{values.manualGatePassNumber}
             </Badge>
           )}
-        </div>
-
-        <div className="mt-4 flex flex-wrap gap-2">
-          <Badge variant="outline" className="bg-background/80 text-[11px]">
+          <Badge variant="secondary" className="text-[11px] h-5 px-2">
             {values.bagsReceived.toLocaleString("en-IN")} bags
-          </Badge>
-          <Badge variant="secondary" className="text-[11px]">
-            {values.variety}
-          </Badge>
-          <Badge variant="outline" className="text-[11px]">
-            Cat. {values.category}
-          </Badge>
-          <Badge variant="outline" className="text-[11px]">
-            {values.stage}
           </Badge>
         </div>
       </div>
 
-      {/* Farmer */}
-      <SummarySection title="Farmer link" icon={User}>
-        <div className="rounded-xl border border-border/50 bg-muted/20 p-4">
-          <SummaryInfoBlock label="Account" value={farmerLabel} icon={User} />
-        </div>
-      </SummarySection>
+      {/* ── Farmer ────────────────────────────────────────────── */}
+      <div className="space-y-2">
+        <SectionLabel icon={User2}>Farmer</SectionLabel>
+        <Card>
+          <DetailRow
+            label="Linked account"
+            value={farmerLabel}
+            icon={User2}
+          />
+        </Card>
+      </div>
 
-      {/* Crop grid */}
-      <SummarySection title="Crop details" icon={Package}>
-        <div className="grid grid-cols-2 gap-4 rounded-xl border border-border/50 bg-muted/20 p-4">
-          <SummaryInfoBlock label="Variety" value={values.variety} />
-          <SummaryInfoBlock label="Category" value={values.category} />
-          <SummaryInfoBlock label="Stage" value={values.stage} />
-          <SummaryInfoBlock
+      {/* ── Crop ──────────────────────────────────────────────── */}
+      <div className="space-y-2">
+        <SectionLabel icon={Package2}>Crop details</SectionLabel>
+        <Card>
+          <DetailRow label="Variety" value={values.variety} />
+          <DetailRow label="Category" value={`Cat. ${values.category}`} />
+          <DetailRow label="Stage" value={values.stage} />
+          <DetailRow
             label="Bags received"
             value={values.bagsReceived.toLocaleString("en-IN")}
-            valueClassName="text-primary"
+            valueClassName="font-semibold"
           />
-        </div>
-      </SummarySection>
+        </Card>
+      </div>
 
-      {/* Weight */}
-      <SummarySection title="Weight slip" icon={Weight}>
-        <WeightReceipt
+      {/* ── Weight slip ───────────────────────────────────────── */}
+      <div className="space-y-2">
+        <SectionLabel icon={Weight}>Weight slip</SectionLabel>
+        <WeightCard
           slipNumber={values.weightSlip.slipNumber}
           grossWeightKg={values.weightSlip.grossWeightKg}
           tareWeightKg={values.weightSlip.tareWeightKg}
         />
-      </SummarySection>
+      </div>
 
+      {/* ── Remarks ───────────────────────────────────────────── */}
       {values.remarks.trim() ? (
-        <SummarySection title="Remarks" icon={FileText}>
-          <div className="rounded-xl border border-border/50 border-dashed bg-muted/15 px-4 py-3.5">
-            <p className="text-sm leading-relaxed whitespace-pre-wrap text-muted-foreground italic">
-              &ldquo;{values.remarks}&rdquo;
+        <div className="space-y-2">
+          <SectionLabel icon={FileText}>Remarks</SectionLabel>
+          <div className="rounded-xl border border-dashed border-border/50 bg-muted/15 px-4 py-3">
+            <p className="text-sm leading-relaxed text-muted-foreground italic whitespace-pre-wrap">
+              {values.remarks}
             </p>
           </div>
-        </SummarySection>
+        </div>
       ) : null}
     </div>
   )
@@ -274,37 +287,33 @@ export function IncomingSummarySheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
-        className="flex w-full flex-col gap-0 p-0 sm:max-w-xl"
+        className="flex flex-col gap-0 p-0 data-[side=right]:w-full data-[side=right]:max-w-full sm:data-[side=right]:max-w-md"
       >
-        <SheetHeader className="border-b border-border/40 bg-muted/20 px-6 py-5">
-          <div className="flex items-start gap-3 pr-8">
-            <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-              <ClipboardCheck className="size-5" />
+        {/* ── Header ──────────────────────────────────────────── */}
+        <SheetHeader className="border-b border-border/40 px-5 py-4">
+          <div className="flex items-center gap-3">
+            <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <ClipboardCheck className="size-4" />
             </span>
-            <div className="min-w-0 space-y-1">
-              <SheetTitle className="font-heading text-lg">
+            <div className="min-w-0 space-y-0.5">
+              <SheetTitle className="text-base font-semibold leading-none">
                 Review gate pass
               </SheetTitle>
-              <SheetDescription className="text-sm leading-relaxed">
-                Check every field before you submit. You can go back to edit
-                anything that looks wrong.
+              <SheetDescription className="text-xs text-muted-foreground leading-snug">
+                Verify all fields before confirming.
               </SheetDescription>
             </div>
           </div>
         </SheetHeader>
 
-        <div className="flex-1 overflow-y-auto px-6 py-6">
+        {/* ── Scrollable body ─────────────────────────────────── */}
+        <div className="flex-1 overflow-y-auto px-5 py-5">
           {values ? (
-            <IncomingReviewSummary
-              values={values}
-              farmerLabel={farmerLabel}
-            />
+            <IncomingReviewSummary values={values} farmerLabel={farmerLabel} />
           ) : (
-            <div className="flex min-h-48 flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border/60 bg-muted/20 px-6 text-center">
-              <Scale className="size-8 text-muted-foreground/50" />
-              <p className="text-sm font-medium text-foreground">
-                No summary available
-              </p>
+            <div className="flex min-h-48 flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border/50 bg-muted/20 text-center px-6">
+              <Scale className="size-7 text-muted-foreground/40" />
+              <p className="text-sm font-medium">No summary available</p>
               <p className="text-xs text-muted-foreground">
                 Complete the form and open review again.
               </p>
@@ -312,22 +321,33 @@ export function IncomingSummarySheet({
           )}
         </div>
 
-        <SheetFooter className="flex-row gap-3 border-t border-border/40 bg-muted/10 px-6 py-4">
+        {/* ── Footer ──────────────────────────────────────────── */}
+        <SheetFooter className="border-t border-border/40 px-5 py-4 flex-row gap-2.5">
           <Button
             type="button"
-            variant="outline"
-            className="flex-1 sm:flex-none"
+            variant="ghost"
+            size="sm"
+            className="gap-1.5 text-muted-foreground hover:text-foreground"
             onClick={onBack}
           >
-            Back to edit
+            <ArrowLeft className="size-3.5" />
+            Back
           </Button>
           <Button
             type="button"
-            className="flex-1 sm:min-w-32"
+            size="sm"
+            className="flex-1 gap-1.5"
             disabled={!canSubmit || isSubmitting}
             onClick={onSubmit}
           >
-            {isSubmitting ? "Submitting…" : "Confirm & submit"}
+            {isSubmitting ? (
+              "Submitting…"
+            ) : (
+              <>
+                <CheckCircle2 className="size-3.5" />
+                Confirm &amp; submit
+              </>
+            )}
           </Button>
         </SheetFooter>
       </SheetContent>

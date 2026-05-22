@@ -15,7 +15,9 @@ import { Route as AuthenticatedPeopleRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedDaybookRouteImport } from './routes/_authenticated/daybook'
 import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
 import { Route as AuthenticatedIncomingIndexRouteImport } from './routes/_authenticated/incoming.index'
+import { Route as AuthenticatedGradingIndexRouteImport } from './routes/_authenticated/grading.index'
 import { Route as AuthenticatedIncomingIdRouteImport } from './routes/_authenticated/incoming.$id'
+import { Route as AuthenticatedGradingIdRouteImport } from './routes/_authenticated/grading.$id'
 
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
   id: '/_authenticated',
@@ -47,9 +49,20 @@ const AuthenticatedIncomingIndexRoute =
     path: '/incoming/',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedGradingIndexRoute =
+  AuthenticatedGradingIndexRouteImport.update({
+    id: '/grading/',
+    path: '/grading/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedIncomingIdRoute = AuthenticatedIncomingIdRouteImport.update({
   id: '/incoming/$id',
   path: '/incoming/$id',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedGradingIdRoute = AuthenticatedGradingIdRouteImport.update({
+  id: '/grading/$id',
+  path: '/grading/$id',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 
@@ -58,7 +71,9 @@ export interface FileRoutesByFullPath {
   '/analytics': typeof AuthenticatedAnalyticsRoute
   '/daybook': typeof AuthenticatedDaybookRoute
   '/people': typeof AuthenticatedPeopleRoute
+  '/grading/$id': typeof AuthenticatedGradingIdRoute
   '/incoming/$id': typeof AuthenticatedIncomingIdRoute
+  '/grading/': typeof AuthenticatedGradingIndexRoute
   '/incoming/': typeof AuthenticatedIncomingIndexRoute
 }
 export interface FileRoutesByTo {
@@ -66,7 +81,9 @@ export interface FileRoutesByTo {
   '/analytics': typeof AuthenticatedAnalyticsRoute
   '/daybook': typeof AuthenticatedDaybookRoute
   '/people': typeof AuthenticatedPeopleRoute
+  '/grading/$id': typeof AuthenticatedGradingIdRoute
   '/incoming/$id': typeof AuthenticatedIncomingIdRoute
+  '/grading': typeof AuthenticatedGradingIndexRoute
   '/incoming': typeof AuthenticatedIncomingIndexRoute
 }
 export interface FileRoutesById {
@@ -76,7 +93,9 @@ export interface FileRoutesById {
   '/_authenticated/analytics': typeof AuthenticatedAnalyticsRoute
   '/_authenticated/daybook': typeof AuthenticatedDaybookRoute
   '/_authenticated/people': typeof AuthenticatedPeopleRoute
+  '/_authenticated/grading/$id': typeof AuthenticatedGradingIdRoute
   '/_authenticated/incoming/$id': typeof AuthenticatedIncomingIdRoute
+  '/_authenticated/grading/': typeof AuthenticatedGradingIndexRoute
   '/_authenticated/incoming/': typeof AuthenticatedIncomingIndexRoute
 }
 export interface FileRouteTypes {
@@ -86,7 +105,9 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/daybook'
     | '/people'
+    | '/grading/$id'
     | '/incoming/$id'
+    | '/grading/'
     | '/incoming/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -94,7 +115,9 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/daybook'
     | '/people'
+    | '/grading/$id'
     | '/incoming/$id'
+    | '/grading'
     | '/incoming'
   id:
     | '__root__'
@@ -103,7 +126,9 @@ export interface FileRouteTypes {
     | '/_authenticated/analytics'
     | '/_authenticated/daybook'
     | '/_authenticated/people'
+    | '/_authenticated/grading/$id'
     | '/_authenticated/incoming/$id'
+    | '/_authenticated/grading/'
     | '/_authenticated/incoming/'
   fileRoutesById: FileRoutesById
 }
@@ -156,11 +181,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedIncomingIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/grading/': {
+      id: '/_authenticated/grading/'
+      path: '/grading'
+      fullPath: '/grading/'
+      preLoaderRoute: typeof AuthenticatedGradingIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/incoming/$id': {
       id: '/_authenticated/incoming/$id'
       path: '/incoming/$id'
       fullPath: '/incoming/$id'
       preLoaderRoute: typeof AuthenticatedIncomingIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/grading/$id': {
+      id: '/_authenticated/grading/$id'
+      path: '/grading/$id'
+      fullPath: '/grading/$id'
+      preLoaderRoute: typeof AuthenticatedGradingIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
   }
@@ -170,7 +209,9 @@ interface AuthenticatedRouteChildren {
   AuthenticatedAnalyticsRoute: typeof AuthenticatedAnalyticsRoute
   AuthenticatedDaybookRoute: typeof AuthenticatedDaybookRoute
   AuthenticatedPeopleRoute: typeof AuthenticatedPeopleRoute
+  AuthenticatedGradingIdRoute: typeof AuthenticatedGradingIdRoute
   AuthenticatedIncomingIdRoute: typeof AuthenticatedIncomingIdRoute
+  AuthenticatedGradingIndexRoute: typeof AuthenticatedGradingIndexRoute
   AuthenticatedIncomingIndexRoute: typeof AuthenticatedIncomingIndexRoute
 }
 
@@ -178,7 +219,9 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAnalyticsRoute: AuthenticatedAnalyticsRoute,
   AuthenticatedDaybookRoute: AuthenticatedDaybookRoute,
   AuthenticatedPeopleRoute: AuthenticatedPeopleRoute,
+  AuthenticatedGradingIdRoute: AuthenticatedGradingIdRoute,
   AuthenticatedIncomingIdRoute: AuthenticatedIncomingIdRoute,
+  AuthenticatedGradingIndexRoute: AuthenticatedGradingIndexRoute,
   AuthenticatedIncomingIndexRoute: AuthenticatedIncomingIndexRoute,
 }
 

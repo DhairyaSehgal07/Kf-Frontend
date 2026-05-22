@@ -4,6 +4,7 @@ import {
   RefreshCw,
   Search,
 } from "lucide-react"
+import { useNavigate } from "@tanstack/react-router"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -41,6 +42,7 @@ import {
 } from "@/components/ui/empty"
 
 const DaybookGradingTab = () => {
+  const navigate = useNavigate();
   const gatePassCount = 0
 
   const itemsPerPage = 10
@@ -52,7 +54,11 @@ const DaybookGradingTab = () => {
   const isSearching = false
 
   const handlePrevPage = () => {}
-  const handleNextPage = () => {}
+  const handleNextPage = () => { }
+
+  const handleAddGrading = () => {
+    navigate({ to: "/grading" })
+  }
 
   return (
     <div className="flex w-full flex-col gap-4">
@@ -105,7 +111,7 @@ const DaybookGradingTab = () => {
               <span className="hidden sm:inline">Grading Edit History</span>
             </Button>
 
-            <Button className="min-w-0 px-2.5 sm:px-3">
+            <Button className="min-w-0 px-2.5 sm:px-3" onClick={handleAddGrading}>
               <ArrowUpFromLine className="h-4 w-4 shrink-0 sm:mr-2" />
               <span className="truncate">Add Grading</span>
             </Button>
