@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import {
   Field,
   FieldDescription,
@@ -82,11 +82,112 @@ async function getData(): Promise<GradingSelectIncomingGatePasses[]> {
       bagsReceived: 100,
       status: "NOT_GRADED",
     },
+    {
+      _id: "728ed530",
+      gatePassNo: 1002,
+      manualGatePassNumber: 101,
+      date: "2026-05-21",
+      variety: "Jyoti",
+      truckNumber: "PB-10-AX-7812",
+      bagsReceived: 120,
+      status: "NOT_GRADED",
+    },
+    {
+      _id: "728ed531",
+      gatePassNo: 1003,
+      manualGatePassNumber: 102,
+      date: "2026-05-20",
+      variety: "Kufri Chipsona",
+      truckNumber: "RJ-14-BL-9021",
+      bagsReceived: 95,
+      status: "NOT_GRADED",
+    },
+    {
+      _id: "728ed532",
+      gatePassNo: 1004,
+      manualGatePassNumber: 103,
+      date: "2026-05-19",
+      variety: "Pukhraj",
+      truckNumber: "HR-38-QW-6671",
+      bagsReceived: 140,
+      status: "NOT_GRADED",
+    },
+    {
+      _id: "728ed533",
+      gatePassNo: 1005,
+      manualGatePassNumber: 104,
+      date: "2026-05-18",
+      variety: "Santana",
+      truckNumber: "PB-08-TY-5544",
+      bagsReceived: 80,
+      status: "NOT_GRADED",
+    },
+    {
+      _id: "728ed534",
+      gatePassNo: 1006,
+      manualGatePassNumber: 105,
+      date: "2026-05-17",
+      variety: "Jyoti",
+      truckNumber: "UP-32-MN-7788",
+      bagsReceived: 110,
+      status: "NOT_GRADED",
+    },
+    {
+      _id: "728ed535",
+      gatePassNo: 1007,
+      manualGatePassNumber: 106,
+      date: "2026-05-16",
+      variety: "Kufri Badshah",
+      truckNumber: "DL-01-RT-1133",
+      bagsReceived: 150,
+      status: "NOT_GRADED",
+    },
+    {
+      _id: "728ed536",
+      gatePassNo: 1008,
+      manualGatePassNumber: 107,
+      date: "2026-05-15",
+      variety: "Pukhraj",
+      truckNumber: "HR-55-ZX-2299",
+      bagsReceived: 90,
+      status: "NOT_GRADED",
+    },
+    {
+      _id: "728ed537",
+      gatePassNo: 1009,
+      manualGatePassNumber: 108,
+      date: "2026-05-14",
+      variety: "Santana",
+      truckNumber: "PB-11-KL-8810",
+      bagsReceived: 130,
+      status: "NOT_GRADED",
+    },
+    {
+      _id: "728ed538",
+      gatePassNo: 1010,
+      manualGatePassNumber: 109,
+      date: "2026-05-13",
+      variety: "Kufri Chipsona",
+      truckNumber: "RJ-45-DF-6722",
+      bagsReceived: 105,
+      status: "NOT_GRADED",
+    },
+    {
+      _id: "728ed539",
+      gatePassNo: 1011,
+      manualGatePassNumber: 110,
+      date: "2026-05-12",
+      variety: "Jyoti",
+      truckNumber: "HR-26-PL-9981",
+      bagsReceived: 115,
+      status: "NOT_GRADED",
+    },
   ]
 }
 
 export function SelectGatePassesStep() {
   const [data, setData] = useState<GradingSelectIncomingGatePasses[]>([])
+  const [isLoadingGatePasses, setIsLoadingGatePasses] = useState(true)
   const [farmerStorageLinkId, setFarmerStorageLinkId] = useState("")
   const [variety, setVariety] = useState("")
   const farmerOptions = useMemo<ComboboxOption[]>(
@@ -107,13 +208,28 @@ export function SelectGatePassesStep() {
     [varietySearch]
   )
 
+  const getGatePassRowId = useCallback(
+    (row: GradingSelectIncomingGatePasses) => row._id,
+    []
+  )
+
   useEffect(() => {
+    let cancelled = false
+
     const fetchData = async () => {
-      const result = await getData()
-      setData(result)
+      setIsLoadingGatePasses(true)
+      try {
+        const result = await getData()
+        if (!cancelled) setData(result)
+      } finally {
+        if (!cancelled) setIsLoadingGatePasses(false)
+      }
     }
 
-    fetchData()
+    void fetchData()
+    return () => {
+      cancelled = true
+    }
   }, [])
 
   return (
@@ -160,12 +276,19 @@ export function SelectGatePassesStep() {
         </Field>
       </FieldGroup>
 
-      <Field>
-      <FieldDescription>
-  Select incoming gate passes for the selected farmer and variety.
-</FieldDescription>
-        <DataTable columns={columns} data={data} />
-         </Field>
+      <Field className="gap-3">
+        <FieldLabel>Gate passes</FieldLabel>
+        <FieldDescription>
+          Select incoming gate passes for the chosen farmer and variety. Use the
+          search box to filter by manual gate pass number.
+        </FieldDescription>
+        <DataTable
+          columns={columns}
+          data={data}
+          getRowId={getGatePassRowId}
+          isLoading={isLoadingGatePasses}
+        />
+      </Field>
     </div>
   )
 }
