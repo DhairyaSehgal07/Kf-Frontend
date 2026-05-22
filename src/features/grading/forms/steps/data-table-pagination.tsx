@@ -22,6 +22,8 @@ interface DataTablePaginationProps<TData> {
   className?: string
 }
 
+const PAGE_SIZE_OPTIONS = [10, 20, 25, 30, 40, 50] as const
+
 export function DataTablePagination<TData>({
   table,
   pagination,
@@ -32,6 +34,7 @@ export function DataTablePagination<TData>({
   const pageCount = Math.max(table.getPageCount(), 1)
   const canPreviousPage = pageIndex > 0
   const canNextPage = pageIndex < pageCount - 1
+  const selectedCount = table.getFilteredSelectedRowModel().rows.length
   const rangeStart =
     filteredTotal === 0 ? 0 : pageIndex * pageSize + 1
   const rangeEnd =
@@ -42,12 +45,12 @@ export function DataTablePagination<TData>({
   return (
     <div
       className={cn(
-        "flex flex-col gap-4 px-4 py-4 sm:flex-row sm:items-center sm:justify-between",
+        "flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:py-4",
         className
       )}
     >
-      <div className="space-y-0.5 text-sm text-muted-foreground tabular-nums">
-        <p>
+      <div className="flex min-w-0 items-center justify-between gap-3 text-sm text-muted-foreground tabular-nums sm:block sm:space-y-0.5 sm:justify-start">
+        <p className="min-w-0 truncate">
           Showing{" "}
           <span className="font-medium text-foreground">
             {rangeStart.toLocaleString("en-IN")}–
@@ -58,29 +61,38 @@ export function DataTablePagination<TData>({
             {filteredTotal.toLocaleString("en-IN")}
           </span>
         </p>
-        <p>
+        <p className="shrink-0">
           <span className="font-medium text-foreground">
-            {table
-              .getFilteredSelectedRowModel()
-              .rows.length.toLocaleString("en-IN")}
+            {selectedCount.toLocaleString("en-IN")}
           </span>{" "}
           selected
         </p>
       </div>
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6 lg:gap-8">
+
+      <div className="flex items-center justify-between gap-3 sm:gap-6 lg:gap-8">
         <div className="flex items-center gap-2">
-          <p className="text-sm font-medium text-foreground">Rows per page</p>
+          <label
+            htmlFor="data-table-page-size"
+            className="text-xs text-muted-foreground sm:text-sm sm:font-medium sm:text-foreground"
+          >
+            <span className="sm:hidden">Per page</span>
+            <span className="hidden sm:inline">Rows per page</span>
+          </label>
           <Select
             value={`${pageSize}`}
             onValueChange={(value) => {
               table.setPageSize(Number(value))
             }}
           >
-            <SelectTrigger className="h-9 w-[4.5rem]">
+            <SelectTrigger
+              id="data-table-page-size"
+              className="h-10 w-17 sm:h-9"
+              aria-label="Rows per page"
+            >
               <SelectValue placeholder={`${pageSize}`} />
             </SelectTrigger>
             <SelectContent side="top">
-              {[10, 20, 25, 30, 40, 50].map((size) => (
+              {PAGE_SIZE_OPTIONS.map((size) => (
                 <SelectItem key={size} value={`${size}`}>
                   {size}
                 </SelectItem>
@@ -88,10 +100,11 @@ export function DataTablePagination<TData>({
             </SelectContent>
           </Select>
         </div>
-        <div className="flex items-center justify-center text-sm font-medium tabular-nums text-foreground sm:w-[7rem]">
-          Page {pageIndex + 1} of {pageCount}
-        </div>
+
         <div className="flex items-center gap-1">
+          <p className="hidden min-w-28 justify-center text-sm font-medium tabular-nums text-foreground sm:flex">
+            Page {pageIndex + 1} of {pageCount}
+          </p>
           <Button
             variant="outline"
             size="icon"
@@ -105,17 +118,23 @@ export function DataTablePagination<TData>({
           <Button
             variant="outline"
             size="icon"
-            className="size-9"
+            className="size-10 shrink-0 sm:size-9"
             onClick={() => table.previousPage()}
             disabled={!canPreviousPage}
           >
             <span className="sr-only">Go to previous page</span>
             <ChevronLeft className="size-4" />
           </Button>
+          <span
+            className="min-w-13 px-1 text-center text-sm font-medium tabular-nums text-foreground sm:hidden"
+            aria-live="polite"
+          >
+            {pageIndex + 1} / {pageCount}
+          </span>
           <Button
             variant="outline"
             size="icon"
-            className="size-9"
+            className="size-10 shrink-0 sm:size-9"
             onClick={() => table.nextPage()}
             disabled={!canNextPage}
           >

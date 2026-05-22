@@ -1,7 +1,8 @@
-import { Fragment, useState } from "react"
+import { useState } from "react"
 import { ArrowLeft, ArrowRight, Check } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { useCreateGradingForm } from "@/features/grading/forms/use-create-grading-form"
 
+import { Stepper } from "@/components/stepper"
 import {
   Card,
   CardContent,
@@ -17,95 +18,27 @@ import { SelectGatePassesStep } from "@/features/grading/forms/steps/select-gate
 type StepMeta = {
   id: string
   title: string
+  description: string
 }
 
 const STEPS: readonly StepMeta[] = [
   {
     id: "select-gate-passes",
     title: "Select Gate Passes",
+    description: "Choose incoming gate passes",
   },
   {
     id: "fill-details",
     title: "Fill Details",
+    description: "Enter graded bag counts",
   },
-] as const
-
-function GradingStepper({
-  steps,
-  currentStep,
-}: {
-  steps: readonly StepMeta[]
-  currentStep: number
-}) {
-  return (
-    <nav aria-label="Grading progress" className="mt-6 overflow-x-clip">
-      <ol className="flex w-full items-start">
-        {steps.map((step, index) => {
-          const isCompleted = currentStep > index
-          const isActive = currentStep === index
-
-          return (
-            <Fragment key={step.id}>
-              {index > 0 && (
-                <li
-                  aria-hidden
-                  className="mt-4 flex min-w-6 flex-1 items-center self-stretch px-2 sm:px-4"
-                >
-                  <div className="h-0.5 w-full overflow-hidden rounded-full bg-border">
-                    <div
-                      className={cn(
-                        "h-full rounded-full bg-primary transition-[width] duration-500 ease-out",
-                        currentStep >= index ? "w-full" : "w-0"
-                      )}
-                    />
-                  </div>
-                </li>
-              )}
-              <li
-                className="flex shrink-0 flex-col items-center gap-2"
-                aria-current={isActive ? "step" : undefined}
-              >
-                <div
-                  className={cn(
-                    "flex size-8 items-center justify-center rounded-full border-2 text-sm font-semibold tabular-nums transition-all duration-300",
-                    isCompleted &&
-                      "border-primary bg-primary text-primary-foreground shadow-sm",
-                    isActive &&
-                      "border-primary bg-primary text-primary-foreground shadow-sm ring-2 ring-primary/25",
-                    !isCompleted &&
-                      !isActive &&
-                      "border-border bg-background text-muted-foreground"
-                  )}
-                >
-                  {isCompleted ? (
-                    <Check className="size-3.5 stroke-[2.5]" aria-hidden />
-                  ) : (
-                    <span>{index + 1}</span>
-                  )}
-                </div>
-                <span
-                  className={cn(
-                    "text-sm transition-colors duration-300",
-                    isActive && "font-semibold text-foreground",
-                    isCompleted && "font-medium text-foreground",
-                    !isActive && !isCompleted && "text-muted-foreground"
-                  )}
-                >
-                  {step.title}
-                </span>
-              </li>
-            </Fragment>
-          )
-        })}
-      </ol>
-    </nav>
-  )
-}
+]
 
 const CreateGradingForm = () => {
   const [currentStep, setCurrentStep] = useState(0)
   const isFirst = currentStep === 0
   const isLast = currentStep === STEPS.length - 1
+  const form = useCreateGradingForm()
 
   return (
     <Card className="mx-auto w-full max-w-4xl shadow-sm">
@@ -117,13 +50,27 @@ const CreateGradingForm = () => {
         <CardDescription className="text-base">
           Enter how many bags were created after grading a truck
         </CardDescription>
-        <GradingStepper steps={STEPS} currentStep={currentStep} />
+        <Stepper
+          className="mt-6"
+          steps={STEPS}
+          currentStep={currentStep + 1}
+          aria-label="Grading progress"
+        />
       </CardHeader>
 
-      <form noValidate onSubmit={(e) => e.preventDefault()}>
+      <form
+        noValidate
+        onSubmit={(e) => {
+          e.preventDefault()
+          e.stopPropagation()
+          if (isLast) {
+            void form.handleSubmit()
+          }
+        }}
+      >
         <CardContent className="pt-8 pb-8">
           {currentStep === 0 && <SelectGatePassesStep />}
-          {currentStep === 1 && <FillDetailsStep />}
+          {currentStep === 1 && <FillDetailsStep form={form} />}
         </CardContent>
 
         <CardFooter className="flex justify-between border-t bg-muted/30 py-6">
@@ -137,26 +84,30 @@ const CreateGradingForm = () => {
             Back
           </Button>
 
-          <Button
-            type="button"
-            onClick={() =>
-              isLast
-                ? undefined
-                : setCurrentStep((s) => Math.min(STEPS.length - 1, s + 1))
-            }
-          >
-            {isLast ? (
-              <>
-                <Check className="mr-2 size-4" />
-                Submit
-              </>
-            ) : (
-              <>
-                Next
-                <ArrowRight className="ml-2 size-4" />
-              </>
-            )}
-          </Button>
+          {isLast ? (
+            <form.Subscribe
+              selector={(state) => ({
+                canSubmit: state.canSubmit,
+                isSubmitting: state.isSubmitting,
+              })}
+              children={({ canSubmit, isSubmitting }) => (
+                <Button type="submit" disabled={!canSubmit || isSubmitting}>
+                  <Check className="mr-2 size-4" />
+                  {isSubmitting ? "Submitting…" : "Submit"}
+                </Button>
+              )}
+            />
+          ) : (
+            <Button
+              type="button"
+              onClick={() =>
+                setCurrentStep((s) => Math.min(STEPS.length - 1, s + 1))
+              }
+            >
+              Next
+              <ArrowRight className="ml-2 size-4" />
+            </Button>
+          )}
         </CardFooter>
       </form>
     </Card>
