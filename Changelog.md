@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2026-05-23
+
+Storage entry flow with review sheet, shared bag quantity UI, and daybook navigation into the new route.
+
+### Added
+
+- **Storage create form** — `/storage` route with `CreateStorageForm` (TanStack Form + Zod) for date, farmer link, variety/category, chamber/floor/row location, bag quantities, and remarks (mock options until API is connected).
+- **Storage summary sheet** — `StorageSummarySheet` to review location, quantities, and totals before final submit.
+- **Storage quantities** — `StorageQuantitiesSection` with default bag-size rows, extra rows, and validation via `storageFormSchema` / `storage-quantities-schema`.
+- **Storage routes** — `storage.index` and `storage.$id` for create and future edit/detail flows.
+- **Shared bag fields** — `BagSizeSelectField` and `FixedBagSizeLabel` in `bag-quantity-size-field.tsx` for grading and storage quantity tables.
+- **Constants** — Chamber, floor, and storage row placeholders (`CHAMBERS`, `FLOORS`, `STORAGE_ROWS`) with defaults for form hints.
+
+### Changed
+
+- **Daybook storage tab** — “Add Storage” navigates to `/storage`.
+- **Grading fill details step** — Extra quantity rows use `BagSizeSelectField`; default rows show fixed size labels instead of a disabled select.
+- **Router** — Generated route tree registers `/storage` and `/storage/$id`.
+
 ## [0.1.9] - 2026-05-23
 
 Grading create form review sheet, per-step validation, and scroll restoration for multi-step flows.
@@ -186,6 +205,7 @@ First application scaffold for the Kapur frontend (`kf-frontend`).
 
 - Default Vite starter styles (`App.css`) and demo application UI from the initial template.
 
+[0.2.0]: https://github.com/compare/v0.1.9...v0.2.0
 [0.1.9]: https://github.com/compare/v0.1.7...v0.1.9
 [0.1.7]: https://github.com/compare/v0.1.6...v0.1.7
 [0.1.6]: https://github.com/compare/v0.1.5...v0.1.6

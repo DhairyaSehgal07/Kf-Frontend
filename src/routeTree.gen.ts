@@ -12,11 +12,12 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedPeopleRouteImport } from './routes/_authenticated/people'
-import { Route as AuthenticatedExampleRouteImport } from './routes/_authenticated/example'
 import { Route as AuthenticatedDaybookRouteImport } from './routes/_authenticated/daybook'
 import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
+import { Route as AuthenticatedStorageIndexRouteImport } from './routes/_authenticated/storage.index'
 import { Route as AuthenticatedIncomingIndexRouteImport } from './routes/_authenticated/incoming.index'
 import { Route as AuthenticatedGradingIndexRouteImport } from './routes/_authenticated/grading.index'
+import { Route as AuthenticatedStorageIdRouteImport } from './routes/_authenticated/storage.$id'
 import { Route as AuthenticatedIncomingIdRouteImport } from './routes/_authenticated/incoming.$id'
 import { Route as AuthenticatedGradingIdRouteImport } from './routes/_authenticated/grading.$id'
 
@@ -34,11 +35,6 @@ const AuthenticatedPeopleRoute = AuthenticatedPeopleRouteImport.update({
   path: '/people',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
-const AuthenticatedExampleRoute = AuthenticatedExampleRouteImport.update({
-  id: '/example',
-  path: '/example',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
 const AuthenticatedDaybookRoute = AuthenticatedDaybookRouteImport.update({
   id: '/daybook',
   path: '/daybook',
@@ -49,6 +45,12 @@ const AuthenticatedAnalyticsRoute = AuthenticatedAnalyticsRouteImport.update({
   path: '/analytics',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedStorageIndexRoute =
+  AuthenticatedStorageIndexRouteImport.update({
+    id: '/storage/',
+    path: '/storage/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedIncomingIndexRoute =
   AuthenticatedIncomingIndexRouteImport.update({
     id: '/incoming/',
@@ -61,6 +63,11 @@ const AuthenticatedGradingIndexRoute =
     path: '/grading/',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedStorageIdRoute = AuthenticatedStorageIdRouteImport.update({
+  id: '/storage/$id',
+  path: '/storage/$id',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedIncomingIdRoute = AuthenticatedIncomingIdRouteImport.update({
   id: '/incoming/$id',
   path: '/incoming/$id',
@@ -76,23 +83,25 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/analytics': typeof AuthenticatedAnalyticsRoute
   '/daybook': typeof AuthenticatedDaybookRoute
-  '/example': typeof AuthenticatedExampleRoute
   '/people': typeof AuthenticatedPeopleRoute
   '/grading/$id': typeof AuthenticatedGradingIdRoute
   '/incoming/$id': typeof AuthenticatedIncomingIdRoute
+  '/storage/$id': typeof AuthenticatedStorageIdRoute
   '/grading/': typeof AuthenticatedGradingIndexRoute
   '/incoming/': typeof AuthenticatedIncomingIndexRoute
+  '/storage/': typeof AuthenticatedStorageIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/analytics': typeof AuthenticatedAnalyticsRoute
   '/daybook': typeof AuthenticatedDaybookRoute
-  '/example': typeof AuthenticatedExampleRoute
   '/people': typeof AuthenticatedPeopleRoute
   '/grading/$id': typeof AuthenticatedGradingIdRoute
   '/incoming/$id': typeof AuthenticatedIncomingIdRoute
+  '/storage/$id': typeof AuthenticatedStorageIdRoute
   '/grading': typeof AuthenticatedGradingIndexRoute
   '/incoming': typeof AuthenticatedIncomingIndexRoute
+  '/storage': typeof AuthenticatedStorageIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -100,12 +109,13 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/_authenticated/analytics': typeof AuthenticatedAnalyticsRoute
   '/_authenticated/daybook': typeof AuthenticatedDaybookRoute
-  '/_authenticated/example': typeof AuthenticatedExampleRoute
   '/_authenticated/people': typeof AuthenticatedPeopleRoute
   '/_authenticated/grading/$id': typeof AuthenticatedGradingIdRoute
   '/_authenticated/incoming/$id': typeof AuthenticatedIncomingIdRoute
+  '/_authenticated/storage/$id': typeof AuthenticatedStorageIdRoute
   '/_authenticated/grading/': typeof AuthenticatedGradingIndexRoute
   '/_authenticated/incoming/': typeof AuthenticatedIncomingIndexRoute
+  '/_authenticated/storage/': typeof AuthenticatedStorageIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -113,35 +123,38 @@ export interface FileRouteTypes {
     | '/'
     | '/analytics'
     | '/daybook'
-    | '/example'
     | '/people'
     | '/grading/$id'
     | '/incoming/$id'
+    | '/storage/$id'
     | '/grading/'
     | '/incoming/'
+    | '/storage/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/analytics'
     | '/daybook'
-    | '/example'
     | '/people'
     | '/grading/$id'
     | '/incoming/$id'
+    | '/storage/$id'
     | '/grading'
     | '/incoming'
+    | '/storage'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/_authenticated/analytics'
     | '/_authenticated/daybook'
-    | '/_authenticated/example'
     | '/_authenticated/people'
     | '/_authenticated/grading/$id'
     | '/_authenticated/incoming/$id'
+    | '/_authenticated/storage/$id'
     | '/_authenticated/grading/'
     | '/_authenticated/incoming/'
+    | '/_authenticated/storage/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -172,13 +185,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPeopleRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/example': {
-      id: '/_authenticated/example'
-      path: '/example'
-      fullPath: '/example'
-      preLoaderRoute: typeof AuthenticatedExampleRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
     '/_authenticated/daybook': {
       id: '/_authenticated/daybook'
       path: '/daybook'
@@ -193,6 +199,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAnalyticsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/storage/': {
+      id: '/_authenticated/storage/'
+      path: '/storage'
+      fullPath: '/storage/'
+      preLoaderRoute: typeof AuthenticatedStorageIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/incoming/': {
       id: '/_authenticated/incoming/'
       path: '/incoming'
@@ -205,6 +218,13 @@ declare module '@tanstack/react-router' {
       path: '/grading'
       fullPath: '/grading/'
       preLoaderRoute: typeof AuthenticatedGradingIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/storage/$id': {
+      id: '/_authenticated/storage/$id'
+      path: '/storage/$id'
+      fullPath: '/storage/$id'
+      preLoaderRoute: typeof AuthenticatedStorageIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/incoming/$id': {
@@ -227,23 +247,25 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteChildren {
   AuthenticatedAnalyticsRoute: typeof AuthenticatedAnalyticsRoute
   AuthenticatedDaybookRoute: typeof AuthenticatedDaybookRoute
-  AuthenticatedExampleRoute: typeof AuthenticatedExampleRoute
   AuthenticatedPeopleRoute: typeof AuthenticatedPeopleRoute
   AuthenticatedGradingIdRoute: typeof AuthenticatedGradingIdRoute
   AuthenticatedIncomingIdRoute: typeof AuthenticatedIncomingIdRoute
+  AuthenticatedStorageIdRoute: typeof AuthenticatedStorageIdRoute
   AuthenticatedGradingIndexRoute: typeof AuthenticatedGradingIndexRoute
   AuthenticatedIncomingIndexRoute: typeof AuthenticatedIncomingIndexRoute
+  AuthenticatedStorageIndexRoute: typeof AuthenticatedStorageIndexRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAnalyticsRoute: AuthenticatedAnalyticsRoute,
   AuthenticatedDaybookRoute: AuthenticatedDaybookRoute,
-  AuthenticatedExampleRoute: AuthenticatedExampleRoute,
   AuthenticatedPeopleRoute: AuthenticatedPeopleRoute,
   AuthenticatedGradingIdRoute: AuthenticatedGradingIdRoute,
   AuthenticatedIncomingIdRoute: AuthenticatedIncomingIdRoute,
+  AuthenticatedStorageIdRoute: AuthenticatedStorageIdRoute,
   AuthenticatedGradingIndexRoute: AuthenticatedGradingIndexRoute,
   AuthenticatedIncomingIndexRoute: AuthenticatedIncomingIndexRoute,
+  AuthenticatedStorageIndexRoute: AuthenticatedStorageIndexRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(

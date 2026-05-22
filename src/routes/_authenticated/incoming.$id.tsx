@@ -9,7 +9,7 @@ function RouteComponent() {
     const { id } = Route.useParams()
   return (
     <>
-      <div className='text-2xl'>Incoming ID: {id}</div>
+      <div className='text-2xl'>Grading ID: {id}</div>
       <EditIncomingForm/>
     </>
     )

@@ -11,6 +11,10 @@ import {
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import {
+  BagSizeSelectField,
+  FixedBagSizeLabel,
+} from "@/components/bag-quantity-size-field"
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -24,9 +28,8 @@ import type { CreateGradingFormApi } from "@/features/grading/forms/use-create-g
 import {
   createDefaultQuantities,
   createEmptyQuantityRow,
-  type GradingQuantityRow,
 } from "@/features/grading/schemas/grading-fill-details-schema"
-import { BAG_SIZES, BAG_TYPES } from "@/lib/constants"
+import { BAG_TYPES } from "@/lib/constants"
 import { Plus, Trash2 } from "lucide-react"
 
 function isFieldInvalid(meta: { isTouched: boolean; isValid: boolean }) {
@@ -172,52 +175,24 @@ export function FillDetailsStep({ form }: FillDetailsStepProps) {
                       className="grid grid-cols-1 gap-3 px-3 py-3 md:grid-cols-12 md:items-start md:gap-3 md:py-2.5"
                     >
                       <div className="md:col-span-3">
-                        <form.Field name={`quantities[${index}].size`}>
-                          {(subField) => {
-                            const isInvalid = isFieldInvalid(
-                              subField.state.meta
-                            )
-                            return (
-                              <Field data-invalid={isInvalid}>
-                                <FieldLabel
-                                  htmlFor={subField.name}
-                                  className="md:sr-only"
-                                >
-                                  Size (row {index + 1})
-                                </FieldLabel>
-                                <Select
-                                  value={subField.state.value || undefined}
-                                  onValueChange={(value) =>
-                                    subField.handleChange(
-                                      value as GradingQuantityRow["size"]
-                                    )
-                                  }
-                                >
-                                  <SelectTrigger
-                                    id={subField.name}
-                                    className="w-full"
-                                    onBlur={subField.handleBlur}
-                                    aria-invalid={isInvalid}
-                                  >
-                                    <SelectValue placeholder="Select size" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {BAG_SIZES.map((size) => (
-                                      <SelectItem key={size} value={size}>
-                                        {size}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                                {isInvalid && (
-                                  <FieldError
-                                    errors={subField.state.meta.errors}
-                                  />
-                                )}
-                              </Field>
-                            )
-                          }}
-                        </form.Field>
+                        {row.isExtra ? (
+                          <form.Field name={`quantities[${index}].size`}>
+                            {(subField) => (
+                              <BagSizeSelectField
+                                id={subField.name}
+                                name={subField.name}
+                                value={subField.state.value}
+                                rowIndex={index}
+                                isInvalid={isFieldInvalid(subField.state.meta)}
+                                errors={subField.state.meta.errors}
+                                onBlur={subField.handleBlur}
+                                onValueChange={subField.handleChange}
+                              />
+                            )}
+                          </form.Field>
+                        ) : (
+                          <FixedBagSizeLabel size={row.size} rowIndex={index} />
+                        )}
                       </div>
 
                       <div className="md:col-span-2">
