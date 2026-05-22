@@ -48,6 +48,7 @@ import {
 
 const MOCK_INCOMING_GATE_PASSES: GatePassData[] = [
   {
+    _id:"d18ef34a-cbb1-407c-a14f-e7411b8f8f6a",
     gatePassNo: 1042,
     manualGatePassNumber: 88,
     date: "2026-05-18T09:30:00.000Z",
@@ -75,6 +76,7 @@ const MOCK_INCOMING_GATE_PASSES: GatePassData[] = [
     },
   },
   {
+    _id:"d4ba8d75-71f9-4514-a79c-9b37c2b72e9c",
     gatePassNo: 1041,
     date: "2026-05-17T14:15:00.000Z",
     variety: "Potato",
@@ -211,7 +213,7 @@ const DaybookIncomingTab = () => {
         <div className="space-y-6">
           {incomingGatePasses.map((gatePass) => (
             <GatePassCard
-              key={gatePass.gatePassNo}
+              key={gatePass._id}
               data={gatePass}
             />
           ))}

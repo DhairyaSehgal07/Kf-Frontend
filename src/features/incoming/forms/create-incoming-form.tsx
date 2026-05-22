@@ -1,7 +1,6 @@
 import * as z from "zod"
 import { useEffect, useMemo, useState } from "react"
 import { useForm } from "@tanstack/react-form"
-import { toast } from "sonner"
 import {
   Card,
   CardContent,
@@ -11,6 +10,7 @@ import {
   CardTitle
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { IncomingSummarySheet } from "@/features/incoming/forms/incoming-summary-sheet"
 import {
   Field,
   FieldDescription,
@@ -171,7 +171,7 @@ function SearchableOptionCombobox({
       inputValue={search}
       open={open}
       onOpenChange={setOpen}
-      autoHighlight
+      autoHighlight={"always" as unknown as boolean}
       onInputValueChange={(inputValue) => {
         setSearch(inputValue)
         const matches = filterAndSortOptions(inputValue, options)
@@ -244,6 +244,14 @@ const incomingFormSchema = z.object({
   remarks: z.string(),
 })
 
+type IncomingSubmitMeta = {
+  submitAction: "review" | "submit"
+}
+
+const defaultSubmitMeta: IncomingSubmitMeta = {
+  submitAction: "review",
+}
+
 function isFieldInvalid(
   meta: { isTouched: boolean; isValid: boolean }
 ) {
@@ -282,6 +290,7 @@ const CreateIncomingForm = () => {
   const [categoryComboboxOpen, setCategoryComboboxOpen] = useState(false)
   const [stageSearch, setStageSearch] = useState("")
   const [stageComboboxOpen, setStageComboboxOpen] = useState(false)
+  const [reviewOpen, setReviewOpen] = useState(false)
 
   const sortedFarmers = useMemo(
     () => filterAndSortOptions(farmerSearch, farmerOptions),
@@ -321,16 +330,33 @@ const CreateIncomingForm = () => {
     },
     validators: {
       onChange: incomingFormSchema,
-      onBlur: incomingFormSchema,
       onSubmit: incomingFormSchema,
     },
-    onSubmit: async ({ value }) => {
-      toast.success("Gate pass created", {
-        description: `Truck ${value.truckNumber} · ${value.bagsReceived} bags`,
-        position: "bottom-right",
-      })
+    onSubmitMeta: defaultSubmitMeta,
+    onSubmit: async ({ value, meta }) => {
+      const parsed = incomingFormSchema.parse(value)
+
+      if (meta.submitAction === "review") {
+        setReviewOpen(true)
+        return
+      }
+
+      console.log(parsed)
+      setReviewOpen(false)
     },
   })
+
+  const getFarmerLabel = (farmerStorageLinkId: string) =>
+    farmerOptions.find((option) => option.id === farmerStorageLinkId)
+      ?.label ?? farmerStorageLinkId
+
+  const handleOpenReview = () => {
+    void form.handleSubmit({ submitAction: "review" })
+  }
+
+  const handleConfirmSubmit = () => {
+    void form.handleSubmit({ submitAction: "submit" })
+  }
 
   useEffect(() => {
     if (userId) {
@@ -353,10 +379,7 @@ const CreateIncomingForm = () => {
       <form
         id="create-incoming-form"
         noValidate
-        onSubmit={(e) => {
-          e.preventDefault()
-          form.handleSubmit()
-        }}
+        onSubmit={(e) => e.preventDefault()}
       >
         <CardContent className="pt-8 pb-8">
           <FieldGroup className="@container/field-group gap-10">
@@ -802,15 +825,47 @@ const CreateIncomingForm = () => {
             Reset Form
           </Button>
           <form.Subscribe
-            selector={(state) => [state.canSubmit, state.isSubmitting]}
-            children={([canSubmit, isSubmitting]) => (
-              <Button type="submit" disabled={!canSubmit || isSubmitting}>
-                {isSubmitting ? "Submitting…" : "Create Gate Pass"}
+            selector={(state) => state.isSubmitting}
+            children={(isSubmitting) => (
+              <Button
+                type="button"
+                disabled={isSubmitting}
+                onClick={handleOpenReview}
+              >
+                {isSubmitting ? "Validating…" : "Review"}
               </Button>
             )}
           />
         </CardFooter>
       </form>
+
+      <form.Subscribe
+        selector={(state) => ({
+          values: state.values,
+          canSubmit: state.canSubmit,
+          isSubmitting: state.isSubmitting,
+        })}
+        children={({ values, canSubmit, isSubmitting }) => {
+          const parsed = incomingFormSchema.safeParse(values)
+
+          return (
+            <IncomingSummarySheet
+              open={reviewOpen}
+              onOpenChange={setReviewOpen}
+              values={parsed.success ? parsed.data : null}
+              farmerLabel={
+                parsed.success
+                  ? getFarmerLabel(parsed.data.farmerStorageLinkId)
+                  : ""
+              }
+              onBack={() => setReviewOpen(false)}
+              onSubmit={handleConfirmSubmit}
+              canSubmit={canSubmit}
+              isSubmitting={isSubmitting}
+            />
+          )
+        }}
+      />
     </Card>
   )
 }

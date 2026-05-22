@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.7] - 2026-05-22
+
+Incoming review sheet, param-based edit route, and gate pass card navigation by ID.
+
+### Added
+
+- **Incoming summary sheet** — `IncomingSummarySheet` for reviewing gate pass details (truck, farmer, variety, weights, remarks) before final submit on create and edit forms.
+- **Edit incoming form** — Full `EditIncomingForm` on `/incoming/$id` with the same fields, validation, and review flow as create.
+
+### Changed
+
+- **Create incoming form** — “Review” validates the form and opens the summary sheet; confirm submit runs from the sheet instead of an immediate toast.
+- **Incoming routes** — Edit moves from `/incoming/edit` to `/incoming/$id`; index route files use flat `incoming.index` / `incoming.$id` naming.
+- **Gate pass card** — Edit navigates to `/incoming/$id` using `_id`; mock daybook data includes IDs for list keys and navigation.
+- **Sheet** — Drops unnecessary `"use client"` directive.
+
+### Removed
+
+- **Incoming edit shell** — Placeholder `/incoming/edit` route replaced by the `$id` edit route.
+
 ## [0.1.6] - 2026-05-21
 
 Incoming gate pass creation flow, form-ready date picker, and combobox/checkbox UI.
@@ -140,6 +160,7 @@ First application scaffold for the Kapur frontend (`kf-frontend`).
 
 - Default Vite starter styles (`App.css`) and demo application UI from the initial template.
 
+[0.1.7]: https://github.com/compare/v0.1.6...v0.1.7
 [0.1.6]: https://github.com/compare/v0.1.5...v0.1.6
 [0.1.5]: https://github.com/compare/v0.1.4...v0.1.5
 [0.1.4]: https://github.com/compare/v0.1.3...v0.1.4

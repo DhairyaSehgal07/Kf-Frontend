@@ -14,8 +14,8 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedPeopleRouteImport } from './routes/_authenticated/people'
 import { Route as AuthenticatedDaybookRouteImport } from './routes/_authenticated/daybook'
 import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
-import { Route as AuthenticatedIncomingIndexRouteImport } from './routes/_authenticated/incoming/index'
-import { Route as AuthenticatedIncomingEditRouteImport } from './routes/_authenticated/incoming/edit'
+import { Route as AuthenticatedIncomingIndexRouteImport } from './routes/_authenticated/incoming.index'
+import { Route as AuthenticatedIncomingIdRouteImport } from './routes/_authenticated/incoming.$id'
 
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
   id: '/_authenticated',
@@ -47,19 +47,18 @@ const AuthenticatedIncomingIndexRoute =
     path: '/incoming/',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
-const AuthenticatedIncomingEditRoute =
-  AuthenticatedIncomingEditRouteImport.update({
-    id: '/incoming/edit',
-    path: '/incoming/edit',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
+const AuthenticatedIncomingIdRoute = AuthenticatedIncomingIdRouteImport.update({
+  id: '/incoming/$id',
+  path: '/incoming/$id',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/analytics': typeof AuthenticatedAnalyticsRoute
   '/daybook': typeof AuthenticatedDaybookRoute
   '/people': typeof AuthenticatedPeopleRoute
-  '/incoming/edit': typeof AuthenticatedIncomingEditRoute
+  '/incoming/$id': typeof AuthenticatedIncomingIdRoute
   '/incoming/': typeof AuthenticatedIncomingIndexRoute
 }
 export interface FileRoutesByTo {
@@ -67,7 +66,7 @@ export interface FileRoutesByTo {
   '/analytics': typeof AuthenticatedAnalyticsRoute
   '/daybook': typeof AuthenticatedDaybookRoute
   '/people': typeof AuthenticatedPeopleRoute
-  '/incoming/edit': typeof AuthenticatedIncomingEditRoute
+  '/incoming/$id': typeof AuthenticatedIncomingIdRoute
   '/incoming': typeof AuthenticatedIncomingIndexRoute
 }
 export interface FileRoutesById {
@@ -77,7 +76,7 @@ export interface FileRoutesById {
   '/_authenticated/analytics': typeof AuthenticatedAnalyticsRoute
   '/_authenticated/daybook': typeof AuthenticatedDaybookRoute
   '/_authenticated/people': typeof AuthenticatedPeopleRoute
-  '/_authenticated/incoming/edit': typeof AuthenticatedIncomingEditRoute
+  '/_authenticated/incoming/$id': typeof AuthenticatedIncomingIdRoute
   '/_authenticated/incoming/': typeof AuthenticatedIncomingIndexRoute
 }
 export interface FileRouteTypes {
@@ -87,7 +86,7 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/daybook'
     | '/people'
-    | '/incoming/edit'
+    | '/incoming/$id'
     | '/incoming/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -95,7 +94,7 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/daybook'
     | '/people'
-    | '/incoming/edit'
+    | '/incoming/$id'
     | '/incoming'
   id:
     | '__root__'
@@ -104,7 +103,7 @@ export interface FileRouteTypes {
     | '/_authenticated/analytics'
     | '/_authenticated/daybook'
     | '/_authenticated/people'
-    | '/_authenticated/incoming/edit'
+    | '/_authenticated/incoming/$id'
     | '/_authenticated/incoming/'
   fileRoutesById: FileRoutesById
 }
@@ -157,11 +156,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedIncomingIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/incoming/edit': {
-      id: '/_authenticated/incoming/edit'
-      path: '/incoming/edit'
-      fullPath: '/incoming/edit'
-      preLoaderRoute: typeof AuthenticatedIncomingEditRouteImport
+    '/_authenticated/incoming/$id': {
+      id: '/_authenticated/incoming/$id'
+      path: '/incoming/$id'
+      fullPath: '/incoming/$id'
+      preLoaderRoute: typeof AuthenticatedIncomingIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
   }
@@ -171,7 +170,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedAnalyticsRoute: typeof AuthenticatedAnalyticsRoute
   AuthenticatedDaybookRoute: typeof AuthenticatedDaybookRoute
   AuthenticatedPeopleRoute: typeof AuthenticatedPeopleRoute
-  AuthenticatedIncomingEditRoute: typeof AuthenticatedIncomingEditRoute
+  AuthenticatedIncomingIdRoute: typeof AuthenticatedIncomingIdRoute
   AuthenticatedIncomingIndexRoute: typeof AuthenticatedIncomingIndexRoute
 }
 
@@ -179,7 +178,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAnalyticsRoute: AuthenticatedAnalyticsRoute,
   AuthenticatedDaybookRoute: AuthenticatedDaybookRoute,
   AuthenticatedPeopleRoute: AuthenticatedPeopleRoute,
-  AuthenticatedIncomingEditRoute: AuthenticatedIncomingEditRoute,
+  AuthenticatedIncomingIdRoute: AuthenticatedIncomingIdRoute,
   AuthenticatedIncomingIndexRoute: AuthenticatedIncomingIndexRoute,
 }
 

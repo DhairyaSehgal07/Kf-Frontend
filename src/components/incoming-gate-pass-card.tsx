@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { useNavigate } from "@tanstack/react-router"
 import {
   Card,
   CardContent,
@@ -46,6 +47,7 @@ interface WeightSlip {
 }
 
 export interface GatePassData {
+  _id:string,
   gatePassNo: number
   manualGatePassNumber?: number
   date: string
@@ -122,6 +124,7 @@ export function GatePassCard({
   canUpdate = true,
   onEdit,
 }: GatePassCardProps) {
+  const navigate = useNavigate()
   const [isExpanded, setIsExpanded] = useState(false)
 
   const farmer = gatePass.farmerStorageLinkId.farmerId
@@ -138,7 +141,16 @@ export function GatePassCard({
 
   const handleEditClick = () => {
     if (!canUpdate) return
-    onEdit?.(gatePass)
+
+    if (onEdit) {
+      onEdit(gatePass)
+      return
+    }
+
+    navigate({
+      to: "/incoming/$id",
+      params: { id: gatePass._id },
+    })
   }
 
   return (
