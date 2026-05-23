@@ -16,7 +16,6 @@ import {
   ChevronDown,
   ChevronUp,
   FileText,
-  MapPin,
   Package,
   Pencil,
   Printer,
@@ -26,48 +25,17 @@ import {
   type LucideIcon,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { Skeleton } from "@/components/ui/skeleton"
+import type { IncomingGatePass } from "@/features/incoming/api/types"
 
 const STATUS_LABELS = {
-  NOT_GRADED: "Not Graded",
+  NOT_GRADED: "Ungraded",
   GRADED: "Graded",
 } as const
 
 const JUTE_BAG_WEIGHT_KG = 1
 
-interface Farmer {
-  name: string
-  address: string
-  mobileNumber: string
-}
-
-interface WeightSlip {
-  slipNumber: string
-  grossWeightKg: number
-  tareWeightKg: number
-}
-
-export interface GatePassData {
-  _id:string,
-  gatePassNo: number
-  manualGatePassNumber?: number
-  date: string
-  variety: string
-  category: string
-  location?: string
-  truckNumber: string
-  bagsReceived: number
-  status: string
-  stage: string
-  remarks: string
-  farmerStorageLinkId: {
-    accountNumber: number
-    farmerId: Farmer
-  }
-  createdBy: {
-    name: string
-  }
-  weightSlip: WeightSlip
-}
+export type GatePassData = IncomingGatePass
 
 interface InfoBlockProps {
   label: string
@@ -137,7 +105,6 @@ export function GatePassCard({
   const bardanaKg = gatePass.bagsReceived * JUTE_BAG_WEIGHT_KG
   const netProductKg = netKg - bardanaKg
   const isCancelledGatePass = gatePass.bagsReceived === 0
-  const location = gatePass.location ?? gatePass.category
 
   const handleEditClick = () => {
     if (!canUpdate) return
@@ -192,15 +159,31 @@ export function GatePassCard({
           </CardDescription>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge variant="outline" className="bg-background text-[11px]">
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <Badge
+            variant="outline"
+            className="max-w-[9rem] truncate bg-background text-[11px]"
+            title={gatePass.category}
+          >
+            {gatePass.category}
+          </Badge>
+          {gatePass.stage ? (
+            <Badge
+              variant="outline"
+              className="bg-muted/40 font-mono text-[11px] tabular-nums"
+            >
+              {gatePass.stage}
+            </Badge>
+          ) : null}
+          <Badge variant="outline" className="bg-background text-[11px] tabular-nums">
             {gatePass.bagsReceived.toLocaleString("en-IN")} Bags
           </Badge>
           <Badge
             variant={gatePass.status === "NOT_GRADED" ? "secondary" : "default"}
             className={cn(
               "text-[11px]",
-              gatePass.status === "NOT_GRADED" && "bg-amber-100 text-amber-800 hover:bg-amber-200"
+              gatePass.status === "NOT_GRADED" &&
+                "bg-amber-100 text-amber-800 hover:bg-amber-200 dark:bg-amber-950/40 dark:text-amber-200 dark:hover:bg-amber-950/60",
             )}
           >
             {statusLabel}
@@ -210,10 +193,9 @@ export function GatePassCard({
 
       {/* Main Card Content */}
       <CardContent className="pt-5">
-        <div className="grid grid-cols-2 gap-6 sm:grid-cols-5">
+        <div className="grid grid-cols-2 gap-6 sm:grid-cols-4">
           <InfoBlock label="Farmer" value={farmer.name ?? "--"} icon={User} />
           <InfoBlock label="Account" value={farmerStorageLink.accountNumber ?? "--"} />
-          <InfoBlock label="Location" value={location} icon={MapPin} />
           <InfoBlock label="Truck" value={gatePass.truckNumber} icon={Truck} />
           <InfoBlock label="Variety" value={gatePass.variety} icon={Package} />
         </div>
@@ -352,6 +334,45 @@ export function GatePassCard({
             <Printer className="mr-2 h-3.5 w-3.5" />
             Print
           </Button>
+        </div>
+      </CardFooter>
+    </Card>
+  )
+}
+
+export function GatePassCardSkeleton() {
+  return (
+    <Card className="overflow-hidden border-border/60">
+      <CardHeader className="flex flex-col gap-4 border-b border-border/40 bg-muted/10 pb-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="space-y-2">
+          <div className="flex items-center gap-3">
+            <Skeleton className="h-6 w-36" />
+            <Skeleton className="h-5 w-20 rounded-full" />
+          </div>
+          <Skeleton className="h-4 w-32" />
+        </div>
+        <div className="flex flex-wrap justify-end gap-2">
+          <Skeleton className="h-6 w-20 rounded-full" />
+          <Skeleton className="h-6 w-10 rounded-full" />
+          <Skeleton className="h-6 w-16 rounded-full" />
+          <Skeleton className="h-6 w-[4.5rem] rounded-full" />
+        </div>
+      </CardHeader>
+      <CardContent className="pt-5">
+        <div className="grid grid-cols-2 gap-6 sm:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, index) => (
+            <div key={index} className="space-y-2">
+              <Skeleton className="h-3 w-14" />
+              <Skeleton className="h-5 w-full max-w-28" />
+            </div>
+          ))}
+        </div>
+      </CardContent>
+      <CardFooter className="flex items-center justify-between border-t border-border/40 bg-muted/10 px-4 py-3">
+        <Skeleton className="h-8 w-32" />
+        <div className="flex gap-2">
+          <Skeleton className="h-8 w-16 rounded-md" />
+          <Skeleton className="h-8 w-16 rounded-md" />
         </div>
       </CardFooter>
     </Card>

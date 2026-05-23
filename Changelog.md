@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.3] - 2026-05-24
+
+Daybook incoming tab wired to the API with paginated list, debounced search, and loading skeletons.
+
+### Added
+
+- **Incoming gate pass list API** — `getIncomingGatePasses`, `searchIncomingGatePasses`, shared query keys, and React Query hooks (`useIncomingGatePasses`, `useSearchIncomingGatePass`) for `/incoming-gate-pass/`.
+- **Incoming gate pass types** — `IncomingGatePass`, list params, pagination, and search request/response shapes.
+- **Gate pass card skeleton** — `GatePassCardSkeleton` for list loading states.
+- **People tab skeleton** — Full-page `PeopleTabSkeleton` while farmer storage links load.
+- **Constants** — `INCOMING_GATE_PASS_STATUSES` for graded/ungraded filter labels.
+- **Dependency** — `usehooks-ts` for debounced search input.
+
+### Changed
+
+- **Daybook incoming tab** — Loads gate passes from the API with sort, status filter, configurable page size, and pagination; debounced gate-pass-number search; loading, error, empty, and invalid-search states; refresh with fetch indicator.
+- **Gate pass card** — Uses shared `IncomingGatePass` type; shows category and stage badges; dark-mode styling for ungraded status; removes location column.
+- **Create incoming gate pass** — Invalidates list queries on success and navigates to the daybook incoming tab.
+- **People tab** — Shows full-page skeleton during initial load instead of inline card skeletons only.
+
 ## [0.2.2] - 2026-05-24
 
 Incoming gate pass creation wired to the API with live voucher numbers, review submit, and improved weight-slip validation.
@@ -236,6 +256,7 @@ First application scaffold for the Kapur frontend (`kf-frontend`).
 
 - Default Vite starter styles (`App.css`) and demo application UI from the initial template.
 
+[0.2.3]: https://github.com/compare/v0.2.2...v0.2.3
 [0.2.2]: https://github.com/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/compare/v0.1.9...v0.2.0

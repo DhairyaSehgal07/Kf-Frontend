@@ -57,3 +57,5 @@ export const INCOMING_STAGES = [
   "Unspecial",
   "BR",
 ] as const
+
+export const INCOMING_GATE_PASS_STATUSES = ["Graded", "Ungraded"] as const

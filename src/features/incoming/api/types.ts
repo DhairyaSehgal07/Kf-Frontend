@@ -37,3 +37,81 @@ export type CreateIncomingGatePassInput = {
   form: IncomingFormValues
   gatePassNo: number
 }
+
+export type IncomingGatePassFarmer = {
+  _id?: string
+  name: string
+  mobileNumber: string
+  address: string
+}
+
+export type IncomingGatePassFarmerStorageLink = {
+  _id?: string
+  accountNumber: number
+  farmerId: IncomingGatePassFarmer
+}
+
+export type IncomingGatePassWeightSlip = {
+  slipNumber: string
+  grossWeightKg: number
+  tareWeightKg: number
+}
+
+export type IncomingGatePass = {
+  _id: string
+  gatePassNo: number
+  manualGatePassNumber?: number
+  date: string
+  variety: string
+  category: string
+  truckNumber: string
+  bagsReceived: number
+  status: GatePassStatus
+  stage: string
+  remarks?: string
+  farmerStorageLinkId: IncomingGatePassFarmerStorageLink
+  createdBy: {
+    _id?: string
+    name: string
+    mobileNumber?: string
+  }
+  weightSlip?: IncomingGatePassWeightSlip
+  createdAt?: string
+  updatedAt?: string
+}
+
+export type IncomingGatePassPagination = {
+  page: number
+  limit: number
+  total: number
+  totalPages: number
+}
+
+export type IncomingGatePassListResult = {
+  incomingGatePasses: IncomingGatePass[]
+  pagination: IncomingGatePassPagination
+}
+
+export type IncomingGatePassSortOrder = "asc" | "desc"
+
+export type IncomingGatePassStatusFilter = "graded" | "ungraded"
+
+export type IncomingGatePassListParams = {
+  page?: number
+  limit?: number
+  sortOrder?: IncomingGatePassSortOrder
+  gatePassNo?: number
+  status?: IncomingGatePassStatusFilter
+  dateFrom?: string
+  dateTo?: string
+}
+
+export type GetIncomingGatePassesResponse = {
+  success: boolean
+  data: IncomingGatePassListResult
+  message?: string
+}
+
+export type SearchIncomingGatePassBody = {
+  number: number
+}
