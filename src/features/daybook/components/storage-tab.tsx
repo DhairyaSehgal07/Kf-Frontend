@@ -1,5 +1,6 @@
 import {
   ArrowUpFromLine,
+  ArrowRightLeft,
   Scale,
   RefreshCw,
   Search,
@@ -60,6 +61,10 @@ const DaybookStorageTab = () => {
     navigate({ to: "/storage" })
   }
 
+  const handleTransferStock = () => {
+    navigate({ to: "/transfer" })
+  }
+
   return (
     <div className="flex w-full flex-col gap-4">
       <Item variant="outline" size="sm">
@@ -106,6 +111,12 @@ const DaybookStorageTab = () => {
           </div>
 
           <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-row sm:shrink-0">
+            <Button variant="secondary" className="min-w-0 px-2.5 sm:px-3" onClick={handleTransferStock}>
+              <ArrowRightLeft className="h-4 w-4 shrink-0 sm:mr-2" />
+              <span className="truncate sm:hidden">Transfer Stock</span>
+              <span className="hidden sm:inline">Transfer Stock</span>
+            </Button>
+
             <Button variant="secondary" className="min-w-0 px-2.5 sm:px-3">
               <span className="truncate sm:hidden">Edit History</span>
               <span className="hidden sm:inline">Storage Edit History</span>

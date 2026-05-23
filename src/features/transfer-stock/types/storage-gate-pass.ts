@@ -1,0 +1,51 @@
+export type StorageGatePassBagSlot = {
+  size: string
+  currentQuantity: number
+  initialQuantity: number
+  bagType: string
+  chamber: string
+  floor: string
+  row: string
+}
+
+export type StorageGatePass = {
+  _id: string
+  farmerStorageLinkId: string
+  gatePassNo: number
+  manualGatePassNumber: number
+  date: string
+  variety: string
+  storageCategory: string
+  bagSizes: StorageGatePassBagSlot[]
+  remarks: string
+}
+
+/** `${passId}|${size}|${bagIndex}` */
+export type TransferAllocationKey = string
+
+export type TransferStockItem = {
+  storageGatePassId: string
+  gatePassNo: number
+  bagSize: string
+  bagIndex: number
+  quantity: number
+  location: {
+    chamber: string
+    floor: string
+    row: string
+  }
+}
+
+export type LocationFilters = {
+  chamber: string
+  floor: string
+  row: string
+}
+
+export type VoucherSort = "asc" | "desc"
+
+export type DatePassGroup = {
+  dateKey: string
+  dateLabel: string
+  passes: StorageGatePass[]
+}
