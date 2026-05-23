@@ -30,7 +30,11 @@ export function useLogin() {
   const router = useRouter()
 
   return useMutation({
+    mutationKey: ["auth", "login"],
     mutationFn: loginRequest,
+    // Wrong credentials / validation — never retry; UI shows toast in LoginForm.
+    retry: false,
+    meta: { suppressGlobalError: true },
     onSuccess: ({ data }) => {
       if (!data) return
 

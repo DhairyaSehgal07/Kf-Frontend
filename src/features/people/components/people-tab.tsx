@@ -182,6 +182,20 @@ const PeopleTab = () => {
                 : "Something went wrong while fetching people."}
             </EmptyDescription>
           </EmptyHeader>
+
+          <Button
+            variant="outline"
+            className="mt-4"
+            onClick={() => void refetch()}
+            disabled={isFetching}
+          >
+            {isFetching ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <RefreshCw className="mr-2 h-4 w-4" />
+            )}
+            Try again
+          </Button>
         </Empty>
       ) : visiblePeople.length === 0 ? (
         <Empty className="rounded-xl border bg-muted/10">

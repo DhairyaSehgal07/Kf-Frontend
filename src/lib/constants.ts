@@ -38,3 +38,22 @@ export const STORAGE_ROWS = [
 export const DEFAULT_CHAMBER = CHAMBERS[0]
 export const DEFAULT_FLOOR = FLOORS[0]
 export const DEFAULT_STORAGE_ROW = STORAGE_ROWS[0]
+
+export const INCOMING_CATEGORIES = [
+  "Own Stock",
+  "Contract Farming",
+  "Fazalpur",
+  "Purchases-Apr",
+  "Conversion",
+  "Transfer From Stores",
+] as const
+
+export const INCOMING_STAGES = [
+  "G0",
+  "G1",
+  "G2",
+  "G3",
+  "Ration",
+  "Unspecial",
+  "BR",
+] as const

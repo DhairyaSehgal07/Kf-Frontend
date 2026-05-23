@@ -10,6 +10,8 @@ import {
 export type ComboboxOption = {
   id: string
   label: string
+  name?: string
+  accountNumber?: number
 }
 
 export type SearchableOptionComboboxProps = {
@@ -27,6 +29,7 @@ export type SearchableOptionComboboxProps = {
   setSearch: (value: string) => void
   open: boolean
   setOpen: (open: boolean) => void
+  disabled?: boolean
 }
 
 // eslint-disable-next-line react-refresh/only-export-components
@@ -68,6 +71,7 @@ export function SearchableOptionCombobox({
   setSearch,
   open,
   setOpen,
+  disabled = false,
 }: SearchableOptionComboboxProps) {
   const selected = options.find((option) => option.id === value) ?? null
 
@@ -99,7 +103,10 @@ export function SearchableOptionCombobox({
         name={name}
         placeholder={placeholder}
         aria-invalid={isInvalid}
-        onFocus={() => setOpen(true)}
+        disabled={disabled}
+        onFocus={() => {
+          if (!disabled) setOpen(true)
+        }}
         onBlur={onBlur}
         className="w-full"
       />
@@ -108,7 +115,17 @@ export function SearchableOptionCombobox({
         <ComboboxList>
           {(option) => (
             <ComboboxItem key={option.id} value={option}>
-              {option.label}
+              {option.name != null && option.accountNumber != null ? (
+                <>
+                  <span>{option.name}</span>
+                  <span className="text-muted-foreground">
+                    {" "}
+                    (Account #{option.accountNumber})
+                  </span>
+                </>
+              ) : (
+                option.label
+              )}
             </ComboboxItem>
           )}
         </ComboboxList>

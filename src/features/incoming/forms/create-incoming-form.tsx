@@ -24,6 +24,11 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { DatePickerInput } from "@/components/date-picker"
 import { useAuthStore } from "@/features/auth/store/use-auth-store"
+import { useFarmerLinkOptions } from "@/features/people/api/use-farmer-link-options"
+import {
+  farmerLinkOptionsToComboboxOptions,
+  getFarmerLinkLabel,
+} from "@/features/people/utils/farmer-link-combobox"
 import {
   SearchableOptionCombobox,
   filterAndSortOptions,
@@ -31,71 +36,22 @@ import {
 } from "@/components/searchable-option-combobox"
 import { incomingFormSchema } from "@/features/incoming/schemas/incoming-form-schema"
 import { defaultSubmitMeta } from "@/features/incoming/types"
+import { INCOMING_CATEGORIES, INCOMING_STAGES } from "@/lib/constants"
+
 const VARIETY_ITEMS = ["Himalini", "K. Pukhraj", "K. Jyoti"].map((value) => ({
   id: value,
   label: value,
 }))
 
-const CATEGORY_ITEMS = ["A", "B", "C"].map((value) => ({
+const CATEGORY_ITEMS = INCOMING_CATEGORIES.map((value) => ({
   id: value,
   label: value,
 }))
 
-const STAGE_ITEMS = ["Incoming", "Grading", "Storage"].map((value) => ({
+const STAGE_ITEMS = INCOMING_STAGES.map((value) => ({
   id: value,
   label: value,
 }))
-
-const MOCK_FARMER_LINKS = [
-  {
-    id: "507f1f77bcf86cd799439011",
-    label: "Rajesh Sehgal — Acct #12045",
-  },
-  {
-    id: "507f191e810c19729de860ea",
-    label: "Gurpreet Singh — Acct #9821",
-  },
-  {
-    id: "507f191e810c19729de860eb",
-    label: "Harbhajan Singh — Acct #7643",
-  },
-  {
-    id: "507f191e810c19729de860ec",
-    label: "Maninder Pal — Acct #4512",
-  },
-  {
-    id: "507f191e810c19729de860ed",
-    label: "Jaswinder Kaur — Acct #8834",
-  },
-  {
-    id: "507f191e810c19729de860ee",
-    label: "Baldev Singh — Acct #2391",
-  },
-  {
-    id: "507f191e810c19729de860ef",
-    label: "Ranjit Kumar — Acct #6745",
-  },
-  {
-    id: "507f191e810c19729de860f0",
-    label: "Sukhchain Singh — Acct #1189",
-  },
-  {
-    id: "507f191e810c19729de860f1",
-    label: "Paramjit Kaur — Acct #5520",
-  },
-  {
-    id: "507f191e810c19729de860f2",
-    label: "Kuldeep Singh — Acct #9076",
-  },
-  {
-    id: "507f191e810c19729de860f3",
-    label: "Amritpal Singh — Acct #3318",
-  },
-  {
-    id: "507f191e810c19729de860f4",
-    label: "Navjot Singh — Acct #4467",
-  },
-] as const
 
 function isFieldInvalid(
   meta: { isTouched: boolean; isValid: boolean }
@@ -123,9 +79,11 @@ const numericInputProps = {
 const CreateIncomingForm = () => {
   const userId = useAuthStore((s) => s.user?._id ?? "")
   const todayIso = new Date().toISOString()
+  const { data: farmerLinkOptions = [], isLoading: isLoadingFarmers } =
+    useFarmerLinkOptions()
   const farmerOptions = useMemo<ComboboxOption[]>(
-    () => [...MOCK_FARMER_LINKS],
-    []
+    () => farmerLinkOptionsToComboboxOptions(farmerLinkOptions),
+    [farmerLinkOptions],
   )
   const [farmerSearch, setFarmerSearch] = useState("")
   const [farmerComboboxOpen, setFarmerComboboxOpen] = useState(false)
@@ -192,8 +150,7 @@ const CreateIncomingForm = () => {
   })
 
   const getFarmerLabel = (farmerStorageLinkId: string) =>
-    farmerOptions.find((option) => option.id === farmerStorageLinkId)
-      ?.label ?? farmerStorageLinkId
+    getFarmerLinkLabel(farmerStorageLinkId, farmerLinkOptions)
 
   const handleOpenReview = () => {
     void form.handleSubmit({ submitAction: "review" })
@@ -339,14 +296,23 @@ const CreateIncomingForm = () => {
                           onValueChange={field.handleChange}
                           onBlur={field.handleBlur}
                           isInvalid={isInvalid}
-                          placeholder="Search farmers..."
-                          emptyMessage="No farmers found."
+                          placeholder={
+                            isLoadingFarmers
+                              ? "Loading farmers..."
+                              : "Search farmers..."
+                          }
+                          emptyMessage={
+                            isLoadingFarmers
+                              ? "Loading farmers..."
+                              : "No farmers found."
+                          }
                           options={farmerOptions}
                           sortedOptions={sortedFarmers}
                           search={farmerSearch}
                           setSearch={setFarmerSearch}
                           open={farmerComboboxOpen}
                           setOpen={setFarmerComboboxOpen}
+                          disabled={isLoadingFarmers}
                         />
                         <FieldDescription>
                           Link this pass to a storage account.

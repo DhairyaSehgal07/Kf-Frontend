@@ -23,3 +23,9 @@ export interface FarmerStorageLinksResponse {
   success: boolean
   data: FarmerStorageLink[]
 }
+
+export type FarmerLinkOption = {
+  farmerStorageLinkId: string
+  name: string
+  accountNumber: number
+}

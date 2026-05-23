@@ -22,7 +22,10 @@ export function useLogout() {
   const clearAuth = useAuthStore((s) => s.clearAuth)
 
   return useMutation({
+    mutationKey: ["auth", "logout"],
     mutationFn: logoutRequest,
+    retry: false,
+    meta: { suppressGlobalError: true },
     onSuccess: () => {
       clearAuth()
       void router.navigate({ to: "/", replace: true })
