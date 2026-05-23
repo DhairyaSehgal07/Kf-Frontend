@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1] - 2026-05-23
+
+People tab wired to the farmer storage links API with search, sort, and card list UI.
+
+### Added
+
+- **Farmer storage links API** — `getFarmerStorageLinks`, React Query hook (`useFarmerStorageLinks`), and query keys for `/farmer-storage-link`.
+- **People types** — `Farmer`, `FarmerStorageLink`, and typed API response shapes.
+- **People card** — `PeopleCard` and `PeopleCardSkeleton` showing farmer name, account number, mobile, address, and active status.
+
+### Changed
+
+- **People tab** — Loads linked farmers from the API; client-side search by name and sort by newest/oldest; loading, error, and empty states; refresh with fetch indicator.
+
 ## [0.2.0] - 2026-05-23
 
 Storage entry flow with review sheet, shared bag quantity UI, and daybook navigation into the new route.
@@ -205,6 +219,7 @@ First application scaffold for the Kapur frontend (`kf-frontend`).
 
 - Default Vite starter styles (`App.css`) and demo application UI from the initial template.
 
+[0.2.1]: https://github.com/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/compare/v0.1.9...v0.2.0
 [0.1.9]: https://github.com/compare/v0.1.7...v0.1.9
 [0.1.7]: https://github.com/compare/v0.1.6...v0.1.7
