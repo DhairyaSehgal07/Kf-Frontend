@@ -3,6 +3,8 @@ import { useAuthStore } from '@/features/auth/store/use-auth-store';
 import { router } from '@/router';
 import { env } from './env';
 
+export { getHttpStatusFromError } from './http-error';
+
 export const apiClient = axios.create({
   baseURL: `${env.apiBaseUrl}/v1`,
   timeout: 15000,
@@ -45,26 +47,19 @@ apiClient.interceptors.response.use(
   },
 );
 
-/** Reads HTTP status from an axios error or from `Error.cause` when wrapped. */
-export function getHttpStatusFromError(error: unknown): number | undefined {
-  if (isAxiosError(error)) {
-    return error.response?.status;
-  }
-
-  if (error instanceof Error && error.cause !== undefined) {
-    return getHttpStatusFromError(error.cause);
-  }
-
-  return undefined;
-}
+type ApiErrorBody = {
+  message?: string;
+  error?: { message?: string };
+};
 
 export function getApiErrorMessage(
   error: unknown,
   fallback = 'Something went wrong',
 ): string {
   if (isAxiosError(error)) {
-    const message = error.response?.data?.message;
-    if (typeof message === 'string') return message;
+    const data = error.response?.data as ApiErrorBody | undefined;
+    if (typeof data?.error?.message === 'string') return data.error.message;
+    if (typeof data?.message === 'string') return data.message;
   }
 
   if (error instanceof Error) return error.message;

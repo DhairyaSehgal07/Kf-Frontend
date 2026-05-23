@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.2] - 2026-05-24
+
+Incoming gate pass creation wired to the API with live voucher numbers, review submit, and improved weight-slip validation.
+
+### Added
+
+- **Create incoming gate pass API** — `createIncomingGatePass`, request body mapper, types, and `useCreateIncomingGatePass` mutation with voucher-number invalidation on success.
+- **Voucher number hook** — `useGetReceiptVoucherNumber`, query keys, and prefetch helper for `/store-admin/voucher-number` (incoming and other gate-pass types).
+- **HTTP error helper** — `getHttpStatusFromError` in `http-error.ts` (re-exported from `api-client`).
+
+### Changed
+
+- **Create incoming form** — Shows next gate pass number from the API; submits through the create mutation with toast feedback; resets form and combobox state on success; disables review when the voucher number is unavailable.
+- **Weight slip fields** — Single `weightSlip` field with `weightSlipSchema` on blur; empty display for zero weights; `en-IN` formatting for calculated net weight.
+- **Incoming form schema** — Exported `weightSlipSchema`; form validates on blur and submit.
+- **API client** — `getApiErrorMessage` reads nested `error.message` from API responses.
+
 ## [0.2.1] - 2026-05-23
 
 People tab wired to the farmer storage links API with search, sort, and card list UI.
@@ -219,6 +236,7 @@ First application scaffold for the Kapur frontend (`kf-frontend`).
 
 - Default Vite starter styles (`App.css`) and demo application UI from the initial template.
 
+[0.2.2]: https://github.com/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/compare/v0.1.9...v0.2.0
 [0.1.9]: https://github.com/compare/v0.1.7...v0.1.9

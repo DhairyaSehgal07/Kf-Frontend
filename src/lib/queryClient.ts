@@ -1,5 +1,5 @@
 import { QueryClient, QueryCache, MutationCache } from '@tanstack/react-query';
-import { getHttpStatusFromError } from '@/lib/api-client';
+import { getHttpStatusFromError } from '@/lib/http-error';
 
 const isProduction = import.meta.env.MODE === 'production';
 

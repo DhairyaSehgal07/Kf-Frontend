@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react"
 import { useForm } from "@tanstack/react-form"
+import { toast } from "sonner"
 import {
   Card,
   CardContent,
@@ -34,9 +35,18 @@ import {
   filterAndSortOptions,
   type ComboboxOption,
 } from "@/components/searchable-option-combobox"
-import { incomingFormSchema } from "@/features/incoming/schemas/incoming-form-schema"
+import {
+  incomingFormSchema,
+  weightSlipSchema,
+} from "@/features/incoming/schemas/incoming-form-schema"
 import { defaultSubmitMeta } from "@/features/incoming/types"
 import { INCOMING_CATEGORIES, INCOMING_STAGES } from "@/lib/constants"
+import { useCreateIncomingGatePass } from "@/features/incoming/api/use-create-incoming-gate-pass"
+import {
+  useGetReceiptVoucherNumber,
+  voucherNumberKeys,
+} from "@/hooks/use-get-voucher-number"
+import { queryClient } from "@/lib/queryClient"
 
 const VARIETY_ITEMS = ["Himalini", "K. Pukhraj", "K. Jyoti"].map((value) => ({
   id: value,
@@ -70,6 +80,17 @@ function parseNumber(value: string): number {
   return Number.isNaN(parsed) ? 0 : parsed
 }
 
+function parseWeightKgInput(value: string): number {
+  if (value === "") return 0
+  const parsed = Number(value)
+  return Number.isNaN(parsed) ? 0 : parsed
+}
+
+/** Show empty input when stored value is 0 (cleared); keeps weight keys in form state. */
+function formatWeightKgDisplay(value: number | undefined): string {
+  return value == null || value === 0 ? "" : String(value)
+}
+
 const numericInputProps = {
   type: "number" as const,
   min: 0,
@@ -81,6 +102,16 @@ const CreateIncomingForm = () => {
   const todayIso = new Date().toISOString()
   const { data: farmerLinkOptions = [], isLoading: isLoadingFarmers } =
     useFarmerLinkOptions()
+  const {
+    data: nextVoucherNumber,
+    isLoading: isLoadingVoucherNumber,
+    isError: isVoucherNumberError,
+  } = useGetReceiptVoucherNumber("incoming-gate-pass")
+  const { mutateAsync: createIncomingGatePass } = useCreateIncomingGatePass()
+  const isGatePassNumberReady =
+    !isLoadingVoucherNumber &&
+    !isVoucherNumberError &&
+    nextVoucherNumber != null
   const farmerOptions = useMemo<ComboboxOption[]>(
     () => farmerLinkOptionsToComboboxOptions(farmerLinkOptions),
     [farmerLinkOptions],
@@ -112,6 +143,17 @@ const CreateIncomingForm = () => {
     [stageSearch]
   )
 
+  const resetComboboxState = () => {
+    setFarmerSearch("")
+    setFarmerComboboxOpen(false)
+    setVarietySearch("")
+    setVarietyComboboxOpen(false)
+    setCategorySearch("")
+    setCategoryComboboxOpen(false)
+    setStageSearch("")
+    setStageComboboxOpen(false)
+  }
+
   const form = useForm({
     defaultValues: {
       manualGatePassNumber: undefined as number | undefined,
@@ -132,7 +174,7 @@ const CreateIncomingForm = () => {
       remarks: "",
     },
     validators: {
-      onChange: incomingFormSchema,
+      onBlur: incomingFormSchema,
       onSubmit: incomingFormSchema,
     },
     onSubmitMeta: defaultSubmitMeta,
@@ -144,8 +186,37 @@ const CreateIncomingForm = () => {
         return
       }
 
-      console.log(parsed)
-      setReviewOpen(false)
+      const gatePassNo = queryClient.getQueryData<number>(
+        voucherNumberKeys.detail("incoming-gate-pass"),
+      )
+
+      if (gatePassNo == null) {
+        toast.error("Gate pass number is unavailable. Refresh and try again.", {
+          position: "bottom-right",
+        })
+        return
+      }
+
+      try {
+        const { message } = await createIncomingGatePass({
+          form: parsed,
+          gatePassNo,
+        })
+
+        toast.success(message ?? "Incoming gate pass created", {
+          position: "bottom-right",
+        })
+        setReviewOpen(false)
+        form.reset()
+        resetComboboxState()
+      } catch (error) {
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "Failed to create incoming gate pass",
+          { position: "bottom-right" },
+        )
+      }
     },
   })
 
@@ -169,7 +240,16 @@ const CreateIncomingForm = () => {
   return (
     <Card className="w-full max-w-4xl mx-auto shadow-sm">
       <CardHeader className="border-b bg-muted/30 pb-6">
-        <CardTitle className="text-2xl">Incoming Gate Pass <span className="text-primary text-2xl">#1024</span></CardTitle>
+        <CardTitle className="text-2xl">
+          Incoming Gate Pass{" "}
+          <span className="font-mono text-2xl tabular-nums text-primary">
+            {isLoadingVoucherNumber
+              ? "…"
+              : isVoucherNumberError || nextVoucherNumber == null
+                ? "—"
+                : `#${nextVoucherNumber}`}
+          </span>
+        </CardTitle>
         <CardDescription className="text-base">
           Record transport, crop, and weighbridge details for a new incoming gate pass.
         </CardDescription>
@@ -472,114 +552,113 @@ const CreateIncomingForm = () => {
               <FieldDescription>
                 Details captured from the weighbridge slip.
               </FieldDescription>
-              <FieldGroup className="mt-5 grid grid-cols-1 gap-6 @md/field-group:grid-cols-3">
-                <form.Field name="weightSlip.slipNumber">
-                  {(field) => {
-                    const isInvalid = isFieldInvalid(field.state.meta)
-                    return (
-                      <Field data-invalid={isInvalid}>
-                        <FieldLabel htmlFor={field.name}>
-                          Slip Number
-                        </FieldLabel>
-                        <Input
-                          id={field.name}
-                          name={field.name}
-                          value={field.state.value}
-                          onBlur={field.handleBlur}
-                          onChange={(e) => field.handleChange(e.target.value)}
-                          aria-invalid={isInvalid}
-                          placeholder="e.g. WS-001"
-                          autoComplete="off"
-                        />
-                        {isInvalid && (
-                          <FieldError errors={field.state.meta.errors} />
-                        )}
-                      </Field>
-                    )
-                  }}
-                </form.Field>
+              <form.Field
+                name="weightSlip"
+                validators={{ onBlur: weightSlipSchema }}
+              >
+                {(field) => {
+                  const weightSlip = field.state.value
+                  const isInvalid = isFieldInvalid(field.state.meta)
+                  const gross = weightSlip.grossWeightKg ?? 0
+                  const tare = weightSlip.tareWeightKg ?? 0
+                  const net = gross - tare
+                  const showNet = gross > 0 && tare >= 0 && net >= 0
 
-                <form.Field name="weightSlip.grossWeightKg">
-                  {(field) => {
-                    const isInvalid = isFieldInvalid(field.state.meta)
-                    return (
-                      <Field data-invalid={isInvalid}>
-                        <FieldLabel htmlFor={field.name}>
-                          Gross Weight (kg)
-                        </FieldLabel>
-                        <Input
-                          {...numericInputProps}
-                          id={field.name}
-                          name={field.name}
-                          value={field.state.value || ""}
-                          onBlur={field.handleBlur}
-                          onChange={(e) =>
-                            field.handleChange(parseNumber(e.target.value))
-                          }
-                          aria-invalid={isInvalid}
-                          placeholder="Total weight"
-                        />
-                        {isInvalid && (
-                          <FieldError errors={field.state.meta.errors} />
-                        )}
-                      </Field>
-                    )
-                  }}
-                </form.Field>
-
-                <form.Field name="weightSlip.tareWeightKg">
-                  {(field) => {
-                    const isInvalid = isFieldInvalid(field.state.meta)
-                    return (
-                      <Field data-invalid={isInvalid}>
-                        <FieldLabel htmlFor={field.name}>
-                          Tare Weight (kg)
-                        </FieldLabel>
-                        <Input
-                          {...numericInputProps}
-                          id={field.name}
-                          name={field.name}
-                          value={field.state.value || ""}
-                          onBlur={field.handleBlur}
-                          onChange={(e) =>
-                            field.handleChange(parseNumber(e.target.value))
-                          }
-                          aria-invalid={isInvalid}
-                          placeholder="Vehicle empty weight"
-                        />
-                        {isInvalid && (
-                          <FieldError errors={field.state.meta.errors} />
-                        )}
-                      </Field>
-                    )
-                  }}
-                </form.Field>
-              </FieldGroup>
-
-              {/* Elevated visual presentation for Calculated Data */}
-              <form.Subscribe
-                selector={(state) => state.values.weightSlip}
-                children={(weightSlip) => {
-                  const net = weightSlip.grossWeightKg - weightSlip.tareWeightKg
-                  const showNet =
-                    weightSlip.grossWeightKg > 0 &&
-                    weightSlip.tareWeightKg >= 0 &&
-                    net >= 0
-
-                  if (!showNet) return null
+                  const patchWeightSlip = (
+                    patch: Partial<typeof weightSlip>,
+                  ) => {
+                    field.handleChange({ ...weightSlip, ...patch })
+                  }
 
                   return (
-                    <div className="mt-6 flex items-center justify-between rounded-md border bg-muted/50 px-4 py-3">
-                      <span className="text-sm font-medium text-muted-foreground">
-                        Calculated Net Weight
-                      </span>
-                      <span className="text-lg font-semibold text-foreground tracking-tight">
-                        {net.toLocaleString()} kg
-                      </span>
-                    </div>
+                    <>
+                      <FieldGroup className="mt-5 grid grid-cols-1 gap-6 @md/field-group:grid-cols-3">
+                        <Field data-invalid={isInvalid}>
+                          <FieldLabel htmlFor="create-incoming-slip-number">
+                            Slip Number
+                          </FieldLabel>
+                          <Input
+                            id="create-incoming-slip-number"
+                            name="weightSlip.slipNumber"
+                            value={weightSlip.slipNumber}
+                            onBlur={field.handleBlur}
+                            onChange={(e) =>
+                              patchWeightSlip({ slipNumber: e.target.value })
+                            }
+                            aria-invalid={isInvalid}
+                            placeholder="e.g. WS-001"
+                            autoComplete="off"
+                          />
+                        </Field>
+
+                        <Field data-invalid={isInvalid}>
+                          <FieldLabel htmlFor="create-incoming-gross-weight">
+                            Gross Weight (kg)
+                          </FieldLabel>
+                          <Input
+                            {...numericInputProps}
+                            id="create-incoming-gross-weight"
+                            name="weightSlip.grossWeightKg"
+                            value={formatWeightKgDisplay(
+                              weightSlip.grossWeightKg,
+                            )}
+                            onBlur={field.handleBlur}
+                            onChange={(e) =>
+                              patchWeightSlip({
+                                grossWeightKg: parseWeightKgInput(
+                                  e.target.value,
+                                ),
+                              })
+                            }
+                            aria-invalid={isInvalid}
+                            placeholder="Total weight"
+                          />
+                        </Field>
+
+                        <Field data-invalid={isInvalid}>
+                          <FieldLabel htmlFor="create-incoming-tare-weight">
+                            Tare Weight (kg)
+                          </FieldLabel>
+                          <Input
+                            {...numericInputProps}
+                            id="create-incoming-tare-weight"
+                            name="weightSlip.tareWeightKg"
+                            value={formatWeightKgDisplay(weightSlip.tareWeightKg)}
+                            onBlur={field.handleBlur}
+                            onChange={(e) =>
+                              patchWeightSlip({
+                                tareWeightKg: parseWeightKgInput(
+                                  e.target.value,
+                                ),
+                              })
+                            }
+                            aria-invalid={isInvalid}
+                            placeholder="Tare Weight"
+                          />
+                        </Field>
+                      </FieldGroup>
+
+                      {isInvalid && (
+                        <FieldError
+                          errors={field.state.meta.errors}
+                          className="mt-2"
+                        />
+                      )}
+
+                      {showNet && (
+                        <div className="mt-6 flex items-center justify-between rounded-md border bg-muted/50 px-4 py-3">
+                          <span className="text-sm font-medium text-muted-foreground">
+                            Calculated Net Weight
+                          </span>
+                          <span className="text-lg font-semibold tracking-tight text-foreground tabular-nums">
+                            {net.toLocaleString("en-IN")} kg
+                          </span>
+                        </div>
+                      )}
+                    </>
                   )
                 }}
-              />
+              </form.Field>
             </FieldSet>
 
             <FieldSeparator />
@@ -623,14 +702,7 @@ const CreateIncomingForm = () => {
             type="button"
             onClick={() => {
               form.reset()
-              setFarmerSearch("")
-              setFarmerComboboxOpen(false)
-              setVarietySearch("")
-              setVarietyComboboxOpen(false)
-              setCategorySearch("")
-              setCategoryComboboxOpen(false)
-              setStageSearch("")
-              setStageComboboxOpen(false)
+              resetComboboxState()
             }}
           >
             Reset Form
@@ -640,10 +712,14 @@ const CreateIncomingForm = () => {
             children={(isSubmitting) => (
               <Button
                 type="button"
-                disabled={isSubmitting}
+                disabled={isSubmitting || !isGatePassNumberReady}
                 onClick={handleOpenReview}
               >
-                {isSubmitting ? "Validating…" : "Review"}
+                {isLoadingVoucherNumber
+                  ? "Loading pass no…"
+                  : isSubmitting
+                    ? "Validating…"
+                    : "Review"}
               </Button>
             )}
           />
