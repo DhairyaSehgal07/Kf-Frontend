@@ -20,7 +20,7 @@ export type StorageGatePass = {
   remarks: string
 }
 
-/** `${passId}|${size}|${bagIndex}` */
+/** `${passId}\u001f${size}\u001f${bagIndex}` — unit separator avoids `|` in size names */
 export type TransferAllocationKey = string
 
 export type TransferStockItem = {

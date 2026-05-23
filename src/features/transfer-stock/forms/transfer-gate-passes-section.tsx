@@ -1,4 +1,5 @@
-import { useCallback, useMemo, useState } from "react"
+import type { ReactNode } from "react"
+import type { LucideIcon } from "lucide-react"
 import {
   ArrowDown,
   ArrowUp,
@@ -9,6 +10,7 @@ import {
   Search,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -19,41 +21,28 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Input } from "@/components/ui/input"
-import { GatePassesMatrixTable } from "@/features/transfer-stock/forms/gate-passes-matrix-table"
-import { useStorageGatePassesForFarmer } from "@/features/transfer-stock/hooks/use-storage-gate-passes-for-farmer"
-import type { LocationFilters } from "@/features/transfer-stock/types/storage-gate-pass"
 import {
-  buildAllocationsFromPass,
-  getUniqueLocationValues,
-  getUniqueSizes,
-  getUniqueVarieties,
-  groupPassesByDate,
-  parseAllocationKey,
-  passMatchesGatePassSearch,
-  passMatchesLocationFilters,
-} from "@/features/transfer-stock/utils/gate-pass-matrix-utils"
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyTitle,
+} from "@/components/ui/empty"
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group"
+import { Label } from "@/components/ui/label"
+import { Skeleton } from "@/components/ui/skeleton"
+import { TransferGatePassMatrix } from "@/features/transfer-stock/forms/transfer-gate-pass-matrix"
+import { useStorageGatePassesForFarmer } from "@/features/transfer-stock/hooks/use-storage-gate-passes-for-farmer"
+import { useTransferGatePassMatrix } from "@/features/transfer-stock/hooks/use-transfer-gate-pass-matrix"
 import { cn } from "@/lib/utils"
 
 type TransferGatePassesSectionProps = {
   fromFarmerStorageLinkId: string
   allocations: Record<string, number>
   onAllocationsChange: (next: Record<string, number>) => void
-}
-
-/** `'all'` shows every size column; otherwise only sizes in the set. */
-type SizeVisibility = "all" | Set<string>
-
-function isSizeVisible(visibility: SizeVisibility, size: string): boolean {
-  return visibility === "all" || visibility.has(size)
-}
-
-function resolveVisibleSizes(
-  tableSizes: string[],
-  visibility: SizeVisibility
-): string[] {
-  if (visibility === "all") return tableSizes
-  return tableSizes.filter((size) => visibility.has(size))
 }
 
 export function TransferGatePassesSection({
@@ -64,225 +53,95 @@ export function TransferGatePassesSection({
   const { data: allPasses, isLoading, error } =
     useStorageGatePassesForFarmer(fromFarmerStorageLinkId)
 
-  const [voucherSort, setVoucherSort] = useState<"asc" | "desc">("asc")
-  const [varietyFilter, setVarietyFilter] = useState("")
-  const [sizeVisibility, setSizeVisibility] = useState<SizeVisibility>("all")
-  const [selectedPassIds, setSelectedPassIds] = useState<Set<string>>(() => new Set())
-  const [locationFilters, setLocationFilters] = useState<LocationFilters>({
-    chamber: "",
-    floor: "",
-    row: "",
+  const matrix = useTransferGatePassMatrix({
+    allPasses,
+    allocations,
+    onAllocationsChange,
   })
-  const [gatePassSearch, setGatePassSearch] = useState("")
-
-  const uniqueVarieties = useMemo(
-    () => getUniqueVarieties(allPasses),
-    [allPasses]
-  )
-
-  const uniqueLocations = useMemo(
-    () => getUniqueLocationValues(allPasses),
-    [allPasses]
-  )
-
-  const filteredPasses = useMemo(() => {
-    let list = allPasses
-    if (varietyFilter.trim()) {
-      list = list.filter((p) => p.variety?.trim() === varietyFilter)
-    }
-    if (gatePassSearch.trim()) {
-      list = list.filter((p) => passMatchesGatePassSearch(p, gatePassSearch))
-    }
-    list = list.filter((p) => passMatchesLocationFilters(p, locationFilters))
-    return list
-  }, [allPasses, varietyFilter, gatePassSearch, locationFilters])
-
-  const tableSizes = useMemo(
-    () => getUniqueSizes(filteredPasses),
-    [filteredPasses]
-  )
-
-  const allTableSizes = useMemo(() => getUniqueSizes(allPasses), [allPasses])
-
-  const visibleSizes = useMemo(
-    () => resolveVisibleSizes(tableSizes, sizeVisibility),
-    [tableSizes, sizeVisibility]
-  )
-
-  const displayGroups = useMemo(
-    () => groupPassesByDate(filteredPasses, voucherSort),
-    [filteredPasses, voucherSort]
-  )
-
-  const needsVarietySelection =
-    uniqueVarieties.length > 0 && varietyFilter.trim() === ""
-
-  const varietySelected = !needsVarietySelection
-  const hasFilteredData =
-    varietySelected && filteredPasses.length > 0 && visibleSizes.length > 0
-
-  const hasActiveFilters =
-    varietyFilter.trim() !== "" ||
-    gatePassSearch.trim() !== "" ||
-    locationFilters.chamber !== "" ||
-    locationFilters.floor !== "" ||
-    locationFilters.row !== ""
-
-  const sizesForColumnPicker =
-    tableSizes.length > 0 ? tableSizes : allTableSizes
-
-  const handleSelectAllSizes = useCallback(() => {
-    setSizeVisibility("all")
-  }, [])
-
-  const handleSizeToggle = useCallback(
-    (size: string) => {
-      setSizeVisibility((prev) => {
-        const pickerSizes =
-          tableSizes.length > 0 ? tableSizes : allTableSizes
-
-        if (prev === "all") {
-          const next = new Set(pickerSizes)
-          next.delete(size)
-          return next
-        }
-
-        const next = new Set(prev)
-        if (next.has(size)) next.delete(size)
-        else next.add(size)
-
-        if (pickerSizes.length > 0 && pickerSizes.every((s) => next.has(s))) {
-          return "all"
-        }
-        return next
-      })
-    },
-    [tableSizes, allTableSizes]
-  )
-
-  const handleResetFilters = useCallback(() => {
-    setVoucherSort("asc")
-    setVarietyFilter("")
-    setGatePassSearch("")
-    setLocationFilters({ chamber: "", floor: "", row: "" })
-    setSizeVisibility("all")
-    setSelectedPassIds(new Set())
-    onAllocationsChange({})
-  }, [onAllocationsChange])
-
-  const handleAllocationChange = useCallback(
-    (key: string, quantity: number) => {
-      onAllocationsChange({ ...allocations, [key]: quantity })
-    },
-    [allocations, onAllocationsChange]
-  )
-
-  const handleAllocationClear = useCallback(
-    (key: string) => {
-      const next = { ...allocations }
-      delete next[key]
-      onAllocationsChange(next)
-    },
-    [allocations, onAllocationsChange]
-  )
-
-  const handlePassToggle = useCallback(
-    (passId: string) => {
-      const isSelecting = !selectedPassIds.has(passId)
-      setSelectedPassIds((prev) => {
-        const next = new Set(prev)
-        if (isSelecting) next.add(passId)
-        else next.delete(passId)
-        return next
-      })
-
-      if (isSelecting) {
-        const pass = filteredPasses.find((p) => p._id === passId)
-        if (pass) {
-          const fromPass = buildAllocationsFromPass(pass, visibleSizes)
-          onAllocationsChange({ ...allocations, ...fromPass })
-        }
-      } else {
-        const next = { ...allocations }
-        for (const key of Object.keys(next)) {
-          const parsed = parseAllocationKey(key)
-          if (parsed?.passId === passId) delete next[key]
-        }
-        onAllocationsChange(next)
-      }
-    },
-    [selectedPassIds, filteredPasses, visibleSizes, allocations, onAllocationsChange]
-  )
 
   if (!fromFarmerStorageLinkId) {
     return (
-      <p className="text-sm text-muted-foreground">
-        Select a <span className="font-medium text-foreground">From</span> farmer
-        to view storage gate passes.
-      </p>
+      <GatePassesSectionMessage
+        title="Select a farmer"
+        description={
+          <>
+            Choose a <span className="font-medium text-foreground">From</span>{" "}
+            farmer to view storage gate passes.
+          </>
+        }
+      />
     )
   }
 
   if (isLoading) {
     return (
-      <p className="text-sm text-muted-foreground">Loading gate passes…</p>
+      <Card size="sm" className="py-4 ring-border/60">
+        <CardContent className="space-y-2">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-11 w-full" />
+          ))}
+        </CardContent>
+      </Card>
     )
   }
 
   if (error) {
     return (
-      <p className="text-sm text-destructive">
-        Failed to load gate passes: {error.message}
-      </p>
+      <GatePassesSectionMessage
+        title="Could not load gate passes"
+        description={error.message}
+        variant="destructive"
+      />
     )
   }
 
   if (!allPasses.length) {
     return (
-      <p className="text-sm text-muted-foreground">
-        No storage gate passes for this farmer.
-      </p>
+      <GatePassesSectionMessage
+        title="No gate passes"
+        description="No storage gate passes for this farmer."
+      />
     )
   }
 
   return (
     <div className="space-y-4">
-      <div className="relative w-full">
-        <Search
-          className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
-          aria-hidden
-        />
-        <Input
+      <InputGroup className="h-11">
+        <InputGroupAddon align="inline-start">
+          <Search className="size-4" aria-hidden />
+        </InputGroupAddon>
+        <InputGroupInput
           placeholder="Search by gate pass or manual parchi number"
-          value={gatePassSearch}
-          onChange={(e) => setGatePassSearch(e.target.value)}
-          className="h-11 pl-10 text-base sm:text-sm"
+          value={matrix.gatePassSearch}
+          onChange={(e) => matrix.setGatePassSearch(e.target.value)}
+          className="text-base sm:text-sm"
           aria-label="Search gate passes"
         />
-      </div>
+      </InputGroup>
 
-      <div className="flex flex-wrap items-end gap-x-5 gap-y-4 rounded-xl border border-border/60 bg-muted/30 px-4 py-4 shadow-sm">
+      <Card size="sm" className="bg-muted/30 py-4 ring-border/60">
+        <CardContent className="flex flex-wrap items-end gap-x-5 gap-y-4 px-4">
         <div className="flex flex-col gap-2">
-          <span className="text-xs font-medium leading-none text-muted-foreground">
+          <Label className="text-xs font-medium leading-none text-muted-foreground">
             Sort by gate pass
-          </span>
+          </Label>
           <div className="flex h-10 items-center gap-1.5">
             <Button
               type="button"
-              variant={voucherSort === "asc" ? "default" : "outline"}
+              variant={matrix.voucherSort === "asc" ? "default" : "outline"}
               size="sm"
               className="h-10 gap-1.5 px-3"
-              onClick={() => setVoucherSort("asc")}
+              onClick={() => matrix.setVoucherSort("asc")}
             >
               <ArrowUp className="size-4" />
               Ascending
             </Button>
             <Button
               type="button"
-              variant={voucherSort === "desc" ? "default" : "outline"}
+              variant={matrix.voucherSort === "desc" ? "default" : "outline"}
               size="sm"
               className="h-10 gap-1.5 px-3"
-              onClick={() => setVoucherSort("desc")}
+              onClick={() => matrix.setVoucherSort("desc")}
             >
               <ArrowDown className="size-4" />
               Descending
@@ -291,9 +150,9 @@ export function TransferGatePassesSection({
         </div>
 
         <div className="flex flex-col gap-2">
-          <span className="text-xs font-medium leading-none text-muted-foreground">
+          <Label className="text-xs font-medium leading-none text-muted-foreground">
             Sizes
-          </span>
+          </Label>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button type="button" variant="outline" size="sm" className="h-10 gap-2">
@@ -305,20 +164,20 @@ export function TransferGatePassesSection({
               <DropdownMenuLabel>Toggle sizes</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuCheckboxItem
-                checked={sizeVisibility === "all"}
+                checked={matrix.sizeVisibility === "all"}
                 onCheckedChange={(checked) => {
-                  if (checked) handleSelectAllSizes()
-                  else setSizeVisibility(new Set())
+                  if (checked) matrix.handleSelectAllSizes()
+                  else matrix.setSizeVisibility(new Set())
                 }}
               >
                 All
               </DropdownMenuCheckboxItem>
               <DropdownMenuSeparator />
-              {sizesForColumnPicker.map((size) => (
+              {matrix.sizesForColumnPicker.map((size) => (
                 <DropdownMenuCheckboxItem
                   key={size}
-                  checked={isSizeVisible(sizeVisibility, size)}
-                  onCheckedChange={() => handleSizeToggle(size)}
+                  checked={matrix.isSizeVisible(matrix.sizeVisibility, size)}
+                  onCheckedChange={() => matrix.handleSizeToggle(size)}
                 >
                   {size}
                 </DropdownMenuCheckboxItem>
@@ -327,164 +186,194 @@ export function TransferGatePassesSection({
           </DropdownMenu>
         </div>
 
-        {uniqueVarieties.length > 0 && (
+        {matrix.uniqueVarieties.length > 0 && (
           <div
             className={cn(
               "flex flex-col gap-2 rounded-lg transition-[box-shadow,background-color,border-color]",
-              needsVarietySelection &&
+              matrix.needsVarietySelection &&
                 "border-2 border-primary/50 bg-primary/5 p-2.5 shadow-sm ring-2 ring-primary/25"
             )}
           >
             <div className="flex flex-col gap-0.5">
-              <span
+              <Label
                 className={cn(
                   "text-xs font-medium leading-none",
-                  needsVarietySelection ? "text-primary" : "text-muted-foreground"
+                  matrix.needsVarietySelection
+                    ? "text-primary"
+                    : "text-muted-foreground"
                 )}
               >
                 Variety
-                {needsVarietySelection ? (
+                {matrix.needsVarietySelection ? (
                   <span className="ml-0.5 font-semibold text-destructive">*</span>
                 ) : null}
-              </span>
-              {needsVarietySelection ? (
-                <span className="max-w-52 text-[11px] leading-snug text-muted-foreground">
+              </Label>
+              {matrix.needsVarietySelection ? (
+                <p className="max-w-52 text-xs leading-snug text-muted-foreground">
                   Choose a variety to show gate passes below.
-                </span>
+                </p>
               ) : null}
             </div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className={cn(
-                    "h-10 min-w-[120px] justify-between gap-2",
-                    needsVarietySelection &&
-                      "border-primary/60 bg-background text-primary hover:bg-primary/10"
-                  )}
-                  aria-label={
-                    needsVarietySelection
-                      ? "Variety — required"
-                      : "Variety filter"
-                  }
-                >
-                  <Package className="size-4 shrink-0" />
-                  {varietyFilter || "All"}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-48">
-                <DropdownMenuRadioGroup
-                  value={varietyFilter}
-                  onValueChange={(v) => setVarietyFilter(v ?? "")}
-                >
-                  <DropdownMenuRadioItem value="">All</DropdownMenuRadioItem>
-                  {uniqueVarieties.map((v) => (
-                    <DropdownMenuRadioItem key={v} value={v}>
-                      {v}
-                    </DropdownMenuRadioItem>
-                  ))}
-                </DropdownMenuRadioGroup>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <MatrixRadioFilter
+              value={matrix.varietyFilter}
+              options={matrix.uniqueVarieties}
+              onChange={matrix.setVarietyFilter}
+              icon={Package}
+              triggerClassName={cn(
+                "min-w-[120px]",
+                matrix.needsVarietySelection &&
+                  "border-primary/60 bg-background text-primary hover:bg-primary/10"
+              )}
+              ariaLabel={
+                matrix.needsVarietySelection
+                  ? "Variety — required"
+                  : "Variety filter"
+              }
+            />
           </div>
         )}
 
-        {uniqueLocations.chambers.length > 0 && (
-          <LocationFilterDropdown
+        {matrix.uniqueLocations.chambers.length > 0 && (
+          <MatrixRadioFilter
             label="Chamber"
-            value={locationFilters.chamber}
-            options={uniqueLocations.chambers}
+            value={matrix.locationFilters.chamber}
+            options={matrix.uniqueLocations.chambers}
             onChange={(chamber) =>
-              setLocationFilters((prev) => ({ ...prev, chamber }))
+              matrix.setLocationFilters((prev) => ({ ...prev, chamber }))
             }
+            icon={MapPin}
           />
         )}
-        {uniqueLocations.floors.length > 0 && (
-          <LocationFilterDropdown
+        {matrix.uniqueLocations.floors.length > 0 && (
+          <MatrixRadioFilter
             label="Floor"
-            value={locationFilters.floor}
-            options={uniqueLocations.floors}
+            value={matrix.locationFilters.floor}
+            options={matrix.uniqueLocations.floors}
             onChange={(floor) =>
-              setLocationFilters((prev) => ({ ...prev, floor }))
+              matrix.setLocationFilters((prev) => ({ ...prev, floor }))
             }
+            icon={MapPin}
           />
         )}
-        {uniqueLocations.rows.length > 0 && (
-          <LocationFilterDropdown
+        {matrix.uniqueLocations.rows.length > 0 && (
+          <MatrixRadioFilter
             label="Row"
-            value={locationFilters.row}
-            options={uniqueLocations.rows}
+            value={matrix.locationFilters.row}
+            options={matrix.uniqueLocations.rows}
             onChange={(row) =>
-              setLocationFilters((prev) => ({ ...prev, row }))
+              matrix.setLocationFilters((prev) => ({ ...prev, row }))
             }
+            icon={MapPin}
           />
         )}
 
         <div className="flex flex-col gap-2">
-          <span className="text-xs font-medium leading-none text-muted-foreground">
+          <Label className="text-xs font-medium leading-none text-muted-foreground">
             Reset
-          </span>
+          </Label>
           <Button
             type="button"
             variant="outline"
             size="sm"
             className="h-10 gap-2"
-            onClick={handleResetFilters}
+            onClick={matrix.handleResetFilters}
           >
             <RotateCcw className="size-4" />
             Reset filters
           </Button>
         </div>
-      </div>
+        </CardContent>
+      </Card>
 
-      <GatePassesMatrixTable
-        displayGroups={displayGroups}
-        visibleSizes={visibleSizes}
-        selectedPassIds={selectedPassIds}
-        onPassToggle={handlePassToggle}
+      <TransferGatePassMatrix
+        displayGroups={matrix.displayGroups}
+        visibleSizes={matrix.visibleSizes}
+        selectedPassIds={matrix.selectedPassIds}
+        onPassToggle={matrix.handlePassToggle}
         allocations={allocations}
-        onAllocationChange={handleAllocationChange}
-        onAllocationClear={handleAllocationClear}
-        isLoading={isLoading}
-        hasFilteredData={hasFilteredData}
-        hasActiveFilters={hasActiveFilters}
+        onAllocationChange={matrix.handleAllocationChange}
+        onAllocationClear={matrix.handleAllocationClear}
+        hasFilteredData={matrix.hasFilteredData}
+        hasActiveFilters={matrix.hasActiveFilters}
       />
     </div>
   )
 }
 
-function LocationFilterDropdown({
+function GatePassesSectionMessage({
+  title,
+  description,
+  variant = "default",
+}: {
+  title: string
+  description: ReactNode
+  variant?: "default" | "destructive"
+}) {
+  return (
+    <Card size="sm" className="py-0 ring-border/60">
+      <CardContent className="px-0 py-0">
+        <Empty className="border-0 py-10">
+          <EmptyHeader>
+            <EmptyTitle
+              className={
+                variant === "destructive" ? "text-destructive" : undefined
+              }
+            >
+              {title}
+            </EmptyTitle>
+            <EmptyDescription>{description}</EmptyDescription>
+          </EmptyHeader>
+        </Empty>
+      </CardContent>
+    </Card>
+  )
+}
+
+function MatrixRadioFilter({
   label,
   value,
   options,
   onChange,
+  icon: Icon,
+  triggerClassName,
+  ariaLabel,
 }: {
-  label: string
+  label?: string
   value: string
   options: string[]
   onChange: (value: string) => void
+  icon?: LucideIcon
+  triggerClassName?: string
+  ariaLabel?: string
 }) {
   return (
     <div className="flex flex-col gap-2">
-      <span className="text-xs font-medium leading-none text-muted-foreground">
-        {label}
-      </span>
+      {label ? (
+        <Label className="text-xs font-medium leading-none text-muted-foreground">
+          {label}
+        </Label>
+      ) : null}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
             type="button"
             variant="outline"
             size="sm"
-            className="h-10 min-w-[100px] justify-between gap-2"
+            className={cn(
+              "h-10 min-w-[100px] justify-between gap-2",
+              triggerClassName
+            )}
+            aria-label={ariaLabel ?? `${label} filter`}
           >
-            <MapPin className="size-4 shrink-0" />
+            {Icon ? <Icon className="size-4 shrink-0" /> : null}
             {value || "All"}
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" className="w-48">
-          <DropdownMenuRadioGroup value={value} onValueChange={(v) => onChange(v ?? "")}>
+          <DropdownMenuRadioGroup
+            value={value}
+            onValueChange={(v) => onChange(v ?? "")}
+          >
             <DropdownMenuRadioItem value="">All</DropdownMenuRadioItem>
             {options.map((opt) => (
               <DropdownMenuRadioItem key={opt} value={opt}>

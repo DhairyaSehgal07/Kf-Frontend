@@ -8,7 +8,32 @@ import type {
   VoucherSort,
 } from "@/features/transfer-stock/types/storage-gate-pass"
 
-const KEY_SEP = "|"
+/** Unit separator — size names may contain `|`. */
+const KEY_SEP = "\u001f"
+
+export type StorageGatePassFilterParams = {
+  variety?: string
+  search?: string
+  location?: LocationFilters
+}
+
+export function filterStorageGatePasses(
+  passes: StorageGatePass[],
+  { variety, search, location }: StorageGatePassFilterParams
+): StorageGatePass[] {
+  let list = passes
+  if (variety?.trim()) {
+    const v = variety.trim()
+    list = list.filter((p) => p.variety?.trim() === v)
+  }
+  if (search?.trim()) {
+    list = list.filter((p) => passMatchesGatePassSearch(p, search))
+  }
+  if (location) {
+    list = list.filter((p) => passMatchesLocationFilters(p, location))
+  }
+  return list
+}
 
 export function allocationKey(
   passId: string,
