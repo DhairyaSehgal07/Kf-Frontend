@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import {
   type ColumnDef,
   flexRender,
@@ -28,6 +28,7 @@ import {
   Table,
   TableBody,
   TableCell,
+  TableFooter,
   TableHead,
   TableHeader,
   TableRow,
@@ -69,16 +70,29 @@ const TABLE_GRID_CLASS = cn(
   "[&_th]:border-border/50 [&_td]:border-border/35",
   "[&_th:first-child]:border-l [&_td:first-child]:border-l",
   "[&_thead_th]:border-t [&_thead_th]:border-b-2 [&_thead_th]:border-b-border/60",
+  "[&_tfoot_th]:border-t-2 [&_tfoot_th]:border-t-border/60",
+  "[&_tfoot_td]:border-t-2 [&_tfoot_td]:border-t-border/60",
   "[&_th:last-child]:border-r-0 [&_td:last-child]:border-r-0",
+  "[&_tfoot_th:last-child]:border-r-0 [&_tfoot_td:last-child]:border-r-0",
 )
 
 type ColumnMeta = {
   align?: "left" | "right"
+  wrap?: boolean
 }
 
 function getColumnAlign(meta: ColumnMeta | undefined): "left" | "right" {
   return meta?.align ?? "left"
 }
+
+function isWrapColumn(meta: ColumnMeta | undefined) {
+  return meta?.wrap === true
+}
+
+const REMARKS_COLUMN_WIDTH_CLASS =
+  "min-w-[14rem] w-[18rem] max-w-[22rem] whitespace-normal"
+
+const REMARKS_BODY_CELL_CLASS = cn(REMARKS_COLUMN_WIDTH_CLASS, "align-top")
 
 function getGridCellClasses(
   columnId: string,
@@ -97,16 +111,36 @@ function getGridCellClasses(
   )
 }
 
+function getFooterClassName(
+  columnId: string,
+  align: "left" | "right",
+  density: DensityState,
+  meta: ColumnMeta | undefined,
+) {
+  return cn(
+    getDensityCellClasses(density),
+    getGridCellClasses(columnId, "body"),
+    "bg-muted/60 text-sm transition-[padding,background-color] duration-200 supports-backdrop-filter:bg-muted/55 backdrop-blur-sm",
+    isWrapColumn(meta) ? REMARKS_COLUMN_WIDTH_CLASS : "align-middle",
+    align === "right" && "text-right",
+    NUMERIC_COLUMN_IDS.has(columnId) && "tabular-nums",
+    columnId === "netWeightKg" && "font-semibold",
+  )
+}
+
 function getHeadClassName(
   columnId: string,
   align: "left" | "right",
   density: DensityState,
   isHeaderScrolled: boolean,
+  meta: ColumnMeta | undefined,
 ) {
   return cn(
     getDensityHeadClasses(density),
     getGridCellClasses(columnId, "head", isHeaderScrolled),
-    "align-middle transition-[padding,background-color,color] duration-200",
+    "transition-[padding,background-color,color] duration-200",
+    isWrapColumn(meta) ? REMARKS_COLUMN_WIDTH_CLASS : undefined,
+    "align-middle",
     align === "right" && "text-right",
     NUMERIC_COLUMN_IDS.has(columnId) && "tabular-nums",
     columnId === "netWeightKg" && "font-semibold",
@@ -118,19 +152,20 @@ function getBodyCellClassName(
   align: "left" | "right",
   isEmpty: boolean,
   density: DensityState,
+  meta: ColumnMeta | undefined,
 ) {
   return cn(
     getDensityCellClasses(density),
     getGridCellClasses(columnId, "body"),
     "text-sm transition-[padding] duration-200",
+    isWrapColumn(meta) ? REMARKS_BODY_CELL_CLASS : "align-middle",
     align === "right" && "text-right",
     NUMERIC_COLUMN_IDS.has(columnId) &&
       !isEmpty &&
       "tabular-nums font-medium text-foreground",
     MONO_COLUMN_IDS.has(columnId) && !isEmpty && "font-mono",
     columnId === "netWeightKg" && !isEmpty && "text-foreground",
-    (columnId === "remarks" || columnId === "address") &&
-      "max-w-[11rem] sm:max-w-[14rem]",
+    columnId === "address" && "max-w-[11rem] sm:max-w-[14rem]",
   )
 }
 
@@ -138,15 +173,17 @@ function getValueSpanClassName(
   columnId: string,
   align: "left" | "right",
   isEmpty: boolean,
+  meta: ColumnMeta | undefined,
 ) {
   if (isEmpty) {
     return "text-muted-foreground"
   }
 
   return cn(
-    "block min-w-0 truncate text-foreground",
+    "block min-w-0 text-foreground",
+    !isWrapColumn(meta) && "truncate",
+    isWrapColumn(meta) && "break-words leading-relaxed",
     align === "right" && "ml-auto max-w-none",
-    columnId === "remarks" && "max-w-[16rem]",
     columnId === "address" && "max-w-[11rem] sm:max-w-[14rem]",
     columnId === "name" && "max-w-[10rem] font-medium sm:max-w-[12rem]",
     NUMERIC_COLUMN_IDS.has(columnId) && "tabular-nums",
@@ -173,12 +210,16 @@ export function DataTable<TData, TValue>({
 }: DataTableProps<TData, TValue>) {
   const [density, setDensity] = useState<DensityState>(densityProp)
   const [isHeaderScrolled, setIsHeaderScrolled] = useState(false)
+  const [isFooterElevated, setIsFooterElevated] = useState(false)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
 
   const handleTableScroll = useCallback(() => {
     const el = scrollContainerRef.current
     if (!el) return
     setIsHeaderScrolled(el.scrollTop > 0)
+    const atBottom =
+      el.scrollTop + el.clientHeight >= el.scrollHeight - 1
+    setIsFooterElevated(!atBottom)
   }, [])
 
   const table = useReactTable({
@@ -193,6 +234,11 @@ export function DataTable<TData, TValue>({
 
   const tableDensity = table.getState().density
   const columnCount = columns.length
+  const hasDataRows = !isLoading && table.getRowModel().rows.length > 0
+
+  useEffect(() => {
+    handleTableScroll()
+  }, [data, isLoading, handleTableScroll])
 
   return (
     <div className="flex min-w-0 flex-col overflow-hidden rounded-xl border border-border bg-card text-card-foreground shadow-sm">
@@ -213,9 +259,10 @@ export function DataTable<TData, TValue>({
               <TableRow key={headerGroup.id} className="border-0">
                 {headerGroup.headers.map((header) => {
                   const columnId = header.column.id
-                  const align = getColumnAlign(
-                    header.column.columnDef.meta as ColumnMeta | undefined,
-                  )
+                  const meta = header.column.columnDef.meta as
+                    | ColumnMeta
+                    | undefined
+                  const align = getColumnAlign(meta)
 
                   return (
                     <TableHead
@@ -225,6 +272,7 @@ export function DataTable<TData, TValue>({
                         align,
                         tableDensity,
                         isHeaderScrolled,
+                        meta,
                       )}
                     >
                       {header.isPlaceholder
@@ -251,9 +299,8 @@ export function DataTable<TData, TValue>({
                       "accessorKey" in column && column.accessorKey
                         ? String(column.accessorKey)
                         : `col-${colIndex}`
-                    const align = getColumnAlign(
-                      column.meta as ColumnMeta | undefined,
-                    )
+                    const meta = column.meta as ColumnMeta | undefined
+                    const align = getColumnAlign(meta)
                     const isHeaderNumeric =
                       NUMERIC_COLUMN_IDS.has(columnId) ||
                       MONO_COLUMN_IDS.has(columnId)
@@ -265,15 +312,18 @@ export function DataTable<TData, TValue>({
                           getDensityCellClasses(tableDensity),
                           getGridCellClasses(columnId, "body"),
                           "transition-[padding] duration-200",
+                          isWrapColumn(meta) && REMARKS_BODY_CELL_CLASS,
                           align === "right" && "text-right",
                         )}
                       >
                         <Skeleton
                           className={cn(
-                            "h-5 rounded-md",
-                            align === "right" || isHeaderNumeric
-                              ? "ml-auto w-16"
-                              : "w-full max-w-36",
+                            "rounded-md",
+                            isWrapColumn(meta) && "h-12 w-full",
+                            !isWrapColumn(meta) &&
+                              (align === "right" || isHeaderNumeric
+                                ? "ml-auto h-5 w-16"
+                                : "h-5 w-full max-w-36"),
                           )}
                         />
                       </TableCell>
@@ -286,9 +336,10 @@ export function DataTable<TData, TValue>({
                 <TableRow key={row.id} className="border-0 even:bg-muted/20">
                   {row.getVisibleCells().map((cell) => {
                     const columnId = cell.column.id
-                    const align = getColumnAlign(
-                      cell.column.columnDef.meta as ColumnMeta | undefined,
-                    )
+                    const meta = cell.column.columnDef.meta as
+                      | ColumnMeta
+                      | undefined
+                    const align = getColumnAlign(meta)
                     const isStatusColumn = columnId === "status"
                     const value = cell.getValue()
                     const isEmpty = value == null || value === ""
@@ -302,6 +353,7 @@ export function DataTable<TData, TValue>({
                           align,
                           isEmpty,
                           tableDensity,
+                          meta,
                         )}
                       >
                         {isStatusColumn ? (
@@ -319,8 +371,11 @@ export function DataTable<TData, TValue>({
                               columnId,
                               align,
                               isEmpty,
+                              meta,
                             )}
-                            title={display}
+                            title={
+                              isWrapColumn(meta) ? undefined : display
+                            }
                           >
                             {flexRender(
                               cell.column.columnDef.cell,
@@ -355,6 +410,46 @@ export function DataTable<TData, TValue>({
               </TableRow>
             )}
           </TableBody>
+          {hasDataRows ? (
+            <TableFooter
+              className={cn(
+                "sticky bottom-0 z-10 border-0 bg-transparent [&>tr]:border-0",
+                isFooterElevated &&
+                  "shadow-[0_-1px_0_0] shadow-border/80",
+              )}
+            >
+              {table.getFooterGroups().map((footerGroup) => (
+                <TableRow key={footerGroup.id} className="border-0 hover:bg-transparent">
+                  {footerGroup.headers.map((header) => {
+                    const columnId = header.column.id
+                    const meta = header.column.columnDef.meta as
+                      | ColumnMeta
+                      | undefined
+                    const align = getColumnAlign(meta)
+
+                    return (
+                      <TableCell
+                        key={header.id}
+                        className={getFooterClassName(
+                          columnId,
+                          align,
+                          tableDensity,
+                          meta,
+                        )}
+                      >
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(
+                              header.column.columnDef.footer,
+                              header.getContext(),
+                            )}
+                      </TableCell>
+                    )
+                  })}
+                </TableRow>
+              ))}
+            </TableFooter>
+          ) : null}
         </Table>
       </div>
     </div>

@@ -1,9 +1,71 @@
-import type { ColumnDef } from "@tanstack/react-table"
+import type { CellContext, ColumnDef } from "@tanstack/react-table"
+import { format, isValid, parse, parseISO } from "date-fns"
 
 import { Badge } from "@/components/ui/badge"
 import type { IncomingGatePassReportRow } from "@/features/incoming-report/api/types"
 import { reportColumnHeader } from "@/features/incoming-report/components/column-header"
+import {
+  createReportTotalFooter,
+  ReportTotalLabel,
+} from "@/features/incoming-report/components/report-totals-footer"
+import {
+  formatIndianInteger,
+  formatIndianWeight,
+} from "@/features/incoming-report/utils/report-formatters"
 import { cn } from "@/lib/utils"
+
+function formatReportDate(value: unknown): string | null {
+  if (value == null || value === "") return null
+
+  const raw = String(value).trim()
+  if (raw.length === 0) return null
+
+  const parsed =
+    /^\d{4}-\d{2}-\d{2}$/.test(raw)
+      ? parse(raw, "yyyy-MM-dd", new Date())
+      : parseISO(raw)
+
+  if (!isValid(parsed)) return raw
+
+  return format(parsed, "do MMMM yyyy")
+}
+
+function reportDateCell({ getValue }: CellContext<IncomingGatePassReportRow, unknown>) {
+  const formatted = formatReportDate(getValue())
+
+  if (formatted == null) {
+    return <span className="text-sm text-muted-foreground">—</span>
+  }
+
+  return <span className="whitespace-nowrap">{formatted}</span>
+}
+
+function indianNumberCell(
+  format: "integer" | "weight",
+  options?: { emphasize?: boolean },
+) {
+  return ({ getValue }: CellContext<IncomingGatePassReportRow, unknown>) => {
+    const formatted =
+      format === "integer"
+        ? formatIndianInteger(getValue())
+        : formatIndianWeight(getValue())
+
+    if (formatted == null) {
+      return <span className="text-sm text-muted-foreground">—</span>
+    }
+
+    return (
+      <span
+        className={cn(
+          "tabular-nums",
+          options?.emphasize && "font-semibold",
+        )}
+      >
+        {formatted}
+      </span>
+    )
+  }
+}
 
 const STATUS_LABELS: Record<string, string> = {
   NOT_GRADED: "Not graded",
@@ -15,7 +77,11 @@ function getStatusLabel(status: string) {
 }
 
 export const columns: ColumnDef<IncomingGatePassReportRow>[] = [
-  { accessorKey: "name", header: reportColumnHeader("Name") },
+  {
+    accessorKey: "name",
+    header: reportColumnHeader("Name"),
+    footer: ReportTotalLabel,
+  },
   { accessorKey: "address", header: reportColumnHeader("Address") },
   {
     accessorKey: "manualGatePassNumber",
@@ -27,7 +93,11 @@ export const columns: ColumnDef<IncomingGatePassReportRow>[] = [
     header: reportColumnHeader("Gate pass", { align: "right", numeric: true }),
     meta: { align: "right" },
   },
-  { accessorKey: "date", header: reportColumnHeader("Date") },
+  {
+    accessorKey: "date",
+    header: reportColumnHeader("Date"),
+    cell: reportDateCell,
+  },
   { accessorKey: "variety", header: reportColumnHeader("Variety") },
   { accessorKey: "stage", header: reportColumnHeader("Stage") },
   {
@@ -38,6 +108,8 @@ export const columns: ColumnDef<IncomingGatePassReportRow>[] = [
     accessorKey: "bags",
     header: reportColumnHeader("Bags", { align: "right", numeric: true }),
     meta: { align: "right" },
+    cell: indianNumberCell("integer"),
+    footer: createReportTotalFooter("bags", "integer"),
   },
   {
     accessorKey: "slipNumber",
@@ -51,6 +123,8 @@ export const columns: ColumnDef<IncomingGatePassReportRow>[] = [
       numeric: true,
     }),
     meta: { align: "right" },
+    cell: indianNumberCell("weight"),
+    footer: createReportTotalFooter("grossWeightKg", "weight"),
   },
   {
     accessorKey: "tareWeightKg",
@@ -60,6 +134,8 @@ export const columns: ColumnDef<IncomingGatePassReportRow>[] = [
       numeric: true,
     }),
     meta: { align: "right" },
+    cell: indianNumberCell("weight"),
+    footer: createReportTotalFooter("tareWeightKg", "weight"),
   },
   {
     accessorKey: "bardanaWeightKg",
@@ -69,6 +145,8 @@ export const columns: ColumnDef<IncomingGatePassReportRow>[] = [
       numeric: true,
     }),
     meta: { align: "right" },
+    cell: indianNumberCell("weight"),
+    footer: createReportTotalFooter("bardanaWeightKg", "weight"),
   },
   {
     accessorKey: "netWeightKg",
@@ -78,6 +156,10 @@ export const columns: ColumnDef<IncomingGatePassReportRow>[] = [
       numeric: true,
     }),
     meta: { align: "right" },
+    cell: indianNumberCell("weight", { emphasize: true }),
+    footer: createReportTotalFooter("netWeightKg", "weight", {
+      emphasize: true,
+    }),
   },
   {
     accessorKey: "status",
@@ -106,7 +188,11 @@ export const columns: ColumnDef<IncomingGatePassReportRow>[] = [
     enableSorting: false,
   },
   { accessorKey: "createdBy", header: reportColumnHeader("Created by") },
-  { accessorKey: "remarks", header: reportColumnHeader("Remarks") },
+  {
+    accessorKey: "remarks",
+    header: reportColumnHeader("Remarks"),
+    meta: { wrap: true },
+  },
 ]
 
 export type { IncomingGatePassReportRow }
