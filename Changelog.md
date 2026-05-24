@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.5] - 2026-05-24
+
+Add Farmer dialog on the People tab wired to the quick-register API with validation, suggested account numbers, and list refresh on success.
+
+### Added
+
+- **Quick register farmer API** — `quickRegisterFarmer`, request body mapper, types, and `useQuickRegisterFarmer` mutation with farmer storage links cache invalidation on success.
+- **Add farmer dialog** — `AddFarmerDialog` with TanStack Form + Zod for name, address, mobile, account number, optional Aadhaar/PAN/image URL, and cost per bag; success/error toasts; resets on open.
+- **Add farmer form schema** — `createAddFarmerFormSchema` with Indian mobile, Aadhaar, PAN, and URL validation; duplicate account/mobile checks against existing links; `buildAddFarmerPayload` for API submit.
+- **Farmer account helpers** — `getNextAccountNumber`, `getUsedAccountNumbers`, and `getUsedMobileNumbers` derived from loaded farmer storage links.
+- **Business number input** — Shared wheel-blur, spinner hiding, and arrow-key guards for numeric fields.
+- **UI** — shadcn `Dialog` component.
+
+### Changed
+
+- **People tab** — “Add Farmer” opens the quick-register dialog; passes current links for uniqueness and next account number suggestions.
+
 ## [0.2.4] - 2026-05-24
 
 Incoming gate pass edit wired to the API with cache-first load, farmer links from the API, and update mutation with toast feedback.
@@ -273,6 +290,7 @@ First application scaffold for the Kapur frontend (`kf-frontend`).
 
 - Default Vite starter styles (`App.css`) and demo application UI from the initial template.
 
+[0.2.5]: https://github.com/compare/v0.2.4...v0.2.5
 [0.2.4]: https://github.com/compare/v0.2.3...v0.2.4
 [0.2.3]: https://github.com/compare/v0.2.2...v0.2.3
 [0.2.2]: https://github.com/compare/v0.2.1...v0.2.2

@@ -36,6 +36,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton"
 
 import { useFarmerStorageLinks } from "../api/use-farmer-storage-links"
+import { AddFarmerDialog } from "./add-farmer-dialog"
 import { PeopleCard, PeopleCardSkeleton } from "./people-card"
 import type { FarmerStorageLink } from "../types"
 
@@ -110,6 +111,7 @@ function PeopleTabSkeleton() {
 const PeopleTab = () => {
   const [search, setSearch] = useState("")
   const [sortOrder, setSortOrder] = useState<SortOrder>("newest")
+  const [addFarmerOpen, setAddFarmerOpen] = useState(false)
 
   const {
     data: farmerStorageLinks = [],
@@ -197,7 +199,10 @@ const PeopleTab = () => {
               <span className="hidden sm:inline">People Edit History</span>
             </Button>
 
-            <Button className="min-w-0 px-2.5 sm:px-3">
+            <Button
+              className="min-w-0 px-2.5 sm:px-3"
+              onClick={() => setAddFarmerOpen(true)}
+            >
               <Plus className="h-4 w-4 shrink-0 sm:mr-2" />
               <span className="truncate">Add Farmer</span>
             </Button>
@@ -260,6 +265,12 @@ const PeopleTab = () => {
           ))}
         </div>
       )}
+
+      <AddFarmerDialog
+        open={addFarmerOpen}
+        onOpenChange={setAddFarmerOpen}
+        links={farmerStorageLinks}
+      />
     </div>
   )
 }
