@@ -13,7 +13,7 @@ export type { GradingFormValues }
 
 type UseCreateGradingFormOptions = {
   onOpenReview?: () => void
-  onCloseReview?: () => void
+  onCreate?: (values: GradingFormValues) => Promise<void>
 }
 
 export function useCreateGradingForm(options: UseCreateGradingFormOptions = {}) {
@@ -42,8 +42,7 @@ export function useCreateGradingForm(options: UseCreateGradingFormOptions = {}) 
         return
       }
 
-      console.log(parsed)
-      options.onCloseReview?.()
+      await options.onCreate?.(parsed)
     },
   })
 }

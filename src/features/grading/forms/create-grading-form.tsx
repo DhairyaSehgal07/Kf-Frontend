@@ -1,11 +1,18 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import { ArrowLeft, ArrowRight } from "lucide-react"
+import { toast } from "sonner"
+import { useCreateGradingGatePass } from "@/features/grading/api/use-create-grading-gate-pass"
 import { useCreateGradingForm } from "@/features/grading/forms/use-create-grading-form"
 import { GradingSummarySheet } from "@/features/grading/forms/grading-summary-sheet"
 import {
   GRADING_FORM_STEPS,
   gradingFormSchema,
 } from "@/features/grading/schemas/grading-form-schema"
+import {
+  useGetReceiptVoucherNumber,
+  voucherNumberKeys,
+} from "@/hooks/use-get-voucher-number"
+import { queryClient } from "@/lib/queryClient"
 
 import { Stepper } from "@/components/stepper"
 import {
@@ -34,9 +41,47 @@ const CreateGradingForm = () => {
   const formTopRef = useRef<HTMLDivElement>(null)
   const isFirst = currentStep === 0
   const isLast = currentStep === STEPS.length - 1
+  const {
+    data: nextVoucherNumber,
+    isLoading: isLoadingVoucherNumber,
+    isError: isVoucherNumberError,
+  } = useGetReceiptVoucherNumber("grading-gate-pass")
+  const { mutateAsync: createGradingGatePass } = useCreateGradingGatePass()
   const form = useCreateGradingForm({
     onOpenReview: () => setReviewOpen(true),
-    onCloseReview: () => setReviewOpen(false),
+    onCreate: async (parsed) => {
+      const gatePassNo = queryClient.getQueryData<number>(
+        voucherNumberKeys.detail("grading-gate-pass"),
+      )
+
+      if (gatePassNo == null) {
+        toast.error("Gate pass number is unavailable. Refresh and try again.", {
+          position: "bottom-right",
+        })
+        return
+      }
+
+      try {
+        const { message } = await createGradingGatePass({
+          form: parsed,
+          gatePassNo,
+        })
+
+        toast.success(message ?? "Grading gate pass created", {
+          position: "bottom-right",
+        })
+        setReviewOpen(false)
+        form.reset()
+        setCurrentStep(0)
+      } catch (error) {
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "Failed to create grading gate pass",
+          { position: "bottom-right" },
+        )
+      }
+    },
   })
   const { data: farmerLinkOptions = [] } = useFarmerLinkOptions()
   const farmerOptions = useMemo(
@@ -105,7 +150,13 @@ const CreateGradingForm = () => {
       <CardHeader className="border-b bg-muted/30 pb-6">
         <CardTitle className="text-2xl">
           Grading Gate Pass{" "}
-          <span className="text-2xl text-primary">#24</span>
+          <span className="font-mono text-2xl tabular-nums text-primary">
+            {isLoadingVoucherNumber
+              ? "…"
+              : isVoucherNumberError || nextVoucherNumber == null
+                ? "—"
+                : `#${nextVoucherNumber}`}
+          </span>
         </CardTitle>
         <CardDescription className="text-base">
           Enter how many bags were created after grading a truck

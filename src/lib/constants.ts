@@ -11,6 +11,8 @@ export const BAG_SIZES = [
 
 export const BAG_TYPES = ["JUTE", "LENO"] as const
 
+export type BagType = (typeof BAG_TYPES)[number]
+
 export const DEFAULT_BAG_TYPE = "JUTE"
 
 /** Example chamber values (free-text in storage forms; used for placeholders) */

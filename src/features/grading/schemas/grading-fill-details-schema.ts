@@ -36,6 +36,15 @@ export const gradingFillDetailsSchema = z.object({
           })
         }
       })
+
+      const hasActiveRow = rows.some((row) => (row.qty ?? 0) > 0)
+      if (!hasActiveRow) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Enter at least one bag quantity.",
+          path: [],
+        })
+      }
     }),
   remarks: z.string(),
 })
