@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.6] - 2026-05-24
+
+Daybook grading tab wired to the API with paginated list, debounced search, and grading gate pass cards.
+
+### Added
+
+- **Grading gate pass list API** — `getGradingGatePasses`, `searchGradingGatePasses`, shared query keys, and React Query hooks (`useGradingGatePasses`, `useSearchGradingGatePass`) for `/grading-gate-pass/`.
+- **Grading gate pass types** — `GradingGatePass`, list params, pagination, and search request/response shapes.
+- **Grading gate pass card** — `GradingGatePassCard` and `GradingGatePassCardSkeleton` with expandable order details, farmer info, and linked incoming gate passes.
+- **Grading tab skeleton** — Full-page `GradingTabSkeleton` while grading gate passes load.
+
+### Changed
+
+- **Daybook grading tab** — Loads grading gate passes from the API with sort, configurable page size, and pagination; debounced gate-pass-number search; loading, error, empty, and invalid-search states; refresh with fetch indicator.
+
 ## [0.2.5] - 2026-05-24
 
 Add Farmer dialog on the People tab wired to the quick-register API with validation, suggested account numbers, and list refresh on success.
@@ -290,6 +305,7 @@ First application scaffold for the Kapur frontend (`kf-frontend`).
 
 - Default Vite starter styles (`App.css`) and demo application UI from the initial template.
 
+[0.2.6]: https://github.com/compare/v0.2.5...v0.2.6
 [0.2.5]: https://github.com/compare/v0.2.4...v0.2.5
 [0.2.4]: https://github.com/compare/v0.2.3...v0.2.4
 [0.2.3]: https://github.com/compare/v0.2.2...v0.2.3
