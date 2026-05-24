@@ -56,13 +56,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import type { IncomingGatePassAudit } from "@/features/incoming/api/types"
-import { useIncomingGatePassEdits } from "@/features/incoming/api/use-incoming-gate-pass-edits"
+import type { GradingGatePassAudit } from "@/features/grading/api/types"
+import { useGradingGatePassEdits } from "@/features/grading/api/use-grading-gate-pass-edits"
 import {
   formatAuditFieldValue,
-  getIncomingGatePassAuditChangedFields,
-  INCOMING_GATE_PASS_AUDIT_FIELD_LABELS,
-} from "@/features/incoming/utils/format-audit-field-value"
+  getGradingGatePassAuditChangedFields,
+  GRADING_GATE_PASS_AUDIT_FIELD_LABELS,
+} from "@/features/grading/utils/format-audit-field-value"
 import { cn } from "@/lib/utils"
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50] as const
@@ -84,7 +84,7 @@ function formatAuditTimestamp(iso: string) {
   }).format(date)
 }
 
-function IncomingEditHistorySkeleton() {
+function GradingEditHistorySkeleton() {
   return (
     <div className="flex w-full flex-col gap-4">
       <Item variant="outline" size="sm">
@@ -116,8 +116,8 @@ function IncomingEditHistorySkeleton() {
   )
 }
 
-function AuditChangeTable({ audit }: { audit: IncomingGatePassAudit }) {
-  const changedFields = getIncomingGatePassAuditChangedFields(
+function AuditChangeTable({ audit }: { audit: GradingGatePassAudit }) {
+  const changedFields = getGradingGatePassAuditChangedFields(
     audit.previousState,
     audit.modifiedState,
   )
@@ -144,7 +144,7 @@ function AuditChangeTable({ audit }: { audit: IncomingGatePassAudit }) {
           {changedFields.map((field) => (
             <TableRow key={field}>
               <TableCell className="font-medium text-foreground">
-                {INCOMING_GATE_PASS_AUDIT_FIELD_LABELS[field]}
+                {GRADING_GATE_PASS_AUDIT_FIELD_LABELS[field]}
               </TableCell>
               <TableCell className="whitespace-normal text-muted-foreground">
                 {formatAuditFieldValue(field, audit.previousState[field])}
@@ -160,7 +160,7 @@ function AuditChangeTable({ audit }: { audit: IncomingGatePassAudit }) {
   )
 }
 
-function IncomingEditAuditCard({ audit }: { audit: IncomingGatePassAudit }) {
+function GradingEditAuditCard({ audit }: { audit: GradingGatePassAudit }) {
   return (
     <Card className="gap-0 overflow-hidden py-0 shadow-sm">
       <CardHeader className="border-b border-border/60 bg-muted/10 sm:px-5">
@@ -177,10 +177,7 @@ function IncomingEditAuditCard({ audit }: { audit: IncomingGatePassAudit }) {
             size="sm"
             className="h-9 shrink-0"
           >
-            <Link
-              to="/incoming/$id"
-              params={{ id: audit.incomingGatePassId }}
-            >
+            <Link to="/grading/$id" params={{ id: audit.gradingGatePassId }}>
               View gate pass
             </Link>
           </Button>
@@ -242,7 +239,7 @@ function IncomingEditAuditCard({ audit }: { audit: IncomingGatePassAudit }) {
   )
 }
 
-const IncomingEditHistoryPage = () => {
+const GradingEditHistoryPage = () => {
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState<PageSize>(DEFAULT_PAGE_SIZE)
 
@@ -255,7 +252,7 @@ const IncomingEditHistoryPage = () => {
   )
 
   const { data, isLoading, isError, error, isFetching, refetch } =
-    useIncomingGatePassEdits(queryParams)
+    useGradingGatePassEdits(queryParams)
 
   const audits = data?.audits ?? []
   const pagination = data?.pagination
@@ -283,7 +280,7 @@ const IncomingEditHistoryPage = () => {
   }
 
   if (isLoading) {
-    return <IncomingEditHistorySkeleton />
+    return <GradingEditHistorySkeleton />
   }
 
   return (
@@ -296,16 +293,16 @@ const IncomingEditHistoryPage = () => {
             size="sm"
             className="-ml-2 mb-1 h-9 px-2 text-muted-foreground"
           >
-            <Link to="/daybook" search={{ tab: "incoming" }}>
+            <Link to="/daybook" search={{ tab: "grading" }}>
               <ArrowLeft className="mr-1.5 h-5 w-5 text-primary" />
               Back to daybook
             </Link>
           </Button>
           <h1 className="font-heading text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
-            Incoming edit history
+            Grading edit history
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Audit trail of incoming gate pass changes in your cold storage.
+            Audit trail of grading gate pass changes in your cold storage.
           </p>
         </div>
       </div>
@@ -366,7 +363,7 @@ const IncomingEditHistoryPage = () => {
       ) : audits.length > 0 ? (
         <div className="space-y-4">
           {audits.map((audit) => (
-            <IncomingEditAuditCard key={audit._id} audit={audit} />
+            <GradingEditAuditCard key={audit._id} audit={audit} />
           ))}
         </div>
       ) : (
@@ -377,7 +374,7 @@ const IncomingEditHistoryPage = () => {
             </EmptyMedia>
             <EmptyTitle>No edits recorded yet</EmptyTitle>
             <EmptyDescription>
-              Changes to incoming gate passes will appear here after they are
+              Changes to grading gate passes will appear here after they are
               saved.
             </EmptyDescription>
           </EmptyHeader>
@@ -454,4 +451,4 @@ const IncomingEditHistoryPage = () => {
   )
 }
 
-export default IncomingEditHistoryPage
+export default GradingEditHistoryPage

@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.7] - 2026-05-24
+
+Grading gate pass edit and audit history wired to the API, with link/delink incoming gate passes on the select step and storage create form using live farmer links.
+
+### Added
+
+- **Update grading gate pass API** — `updateGradingGatePass`, body mapper, types, and `useUpdateGradingGatePass` mutation with list/detail cache invalidation on success.
+- **Grading gate pass by ID** — `getGradingGatePassById`, `findGradingGatePassInCache`, and `useGradingGatePassById` (cache-first, then API fallback).
+- **Incoming link on grading** — `linkIncomingToGradingGatePass`, `delinkIncomingFromGradingGatePass`, and `useGradingIncomingGatePassLink` for linking/unlinking incoming gate passes during edit.
+- **Grading edit history API** — `getGradingGatePassEdits`, audit types, query keys, and `useGradingGatePassEdits` for paginated audit list.
+- **Grading edit history page** — `GradingEditHistory` at `/grading/edit-history` with paginated audits, field diff tables, editor metadata, and links to edit grading gate passes.
+- **Shared grading form hooks** — `useGradingForm` (create/edit shared logic) and `useEditGradingForm`; `gradingGatePassToFormValues` and incoming ref helpers for prefill and reset.
+- **Incoming cache lookup** — `findIncomingGatePassByGatePassNoInCache` for resolving incoming refs when hydrating grading forms.
+- **Grading incoming action cell** — Link/delink controls on the select-gate-passes step in edit mode.
+- **Constants** — `STORAGE_CATEGORIES` for storage gate pass category options.
+
+### Changed
+
+- **Edit grading form** — Multi-step edit flow loads gate pass by route `id`, pre-fills from API, links/unlinks incoming gate passes, submits updates with toasts; loading and error states.
+- **Grading edit route** — `/grading/$id` renders `EditGradingForm` with `gatePassId`.
+- **Daybook grading tab** — “Grading Edit History” navigates to the new edit-history route.
+- **Create storage form** — Farmer combobox uses live farmer link options, receipt voucher number from API, Add Farmer dialog, and `STORAGE_CATEGORIES`; removes mock farmer data.
+- **Incoming edit history** — Card-based audit layout with shadcn `Table` for field diffs; skeleton matches card structure.
+- **Searchable option combobox** — Disabled state shows `cursor-not-allowed` on input and trigger.
+- **Topbar** — Route title for `/grading/edit-history`.
+
 ## [0.2.6] - 2026-05-24
 
 Daybook grading tab wired to the API with paginated list, debounced search, and grading gate pass cards.

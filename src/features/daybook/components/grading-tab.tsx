@@ -219,6 +219,10 @@ const DaybookGradingTab = () => {
     navigate({ to: "/grading" })
   }
 
+  const handleEditHistory= () => {
+    navigate({ to: "/grading/edit-history" })
+  }
+
   const handleSearchChange = (value: string) => {
     setSearchInput(value)
     setDebouncedSearch(value)
@@ -294,7 +298,7 @@ const DaybookGradingTab = () => {
           </Select>
 
           <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-row sm:shrink-0">
-            <Button variant="secondary" className="min-w-0 px-2.5 sm:px-3" disabled>
+            <Button variant="secondary" className="min-w-0 px-2.5 sm:px-3" onClick={handleEditHistory}>
               <span className="truncate sm:hidden">Edit History</span>
               <span className="hidden sm:inline">Grading Edit History</span>
             </Button>

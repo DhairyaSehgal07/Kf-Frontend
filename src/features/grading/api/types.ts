@@ -30,12 +30,35 @@ export type CreateGradingGatePassInput = {
   gatePassNo: number
 }
 
+export type UpdateGradingGatePassBody = {
+  variety: string
+  date: string
+  orderDetails: GradingOrderDetail[]
+  manualGatePassNumber?: number
+  remarks?: string
+}
+
+export type UpdateGradingGatePassInput = {
+  id: string
+  form: GradingFormValues
+}
+
+export type UpdateGradingGatePassResponse = {
+  success: boolean
+  data: Record<string, unknown> | null
+  message?: string
+}
+
 export type GradingGatePassIncomingRef = {
+  _id?: string
   gatePassNo: number
   manualGatePassNumber?: number
   bagsReceived: number
   grossWeightKg: number
   tareWeightKg: number
+  date?: string
+  truckNumber?: string
+  status?: string
 }
 
 export type GradingGatePassFarmer = {
@@ -57,7 +80,7 @@ export type GradingGatePassCreatedBy = {
 
 export type GradingGatePass = {
   _id: string
-  farmerStorageLinkId: GradingGatePassFarmerStorageLink
+  farmerStorageLinkId: GradingGatePassFarmerStorageLink | string
   incomingGatePassIds: GradingGatePassIncomingRef[]
   createdBy: GradingGatePassCreatedBy
   gatePassNo: number
@@ -96,6 +119,66 @@ export type GetGradingGatePassesResponse = {
   message?: string
 }
 
+export type GetGradingGatePassByIdResponse = {
+  success: boolean
+  data: GradingGatePass
+  message?: string
+}
+
 export type SearchGradingGatePassBody = {
   number: number
+}
+
+export type GradingIncomingGatePassLinkInput = {
+  gradingGatePassId: string
+  incomingGatePassId: string
+}
+
+export type GradingIncomingGatePassLinkResponse = {
+  success: boolean
+  data: Record<string, unknown> | null
+  message?: string
+}
+
+export type GradingGatePassAuditEditor = {
+  _id: string
+  name: string
+  mobileNumber?: string
+}
+
+export type GradingGatePassAuditState = Partial<{
+  manualGatePassNumber: number | null
+  date: string
+  variety: string
+  orderDetails: GradingOrderDetail[]
+  incomingGatePassIds: GradingGatePassIncomingRef[] | string[]
+  remarks: string
+}>
+
+export type GradingGatePassAudit = {
+  _id: string
+  gradingGatePassId: string
+  editedById: GradingGatePassAuditEditor
+  previousState: GradingGatePassAuditState
+  modifiedState: GradingGatePassAuditState
+  reason: string
+  ipAddress?: string
+  userAgent?: string
+  createdAt: string
+}
+
+export type GradingGatePassEditsListParams = {
+  page?: number
+  limit?: number
+}
+
+export type GradingGatePassEditsListResult = {
+  audits: GradingGatePassAudit[]
+  pagination: GradingGatePassPagination
+}
+
+export type GetGradingGatePassEditsResponse = {
+  success: boolean
+  data: GradingGatePassEditsListResult
+  message?: string
 }

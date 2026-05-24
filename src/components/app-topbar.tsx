@@ -31,6 +31,7 @@ const routeTitles: Record<string, string> = {
   '/people': 'People',
   '/analytics': 'Analytics',
   '/incoming/edit-history': 'Incoming edit history',
+  '/grading/edit-history': 'Grading edit history',
   '/additional': 'Additional',
 };
 

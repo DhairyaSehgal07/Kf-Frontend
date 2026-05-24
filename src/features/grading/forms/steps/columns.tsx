@@ -4,6 +4,7 @@ import type { GradingSelectIncomingGatePasses } from "../../types"
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
 import { cn } from "@/lib/utils"
+import { GradingIncomingGatePassActionCell } from "./grading-incoming-gate-pass-action-cell"
 import { DataTableColumnHeader } from "./data-table-column-header"
 
 const STATUS_LABELS: Record<string, string> = {
@@ -30,7 +31,39 @@ function getStatusLabel(status: string) {
   return STATUS_LABELS[status] ?? status.replaceAll("_", " ")
 }
 
-export const columns: ColumnDef<GradingSelectIncomingGatePasses>[] = [
+type GradingGatePassColumnOptions = {
+  showActions?: boolean
+  gradingGatePassId?: string
+  farmerStorageLinkId?: string
+}
+
+function createActionsColumn(
+  options: Pick<
+    GradingGatePassColumnOptions,
+    "gradingGatePassId" | "farmerStorageLinkId"
+  >,
+): ColumnDef<GradingSelectIncomingGatePasses> {
+  const { gradingGatePassId, farmerStorageLinkId } = options
+
+  return {
+    id: "actions",
+    header: "Actions",
+    cell: ({ row }) => {
+      if (!gradingGatePassId || !farmerStorageLinkId) return null
+
+      return (
+        <GradingIncomingGatePassActionCell
+          gradingGatePassId={gradingGatePassId}
+          farmerStorageLinkId={farmerStorageLinkId}
+          incomingGatePass={row.original}
+        />
+      )
+    },
+    enableSorting: false,
+  }
+}
+
+const baseColumns: ColumnDef<GradingSelectIncomingGatePasses>[] = [
   {
     id: "select",
     size: 48,
@@ -53,17 +86,6 @@ export const columns: ColumnDef<GradingSelectIncomingGatePasses>[] = [
     ),
     enableSorting: false,
     enableHiding: false,
-  },
-  {
-    accessorKey: "gatePassNo",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="IGP #" />
-    ),
-    cell: ({ row }) => (
-      <span className="tabular-nums text-sm font-medium text-primary">
-        #{row.getValue<number>("gatePassNo")}
-      </span>
-    ),
   },
   {
     accessorKey: "manualGatePassNumber",
@@ -150,3 +172,18 @@ export const columns: ColumnDef<GradingSelectIncomingGatePasses>[] = [
     enableSorting: false,
   },
 ]
+
+export function getGradingGatePassColumns(
+  options?: GradingGatePassColumnOptions,
+): ColumnDef<GradingSelectIncomingGatePasses>[] {
+  if (options?.showActions) {
+    return [
+      ...baseColumns,
+      createActionsColumn({
+        gradingGatePassId: options.gradingGatePassId,
+        farmerStorageLinkId: options.farmerStorageLinkId,
+      }),
+    ]
+  }
+  return baseColumns
+}

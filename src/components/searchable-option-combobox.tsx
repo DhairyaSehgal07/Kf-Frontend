@@ -6,6 +6,7 @@ import {
   ComboboxItem,
   ComboboxList,
 } from "@/components/ui/combobox"
+import { cn } from "@/lib/utils"
 
 export type ComboboxOption = {
   id: string
@@ -108,7 +109,11 @@ export function SearchableOptionCombobox({
           if (!disabled) setOpen(true)
         }}
         onBlur={onBlur}
-        className="w-full"
+        className={cn(
+          "w-full",
+          disabled &&
+            "cursor-not-allowed **:data-[slot=input-group-control]:cursor-not-allowed **:data-[slot=input-group-button]:cursor-not-allowed",
+        )}
       />
       <ComboboxContent>
         <ComboboxEmpty>{emptyMessage}</ComboboxEmpty>

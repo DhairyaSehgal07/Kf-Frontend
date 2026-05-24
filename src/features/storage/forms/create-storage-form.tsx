@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
+import { UserPlus } from "lucide-react"
 import {
   Card,
   CardContent,
@@ -26,73 +27,35 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { DatePickerInput } from "@/components/date-picker"
 import { useAuthStore } from "@/features/auth/store/use-auth-store"
+import { useFarmerLinkOptions } from "@/features/people/api/use-farmer-link-options"
+import { useFarmerStorageLinks } from "@/features/people/api/use-farmer-storage-links"
+import { AddFarmerDialog } from "@/features/people/components/add-farmer-dialog"
+import type { FarmerStorageLink } from "@/features/people/types"
+import {
+  farmerLinkOptionsToComboboxOptions,
+  formatFarmerLinkLabel,
+  getFarmerLinkLabel,
+} from "@/features/people/utils/farmer-link-combobox"
 import {
   SearchableOptionCombobox,
   filterAndSortOptions,
   type ComboboxOption,
 } from "@/components/searchable-option-combobox"
 import { storageFormSchema } from "@/features/storage/schemas/storage-form-schema"
+import {
+  useGetReceiptVoucherNumber,
+} from "@/hooks/use-get-voucher-number"
+import { STORAGE_CATEGORIES } from "@/lib/constants"
 
 const VARIETY_ITEMS = ["Himalini", "K. Pukhraj", "K. Jyoti"].map((value) => ({
   id: value,
   label: value,
 }))
 
-const CATEGORY_ITEMS = ["A", "B", "C"].map((value) => ({
+const CATEGORY_ITEMS = STORAGE_CATEGORIES.map((value) => ({
   id: value,
   label: value,
 }))
-
-const MOCK_FARMER_LINKS = [
-  {
-    id: "507f1f77bcf86cd799439011",
-    label: "Rajesh Sehgal — Acct #12045",
-  },
-  {
-    id: "507f191e810c19729de860ea",
-    label: "Gurpreet Singh — Acct #9821",
-  },
-  {
-    id: "507f191e810c19729de860eb",
-    label: "Harbhajan Singh — Acct #7643",
-  },
-  {
-    id: "507f191e810c19729de860ec",
-    label: "Maninder Pal — Acct #4512",
-  },
-  {
-    id: "507f191e810c19729de860ed",
-    label: "Jaswinder Kaur — Acct #8834",
-  },
-  {
-    id: "507f191e810c19729de860ee",
-    label: "Baldev Singh — Acct #2391",
-  },
-  {
-    id: "507f191e810c19729de860ef",
-    label: "Ranjit Kumar — Acct #6745",
-  },
-  {
-    id: "507f191e810c19729de860f0",
-    label: "Sukhchain Singh — Acct #1189",
-  },
-  {
-    id: "507f191e810c19729de860f1",
-    label: "Paramjit Kaur — Acct #5520",
-  },
-  {
-    id: "507f191e810c19729de860f2",
-    label: "Kuldeep Singh — Acct #9076",
-  },
-  {
-    id: "507f191e810c19729de860f3",
-    label: "Amritpal Singh — Acct #3318",
-  },
-  {
-    id: "507f191e810c19729de860f4",
-    label: "Navjot Singh — Acct #4467",
-  },
-] as const
 
 function isFieldInvalid(meta: { isTouched: boolean; isValid: boolean }) {
   return meta.isTouched && !meta.isValid
@@ -112,9 +75,21 @@ const numericInputProps = {
 
 const CreateStorageForm = () => {
   const userId = useAuthStore((s) => s.user?._id ?? "")
+  const { data: farmerLinkOptions = [], isLoading: isLoadingFarmers } =
+    useFarmerLinkOptions()
+  const { data: farmerStorageLinks = [] } = useFarmerStorageLinks()
+  const {
+    data: nextVoucherNumber,
+    isLoading: isLoadingVoucherNumber,
+    isError: isVoucherNumberError,
+  } = useGetReceiptVoucherNumber("storage-gate-pass")
+  const isGatePassNumberReady =
+    !isLoadingVoucherNumber &&
+    !isVoucherNumberError &&
+    nextVoucherNumber != null
   const farmerOptions = useMemo<ComboboxOption[]>(
-    () => [...MOCK_FARMER_LINKS],
-    []
+    () => farmerLinkOptionsToComboboxOptions(farmerLinkOptions),
+    [farmerLinkOptions],
   )
   const [farmerSearch, setFarmerSearch] = useState("")
   const [farmerComboboxOpen, setFarmerComboboxOpen] = useState(false)
@@ -123,6 +98,7 @@ const CreateStorageForm = () => {
   const [categorySearch, setCategorySearch] = useState("")
   const [categoryComboboxOpen, setCategoryComboboxOpen] = useState(false)
   const [reviewOpen, setReviewOpen] = useState(false)
+  const [addFarmerOpen, setAddFarmerOpen] = useState(false)
 
   const sortedFarmers = useMemo(
     () => filterAndSortOptions(farmerSearch, farmerOptions),
@@ -143,8 +119,28 @@ const CreateStorageForm = () => {
   })
 
   const getFarmerLabel = (farmerStorageLinkId: string) =>
-    farmerOptions.find((option) => option.id === farmerStorageLinkId)
-      ?.label ?? farmerStorageLinkId
+    getFarmerLinkLabel(farmerStorageLinkId, farmerLinkOptions)
+
+  const handleFarmerCreated = (link: FarmerStorageLink) => {
+    form.setFieldValue("farmerStorageLinkId", link._id)
+    setFarmerSearch(
+      formatFarmerLinkLabel({
+        farmerStorageLinkId: link._id,
+        name: link.farmerId.name,
+        accountNumber: link.accountNumber,
+      }),
+    )
+    setFarmerComboboxOpen(false)
+  }
+
+  const resetComboboxState = () => {
+    setFarmerSearch("")
+    setFarmerComboboxOpen(false)
+    setVarietySearch("")
+    setVarietyComboboxOpen(false)
+    setCategorySearch("")
+    setCategoryComboboxOpen(false)
+  }
 
   const handleOpenReview = () => {
     void form.handleSubmit({ submitAction: "review" })
@@ -165,7 +161,13 @@ const CreateStorageForm = () => {
       <CardHeader className="border-b bg-muted/30 pb-6">
         <CardTitle className="font-heading text-xl font-semibold tracking-tight sm:text-2xl">
           Storage Gate Pass{" "}
-          <span className="text-primary">#—</span>
+          <span className="font-mono tabular-nums text-primary sm:text-2xl">
+            {isLoadingVoucherNumber
+              ? "…"
+              : isVoucherNumberError || nextVoucherNumber == null
+                ? "—"
+                : `#${nextVoucherNumber}`}
+          </span>
         </CardTitle>
         <CardDescription className="text-base">
           Record crop and account details for a new storage gate pass.
@@ -257,26 +259,50 @@ const CreateStorageForm = () => {
                         className="@md/field-group:col-span-2"
                       >
                         <FieldLabel htmlFor="create-storage-farmer">
-                          Farmer Link
+                          Farmer
                         </FieldLabel>
-                        <SearchableOptionCombobox
-                          id="create-storage-farmer"
-                          name={field.name}
-                          value={field.state.value}
-                          onValueChange={field.handleChange}
-                          onBlur={field.handleBlur}
-                          isInvalid={isInvalid}
-                          placeholder="Search farmers..."
-                          emptyMessage="No farmers found."
-                          options={farmerOptions}
-                          sortedOptions={sortedFarmers}
-                          search={farmerSearch}
-                          setSearch={setFarmerSearch}
-                          open={farmerComboboxOpen}
-                          setOpen={setFarmerComboboxOpen}
-                        />
+                        <div className="flex gap-2">
+                          <div className="min-w-0 flex-1">
+                            <SearchableOptionCombobox
+                              id="create-storage-farmer"
+                              name={field.name}
+                              value={field.state.value}
+                              onValueChange={field.handleChange}
+                              onBlur={field.handleBlur}
+                              isInvalid={isInvalid}
+                              placeholder={
+                                isLoadingFarmers
+                                  ? "Loading farmers..."
+                                  : "Search farmers..."
+                              }
+                              emptyMessage={
+                                isLoadingFarmers
+                                  ? "Loading farmers..."
+                                  : "No farmers found."
+                              }
+                              options={farmerOptions}
+                              sortedOptions={sortedFarmers}
+                              search={farmerSearch}
+                              setSearch={setFarmerSearch}
+                              open={farmerComboboxOpen}
+                              setOpen={setFarmerComboboxOpen}
+                              disabled={isLoadingFarmers}
+                            />
+                          </div>
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            className="h-auto min-h-9 shrink-0 gap-1.5 px-3"
+                            onClick={() => setAddFarmerOpen(true)}
+                            aria-label="Add farmer"
+                          >
+                            <UserPlus className="size-4 shrink-0" />
+                            <span className="hidden sm:inline">Add Farmer</span>
+                          </Button>
+                        </div>
                         <FieldDescription>
-                          Link this pass to a storage account.
+                          Link this pass to a storage account. If the farmer is
+                          not listed, add them here without leaving this form.
                         </FieldDescription>
                         {isInvalid && (
                           <FieldError errors={field.state.meta.errors} />
@@ -415,12 +441,7 @@ const CreateStorageForm = () => {
                 "quantities",
                 createDefaultStorageQuantities()
               )
-              setFarmerSearch("")
-              setFarmerComboboxOpen(false)
-              setVarietySearch("")
-              setVarietyComboboxOpen(false)
-              setCategorySearch("")
-              setCategoryComboboxOpen(false)
+              resetComboboxState()
             }}
           >
             Reset Form
@@ -430,10 +451,14 @@ const CreateStorageForm = () => {
             children={(isSubmitting) => (
               <Button
                 type="button"
-                disabled={isSubmitting}
+                disabled={isSubmitting || !isGatePassNumberReady}
                 onClick={handleOpenReview}
               >
-                {isSubmitting ? "Validating…" : "Review"}
+                {isLoadingVoucherNumber
+                  ? "Loading pass no…"
+                  : isSubmitting
+                    ? "Validating…"
+                    : "Review"}
               </Button>
             )}
           />
@@ -466,6 +491,13 @@ const CreateStorageForm = () => {
             />
           )
         }}
+      />
+
+      <AddFarmerDialog
+        open={addFarmerOpen}
+        onOpenChange={setAddFarmerOpen}
+        links={farmerStorageLinks}
+        onSuccess={handleFarmerCreated}
       />
     </Card>
   )

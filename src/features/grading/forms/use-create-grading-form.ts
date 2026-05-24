@@ -1,15 +1,16 @@
-import { useForm } from "@tanstack/react-form"
 import {
   createDefaultQuantities,
-  gradingFormSchema,
   type GradingFormValues,
 } from "@/features/grading/schemas/grading-form-schema"
 import {
-  defaultGradingSubmitMeta,
-  type GradingSubmitMeta,
-} from "@/features/grading/types"
+  useGradingForm,
+  type GradingFormApi,
+} from "@/features/grading/forms/use-grading-form"
 
-export type { GradingFormValues }
+export type { GradingFormValues, GradingFormApi }
+
+/** @deprecated Use `GradingFormApi` */
+export type CreateGradingFormApi = GradingFormApi
 
 type UseCreateGradingFormOptions = {
   onOpenReview?: () => void
@@ -19,7 +20,7 @@ type UseCreateGradingFormOptions = {
 export function useCreateGradingForm(options: UseCreateGradingFormOptions = {}) {
   const todayIso = new Date().toISOString()
 
-  return useForm({
+  return useGradingForm({
     defaultValues: {
       farmerStorageLinkId: "",
       variety: "",
@@ -29,22 +30,7 @@ export function useCreateGradingForm(options: UseCreateGradingFormOptions = {}) 
       quantities: createDefaultQuantities(),
       remarks: "",
     },
-    validators: {
-      onChange: gradingFormSchema,
-      onSubmit: gradingFormSchema,
-    },
-    onSubmitMeta: defaultGradingSubmitMeta,
-    onSubmit: async ({ value, meta }) => {
-      const parsed = gradingFormSchema.parse(value)
-
-      if ((meta as GradingSubmitMeta).submitAction === "review") {
-        options.onOpenReview?.()
-        return
-      }
-
-      await options.onCreate?.(parsed)
-    },
+    onOpenReview: options.onOpenReview,
+    onSubmitParsed: options.onCreate,
   })
 }
-
-export type CreateGradingFormApi = ReturnType<typeof useCreateGradingForm>
