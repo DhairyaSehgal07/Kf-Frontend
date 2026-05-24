@@ -38,6 +38,36 @@ export type CreateIncomingGatePassInput = {
   gatePassNo: number
 }
 
+export type UpdateIncomingGatePassWeightSlip = {
+  slipNumber: string
+  grossWeightKg: number
+  tareWeightKg: number
+}
+
+export type UpdateIncomingGatePassBody = {
+  manualGatePassNumber?: number | null
+  truckNumber: string
+  date: string
+  farmerStorageLinkId: string
+  variety: string
+  category: IncomingGatePassCategory
+  stage: string
+  bagsReceived: number
+  weightSlip: UpdateIncomingGatePassWeightSlip
+  remarks?: string
+}
+
+export type UpdateIncomingGatePassResponse = {
+  success: boolean
+  data: Record<string, unknown> | null
+  message?: string
+}
+
+export type UpdateIncomingGatePassInput = {
+  id: string
+  form: IncomingFormValues
+}
+
 export type IncomingGatePassFarmer = {
   _id?: string
   name: string

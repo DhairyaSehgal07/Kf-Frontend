@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.4] - 2026-05-24
+
+Incoming gate pass edit wired to the API with cache-first load, farmer links from the API, and update mutation with toast feedback.
+
+### Added
+
+- **Update incoming gate pass API** — `updateIncomingGatePass`, request body mapper, types, and `useUpdateIncomingGatePass` mutation with list/detail cache invalidation on success.
+- **Gate pass by ID hook** — `useIncomingGatePassById` resolves from React Query list cache first, then falls back to a paginated list fetch.
+- **Cache lookup** — `findIncomingGatePassInCache` scans cached incoming gate pass list queries for a matching `_id`.
+- **Form mapper** — `incomingGatePassToFormValues` maps an `IncomingGatePass` to `IncomingFormValues` for edit and reset.
+
+### Changed
+
+- **Edit incoming form** — Loads gate pass by route `id`; pre-fills fields from API data; submits updates via mutation with success/error toasts; uses live farmer link options; reset restores server values; loading and error states.
+- **Incoming edit route** — `/incoming/$id` renders `EditIncomingForm` with `gatePassId` instead of a placeholder.
+- **Gate pass card** — Removes internal “System Stage” field from expanded details.
+
 ## [0.2.3] - 2026-05-24
 
 Daybook incoming tab wired to the API with paginated list, debounced search, and loading skeletons.
@@ -256,6 +273,7 @@ First application scaffold for the Kapur frontend (`kf-frontend`).
 
 - Default Vite starter styles (`App.css`) and demo application UI from the initial template.
 
+[0.2.4]: https://github.com/compare/v0.2.3...v0.2.4
 [0.2.3]: https://github.com/compare/v0.2.2...v0.2.3
 [0.2.2]: https://github.com/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/compare/v0.2.0...v0.2.1

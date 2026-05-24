@@ -294,7 +294,6 @@ export function GatePassCard({
 
                 <div className="flex items-center gap-6 rounded-xl border border-border/50 bg-muted/20 p-4">
                   <InfoBlock label="Created By" value={createdBy} />
-                  <InfoBlock label="System Stage" value={gatePass.stage} />
                 </div>
               </div>
 

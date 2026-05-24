@@ -6,11 +6,7 @@ export const Route = createFileRoute('/_authenticated/incoming/$id')({
 })
 
 function RouteComponent() {
-    const { id } = Route.useParams()
-  return (
-    <>
-      <div className='text-2xl'>Grading ID: {id}</div>
-      <EditIncomingForm/>
-    </>
-    )
+  const { id } = Route.useParams()
+
+  return <EditIncomingForm gatePassId={id} />
 }

@@ -9,4 +9,5 @@ export const incomingGatePassKeys = {
   search: (number: number) =>
     [...incomingGatePassKeys.searches(), number] as const,
   create: () => [...incomingGatePassKeys.all, "create"] as const,
+  update: (id: string) => [...incomingGatePassKeys.all, "update", id] as const,
 }

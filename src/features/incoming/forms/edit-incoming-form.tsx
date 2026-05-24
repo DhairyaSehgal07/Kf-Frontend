@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react"
 import { useForm } from "@tanstack/react-form"
+import { Loader2 } from "lucide-react"
+import { toast } from "sonner"
 import {
   Card,
   CardContent,
@@ -24,6 +26,14 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { DatePickerInput } from "@/components/date-picker"
 import { useAuthStore } from "@/features/auth/store/use-auth-store"
+import type { IncomingGatePass } from "@/features/incoming/api/types"
+import { useIncomingGatePassById } from "@/features/incoming/api/use-incoming-gate-pass-by-id"
+import { useUpdateIncomingGatePass } from "@/features/incoming/api/use-update-incoming-gate-pass"
+import { useFarmerLinkOptions } from "@/features/people/api/use-farmer-link-options"
+import {
+  farmerLinkOptionsToComboboxOptions,
+  getFarmerLinkLabel,
+} from "@/features/people/utils/farmer-link-combobox"
 import {
   SearchableOptionCombobox,
   filterAndSortOptions,
@@ -31,71 +41,43 @@ import {
 } from "@/components/searchable-option-combobox"
 import { incomingFormSchema } from "@/features/incoming/schemas/incoming-form-schema"
 import { defaultSubmitMeta } from "@/features/incoming/types"
+import { incomingGatePassToFormValues } from "@/features/incoming/utils/incoming-gate-pass-to-form-values"
+import { INCOMING_CATEGORIES, INCOMING_STAGES } from "@/lib/constants"
+
 const VARIETY_ITEMS = ["Himalini", "K. Pukhraj", "K. Jyoti"].map((value) => ({
   id: value,
   label: value,
 }))
 
-const CATEGORY_ITEMS = ["A", "B", "C"].map((value) => ({
+const CATEGORY_ITEMS = INCOMING_CATEGORIES.map((value) => ({
   id: value,
   label: value,
 }))
 
-const STAGE_ITEMS = ["Incoming", "Grading", "Storage"].map((value) => ({
+const STAGE_ITEMS = INCOMING_STAGES.map((value) => ({
   id: value,
   label: value,
 }))
 
-const MOCK_FARMER_LINKS = [
-  {
-    id: "507f1f77bcf86cd799439011",
-    label: "Rajesh Sehgal — Acct #12045",
-  },
-  {
-    id: "507f191e810c19729de860ea",
-    label: "Gurpreet Singh — Acct #9821",
-  },
-  {
-    id: "507f191e810c19729de860eb",
-    label: "Harbhajan Singh — Acct #7643",
-  },
-  {
-    id: "507f191e810c19729de860ec",
-    label: "Maninder Pal — Acct #4512",
-  },
-  {
-    id: "507f191e810c19729de860ed",
-    label: "Jaswinder Kaur — Acct #8834",
-  },
-  {
-    id: "507f191e810c19729de860ee",
-    label: "Baldev Singh — Acct #2391",
-  },
-  {
-    id: "507f191e810c19729de860ef",
-    label: "Ranjit Kumar — Acct #6745",
-  },
-  {
-    id: "507f191e810c19729de860f0",
-    label: "Sukhchain Singh — Acct #1189",
-  },
-  {
-    id: "507f191e810c19729de860f1",
-    label: "Paramjit Kaur — Acct #5520",
-  },
-  {
-    id: "507f191e810c19729de860f2",
-    label: "Kuldeep Singh — Acct #9076",
-  },
-  {
-    id: "507f191e810c19729de860f3",
-    label: "Amritpal Singh — Acct #3318",
-  },
-  {
-    id: "507f191e810c19729de860f4",
-    label: "Navjot Singh — Acct #4467",
-  },
-] as const
+function ensureOptionInList(
+  options: ComboboxOption[],
+  value: string | undefined,
+): ComboboxOption[] {
+  if (!value?.trim()) return options
+  if (options.some((o) => o.id === value)) return options
+  return [...options, { id: value, label: value }]
+}
+
+function farmerSearchLabelFromGatePass(gatePass: IncomingGatePass): string {
+  const link = gatePass.farmerStorageLinkId
+  if (!link || typeof link === "string") return ""
+  const name = link.farmerId?.name ?? ""
+  return `${name} (Account #${link.accountNumber})`
+}
+
+type EditIncomingFormProps = {
+  gatePassId: string
+}
 
 function isFieldInvalid(
   meta: { isTouched: boolean; isValid: boolean }
@@ -120,61 +102,128 @@ const numericInputProps = {
   onWheel: (e: React.WheelEvent<HTMLInputElement>) => e.currentTarget.blur(),
 }
 
-const EditIncomingForm = () => {
+const EditIncomingForm = ({ gatePassId }: EditIncomingFormProps) => {
+  const {
+    gatePass,
+    isLoading: isLoadingGatePass,
+    isError: isGatePassError,
+    error: gatePassError,
+  } = useIncomingGatePassById(gatePassId)
+
+  if (isLoadingGatePass) {
+    return (
+      <Card className="mx-auto w-full max-w-4xl shadow-sm">
+        <CardContent className="flex min-h-64 items-center justify-center gap-2 py-12 text-sm text-muted-foreground">
+          <Loader2 className="size-4 animate-spin" />
+          Loading gate pass…
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (isGatePassError) {
+    return (
+      <Card className="mx-auto w-full max-w-4xl shadow-sm">
+        <CardContent className="flex min-h-64 items-center justify-center py-12 text-center">
+          <p className="text-sm text-destructive">
+            {gatePassError?.message ?? "Failed to load incoming gate pass."}
+          </p>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (!gatePass) {
+    return (
+      <Card className="mx-auto w-full max-w-4xl shadow-sm">
+        <CardContent className="flex min-h-64 items-center justify-center py-12 text-center">
+          <p className="text-sm text-muted-foreground">
+            Incoming gate pass not found.
+          </p>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  return <EditIncomingFormFields key={gatePass._id} gatePass={gatePass} />
+}
+
+type EditIncomingFormFieldsProps = {
+  gatePass: IncomingGatePass
+}
+
+function EditIncomingFormFields({ gatePass }: EditIncomingFormFieldsProps) {
   const userId = useAuthStore((s) => s.user?._id ?? "")
-  const todayIso = new Date().toISOString()
-  const farmerOptions = useMemo<ComboboxOption[]>(
-    () => [...MOCK_FARMER_LINKS],
-    []
+  const { mutateAsync: updateIncomingGatePass } = useUpdateIncomingGatePass(
+    gatePass._id,
   )
-  const [farmerSearch, setFarmerSearch] = useState("")
+  const { data: farmerLinkOptions = [], isLoading: isLoadingFarmers } =
+    useFarmerLinkOptions()
+
+  const farmerOptions = useMemo<ComboboxOption[]>(() => {
+    const base = farmerLinkOptionsToComboboxOptions(farmerLinkOptions)
+    const link = gatePass.farmerStorageLinkId
+    if (!link || typeof link === "string") return base
+    const id = link._id
+    if (!id || base.some((o) => o.id === id)) return base
+    const name = link.farmerId?.name ?? "Farmer"
+    return [
+      ...base,
+      {
+        id,
+        label: `${name} (Account #${link.accountNumber})`,
+        name,
+        accountNumber: link.accountNumber,
+      },
+    ]
+  }, [farmerLinkOptions, gatePass])
+
+  const varietyOptions = useMemo(
+    () => ensureOptionInList(VARIETY_ITEMS, gatePass.variety),
+    [gatePass.variety],
+  )
+  const categoryOptions = useMemo(
+    () => ensureOptionInList(CATEGORY_ITEMS, gatePass.category),
+    [gatePass.category],
+  )
+  const stageOptions = useMemo(
+    () => ensureOptionInList(STAGE_ITEMS, gatePass.stage),
+    [gatePass.stage],
+  )
+
+  const [farmerSearch, setFarmerSearch] = useState(() =>
+    farmerSearchLabelFromGatePass(gatePass),
+  )
   const [farmerComboboxOpen, setFarmerComboboxOpen] = useState(false)
-  const [varietySearch, setVarietySearch] = useState("")
+  const [varietySearch, setVarietySearch] = useState(() => gatePass.variety)
   const [varietyComboboxOpen, setVarietyComboboxOpen] = useState(false)
-  const [categorySearch, setCategorySearch] = useState("")
+  const [categorySearch, setCategorySearch] = useState(() => gatePass.category)
   const [categoryComboboxOpen, setCategoryComboboxOpen] = useState(false)
-  const [stageSearch, setStageSearch] = useState("")
+  const [stageSearch, setStageSearch] = useState(() => gatePass.stage)
   const [stageComboboxOpen, setStageComboboxOpen] = useState(false)
   const [reviewOpen, setReviewOpen] = useState(false)
 
   const sortedFarmers = useMemo(
     () => filterAndSortOptions(farmerSearch, farmerOptions),
-    [farmerSearch, farmerOptions]
+    [farmerSearch, farmerOptions],
   )
   const sortedVarieties = useMemo(
-    () => filterAndSortOptions(varietySearch, VARIETY_ITEMS),
-    [varietySearch]
+    () => filterAndSortOptions(varietySearch, varietyOptions),
+    [varietySearch, varietyOptions],
   )
   const sortedCategories = useMemo(
-    () => filterAndSortOptions(categorySearch, CATEGORY_ITEMS),
-    [categorySearch]
+    () => filterAndSortOptions(categorySearch, categoryOptions),
+    [categorySearch, categoryOptions],
   )
   const sortedStages = useMemo(
-    () => filterAndSortOptions(stageSearch, STAGE_ITEMS),
-    [stageSearch]
+    () => filterAndSortOptions(stageSearch, stageOptions),
+    [stageSearch, stageOptions],
   )
 
   const form = useForm({
-    defaultValues: {
-      manualGatePassNumber: undefined as number | undefined,
-      truckNumber: "",
-      farmerStorageLinkId: "",
-      createdBy: userId,
-      variety: "",
-      category: "",
-      stage: "",
-      date: todayIso,
-      bagsReceived: 0,
-      weightSlip: {
-        slipNumber: "",
-        grossWeightKg: 0,
-        tareWeightKg: 0,
-      },
-      status: "NOT_GRADED",
-      remarks: "",
-    },
+    defaultValues: incomingGatePassToFormValues(gatePass, userId),
     validators: {
-      onChange: incomingFormSchema,
+      onBlur: incomingFormSchema,
       onSubmit: incomingFormSchema,
     },
     onSubmitMeta: defaultSubmitMeta,
@@ -186,14 +235,36 @@ const EditIncomingForm = () => {
         return
       }
 
-      console.log(parsed)
-      setReviewOpen(false)
+      try {
+        const { message } = await updateIncomingGatePass({
+          id: gatePass._id,
+          form: parsed,
+        })
+
+        toast.success(message ?? "Incoming gate pass updated", {
+          position: "bottom-right",
+        })
+        setReviewOpen(false)
+      } catch (error) {
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "Failed to update incoming gate pass",
+          { position: "bottom-right" },
+        )
+      }
     },
   })
 
-  const getFarmerLabel = (farmerStorageLinkId: string) =>
-    farmerOptions.find((option) => option.id === farmerStorageLinkId)
-      ?.label ?? farmerStorageLinkId
+  const getFarmerLabel = (farmerStorageLinkId: string) => {
+    const fromList = getFarmerLinkLabel(farmerStorageLinkId, farmerLinkOptions)
+    if (fromList !== farmerStorageLinkId) return fromList
+    const link = gatePass.farmerStorageLinkId
+    if (typeof link !== "string" && link?._id === farmerStorageLinkId) {
+      return farmerSearchLabelFromGatePass(gatePass)
+    }
+    return fromList
+  }
 
   const handleOpenReview = () => {
     void form.handleSubmit({ submitAction: "review" })
@@ -203,18 +274,35 @@ const EditIncomingForm = () => {
     void form.handleSubmit({ submitAction: "submit" })
   }
 
+  const handleResetForm = () => {
+    form.reset(incomingGatePassToFormValues(gatePass, userId))
+    setFarmerSearch(farmerSearchLabelFromGatePass(gatePass))
+    setFarmerComboboxOpen(false)
+    setVarietySearch(gatePass.variety)
+    setVarietyComboboxOpen(false)
+    setCategorySearch(gatePass.category)
+    setCategoryComboboxOpen(false)
+    setStageSearch(gatePass.stage)
+    setStageComboboxOpen(false)
+  }
+
   useEffect(() => {
     if (userId) {
       form.setFieldValue("createdBy", userId)
     }
-  }, [userId])
+  }, [userId, form])
 
   return (
     <Card className="w-full max-w-4xl mx-auto shadow-sm">
       <CardHeader className="border-b bg-muted/30 pb-6">
-        <CardTitle className="text-2xl">Incoming Gate Pass</CardTitle>
+        <CardTitle className="text-2xl">
+          Edit Incoming Gate Pass{" "}
+          <span className="font-mono text-2xl tabular-nums text-primary">
+            #{gatePass.gatePassNo}
+          </span>
+        </CardTitle>
         <CardDescription className="text-base">
-          Record transport, crop, and weighbridge details for a new incoming gate pass.
+          Update transport, crop, and weighbridge details for this incoming gate pass.
         </CardDescription>
       </CardHeader>
 
@@ -222,7 +310,7 @@ const EditIncomingForm = () => {
         button in the footer triggers the submission properly.
       */}
       <form
-        id="create-incoming-form"
+        id="edit-incoming-form"
         noValidate
         onSubmit={(e) => e.preventDefault()}
       >
@@ -329,24 +417,33 @@ const EditIncomingForm = () => {
                     const isInvalid = isFieldInvalid(field.state.meta)
                     return (
                       <Field data-invalid={isInvalid}>
-                        <FieldLabel htmlFor="create-incoming-farmer">
+                        <FieldLabel htmlFor="edit-incoming-farmer">
                           Farmer Link
                         </FieldLabel>
                         <SearchableOptionCombobox
-                          id="create-incoming-farmer"
+                          id="edit-incoming-farmer"
                           name={field.name}
                           value={field.state.value}
                           onValueChange={field.handleChange}
                           onBlur={field.handleBlur}
                           isInvalid={isInvalid}
-                          placeholder="Search farmers..."
-                          emptyMessage="No farmers found."
+                          placeholder={
+                            isLoadingFarmers
+                              ? "Loading farmers..."
+                              : "Search farmers..."
+                          }
+                          emptyMessage={
+                            isLoadingFarmers
+                              ? "Loading farmers..."
+                              : "No farmers found."
+                          }
                           options={farmerOptions}
                           sortedOptions={sortedFarmers}
                           search={farmerSearch}
                           setSearch={setFarmerSearch}
                           open={farmerComboboxOpen}
                           setOpen={setFarmerComboboxOpen}
+                          disabled={isLoadingFarmers}
                         />
                         <FieldDescription>
                           Link this pass to a storage account.
@@ -376,11 +473,11 @@ const EditIncomingForm = () => {
                     const isInvalid = isFieldInvalid(field.state.meta)
                     return (
                       <Field data-invalid={isInvalid}>
-                        <FieldLabel htmlFor="create-incoming-variety">
+                        <FieldLabel htmlFor="edit-incoming-variety">
                           Variety
                         </FieldLabel>
                         <SearchableOptionCombobox
-                          id="create-incoming-variety"
+                          id="edit-incoming-variety"
                           name={field.name}
                           value={field.state.value}
                           onValueChange={field.handleChange}
@@ -388,7 +485,7 @@ const EditIncomingForm = () => {
                           isInvalid={isInvalid}
                           placeholder="Search varieties..."
                           emptyMessage="No varieties found."
-                          options={VARIETY_ITEMS}
+                          options={varietyOptions}
                           sortedOptions={sortedVarieties}
                           search={varietySearch}
                           setSearch={setVarietySearch}
@@ -408,11 +505,11 @@ const EditIncomingForm = () => {
                     const isInvalid = isFieldInvalid(field.state.meta)
                     return (
                       <Field data-invalid={isInvalid}>
-                        <FieldLabel htmlFor="create-incoming-category">
+                        <FieldLabel htmlFor="edit-incoming-category">
                           Category
                         </FieldLabel>
                         <SearchableOptionCombobox
-                          id="create-incoming-category"
+                          id="edit-incoming-category"
                           name={field.name}
                           value={field.state.value}
                           onValueChange={field.handleChange}
@@ -420,7 +517,7 @@ const EditIncomingForm = () => {
                           isInvalid={isInvalid}
                           placeholder="Search categories..."
                           emptyMessage="No categories found."
-                          options={CATEGORY_ITEMS}
+                          options={categoryOptions}
                           sortedOptions={sortedCategories}
                           search={categorySearch}
                           setSearch={setCategorySearch}
@@ -440,11 +537,11 @@ const EditIncomingForm = () => {
                     const isInvalid = isFieldInvalid(field.state.meta)
                     return (
                       <Field data-invalid={isInvalid}>
-                        <FieldLabel htmlFor="create-incoming-stage">
+                        <FieldLabel htmlFor="edit-incoming-stage">
                           Stage
                         </FieldLabel>
                         <SearchableOptionCombobox
-                          id="create-incoming-stage"
+                          id="edit-incoming-stage"
                           name={field.name}
                           value={field.state.value}
                           onValueChange={field.handleChange}
@@ -452,7 +549,7 @@ const EditIncomingForm = () => {
                           isInvalid={isInvalid}
                           placeholder="Search stages..."
                           emptyMessage="No stages found."
-                          options={STAGE_ITEMS}
+                          options={stageOptions}
                           sortedOptions={sortedStages}
                           search={stageSearch}
                           setSearch={setStageSearch}
@@ -655,17 +752,7 @@ const EditIncomingForm = () => {
           <Button
             variant="outline"
             type="button"
-            onClick={() => {
-              form.reset()
-              setFarmerSearch("")
-              setFarmerComboboxOpen(false)
-              setVarietySearch("")
-              setVarietyComboboxOpen(false)
-              setCategorySearch("")
-              setCategoryComboboxOpen(false)
-              setStageSearch("")
-              setStageComboboxOpen(false)
-            }}
+            onClick={handleResetForm}
           >
             Reset Form
           </Button>
