@@ -52,19 +52,19 @@ const optionalPositiveNumber = z.union([
 ])
 
 type CreateAddFarmerFormSchemaOptions = {
-  usedAccountNumbers: number[]
-  usedMobileNumbers: string[]
+  getUsedAccountNumbers: () => number[]
+  getUsedMobileNumbers: () => string[]
 }
 
 export function createAddFarmerFormSchema({
-  usedAccountNumbers,
-  usedMobileNumbers,
+  getUsedAccountNumbers,
+  getUsedMobileNumbers,
 }: CreateAddFarmerFormSchemaOptions) {
   return z.object({
     name: z.string().trim().min(1, "Name is required"),
     address: z.string().trim().min(1, "Address is required"),
     mobileNumber: indianMobile.refine(
-      (value) => !usedMobileNumbers.includes(value),
+      (value) => !getUsedMobileNumbers().includes(value),
       { message: "Mobile number already in use" },
     ),
     accountNumber: z
@@ -80,7 +80,7 @@ export function createAddFarmerFormSchema({
             const num = Number(value)
             return !Number.isNaN(num) && num > 0 && Number.isInteger(num)
           }, "Account number is required")
-          .refine((value) => !usedAccountNumbers.includes(Number(value)), {
+          .refine((value) => !getUsedAccountNumbers().includes(Number(value)), {
             message: "This account number is already taken",
           }),
       )

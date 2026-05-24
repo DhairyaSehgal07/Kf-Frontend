@@ -1,6 +1,6 @@
 import { useForm } from "@tanstack/react-form"
 import { Info, Loader2, UserPlus } from "lucide-react"
-import { useEffect, useMemo } from "react"
+import { useMemo } from "react"
 import { toast } from "sonner"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -51,6 +51,7 @@ type AddFarmerDialogProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
   links?: FarmerStorageLink[]
+  onSuccess?: (link: FarmerStorageLink) => void
 }
 
 function createDefaultValues(nextAccountNumber: number): AddFarmerFormInput {
@@ -66,8 +67,35 @@ function createDefaultValues(nextAccountNumber: number): AddFarmerFormInput {
   }
 }
 
-function isFieldInvalid(meta: { isTouched: boolean; isValid: boolean }) {
-  return meta.isTouched && !meta.isValid
+type FieldMetaForDisplay = {
+  isBlurred: boolean
+  isValid: boolean
+  errors: unknown[]
+}
+
+function shouldShowFieldErrors(
+  meta: FieldMetaForDisplay,
+  submissionAttempts: number,
+) {
+  return (
+    (submissionAttempts > 0 || meta.isBlurred) &&
+    !meta.isValid &&
+    meta.errors.length > 0
+  )
+}
+
+function FieldErrorSlot({
+  show,
+  errors,
+}: {
+  show: boolean
+  errors?: Array<{ message?: string } | undefined>
+}) {
+  return (
+    <div className="min-h-5" aria-live="polite">
+      {show ? <FieldError errors={errors} /> : null}
+    </div>
+  )
 }
 
 function parseOptionalPositiveNumber(value: string): number | undefined {
@@ -124,12 +152,36 @@ export function AddFarmerDialog({
   open,
   onOpenChange,
   links = [],
+  onSuccess,
 }: AddFarmerDialogProps) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      {open ? (
+        <AddFarmerDialogContent
+          links={links}
+          onSuccess={onSuccess}
+          onOpenChange={onOpenChange}
+        />
+      ) : null}
+    </Dialog>
+  )
+}
+
+type AddFarmerDialogContentProps = {
+  links: FarmerStorageLink[]
+  onOpenChange: (open: boolean) => void
+  onSuccess?: (link: FarmerStorageLink) => void
+}
+
+function AddFarmerDialogContent({
+  links,
+  onOpenChange,
+  onSuccess,
+}: AddFarmerDialogContentProps) {
   const usedAccountNumbers = useMemo(
     () => getUsedAccountNumbers(links),
     [links],
   )
-  const usedMobileNumbers = useMemo(() => getUsedMobileNumbers(links), [links])
   const nextAccountNumber = useMemo(
     () => getNextAccountNumber(usedAccountNumbers),
     [usedAccountNumbers],
@@ -140,25 +192,27 @@ export function AddFarmerDialog({
   const formSchema = useMemo(
     () =>
       createAddFarmerFormSchema({
-        usedAccountNumbers,
-        usedMobileNumbers,
+        getUsedAccountNumbers: () => getUsedAccountNumbers(links),
+        getUsedMobileNumbers: () => getUsedMobileNumbers(links),
       }),
-    [usedAccountNumbers, usedMobileNumbers],
+    [links],
   )
 
   const form = useForm({
     defaultValues: createDefaultValues(nextAccountNumber),
     validators: {
-      onBlur: formSchema,
       onSubmit: formSchema,
     },
     onSubmit: async ({ value }) => {
       try {
         const payload = buildAddFarmerPayload(formSchema.parse(value))
-        const { message } = await quickRegisterFarmer(payload)
+        const { message, data } = await quickRegisterFarmer(payload)
         toast.success(message ?? "Farmer added successfully", {
           position: "bottom-right",
         })
+        if (data) {
+          onSuccess?.(data)
+        }
         onOpenChange(false)
       } catch (error) {
         toast.error(
@@ -169,21 +223,8 @@ export function AddFarmerDialog({
     },
   })
 
-  useEffect(() => {
-    if (open) {
-      form.setFieldValue("accountNumber", nextAccountNumber.toString())
-    }
-  }, [open, nextAccountNumber, form])
-
-  useEffect(() => {
-    if (!open) {
-      form.reset()
-    }
-  }, [open, form])
-
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex max-h-[min(90dvh,720px)] max-w-lg flex-col gap-0 overflow-hidden p-0 sm:max-w-lg">
+    <DialogContent className="flex max-h-[min(90dvh,720px)] max-w-lg flex-col gap-0 overflow-hidden p-0 sm:max-w-lg">
         <DialogHeader className="shrink-0 border-b border-border px-6 py-5">
           <DialogTitle className="font-heading text-xl font-semibold tracking-tight text-foreground">
             Add farmer
@@ -209,7 +250,10 @@ export function AddFarmerDialog({
               <FieldGroup className="gap-5">
                   <form.Field name="accountNumber">
                     {(field) => {
-                      const isInvalid = isFieldInvalid(field.state.meta)
+                      const isInvalid = shouldShowFieldErrors(
+                        field.state.meta,
+                        field.form.state.submissionAttempts,
+                      )
                       return (
                         <Field data-invalid={isInvalid}>
                           <div className="flex items-center justify-between gap-2">
@@ -289,9 +333,10 @@ export function AddFarmerDialog({
                             </FieldDescription>
                           </div>
 
-                          {isInvalid && (
-                            <FieldError errors={field.state.meta.errors} />
-                          )}
+                          <FieldErrorSlot
+                            show={isInvalid}
+                            errors={field.state.meta.errors}
+                          />
                         </Field>
                       )
                     }}
@@ -299,7 +344,10 @@ export function AddFarmerDialog({
 
                   <form.Field name="mobileNumber">
                     {(field) => {
-                      const isInvalid = isFieldInvalid(field.state.meta)
+                      const isInvalid = shouldShowFieldErrors(
+                        field.state.meta,
+                        field.form.state.submissionAttempts,
+                      )
                       return (
                         <Field data-invalid={isInvalid}>
                           <RequiredFieldLabel htmlFor={field.name}>
@@ -323,9 +371,10 @@ export function AddFarmerDialog({
                             autoComplete="tel"
                             className="h-11 text-base tabular-nums"
                           />
-                          {isInvalid && (
-                            <FieldError errors={field.state.meta.errors} />
-                          )}
+                          <FieldErrorSlot
+                            show={isInvalid}
+                            errors={field.state.meta.errors}
+                          />
                         </Field>
                       )
                     }}
@@ -333,7 +382,10 @@ export function AddFarmerDialog({
 
                   <form.Field name="name">
                     {(field) => {
-                      const isInvalid = isFieldInvalid(field.state.meta)
+                      const isInvalid = shouldShowFieldErrors(
+                        field.state.meta,
+                        field.form.state.submissionAttempts,
+                      )
                       return (
                         <Field data-invalid={isInvalid}>
                           <RequiredFieldLabel htmlFor={field.name}>
@@ -352,9 +404,10 @@ export function AddFarmerDialog({
                             autoComplete="name"
                             className="h-11 text-base"
                           />
-                          {isInvalid && (
-                            <FieldError errors={field.state.meta.errors} />
-                          )}
+                          <FieldErrorSlot
+                            show={isInvalid}
+                            errors={field.state.meta.errors}
+                          />
                         </Field>
                       )
                     }}
@@ -362,7 +415,10 @@ export function AddFarmerDialog({
 
                   <form.Field name="address">
                     {(field) => {
-                      const isInvalid = isFieldInvalid(field.state.meta)
+                      const isInvalid = shouldShowFieldErrors(
+                        field.state.meta,
+                        field.form.state.submissionAttempts,
+                      )
                       return (
                         <Field data-invalid={isInvalid}>
                           <RequiredFieldLabel htmlFor={field.name}>
@@ -381,9 +437,10 @@ export function AddFarmerDialog({
                             autoComplete="street-address"
                             className="h-11 text-base"
                           />
-                          {isInvalid && (
-                            <FieldError errors={field.state.meta.errors} />
-                          )}
+                          <FieldErrorSlot
+                            show={isInvalid}
+                            errors={field.state.meta.errors}
+                          />
                         </Field>
                       )
                     }}
@@ -404,7 +461,10 @@ export function AddFarmerDialog({
                 <FieldGroup className="mt-5 gap-5">
                   <form.Field name="aadharCardNumber">
                     {(field) => {
-                      const isInvalid = isFieldInvalid(field.state.meta)
+                      const isInvalid = shouldShowFieldErrors(
+                        field.state.meta,
+                        field.form.state.submissionAttempts,
+                      )
                       return (
                         <Field data-invalid={isInvalid}>
                           <OptionalFieldLabel htmlFor={field.name}>
@@ -426,9 +486,10 @@ export function AddFarmerDialog({
                             maxLength={12}
                             className="h-11 text-base tabular-nums"
                           />
-                          {isInvalid && (
-                            <FieldError errors={field.state.meta.errors} />
-                          )}
+                          <FieldErrorSlot
+                            show={isInvalid}
+                            errors={field.state.meta.errors}
+                          />
                         </Field>
                       )
                     }}
@@ -436,7 +497,10 @@ export function AddFarmerDialog({
 
                   <form.Field name="panCardNumber">
                     {(field) => {
-                      const isInvalid = isFieldInvalid(field.state.meta)
+                      const isInvalid = shouldShowFieldErrors(
+                        field.state.meta,
+                        field.form.state.submissionAttempts,
+                      )
                       return (
                         <Field data-invalid={isInvalid}>
                           <OptionalFieldLabel htmlFor={field.name}>
@@ -457,9 +521,10 @@ export function AddFarmerDialog({
                             autoComplete="off"
                             className="h-11 text-base uppercase"
                           />
-                          {isInvalid && (
-                            <FieldError errors={field.state.meta.errors} />
-                          )}
+                          <FieldErrorSlot
+                            show={isInvalid}
+                            errors={field.state.meta.errors}
+                          />
                         </Field>
                       )
                     }}
@@ -467,7 +532,10 @@ export function AddFarmerDialog({
 
                   <form.Field name="costPerBag">
                     {(field) => {
-                      const isInvalid = isFieldInvalid(field.state.meta)
+                      const isInvalid = shouldShowFieldErrors(
+                        field.state.meta,
+                        field.form.state.submissionAttempts,
+                      )
                       return (
                         <Field data-invalid={isInvalid}>
                           <OptionalFieldLabel htmlFor={field.name}>
@@ -498,9 +566,10 @@ export function AddFarmerDialog({
                           <FieldDescription>
                             Storage rate in INR per bag, if applicable.
                           </FieldDescription>
-                          {isInvalid && (
-                            <FieldError errors={field.state.meta.errors} />
-                          )}
+                          <FieldErrorSlot
+                            show={isInvalid}
+                            errors={field.state.meta.errors}
+                          />
                         </Field>
                       )
                     }}
@@ -508,7 +577,10 @@ export function AddFarmerDialog({
 
                   <form.Field name="imageUrl">
                     {(field) => {
-                      const isInvalid = isFieldInvalid(field.state.meta)
+                      const isInvalid = shouldShowFieldErrors(
+                        field.state.meta,
+                        field.form.state.submissionAttempts,
+                      )
                       return (
                         <Field data-invalid={isInvalid}>
                           <OptionalFieldLabel htmlFor={field.name}>
@@ -529,9 +601,10 @@ export function AddFarmerDialog({
                             autoComplete="off"
                             className="h-11 text-base"
                           />
-                          {isInvalid && (
-                            <FieldError errors={field.state.meta.errors} />
-                          )}
+                          <FieldErrorSlot
+                            show={isInvalid}
+                            errors={field.state.meta.errors}
+                          />
                         </Field>
                       )
                     }}
@@ -575,7 +648,6 @@ export function AddFarmerDialog({
             </form.Subscribe>
           </DialogFooter>
         </form>
-      </DialogContent>
-    </Dialog>
+    </DialogContent>
   )
 }

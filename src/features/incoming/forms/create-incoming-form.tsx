@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react"
 import { useForm } from "@tanstack/react-form"
+import { UserPlus } from "lucide-react"
 import { toast } from "sonner"
 import {
   Card,
@@ -26,6 +27,10 @@ import { Textarea } from "@/components/ui/textarea"
 import { DatePickerInput } from "@/components/date-picker"
 import { useAuthStore } from "@/features/auth/store/use-auth-store"
 import { useFarmerLinkOptions } from "@/features/people/api/use-farmer-link-options"
+import { useFarmerStorageLinks } from "@/features/people/api/use-farmer-storage-links"
+import { AddFarmerDialog } from "@/features/people/components/add-farmer-dialog"
+import type { FarmerStorageLink } from "@/features/people/types"
+import { formatFarmerLinkLabel } from "@/features/people/utils/farmer-link-combobox"
 import {
   farmerLinkOptionsToComboboxOptions,
   getFarmerLinkLabel,
@@ -102,6 +107,7 @@ const CreateIncomingForm = () => {
   const todayIso = new Date().toISOString()
   const { data: farmerLinkOptions = [], isLoading: isLoadingFarmers } =
     useFarmerLinkOptions()
+  const { data: farmerStorageLinks = [] } = useFarmerStorageLinks()
   const {
     data: nextVoucherNumber,
     isLoading: isLoadingVoucherNumber,
@@ -125,6 +131,7 @@ const CreateIncomingForm = () => {
   const [stageSearch, setStageSearch] = useState("")
   const [stageComboboxOpen, setStageComboboxOpen] = useState(false)
   const [reviewOpen, setReviewOpen] = useState(false)
+  const [addFarmerOpen, setAddFarmerOpen] = useState(false)
 
   const sortedFarmers = useMemo(
     () => filterAndSortOptions(farmerSearch, farmerOptions),
@@ -229,6 +236,18 @@ const CreateIncomingForm = () => {
 
   const handleConfirmSubmit = () => {
     void form.handleSubmit({ submitAction: "submit" })
+  }
+
+  const handleFarmerCreated = (link: FarmerStorageLink) => {
+    form.setFieldValue("farmerStorageLinkId", link._id)
+    setFarmerSearch(
+      formatFarmerLinkLabel({
+        farmerStorageLinkId: link._id,
+        name: link.farmerId.name,
+        accountNumber: link.accountNumber,
+      }),
+    )
+    setFarmerComboboxOpen(false)
   }
 
   useEffect(() => {
@@ -365,37 +384,55 @@ const CreateIncomingForm = () => {
                   {(field) => {
                     const isInvalid = isFieldInvalid(field.state.meta)
                     return (
-                      <Field data-invalid={isInvalid}>
+                      <Field
+                        data-invalid={isInvalid}
+                        className="@md/field-group:col-span-2"
+                      >
                         <FieldLabel htmlFor="create-incoming-farmer">
-                          Farmer Link
+                          Farmer
                         </FieldLabel>
-                        <SearchableOptionCombobox
-                          id="create-incoming-farmer"
-                          name={field.name}
-                          value={field.state.value}
-                          onValueChange={field.handleChange}
-                          onBlur={field.handleBlur}
-                          isInvalid={isInvalid}
-                          placeholder={
-                            isLoadingFarmers
-                              ? "Loading farmers..."
-                              : "Search farmers..."
-                          }
-                          emptyMessage={
-                            isLoadingFarmers
-                              ? "Loading farmers..."
-                              : "No farmers found."
-                          }
-                          options={farmerOptions}
-                          sortedOptions={sortedFarmers}
-                          search={farmerSearch}
-                          setSearch={setFarmerSearch}
-                          open={farmerComboboxOpen}
-                          setOpen={setFarmerComboboxOpen}
-                          disabled={isLoadingFarmers}
-                        />
+                        <div className="flex gap-2">
+                          <div className="min-w-0 flex-1">
+                            <SearchableOptionCombobox
+                              id="create-incoming-farmer"
+                              name={field.name}
+                              value={field.state.value}
+                              onValueChange={field.handleChange}
+                              onBlur={field.handleBlur}
+                              isInvalid={isInvalid}
+                              placeholder={
+                                isLoadingFarmers
+                                  ? "Loading farmers..."
+                                  : "Search farmers..."
+                              }
+                              emptyMessage={
+                                isLoadingFarmers
+                                  ? "Loading farmers..."
+                                  : "No farmers found."
+                              }
+                              options={farmerOptions}
+                              sortedOptions={sortedFarmers}
+                              search={farmerSearch}
+                              setSearch={setFarmerSearch}
+                              open={farmerComboboxOpen}
+                              setOpen={setFarmerComboboxOpen}
+                              disabled={isLoadingFarmers}
+                            />
+                          </div>
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            className="h-auto min-h-9 shrink-0 gap-1.5 px-3"
+                            onClick={() => setAddFarmerOpen(true)}
+                            aria-label="Add farmer"
+                          >
+                            <UserPlus className="size-4 shrink-0" />
+                            <span className="hidden sm:inline">Add Farmer</span>
+                          </Button>
+                        </div>
                         <FieldDescription>
-                          Link this pass to a storage account.
+                          Link this pass to a storage account. If the farmer is
+                          not listed, add them here without leaving this form.
                         </FieldDescription>
                         {isInvalid && (
                           <FieldError errors={field.state.meta.errors} />
@@ -752,6 +789,13 @@ const CreateIncomingForm = () => {
             />
           )
         }}
+      />
+
+      <AddFarmerDialog
+        open={addFarmerOpen}
+        onOpenChange={setAddFarmerOpen}
+        links={farmerStorageLinks}
+        onSuccess={handleFarmerCreated}
       />
     </Card>
   )
