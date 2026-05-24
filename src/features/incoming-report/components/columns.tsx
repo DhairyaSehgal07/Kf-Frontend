@@ -2,6 +2,7 @@ import type { ColumnDef } from "@tanstack/react-table"
 
 import { Badge } from "@/components/ui/badge"
 import type { IncomingGatePassReportRow } from "@/features/incoming-report/api/types"
+import { reportColumnHeader } from "@/features/incoming-report/components/column-header"
 import { cn } from "@/lib/utils"
 
 const STATUS_LABELS: Record<string, string> = {
@@ -14,52 +15,73 @@ function getStatusLabel(status: string) {
 }
 
 export const columns: ColumnDef<IncomingGatePassReportRow>[] = [
-  { accessorKey: "name", header: "Name" },
-  { accessorKey: "address", header: "Address" },
+  { accessorKey: "name", header: reportColumnHeader("Name") },
+  { accessorKey: "address", header: reportColumnHeader("Address") },
   {
     accessorKey: "manualGatePassNumber",
-    header: "Manual GP",
+    header: reportColumnHeader("Manual GP", { align: "right", numeric: true }),
     meta: { align: "right" },
   },
   {
     accessorKey: "gatePassNo",
-    header: "Gate pass",
+    header: reportColumnHeader("Gate pass", { align: "right", numeric: true }),
     meta: { align: "right" },
   },
-  { accessorKey: "date", header: "Date" },
-  { accessorKey: "variety", header: "Variety" },
-  { accessorKey: "stage", header: "Stage" },
-  { accessorKey: "truckNumber", header: "Truck" },
+  { accessorKey: "date", header: reportColumnHeader("Date") },
+  { accessorKey: "variety", header: reportColumnHeader("Variety") },
+  { accessorKey: "stage", header: reportColumnHeader("Stage") },
+  {
+    accessorKey: "truckNumber",
+    header: reportColumnHeader("Truck", { numeric: true }),
+  },
   {
     accessorKey: "bags",
-    header: "Bags",
+    header: reportColumnHeader("Bags", { align: "right", numeric: true }),
     meta: { align: "right" },
   },
-  { accessorKey: "slipNumber", header: "Slip no." },
+  {
+    accessorKey: "slipNumber",
+    header: reportColumnHeader("Slip no.", { numeric: true }),
+  },
   {
     accessorKey: "grossWeightKg",
-    header: "Gross (kg)",
+    header: reportColumnHeader("Gross", {
+      unit: "kg",
+      align: "right",
+      numeric: true,
+    }),
     meta: { align: "right" },
   },
   {
     accessorKey: "tareWeightKg",
-    header: "Tare (kg)",
+    header: reportColumnHeader("Tare", {
+      unit: "kg",
+      align: "right",
+      numeric: true,
+    }),
     meta: { align: "right" },
   },
   {
     accessorKey: "bardanaWeightKg",
-    header: "Bardana (kg)",
+    header: reportColumnHeader("Bardana", {
+      unit: "kg",
+      align: "right",
+      numeric: true,
+    }),
     meta: { align: "right" },
   },
   {
     accessorKey: "netWeightKg",
-    header: "Net (kg)",
+    header: reportColumnHeader("Net", {
+      unit: "kg",
+      align: "right",
+      numeric: true,
+    }),
     meta: { align: "right" },
   },
-  { accessorKey: "remarks", header: "Remarks" },
   {
     accessorKey: "status",
-    header: "Status",
+    header: reportColumnHeader("Status"),
     cell: ({ row }) => {
       const status = row.getValue<string>("status")
       if (!status) {
@@ -73,8 +95,8 @@ export const columns: ColumnDef<IncomingGatePassReportRow>[] = [
           variant={isNotGraded ? "secondary" : "default"}
           className={cn(
             "text-xs font-medium",
-            isNotGraded &&
-              "bg-amber-100 text-amber-900 hover:bg-amber-100/90 dark:bg-amber-950/50 dark:text-amber-200 dark:hover:bg-amber-950/60",
+            !isNotGraded &&
+              "border-transparent bg-primary/10 text-primary hover:bg-primary/15",
           )}
         >
           {getStatusLabel(status)}
@@ -83,7 +105,8 @@ export const columns: ColumnDef<IncomingGatePassReportRow>[] = [
     },
     enableSorting: false,
   },
-  { accessorKey: "createdBy", header: "Created by" },
+  { accessorKey: "createdBy", header: reportColumnHeader("Created by") },
+  { accessorKey: "remarks", header: reportColumnHeader("Remarks") },
 ]
 
 export type { IncomingGatePassReportRow }
