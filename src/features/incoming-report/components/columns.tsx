@@ -76,33 +76,57 @@ function getStatusLabel(status: string) {
   return STATUS_LABELS[status] ?? status.replace(/_/g, " ")
 }
 
+const sortText = { sortingFn: "text" as const, sortUndefined: "last" as const }
+const sortNumeric = {
+  sortingFn: "reportNumeric" as const,
+  sortUndefined: "last" as const,
+}
+const sortDate = { sortingFn: "reportDate" as const, sortUndefined: "last" as const }
+
 export const columns: ColumnDef<IncomingGatePassReportRow>[] = [
   {
     accessorKey: "name",
     header: reportColumnHeader("Name"),
     footer: ReportTotalLabel,
+    ...sortText,
   },
-  { accessorKey: "address", header: reportColumnHeader("Address") },
+  {
+    accessorKey: "address",
+    header: reportColumnHeader("Address"),
+    ...sortText,
+  },
   {
     accessorKey: "manualGatePassNumber",
     header: reportColumnHeader("Manual GP", { align: "right", numeric: true }),
     meta: { align: "right" },
+    ...sortNumeric,
   },
   {
     accessorKey: "gatePassNo",
     header: reportColumnHeader("Gate pass", { align: "right", numeric: true }),
     meta: { align: "right" },
+    ...sortNumeric,
   },
   {
     accessorKey: "date",
     header: reportColumnHeader("Date"),
     cell: reportDateCell,
+    ...sortDate,
   },
-  { accessorKey: "variety", header: reportColumnHeader("Variety") },
-  { accessorKey: "stage", header: reportColumnHeader("Stage") },
+  {
+    accessorKey: "variety",
+    header: reportColumnHeader("Variety"),
+    ...sortText,
+  },
+  {
+    accessorKey: "stage",
+    header: reportColumnHeader("Stage"),
+    ...sortText,
+  },
   {
     accessorKey: "truckNumber",
     header: reportColumnHeader("Truck", { numeric: true }),
+    ...sortNumeric,
   },
   {
     accessorKey: "bags",
@@ -110,10 +134,12 @@ export const columns: ColumnDef<IncomingGatePassReportRow>[] = [
     meta: { align: "right" },
     cell: indianNumberCell("integer"),
     footer: createReportTotalFooter("bags", "integer"),
+    ...sortNumeric,
   },
   {
     accessorKey: "slipNumber",
     header: reportColumnHeader("Slip no.", { numeric: true }),
+    ...sortNumeric,
   },
   {
     accessorKey: "grossWeightKg",
@@ -125,6 +151,7 @@ export const columns: ColumnDef<IncomingGatePassReportRow>[] = [
     meta: { align: "right" },
     cell: indianNumberCell("weight"),
     footer: createReportTotalFooter("grossWeightKg", "weight"),
+    ...sortNumeric,
   },
   {
     accessorKey: "tareWeightKg",
@@ -136,6 +163,7 @@ export const columns: ColumnDef<IncomingGatePassReportRow>[] = [
     meta: { align: "right" },
     cell: indianNumberCell("weight"),
     footer: createReportTotalFooter("tareWeightKg", "weight"),
+    ...sortNumeric,
   },
   {
     accessorKey: "bardanaWeightKg",
@@ -147,6 +175,7 @@ export const columns: ColumnDef<IncomingGatePassReportRow>[] = [
     meta: { align: "right" },
     cell: indianNumberCell("weight"),
     footer: createReportTotalFooter("bardanaWeightKg", "weight"),
+    ...sortNumeric,
   },
   {
     accessorKey: "netWeightKg",
@@ -160,10 +189,12 @@ export const columns: ColumnDef<IncomingGatePassReportRow>[] = [
     footer: createReportTotalFooter("netWeightKg", "weight", {
       emphasize: true,
     }),
+    ...sortNumeric,
   },
   {
     accessorKey: "status",
     header: reportColumnHeader("Status"),
+    ...sortText,
     cell: ({ row }) => {
       const status = row.getValue<string>("status")
       if (!status) {
@@ -185,13 +216,17 @@ export const columns: ColumnDef<IncomingGatePassReportRow>[] = [
         </Badge>
       )
     },
-    enableSorting: false,
   },
-  { accessorKey: "createdBy", header: reportColumnHeader("Created by") },
+  {
+    accessorKey: "createdBy",
+    header: reportColumnHeader("Created by"),
+    ...sortText,
+  },
   {
     accessorKey: "remarks",
     header: reportColumnHeader("Remarks"),
     meta: { wrap: true },
+    ...sortText,
   },
 ]
 

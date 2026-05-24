@@ -3,6 +3,8 @@ import {
   type ColumnDef,
   flexRender,
   getCoreRowModel,
+  getSortedRowModel,
+  type SortingState,
   useReactTable,
 } from "@tanstack/react-table"
 import { ClipboardList } from "lucide-react"
@@ -15,6 +17,7 @@ import {
   getDensityCellClasses,
   getDensityHeadClasses,
 } from "@/lib/tanstack-table/density-classes"
+import { reportSortingFns } from "@/features/incoming-report/utils/report-sorting-fns"
 
 import {
   Empty,
@@ -209,6 +212,7 @@ export function DataTable<TData, TValue>({
   density: densityProp = "lg",
 }: DataTableProps<TData, TValue>) {
   const [density, setDensity] = useState<DensityState>(densityProp)
+  const [sorting, setSorting] = useState<SortingState>([])
   const [isHeaderScrolled, setIsHeaderScrolled] = useState(false)
   const [isFooterElevated, setIsFooterElevated] = useState(false)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
@@ -227,9 +231,13 @@ export function DataTable<TData, TValue>({
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
     getRowId,
-    state: { density },
+    sortingFns: reportSortingFns,
+    enableSortingRemoval: true,
+    state: { density, sorting },
     onDensityChange: setDensity,
+    onSortingChange: setSorting,
   })
 
   const tableDensity = table.getState().density
@@ -263,16 +271,27 @@ export function DataTable<TData, TValue>({
                     | ColumnMeta
                     | undefined
                   const align = getColumnAlign(meta)
+                  const sorted = header.column.getIsSorted()
 
                   return (
                     <TableHead
                       key={header.id}
-                      className={getHeadClassName(
-                        columnId,
-                        align,
-                        tableDensity,
-                        isHeaderScrolled,
-                        meta,
+                      aria-sort={
+                        sorted === "asc"
+                          ? "ascending"
+                          : sorted === "desc"
+                            ? "descending"
+                            : "none"
+                      }
+                      className={cn(
+                        "group/head",
+                        getHeadClassName(
+                          columnId,
+                          align,
+                          tableDensity,
+                          isHeaderScrolled,
+                          meta,
+                        ),
                       )}
                     >
                       {header.isPlaceholder
