@@ -63,3 +63,13 @@ export function createEmptyQuantityRow(): GradingQuantityRow {
     weight: undefined,
   }
 }
+
+export function gradingRowTotalWeightKg(row: GradingQuantityRow): number {
+  return (row.qty ?? 0) * (row.weight ?? 0)
+}
+
+export function gradingTotalWeightKg(
+  rows: readonly GradingQuantityRow[],
+): number {
+  return rows.reduce((sum, row) => sum + gradingRowTotalWeightKg(row), 0)
+}

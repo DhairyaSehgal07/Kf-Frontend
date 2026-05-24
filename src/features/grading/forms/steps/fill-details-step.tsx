@@ -1,3 +1,4 @@
+import { useMemo } from "react"
 import { DatePickerInput } from "@/components/date-picker"
 import {
   Field,
@@ -24,10 +25,13 @@ import {
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { IncomingGatePassesSummaryCard } from "@/features/grading/components/incoming-gate-passes-summary-card"
+import { resolveSelectedIncomingGatePasses } from "@/features/grading/data/mock-incoming-gate-passes"
 import type { CreateGradingFormApi } from "@/features/grading/forms/use-create-grading-form"
+import { useIncomingGatePassesByFarmer } from "@/features/incoming/api/use-incoming-gate-passes-by-farmer"
 import {
   createDefaultQuantities,
   createEmptyQuantityRow,
+  gradingTotalWeightKg,
 } from "@/features/grading/schemas/grading-fill-details-schema"
 import { BAG_TYPES } from "@/lib/constants"
 import { Plus, Trash2 } from "lucide-react"
@@ -50,6 +54,35 @@ const numericInputProps = {
 
 type FillDetailsStepProps = {
   form: CreateGradingFormApi
+}
+
+type SelectedGatePassesSummaryProps = {
+  farmerStorageLinkId: string
+  selectedIncomingGatePassIds: string[]
+}
+
+function SelectedGatePassesSummary({
+  farmerStorageLinkId,
+  selectedIncomingGatePassIds,
+}: SelectedGatePassesSummaryProps) {
+  const { data: gatePassResult } =
+    useIncomingGatePassesByFarmer(farmerStorageLinkId)
+
+  const selectedGatePasses = useMemo(
+    () =>
+      resolveSelectedIncomingGatePasses(
+        selectedIncomingGatePassIds,
+        gatePassResult?.incomingGatePasses ?? [],
+      ),
+    [gatePassResult?.incomingGatePasses, selectedIncomingGatePassIds],
+  )
+
+  return (
+    <IncomingGatePassesSummaryCard
+      className="mt-4"
+      gatePasses={selectedGatePasses}
+    />
+  )
 }
 
 export function FillDetailsStep({ form }: FillDetailsStepProps) {
@@ -139,11 +172,17 @@ export function FillDetailsStep({ form }: FillDetailsStepProps) {
         </FieldDescription>
 
         <form.Subscribe
-          selector={(state) => state.values.selectedIncomingGatePassIds}
-          children={(selectedIncomingGatePassIds) => (
-            <IncomingGatePassesSummaryCard
-              className="mt-4"
-              selectedIds={selectedIncomingGatePassIds}
+          selector={(state) => ({
+            farmerStorageLinkId: state.values.farmerStorageLinkId,
+            selectedIncomingGatePassIds: state.values.selectedIncomingGatePassIds,
+          })}
+          children={({
+            farmerStorageLinkId,
+            selectedIncomingGatePassIds,
+          }) => (
+            <SelectedGatePassesSummary
+              farmerStorageLinkId={farmerStorageLinkId}
+              selectedIncomingGatePassIds={selectedIncomingGatePassIds}
             />
           )}
         />
@@ -160,7 +199,7 @@ export function FillDetailsStep({ form }: FillDetailsStepProps) {
               Bag type
             </div>
             <div className="col-span-3 text-right text-sm font-medium text-muted-foreground">
-              Wt (kg)
+              wt (kg)/bag
             </div>
             <div className="col-span-1" aria-hidden />
           </div>
@@ -305,7 +344,7 @@ export function FillDetailsStep({ form }: FillDetailsStepProps) {
                                     htmlFor={subField.name}
                                     className="md:sr-only"
                                   >
-                                    Weight kg ({sizeLabel})
+                                    Weight kg per bag ({sizeLabel})
                                   </FieldLabel>
                                   <Input
                                     {...numericInputProps}
@@ -313,7 +352,7 @@ export function FillDetailsStep({ form }: FillDetailsStepProps) {
                                     name={subField.name}
                                     inputMode="decimal"
                                     step="0.01"
-                                    placeholder="Wt"
+                                    placeholder="kg/bag"
                                     value={subField.state.value ?? ""}
                                     onBlur={subField.handleBlur}
                                     onChange={(e) =>
@@ -401,7 +440,7 @@ export function FillDetailsStep({ form }: FillDetailsStepProps) {
         </div>
 
         <FieldDescription className="mt-4">
-          Quantity / approx. weight (kg) per size.
+          Quantity and weight per bag (kg) by size.
         </FieldDescription>
 
         <form.Subscribe
@@ -411,10 +450,7 @@ export function FillDetailsStep({ form }: FillDetailsStepProps) {
               (sum, row) => sum + (row.qty ?? 0),
               0
             )
-            const totalWeightKg = quantities.reduce(
-              (sum, row) => sum + (row.weight ?? 0),
-              0
-            )
+            const totalWeightKg = gradingTotalWeightKg(quantities)
             const weightFormatter = new Intl.NumberFormat("en-IN", {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,

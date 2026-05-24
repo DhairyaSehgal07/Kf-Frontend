@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { ArrowLeft, ArrowRight } from "lucide-react"
 import { useCreateGradingForm } from "@/features/grading/forms/use-create-grading-form"
 import { GradingSummarySheet } from "@/features/grading/forms/grading-summary-sheet"
@@ -18,10 +18,11 @@ import {
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { FillDetailsStep } from "@/features/grading/forms/steps/fill-details-step"
-import { GRADING_MOCK_FARMER_LINKS } from "@/features/grading/constants/grading-form.constants"
 import { SelectGatePassesStep } from "@/features/grading/forms/steps/select-gate-passes-step"
 import type { GradingFormValues } from "@/features/grading/schemas/grading-form-schema"
 import { scrollMainToTop } from "@/lib/scroll-to-top"
+import { useFarmerLinkOptions } from "@/features/people/api/use-farmer-link-options"
+import { farmerLinkOptionsToComboboxOptions } from "@/features/people/utils/farmer-link-combobox"
 
 const STEPS = GRADING_FORM_STEPS
 
@@ -37,6 +38,11 @@ const CreateGradingForm = () => {
     onOpenReview: () => setReviewOpen(true),
     onCloseReview: () => setReviewOpen(false),
   })
+  const { data: farmerLinkOptions = [] } = useFarmerLinkOptions()
+  const farmerOptions = useMemo(
+    () => farmerLinkOptionsToComboboxOptions(farmerLinkOptions),
+    [farmerLinkOptions],
+  )
 
   const handleOpenReview = () => {
     void form.handleSubmit({ submitAction: "review" })
@@ -183,7 +189,7 @@ const CreateGradingForm = () => {
               open={reviewOpen}
               onOpenChange={setReviewOpen}
               values={parsed.success ? parsed.data : null}
-              farmerOptions={[...GRADING_MOCK_FARMER_LINKS]}
+              farmerOptions={farmerOptions}
               onBack={() => setReviewOpen(false)}
               onSubmit={handleConfirmSubmit}
               canSubmit={canSubmit}

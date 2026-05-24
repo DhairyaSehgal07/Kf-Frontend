@@ -22,11 +22,11 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet"
-import {
-  MOCK_INCOMING_GATE_PASSES,
-  resolveSelectedIncomingGatePasses,
-} from "@/features/grading/data/mock-incoming-gate-passes"
+import { resolveSelectedIncomingGatePasses } from "@/features/grading/data/mock-incoming-gate-passes"
 import type { GradingFormValues } from "@/features/grading/schemas/grading-form-schema"
+import { gradingTotalWeightKg } from "@/features/grading/schemas/grading-fill-details-schema"
+import type { GradingSelectIncomingGatePasses } from "@/features/grading/types"
+import { useIncomingGatePassesByFarmer } from "@/features/incoming/api/use-incoming-gate-passes-by-farmer"
 import { cn } from "@/lib/utils"
 
 export type GradingSummaryValues = GradingFormValues
@@ -158,7 +158,7 @@ function activeQuantityRows(quantities: GradingSummaryValues["quantities"]) {
 function IncomingGatePassesTable({
   gatePasses,
 }: {
-  gatePasses: ReturnType<typeof resolveSelectedIncomingGatePasses>
+  gatePasses: GradingSelectIncomingGatePasses[]
 }) {
   const totalBags = gatePasses.reduce(
     (sum, gatePass) => sum + gatePass.bagsReceived,
@@ -232,14 +232,17 @@ function GradingReviewSummary({
 }) {
   const rows = activeQuantityRows(values.quantities)
   const totalBags = rows.reduce((sum, row) => sum + (row.qty ?? 0), 0)
-  const totalWeightKg = rows.reduce((sum, row) => sum + (row.weight ?? 0), 0)
+  const totalWeightKg = gradingTotalWeightKg(rows)
+  const { data: gatePassResult } = useIncomingGatePassesByFarmer(
+    values.farmerStorageLinkId,
+  )
   const selectedIncomingGatePasses = useMemo(
     () =>
       resolveSelectedIncomingGatePasses(
         values.selectedIncomingGatePassIds,
-        MOCK_INCOMING_GATE_PASSES
+        gatePassResult?.incomingGatePasses ?? [],
       ),
-    [values.selectedIncomingGatePassIds]
+    [gatePassResult?.incomingGatePasses, values.selectedIncomingGatePassIds],
   )
 
   return (
@@ -326,7 +329,7 @@ function GradingReviewSummary({
                     Type
                   </th>
                   <th className="h-9 px-3 text-right text-xs font-medium text-muted-foreground">
-                    Wt
+                    wt (kg)/bag
                   </th>
                 </tr>
               </thead>

@@ -136,6 +136,11 @@ export type IncomingGatePassListParams = {
   dateTo?: string
 }
 
+export type IncomingGatePassesByFarmerParams = {
+  sortOrder?: IncomingGatePassSortOrder
+  status?: IncomingGatePassStatusFilter
+}
+
 export type GetIncomingGatePassesResponse = {
   success: boolean
   data: IncomingGatePassListResult
