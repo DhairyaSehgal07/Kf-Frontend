@@ -25,7 +25,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { IncomingGatePassesSummaryCard } from "@/features/grading/components/incoming-gate-passes-summary-card"
-import { resolveSelectedIncomingGatePasses } from "@/features/grading/data/mock-incoming-gate-passes"
+import { resolveSelectedIncomingGatePasses } from "@/features/grading/utils/resolve-selected-incoming-gate-passes"
 import type { GradingFormApi } from "@/features/grading/forms/use-grading-form"
 import { useIncomingGatePassesByFarmer } from "@/features/incoming/api/use-incoming-gate-passes-by-farmer"
 import {

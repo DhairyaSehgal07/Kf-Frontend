@@ -35,7 +35,7 @@ export function toCreateIncomingGatePassBody({
     body.stage = stage
   }
 
-  const remarks = form.remarks
+  const remarks = form.remarks.trim()
   if (remarks) {
     body.remarks = remarks
   }

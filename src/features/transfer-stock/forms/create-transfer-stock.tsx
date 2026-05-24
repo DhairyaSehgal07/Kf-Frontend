@@ -8,14 +8,16 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import {
-  DEMO_FARMER_STORAGE_LINK_ID,
-  getMockStorageGatePassesForFarmer,
-} from "@/features/transfer-stock/data/mock-storage-gate-passes"
+import { useFarmerLinkOptions } from "@/features/people/api/use-farmer-link-options"
+import { farmerLinkOptionsToComboboxOptions } from "@/features/people/utils/farmer-link-combobox"
 import { TransferGatePassesSection } from "@/features/transfer-stock/forms/transfer-gate-passes-section"
 import { TransferStockSummarySheet } from "@/features/transfer-stock/forms/transfer-stock-summary-sheet"
 import { useCreateTransferStockForm } from "@/features/transfer-stock/forms/use-create-transfer-stock-form"
-import { transferStockFormSchema } from "@/features/transfer-stock/schemas/transfer-stock-form-schema"
+import { useStorageGatePassesForFarmer } from "@/features/transfer-stock/hooks/use-storage-gate-passes-for-farmer"
+import {
+  transferStockFormSchema,
+  type TransferStockFormValues,
+} from "@/features/transfer-stock/schemas/transfer-stock-form-schema"
 import { buildTransferItems } from "@/features/transfer-stock/utils/gate-pass-matrix-utils"
 import {
   Field,
@@ -34,69 +36,61 @@ import {
   type ComboboxOption,
 } from "@/components/searchable-option-combobox"
 
-const MOCK_FARMER_LINKS = [
-  {
-    id: DEMO_FARMER_STORAGE_LINK_ID,
-    label: "RAM KISHAN SETHIA — Acct #15",
-  },
-  {
-    id: "507f1f77bcf86cd799439011",
-    label: "Rajesh Sehgal — Acct #12045",
-  },
-  {
-    id: "507f191e810c19729de860ea",
-    label: "Gurpreet Singh — Acct #9821",
-  },
-  {
-    id: "507f191e810c19729de860eb",
-    label: "Harbhajan Singh — Acct #7643",
-  },
-  {
-    id: "507f191e810c19729de860ec",
-    label: "Maninder Pal — Acct #4512",
-  },
-  {
-    id: "507f191e810c19729de860ed",
-    label: "Jaswinder Kaur — Acct #8834",
-  },
-  {
-    id: "507f191e810c19729de860ee",
-    label: "Baldev Singh — Acct #2391",
-  },
-  {
-    id: "507f191e810c19729de860ef",
-    label: "Ranjit Kumar — Acct #6745",
-  },
-  {
-    id: "507f191e810c19729de860f0",
-    label: "Sukhchain Singh — Acct #1189",
-  },
-  {
-    id: "507f191e810c19729de860f1",
-    label: "Paramjit Kaur — Acct #5520",
-  },
-  {
-    id: "507f191e810c19729de860f2",
-    label: "Kuldeep Singh — Acct #9076",
-  },
-  {
-    id: "507f191e810c19729de860f3",
-    label: "Amritpal Singh — Acct #3318",
-  },
-  {
-    id: "507f191e810c19729de860f4",
-    label: "Navjot Singh — Acct #4467",
-  },
-] as const
-
 function isFieldInvalid(meta: { isTouched: boolean; isValid: boolean }) {
   return meta.isTouched && !meta.isValid
 }
 
+type TransferStockReviewSheetProps = {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  fromFarmerStorageLinkId: string
+  values: TransferStockFormValues | null
+  fromFarmerLabel: string
+  toFarmerLabel: string
+  onBack: () => void
+  onSubmit: () => void
+  canSubmit: boolean
+  isSubmitting: boolean
+}
+
+function TransferStockReviewSheet({
+  open,
+  onOpenChange,
+  fromFarmerStorageLinkId,
+  values,
+  fromFarmerLabel,
+  toFarmerLabel,
+  onBack,
+  onSubmit,
+  canSubmit,
+  isSubmitting,
+}: TransferStockReviewSheetProps) {
+  const { data: passes } = useStorageGatePassesForFarmer(fromFarmerStorageLinkId)
+  const transferItems =
+    values != null ? buildTransferItems(values.allocations, passes) : []
+
+  return (
+    <TransferStockSummarySheet
+      open={open}
+      onOpenChange={onOpenChange}
+      values={values}
+      transferItems={transferItems}
+      fromFarmerLabel={fromFarmerLabel}
+      toFarmerLabel={toFarmerLabel}
+      onBack={onBack}
+      onSubmit={onSubmit}
+      canSubmit={canSubmit}
+      isSubmitting={isSubmitting}
+    />
+  )
+}
+
 const CreateTransferStock = () => {
+  const { data: farmerLinkOptions = [], isLoading: isLoadingFarmers } =
+    useFarmerLinkOptions()
   const farmerOptions = useMemo<ComboboxOption[]>(
-    () => [...MOCK_FARMER_LINKS],
-    []
+    () => farmerLinkOptionsToComboboxOptions(farmerLinkOptions),
+    [farmerLinkOptions],
   )
   const [fromFarmerSearch, setFromFarmerSearch] = useState("")
   const [fromFarmerComboboxOpen, setFromFarmerComboboxOpen] = useState(false)
@@ -181,14 +175,23 @@ const CreateTransferStock = () => {
                           }}
                           onBlur={field.handleBlur}
                           isInvalid={isInvalid}
-                          placeholder="Search farmers..."
-                          emptyMessage="No farmers found."
+                          placeholder={
+                            isLoadingFarmers
+                              ? "Loading farmers…"
+                              : "Search farmers…"
+                          }
+                          emptyMessage={
+                            isLoadingFarmers
+                              ? "Loading farmers…"
+                              : "No farmers found."
+                          }
                           options={farmerOptions}
                           sortedOptions={sortedFromFarmers}
                           search={fromFarmerSearch}
                           setSearch={setFromFarmerSearch}
                           open={fromFarmerComboboxOpen}
                           setOpen={setFromFarmerComboboxOpen}
+                          disabled={isLoadingFarmers}
                         />
                         <FieldDescription>
                           Farmer account stock is transferred from.
@@ -216,14 +219,23 @@ const CreateTransferStock = () => {
                           onValueChange={field.handleChange}
                           onBlur={field.handleBlur}
                           isInvalid={isInvalid}
-                          placeholder="Search farmers..."
-                          emptyMessage="No farmers found."
+                          placeholder={
+                            isLoadingFarmers
+                              ? "Loading farmers…"
+                              : "Search farmers…"
+                          }
+                          emptyMessage={
+                            isLoadingFarmers
+                              ? "Loading farmers…"
+                              : "No farmers found."
+                          }
                           options={farmerOptions}
                           sortedOptions={sortedToFarmers}
                           search={toFarmerSearch}
                           setSearch={setToFarmerSearch}
                           open={toFarmerComboboxOpen}
                           setOpen={setToFarmerComboboxOpen}
+                          disabled={isLoadingFarmers}
                         />
                         <FieldDescription>
                           Farmer account receiving the transferred stock.
@@ -368,20 +380,13 @@ const CreateTransferStock = () => {
           const fromFarmerId = parsed.success
             ? parsed.data.fromFarmerStorageLinkId
             : values.fromFarmerStorageLinkId
-          const passes = fromFarmerId
-            ? getMockStorageGatePassesForFarmer(fromFarmerId)
-            : []
-          const transferItems =
-            parsed.success
-              ? buildTransferItems(parsed.data.allocations, passes)
-              : []
 
           return (
-            <TransferStockSummarySheet
+            <TransferStockReviewSheet
               open={reviewOpen}
               onOpenChange={setReviewOpen}
+              fromFarmerStorageLinkId={fromFarmerId}
               values={parsed.success ? parsed.data : null}
-              transferItems={transferItems}
               fromFarmerLabel={
                 parsed.success
                   ? getFarmerLabel(parsed.data.fromFarmerStorageLinkId)

@@ -1,10 +1,12 @@
 import { useForm } from "@tanstack/react-form"
-import { getMockStorageGatePassesForFarmer } from "@/features/transfer-stock/data/mock-storage-gate-passes"
+import { useQueryClient } from "@tanstack/react-query"
+import { storageGatePassesByFarmerQueryOptions } from "@/features/storage/api/use-storage-gate-passes-by-farmer"
 import {
   transferStockFormSchema,
   type TransferStockFormValues,
 } from "@/features/transfer-stock/schemas/transfer-stock-form-schema"
 import { buildTransferItems } from "@/features/transfer-stock/utils/gate-pass-matrix-utils"
+import { toTransferStorageGatePass } from "@/features/transfer-stock/utils/to-transfer-storage-gate-pass"
 import {
   defaultSubmitMeta,
   type TransferStockSubmitMeta,
@@ -18,8 +20,9 @@ type UseCreateTransferStockFormOptions = {
 }
 
 export function useCreateTransferStockForm(
-  options: UseCreateTransferStockFormOptions = {}
+  options: UseCreateTransferStockFormOptions = {},
 ) {
+  const queryClient = useQueryClient()
   const todayIso = new Date().toISOString()
 
   return useForm({
@@ -43,9 +46,10 @@ export function useCreateTransferStockForm(
         return
       }
 
-      const passes = getMockStorageGatePassesForFarmer(
-        parsed.fromFarmerStorageLinkId
+      const result = await queryClient.fetchQuery(
+        storageGatePassesByFarmerQueryOptions(parsed.fromFarmerStorageLinkId),
       )
+      const passes = result.storageGatePasses.map(toTransferStorageGatePass)
       const items = buildTransferItems(parsed.allocations, passes)
       console.log({ ...parsed, items })
       options.onCloseReview?.()

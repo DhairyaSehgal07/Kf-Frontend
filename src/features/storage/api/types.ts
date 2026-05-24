@@ -77,6 +77,11 @@ export type StorageGatePassListParams = {
   dateTo?: string
 }
 
+export type StorageGatePassesByFarmerParams = {
+  sortOrder?: StorageGatePassSortOrder
+  status?: StorageGatePassStatusFilter
+}
+
 export type GetStorageGatePassesResponse = {
   success: boolean
   data: StorageGatePassListResult

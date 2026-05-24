@@ -22,7 +22,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet"
-import { resolveSelectedIncomingGatePasses } from "@/features/grading/data/mock-incoming-gate-passes"
+import { resolveSelectedIncomingGatePasses } from "@/features/grading/utils/resolve-selected-incoming-gate-passes"
 import type { GradingFormValues } from "@/features/grading/schemas/grading-form-schema"
 import { gradingTotalWeightKg } from "@/features/grading/schemas/grading-fill-details-schema"
 import type { GradingSelectIncomingGatePasses } from "@/features/grading/types"
