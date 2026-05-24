@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react"
 import { UserPlus } from "lucide-react"
+import { toast } from "sonner"
 import {
   Card,
   CardContent,
@@ -11,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { StorageQuantitiesSection } from "@/features/storage/forms/storage-quantities-section"
 import { StorageSummarySheet } from "@/features/storage/forms/storage-summary-sheet"
+import { useCreateStorageGatePass } from "@/features/storage/api/use-create-storage-gate-pass"
 import { useCreateStorageForm } from "@/features/storage/forms/use-create-storage-form"
 import { createDefaultStorageQuantities } from "@/features/storage/schemas/storage-form-schema"
 import {
@@ -44,7 +46,9 @@ import {
 import { storageFormSchema } from "@/features/storage/schemas/storage-form-schema"
 import {
   useGetReceiptVoucherNumber,
+  voucherNumberKeys,
 } from "@/hooks/use-get-voucher-number"
+import { queryClient } from "@/lib/queryClient"
 import { STORAGE_CATEGORIES } from "@/lib/constants"
 
 const VARIETY_ITEMS = ["Himalini", "K. Pukhraj", "K. Jyoti"].map((value) => ({
@@ -83,6 +87,7 @@ const CreateStorageForm = () => {
     isLoading: isLoadingVoucherNumber,
     isError: isVoucherNumberError,
   } = useGetReceiptVoucherNumber("storage-gate-pass")
+  const { mutateAsync: createStorageGatePass } = useCreateStorageGatePass()
   const isGatePassNumberReady =
     !isLoadingVoucherNumber &&
     !isVoucherNumberError &&
@@ -115,7 +120,40 @@ const CreateStorageForm = () => {
 
   const form = useCreateStorageForm({
     onOpenReview: () => setReviewOpen(true),
-    onCloseReview: () => setReviewOpen(false),
+    onCreate: async (parsed) => {
+      const gatePassNo = queryClient.getQueryData<number>(
+        voucherNumberKeys.detail("storage-gate-pass"),
+      )
+
+      if (gatePassNo == null) {
+        toast.error("Gate pass number is unavailable. Refresh and try again.", {
+          position: "bottom-right",
+        })
+        return
+      }
+
+      try {
+        const { message } = await createStorageGatePass({
+          form: parsed,
+          gatePassNo,
+        })
+
+        toast.success(message ?? "Storage gate pass created", {
+          position: "bottom-right",
+        })
+        setReviewOpen(false)
+        form.reset()
+        form.setFieldValue("quantities", createDefaultStorageQuantities())
+        resetComboboxState()
+      } catch (error) {
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "Failed to create storage gate pass",
+          { position: "bottom-right" },
+        )
+      }
+    },
   })
 
   const getFarmerLabel = (farmerStorageLinkId: string) =>

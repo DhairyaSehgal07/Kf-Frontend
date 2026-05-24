@@ -1,5 +1,4 @@
 import { useForm } from "@tanstack/react-form"
-import { toast } from "sonner"
 import { useAuthStore } from "@/features/auth/store/use-auth-store"
 import {
   createDefaultStorageQuantities,
@@ -7,14 +6,12 @@ import {
   type StorageFormValues,
 } from "@/features/storage/schemas/storage-form-schema"
 import { defaultSubmitMeta, type StorageSubmitMeta } from "@/features/storage/types"
-import { voucherNumberKeys } from "@/hooks/use-get-voucher-number"
-import { queryClient } from "@/lib/queryClient"
 
 export type { StorageFormValues }
 
 type UseCreateStorageFormOptions = {
   onOpenReview?: () => void
-  onCloseReview?: () => void
+  onCreate?: (values: StorageFormValues) => Promise<void>
 }
 
 export function useCreateStorageForm(options: UseCreateStorageFormOptions = {}) {
@@ -45,19 +42,7 @@ export function useCreateStorageForm(options: UseCreateStorageFormOptions = {}) 
         return
       }
 
-      const gatePassNo = queryClient.getQueryData<number>(
-        voucherNumberKeys.detail("storage-gate-pass"),
-      )
-
-      if (gatePassNo == null) {
-        toast.error("Gate pass number is unavailable. Refresh and try again.", {
-          position: "bottom-right",
-        })
-        return
-      }
-
-      console.log({ form: parsed, gatePassNo })
-      options.onCloseReview?.()
+      await options.onCreate?.(parsed)
     },
   })
 }

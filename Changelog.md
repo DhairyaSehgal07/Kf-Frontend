@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.8] - 2026-05-24
+
+Storage gate pass list, search, and create wired to the API; daybook storage tab shows live gate passes; Reports nav with report route shells.
+
+### Added
+
+- **Storage gate pass list API** — `getStorageGatePasses`, `searchStorageGatePasses`, shared query keys, and React Query hooks (`useStorageGatePasses`, `useSearchStorageGatePass`) for `/storage-gate-pass/`.
+- **Create storage gate pass API** — `createStorageGatePass`, request body mapper, types, and `useCreateStorageGatePass` mutation with list and voucher-number cache invalidation on success.
+- **Storage gate pass types** — `StorageGatePass`, list params, pagination, and search request/response shapes.
+- **Storage gate pass card** — `StorageGatePassCard` and `StorageGatePassCardSkeleton` with expandable location/quantity details, farmer info, and actions.
+- **Storage tab skeleton** — Full-page `StorageTabSkeleton` while storage gate passes load.
+- **Reports navigation** — Collapsible “Reports” sidebar group with links to incoming, grading, storage, and dispatch pre/post-storage report routes.
+- **Report routes** — `/incoming/report` (incoming report feature shell), plus placeholder pages for grading, storage, and dispatch reports.
+- **Additional route** — `/additional` authenticated route shell.
+
+### Changed
+
+- **Daybook storage tab** — Loads storage gate passes from the API with sort, configurable page size, and pagination; debounced gate-pass-number search; loading, error, empty, and invalid-search states; refresh with fetch indicator.
+- **Create storage form** — Submits through `useCreateStorageGatePass` with success/error toasts, form reset, and combobox reset on success; review sheet closes after create.
+- **useCreateStorageForm** — `onCreate` callback replaces inline console log and toast handling in the form hook.
+- **Topbar** — Route titles for report paths; logout menu item uses `destructive` variant.
+
 ## [0.2.7] - 2026-05-24
 
 Grading gate pass edit and audit history wired to the API, with link/delink incoming gate passes on the select step and storage create form using live farmer links.
@@ -331,6 +353,8 @@ First application scaffold for the Kapur frontend (`kf-frontend`).
 
 - Default Vite starter styles (`App.css`) and demo application UI from the initial template.
 
+[0.2.8]: https://github.com/compare/v0.2.7...v0.2.8
+[0.2.7]: https://github.com/compare/v0.2.6...v0.2.7
 [0.2.6]: https://github.com/compare/v0.2.5...v0.2.6
 [0.2.5]: https://github.com/compare/v0.2.4...v0.2.5
 [0.2.4]: https://github.com/compare/v0.2.3...v0.2.4

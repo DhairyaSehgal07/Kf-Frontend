@@ -33,6 +33,11 @@ const routeTitles: Record<string, string> = {
   '/incoming/edit-history': 'Incoming edit history',
   '/grading/edit-history': 'Grading edit history',
   '/additional': 'Additional',
+  '/incoming/report': 'Incoming report',
+  '/grading/report': 'Grading report',
+  '/storage/report': 'Storage report',
+  '/dispatch-pre-storage/report': 'Dispatch pre-storage report',
+  '/dispatch-post-storage/report': 'Dispatch post-storage report',
 };
 
 function getInitials(name?: string) {
@@ -191,9 +196,9 @@ export function AppTopbar() {
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem
+              variant="destructive"
               disabled={isLoggingOut}
               onClick={() => logout()}
-              className="text-destructive focus:bg-destructive focus:text-destructive-foreground"
             >
               {isLoggingOut ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
