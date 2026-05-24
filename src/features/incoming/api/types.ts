@@ -150,3 +150,50 @@ export type GetIncomingGatePassesResponse = {
 export type SearchIncomingGatePassBody = {
   number: number
 }
+
+export type IncomingGatePassAuditEditor = {
+  _id: string
+  name: string
+  mobileNumber?: string
+}
+
+export type IncomingGatePassAuditState = Partial<{
+  manualGatePassNumber: number | null
+  truckNumber: string
+  date: string
+  farmerStorageLinkId: IncomingGatePassFarmerStorageLink | string
+  variety: string
+  category: string
+  stage: string
+  bagsReceived: number
+  weightSlip: IncomingGatePassWeightSlip
+  remarks: string
+}>
+
+export type IncomingGatePassAudit = {
+  _id: string
+  incomingGatePassId: string
+  editedById: IncomingGatePassAuditEditor
+  previousState: IncomingGatePassAuditState
+  modifiedState: IncomingGatePassAuditState
+  reason: string
+  ipAddress?: string
+  userAgent?: string
+  createdAt: string
+}
+
+export type IncomingGatePassEditsListParams = {
+  page?: number
+  limit?: number
+}
+
+export type IncomingGatePassEditsListResult = {
+  audits: IncomingGatePassAudit[]
+  pagination: IncomingGatePassPagination
+}
+
+export type GetIncomingGatePassEditsResponse = {
+  success: boolean
+  data: IncomingGatePassEditsListResult
+  message?: string
+}

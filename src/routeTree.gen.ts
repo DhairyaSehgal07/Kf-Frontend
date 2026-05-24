@@ -19,6 +19,7 @@ import { Route as AuthenticatedStorageIndexRouteImport } from './routes/_authent
 import { Route as AuthenticatedIncomingIndexRouteImport } from './routes/_authenticated/incoming.index'
 import { Route as AuthenticatedGradingIndexRouteImport } from './routes/_authenticated/grading.index'
 import { Route as AuthenticatedStorageIdRouteImport } from './routes/_authenticated/storage.$id'
+import { Route as AuthenticatedIncomingEditHistoryRouteImport } from './routes/_authenticated/incoming.edit-history'
 import { Route as AuthenticatedIncomingIdRouteImport } from './routes/_authenticated/incoming.$id'
 import { Route as AuthenticatedGradingIdRouteImport } from './routes/_authenticated/grading.$id'
 
@@ -75,6 +76,12 @@ const AuthenticatedStorageIdRoute = AuthenticatedStorageIdRouteImport.update({
   path: '/storage/$id',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedIncomingEditHistoryRoute =
+  AuthenticatedIncomingEditHistoryRouteImport.update({
+    id: '/incoming/edit-history',
+    path: '/incoming/edit-history',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedIncomingIdRoute = AuthenticatedIncomingIdRouteImport.update({
   id: '/incoming/$id',
   path: '/incoming/$id',
@@ -93,6 +100,7 @@ export interface FileRoutesByFullPath {
   '/people': typeof AuthenticatedPeopleRoute
   '/grading/$id': typeof AuthenticatedGradingIdRoute
   '/incoming/$id': typeof AuthenticatedIncomingIdRoute
+  '/incoming/edit-history': typeof AuthenticatedIncomingEditHistoryRoute
   '/storage/$id': typeof AuthenticatedStorageIdRoute
   '/grading/': typeof AuthenticatedGradingIndexRoute
   '/incoming/': typeof AuthenticatedIncomingIndexRoute
@@ -106,6 +114,7 @@ export interface FileRoutesByTo {
   '/people': typeof AuthenticatedPeopleRoute
   '/grading/$id': typeof AuthenticatedGradingIdRoute
   '/incoming/$id': typeof AuthenticatedIncomingIdRoute
+  '/incoming/edit-history': typeof AuthenticatedIncomingEditHistoryRoute
   '/storage/$id': typeof AuthenticatedStorageIdRoute
   '/grading': typeof AuthenticatedGradingIndexRoute
   '/incoming': typeof AuthenticatedIncomingIndexRoute
@@ -121,6 +130,7 @@ export interface FileRoutesById {
   '/_authenticated/people': typeof AuthenticatedPeopleRoute
   '/_authenticated/grading/$id': typeof AuthenticatedGradingIdRoute
   '/_authenticated/incoming/$id': typeof AuthenticatedIncomingIdRoute
+  '/_authenticated/incoming/edit-history': typeof AuthenticatedIncomingEditHistoryRoute
   '/_authenticated/storage/$id': typeof AuthenticatedStorageIdRoute
   '/_authenticated/grading/': typeof AuthenticatedGradingIndexRoute
   '/_authenticated/incoming/': typeof AuthenticatedIncomingIndexRoute
@@ -136,6 +146,7 @@ export interface FileRouteTypes {
     | '/people'
     | '/grading/$id'
     | '/incoming/$id'
+    | '/incoming/edit-history'
     | '/storage/$id'
     | '/grading/'
     | '/incoming/'
@@ -149,6 +160,7 @@ export interface FileRouteTypes {
     | '/people'
     | '/grading/$id'
     | '/incoming/$id'
+    | '/incoming/edit-history'
     | '/storage/$id'
     | '/grading'
     | '/incoming'
@@ -163,6 +175,7 @@ export interface FileRouteTypes {
     | '/_authenticated/people'
     | '/_authenticated/grading/$id'
     | '/_authenticated/incoming/$id'
+    | '/_authenticated/incoming/edit-history'
     | '/_authenticated/storage/$id'
     | '/_authenticated/grading/'
     | '/_authenticated/incoming/'
@@ -247,6 +260,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedStorageIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/incoming/edit-history': {
+      id: '/_authenticated/incoming/edit-history'
+      path: '/incoming/edit-history'
+      fullPath: '/incoming/edit-history'
+      preLoaderRoute: typeof AuthenticatedIncomingEditHistoryRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/incoming/$id': {
       id: '/_authenticated/incoming/$id'
       path: '/incoming/$id'
@@ -270,6 +290,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedPeopleRoute: typeof AuthenticatedPeopleRoute
   AuthenticatedGradingIdRoute: typeof AuthenticatedGradingIdRoute
   AuthenticatedIncomingIdRoute: typeof AuthenticatedIncomingIdRoute
+  AuthenticatedIncomingEditHistoryRoute: typeof AuthenticatedIncomingEditHistoryRoute
   AuthenticatedStorageIdRoute: typeof AuthenticatedStorageIdRoute
   AuthenticatedGradingIndexRoute: typeof AuthenticatedGradingIndexRoute
   AuthenticatedIncomingIndexRoute: typeof AuthenticatedIncomingIndexRoute
@@ -283,6 +304,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedPeopleRoute: AuthenticatedPeopleRoute,
   AuthenticatedGradingIdRoute: AuthenticatedGradingIdRoute,
   AuthenticatedIncomingIdRoute: AuthenticatedIncomingIdRoute,
+  AuthenticatedIncomingEditHistoryRoute: AuthenticatedIncomingEditHistoryRoute,
   AuthenticatedStorageIdRoute: AuthenticatedStorageIdRoute,
   AuthenticatedGradingIndexRoute: AuthenticatedGradingIndexRoute,
   AuthenticatedIncomingIndexRoute: AuthenticatedIncomingIndexRoute,

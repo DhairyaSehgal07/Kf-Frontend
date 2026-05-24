@@ -30,6 +30,7 @@ const routeTitles: Record<string, string> = {
   '/daybook': 'Daybook',
   '/people': 'People',
   '/analytics': 'Analytics',
+  '/incoming/edit-history': 'Incoming edit history',
   '/additional': 'Additional',
 };
 

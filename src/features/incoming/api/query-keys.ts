@@ -1,4 +1,5 @@
 import type {
+  IncomingGatePassEditsListParams,
   IncomingGatePassListParams,
   IncomingGatePassesByFarmerParams,
 } from "./types"
@@ -23,4 +24,7 @@ export const incomingGatePassKeys = {
     [...incomingGatePassKeys.searches(), number] as const,
   create: () => [...incomingGatePassKeys.all, "create"] as const,
   update: (id: string) => [...incomingGatePassKeys.all, "update", id] as const,
+  editsLists: () => [...incomingGatePassKeys.all, "edits"] as const,
+  edits: (params: IncomingGatePassEditsListParams) =>
+    [...incomingGatePassKeys.editsLists(), params] as const,
 }
