@@ -2,8 +2,10 @@ import { useMemo, useState, type MouseEvent } from "react"
 import { Link } from "@tanstack/react-router"
 import {
   ArrowLeft,
+  Globe,
   History,
   Loader2,
+  Monitor,
   RefreshCw,
   User,
 } from "lucide-react"
@@ -173,7 +175,7 @@ function IncomingEditAuditCard({ audit }: { audit: IncomingGatePassAudit }) {
 
       <div className="grid gap-3 border-b border-border/60 px-4 py-4 sm:grid-cols-2 sm:px-5">
         <div className="flex items-start gap-2 text-sm">
-          <User className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+          <User className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
           <div className="min-w-0">
             <p className="font-medium text-foreground">
               {audit.editedById.name}
@@ -186,10 +188,39 @@ function IncomingEditAuditCard({ audit }: { audit: IncomingGatePassAudit }) {
           </div>
         </div>
 
-        <div className="min-w-0 text-sm">
-          <p className="font-medium text-foreground">Reason</p>
-          <p className="text-muted-foreground">{audit.reason || "—"}</p>
-        </div>
+        {audit.ipAddress ? (
+          <div className="flex items-start gap-2 text-sm">
+            <Globe className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+            <div className="min-w-0">
+              <p className="font-medium text-foreground">IP address</p>
+              <p className="font-mono tabular-nums text-muted-foreground">
+                {audit.ipAddress}
+              </p>
+            </div>
+          </div>
+        ) : null}
+
+        {audit.userAgent ? (
+          <div
+            className={cn(
+              "min-w-0 text-sm",
+              audit.ipAddress ? "" : "sm:col-span-2",
+            )}
+          >
+            <div className="flex items-start gap-2">
+              <Monitor className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+              <div className="min-w-0">
+                <p className="font-medium text-foreground">User agent</p>
+                <p
+                  className="truncate text-muted-foreground"
+                  title={audit.userAgent}
+                >
+                  {audit.userAgent}
+                </p>
+              </div>
+            </div>
+          </div>
+        ) : null}
       </div>
 
       <AuditChangeTable audit={audit} />
@@ -252,7 +283,7 @@ const IncomingEditHistoryPage = () => {
             className="-ml-2 mb-1 h-9 px-2 text-muted-foreground"
           >
             <Link to="/daybook" search={{ tab: "incoming" }}>
-              <ArrowLeft className="mr-1.5 size-4" />
+              <ArrowLeft className="mr-1.5 h-5 w-5 text-primary" />
               Back to daybook
             </Link>
           </Button>
@@ -287,9 +318,9 @@ const IncomingEditHistoryPage = () => {
             disabled={isFetching}
           >
             {isFetching ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              <Loader2 className="mr-2 h-5 w-5 animate-spin text-primary" />
             ) : (
-              <RefreshCw className="mr-2 h-4 w-4" />
+              <RefreshCw className="mr-2 h-5 w-5 text-primary" />
             )}
             Refresh
           </Button>
@@ -300,7 +331,7 @@ const IncomingEditHistoryPage = () => {
         <Empty className="rounded-xl border bg-muted/10">
           <EmptyHeader>
             <EmptyMedia variant="icon">
-              <History />
+              <History className="h-5 w-5 text-primary" />
             </EmptyMedia>
             <EmptyTitle>Could not load edit history</EmptyTitle>
             <EmptyDescription>
@@ -328,7 +359,7 @@ const IncomingEditHistoryPage = () => {
         <Empty className="rounded-xl border bg-muted/10">
           <EmptyHeader>
             <EmptyMedia variant="icon">
-              <History />
+              <History className="h-5 w-5 text-primary" />
             </EmptyMedia>
             <EmptyTitle>No edits recorded yet</EmptyTitle>
             <EmptyDescription>
