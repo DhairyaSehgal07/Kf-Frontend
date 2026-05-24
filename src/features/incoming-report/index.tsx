@@ -1,11 +1,9 @@
 import { useState } from "react"
 import { format } from "date-fns"
 
-import { DatePickerInput } from "@/components/date-picker"
-import { Button } from "@/components/ui/button"
-
 import { columns } from "./components/columns"
 import { DataTable } from "./components/data-table"
+import { ReportToolbar } from "./components/report-toolbar"
 import { useIncomingGatePassReport } from "./api/use-incoming-gate-pass-report"
 import type { IncomingGatePassReportParams } from "./api/types"
 
@@ -18,10 +16,12 @@ const IncomingReportPage = () => {
   const [toDate, setToDate] = useState<Date | undefined>()
   const [appliedParams, setAppliedParams] =
     useState<IncomingGatePassReportParams>({})
+  const [searchQuery, setSearchQuery] = useState("")
 
   const { data, error, isLoading } = useIncomingGatePassReport(appliedParams)
 
   const reportRows = data?.incomingGatePasses ?? []
+  const rowCount = reportRows.length
 
   const handleApply = () => {
     const next: IncomingGatePassReportParams = {}
@@ -39,40 +39,39 @@ const IncomingReportPage = () => {
   }
 
   return (
-    <div className="flex w-full flex-col gap-4">
-      <div className="flex flex-col gap-3 rounded-xl border bg-card p-3 text-card-foreground shadow-sm sm:gap-4 sm:p-4">
-        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end sm:gap-4">
-          <DatePickerInput
-            id="incoming-report-from"
-            label="From"
-            placeholder="Start date"
-            value={fromDate}
-            onChange={setFromDate}
-            className="min-w-0 sm:max-w-[220px] sm:flex-1"
-          />
-
-          <DatePickerInput
-            id="incoming-report-to"
-            label="To"
-            placeholder="End date"
-            value={toDate}
-            onChange={setToDate}
-            className="min-w-0 sm:max-w-[220px] sm:flex-1"
-          />
-
-          <div className="flex gap-2 sm:shrink-0">
-            <Button className="flex-1 sm:flex-none" onClick={handleApply}>
-              Apply
-            </Button>
-            <Button
-              variant="outline"
-              className="flex-1 sm:flex-none"
-              onClick={handleReset}
-            >
-              Reset
-            </Button>
+    <div className="flex w-full min-w-0 flex-col gap-4">
+      <div className="overflow-hidden rounded-xl border border-border bg-card text-card-foreground shadow-sm">
+        <div className="border-b border-border/60 bg-muted/20 px-4 py-4 sm:px-6">
+          <div className="min-w-0 space-y-1">
+            <h1 className="font-heading truncate text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
+              Incoming gate passes
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              {isLoading ? (
+                "Loading report…"
+              ) : (
+                <>
+                  <span className="tabular-nums font-medium text-foreground">
+                    {rowCount.toLocaleString("en-IN")}
+                  </span>{" "}
+                  {rowCount === 1 ? "entry" : "entries"}
+                </>
+              )}
+            </p>
           </div>
         </div>
+
+        <ReportToolbar
+          fromDate={fromDate}
+          toDate={toDate}
+          onFromDateChange={setFromDate}
+          onToDateChange={setToDate}
+          onApply={handleApply}
+          onReset={handleReset}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          isLoading={isLoading}
+        />
       </div>
 
       {error ? (

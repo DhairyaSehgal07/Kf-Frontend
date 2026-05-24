@@ -193,31 +193,9 @@ export function DataTable<TData, TValue>({
 
   const tableDensity = table.getState().density
   const columnCount = columns.length
-  const rowCount = data.length
 
   return (
     <div className="flex min-w-0 flex-col overflow-hidden rounded-xl border border-border bg-card text-card-foreground shadow-sm">
-      <div className="border-b border-border/60 bg-muted/30 px-4 py-3.5 sm:px-6">
-        <div className="min-w-0 space-y-0.5">
-          <h2 className="font-heading truncate text-base font-semibold tracking-tight text-foreground">
-            Incoming gate passes
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            {isLoading ? (
-              "Loading report…"
-            ) : (
-              <>
-                <span className="tabular-nums font-medium text-foreground">
-                  {rowCount.toLocaleString("en-IN")}
-                </span>
-                {" "}
-                {rowCount === 1 ? "entry" : "entries"}
-              </>
-            )}
-          </p>
-        </div>
-      </div>
-
       <div
         ref={scrollContainerRef}
         onScroll={handleTableScroll}
