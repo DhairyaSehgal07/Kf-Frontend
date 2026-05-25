@@ -16,6 +16,7 @@ import type {
   AdvancedFilterOperator,
   AdvancedReportGlobalFilter,
 } from "@/features/incoming-report/utils/report-filter-fns"
+import { isAdvancedNumericColumn } from "@/features/incoming-report/utils/report-filter-fns"
 import { cn } from "@/lib/utils"
 
 interface AdvancedTabProps {
@@ -27,33 +28,42 @@ interface AdvancedTabProps {
 type OperatorOption = {
   value: AdvancedFilterOperator
   label: string
-  numericOnly?: boolean
   requiresValue?: boolean
 }
 
-const OPERATOR_OPTIONS: OperatorOption[] = [
+const STRING_OPERATOR_OPTIONS: OperatorOption[] = [
   { value: "contains", label: "contains", requiresValue: true },
   { value: "notContains", label: "does not contain", requiresValue: true },
   { value: "equals", label: "equals", requiresValue: true },
   { value: "notEquals", label: "does not equal", requiresValue: true },
   { value: "startsWith", label: "starts with", requiresValue: true },
   { value: "endsWith", label: "ends with", requiresValue: true },
-  { value: "greaterThan", label: ">", numericOnly: true, requiresValue: true },
+  { value: "isEmpty", label: "is blank" },
+  { value: "isNotEmpty", label: "is not blank" },
+]
+
+const NUMERIC_OPERATOR_OPTIONS: OperatorOption[] = [
+  { value: "equals", label: "=", requiresValue: true },
+  { value: "notEquals", label: "!=", requiresValue: true },
+  { value: "greaterThan", label: ">", requiresValue: true },
   {
     value: "greaterThanOrEqual",
     label: ">=",
-    numericOnly: true,
     requiresValue: true,
   },
-  { value: "lessThan", label: "<", numericOnly: true, requiresValue: true },
+  { value: "lessThan", label: "<", requiresValue: true },
   {
     value: "lessThanOrEqual",
     label: "<=",
-    numericOnly: true,
     requiresValue: true,
   },
   { value: "isEmpty", label: "is blank" },
   { value: "isNotEmpty", label: "is not blank" },
+]
+
+const OPERATOR_OPTIONS = [
+  ...STRING_OPERATOR_OPTIONS,
+  ...NUMERIC_OPERATOR_OPTIONS,
 ]
 
 function getColumnLabel(column: Column<IncomingGatePassReportRow, unknown>) {
@@ -61,14 +71,31 @@ function getColumnLabel(column: Column<IncomingGatePassReportRow, unknown>) {
 }
 
 function getDefaultOperator(column: Column<IncomingGatePassReportRow, unknown>) {
-  return column.columnDef.meta?.numeric === true ? "greaterThan" : "contains"
+  return isAdvancedNumericColumn(column.id) ? "greaterThan" : "contains"
 }
 
 function getOperatorOptions(
   column: Column<IncomingGatePassReportRow, unknown> | undefined,
 ) {
-  const isNumeric = column?.columnDef.meta?.numeric === true
-  return OPERATOR_OPTIONS.filter((option) => !option.numericOnly || isNumeric)
+  return column && isAdvancedNumericColumn(column.id)
+    ? NUMERIC_OPERATOR_OPTIONS
+    : STRING_OPERATOR_OPTIONS
+}
+
+function getColumnValueOptions(
+  column: Column<IncomingGatePassReportRow, unknown> | undefined,
+) {
+  if (!column) return []
+
+  return Array.from(column.getFacetedUniqueValues().keys())
+    .map((value) => String(value ?? "").trim())
+    .filter((value) => value.length > 0)
+    .sort((a, b) =>
+      a.localeCompare(b, "en-IN", {
+        numeric: true,
+        sensitivity: "base",
+      }),
+    )
 }
 
 function createCondition(
@@ -138,7 +165,11 @@ const AdvancedTab = ({
   }
 
   const handleReset = () => {
-    onDraftGlobalFilterChange({ logic: "AND", conditions: [] })
+    onDraftGlobalFilterChange({
+      logic: "AND",
+      conditions: [],
+      manualGatePassSearch: draftGlobalFilter.manualGatePassSearch,
+    })
   }
 
   const activeConditionCount = conditions.filter(
@@ -217,7 +248,19 @@ const AdvancedTab = ({
             {conditions.map((condition) => {
               const selectedColumn = columnsById.get(String(condition.columnId))
               const operatorOptions = getOperatorOptions(selectedColumn)
-              const needsValue = isValueRequired(condition.operator)
+              const effectiveOperator = operatorOptions.some(
+                (option) => option.value === condition.operator,
+              )
+                ? condition.operator
+                : selectedColumn
+                  ? getDefaultOperator(selectedColumn)
+                  : condition.operator
+              const needsValue = isValueRequired(effectiveOperator)
+              const isNumericColumn =
+                selectedColumn != null &&
+                isAdvancedNumericColumn(selectedColumn.id)
+              const valueOptions = getColumnValueOptions(selectedColumn)
+              const valueListId = `advanced-filter-values-${condition.id}`
 
               return (
                 <div
@@ -243,7 +286,7 @@ const AdvancedTab = ({
                   </Select>
 
                   <Select
-                    value={condition.operator}
+                    value={effectiveOperator}
                     onValueChange={(value) =>
                       updateCondition(condition.id, {
                         operator: value as AdvancedFilterOperator,
@@ -267,15 +310,17 @@ const AdvancedTab = ({
                   </Select>
 
                   <Input
+                    type="text"
                     value={condition.value}
                     disabled={!needsValue}
-                    inputMode={
-                      selectedColumn?.columnDef.meta?.numeric === true
-                        ? "decimal"
-                        : "text"
-                    }
+                    list={needsValue ? valueListId : undefined}
+                    inputMode={isNumericColumn ? "decimal" : "text"}
                     placeholder={
-                      needsValue ? "Select or type value..." : "No value needed"
+                      needsValue
+                        ? isNumericColumn
+                          ? "Enter number..."
+                          : "Select or type value..."
+                        : "No value needed"
                     }
                     onChange={(event) =>
                       updateCondition(condition.id, {
@@ -284,6 +329,13 @@ const AdvancedTab = ({
                     }
                     className="h-10"
                   />
+                  {needsValue ? (
+                    <datalist id={valueListId}>
+                      {valueOptions.map((value) => (
+                        <option key={value} value={value} />
+                      ))}
+                    </datalist>
+                  ) : null}
 
                   <Button
                     type="button"

@@ -29,6 +29,21 @@ export type AdvancedFilterCondition = {
 export type AdvancedReportGlobalFilter = {
   logic: AdvancedFilterLogic
   conditions: AdvancedFilterCondition[]
+  manualGatePassSearch?: string
+}
+
+const ADVANCED_NUMERIC_COLUMN_IDS = new Set<keyof IncomingGatePassReportRow>([
+  "bags",
+  "grossWeightKg",
+  "tareWeightKg",
+  "bardanaWeightKg",
+  "netWeightKg",
+])
+
+export function isAdvancedNumericColumn(
+  columnId: string,
+): columnId is keyof IncomingGatePassReportRow {
+  return ADVANCED_NUMERIC_COLUMN_IDS.has(columnId as keyof IncomingGatePassReportRow)
 }
 
 export function getReportFilterValueKey(value: unknown): string {
@@ -86,6 +101,19 @@ function evaluateCondition(
 
   const rowText = normalizeText(rawValue)
   const filterText = normalizeText(filterValue)
+  const isNumericCondition = isAdvancedNumericColumn(String(condition.columnId))
+
+  if (
+    isNumericCondition &&
+    (condition.operator === "equals" || condition.operator === "notEquals")
+  ) {
+    const rowNumber = parseReportNumber(rawValue)
+    const filterNumber = parseReportNumber(filterValue)
+    if (rowNumber == null || filterNumber == null) return false
+    return condition.operator === "equals"
+      ? rowNumber === filterNumber
+      : rowNumber !== filterNumber
+  }
 
   switch (condition.operator) {
     case "contains":
@@ -127,6 +155,16 @@ export const advancedReportGlobalFilterFn: FilterFn<IncomingGatePassReportRow> =
 ) => {
   if (!isAdvancedReportGlobalFilter(filterValue)) return true
 
+  const manualGatePassSearch = filterValue.manualGatePassSearch?.trim()
+  if (
+    manualGatePassSearch &&
+    !normalizeText(row.original.manualGatePassNumber).includes(
+      normalizeText(manualGatePassSearch),
+    )
+  ) {
+    return false
+  }
+
   const activeConditions = filterValue.conditions.filter((condition) => {
     if (condition.operator === "isEmpty" || condition.operator === "isNotEmpty") {
       return true
@@ -148,9 +186,10 @@ export const advancedReportGlobalFilterFn: FilterFn<IncomingGatePassReportRow> =
 
 advancedReportGlobalFilterFn.autoRemove = (filterValue) =>
   !isAdvancedReportGlobalFilter(filterValue) ||
-  filterValue.conditions.every(
-    (condition) =>
-      condition.operator !== "isEmpty" &&
-      condition.operator !== "isNotEmpty" &&
-      condition.value.trim().length === 0,
-  )
+  ((filterValue.manualGatePassSearch?.trim().length ?? 0) === 0 &&
+    filterValue.conditions.every(
+      (condition) =>
+        condition.operator !== "isEmpty" &&
+        condition.operator !== "isNotEmpty" &&
+        condition.value.trim().length === 0,
+    ))

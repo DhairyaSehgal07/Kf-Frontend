@@ -83,7 +83,13 @@ export function ViewFiltersSheet({ table }: ViewFiltersSheetProps) {
     table.setColumnOrder(draftColumnOrder)
     table.setGrouping(draftGrouping)
     table.setExpanded(draftGrouping.length > 0 ? true : {})
-    table.setGlobalFilter(draftGlobalFilter)
+    table.setGlobalFilter({
+      ...draftGlobalFilter,
+      manualGatePassSearch:
+        table.getState().globalFilter?.manualGatePassSearch ??
+        draftGlobalFilter.manualGatePassSearch ??
+        "",
+    })
     setOpen(false)
   }
 
@@ -107,7 +113,7 @@ export function ViewFiltersSheet({ table }: ViewFiltersSheetProps) {
       </SheetTrigger>
       <SheetContent
         side="right"
-        className="flex flex-col gap-0 p-0 data-[side=right]:w-full data-[side=right]:max-w-full sm:data-[side=right]:max-w-md"
+        className="flex flex-col gap-0 p-0 data-[side=right]:w-full data-[side=right]:max-w-full sm:data-[side=right]:max-w-2xl lg:data-[side=right]:max-w-3xl"
       >
         {/* ── Header ──────────────────────────────────────────── */}
         {/* Added pr-14 to ensure text doesn't overlap with the absolute close button */}

@@ -56,6 +56,7 @@ const IncomingReportPage = () => {
   const [globalFilter, setGlobalFilter] = useState<AdvancedReportGlobalFilter>({
     logic: "AND",
     conditions: [],
+    manualGatePassSearch: "",
   })
   const [density, setDensity] = useState<DensityState>("lg")
 
@@ -124,6 +125,14 @@ const IncomingReportPage = () => {
     setAppliedParams({})
   }
 
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value)
+    setGlobalFilter((current) => ({
+      ...current,
+      manualGatePassSearch: value,
+    }))
+  }
+
   return (
     <div className="flex w-full min-w-0 flex-col gap-4">
       <div className="overflow-hidden rounded-xl border border-border bg-card text-card-foreground shadow-sm">
@@ -156,7 +165,7 @@ const IncomingReportPage = () => {
           onApply={handleApply}
           onReset={handleReset}
           searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
+          onSearchChange={handleSearchChange}
           isLoading={isLoading}
         />
       </div>
