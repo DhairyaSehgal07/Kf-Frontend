@@ -1,30 +1,41 @@
 import { type FormEvent, useMemo, useState } from "react"
-import { FileJson2, Loader2, RefreshCw } from "lucide-react"
+import { Loader2, RefreshCw } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 import {
   useStorageGatePassReport,
   type StorageGatePassReportParams,
 } from "./api/use-storage-gate-pass-report"
+import {
+  getStorageReportColumns,
+  type StorageQuantityMode,
+} from "./components/columns"
+import { DataTable } from "./components/data-table"
 
 const DEFAULT_REPORT_PARAMS = {} satisfies StorageGatePassReportParams
 
 const StorageReportPage = () => {
   const [dateFrom, setDateFrom] = useState("")
   const [dateTo, setDateTo] = useState("")
+  const [quantityMode, setQuantityMode] =
+    useState<StorageQuantityMode>("current")
   const [appliedParams, setAppliedParams] =
     useState<StorageGatePassReportParams>(DEFAULT_REPORT_PARAMS)
 
   const { data, error, isFetching, isLoading, refetch } =
     useStorageGatePassReport(appliedParams)
 
-  const reportRows = data?.data.storageGatePasses ?? []
-  const formattedResponse = useMemo(
-    () => (data ? JSON.stringify(data, null, 2) : ""),
-    [data],
+  const reportRows = useMemo(
+    () => data?.data.storageGatePasses ?? [],
+    [data?.data.storageGatePasses],
+  )
+  const tableColumns = useMemo(
+    () => getStorageReportColumns(reportRows, quantityMode),
+    [quantityMode, reportRows],
   )
 
   const handleApply = (event: FormEvent<HTMLFormElement>) => {
@@ -152,17 +163,31 @@ const StorageReportPage = () => {
         <div className="flex flex-col gap-2 border-b border-border/60 bg-muted/20 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <div className="min-w-0 space-y-1">
             <h2 className="font-heading text-base font-semibold text-foreground">
-              JSON response
+              Storage gate passes
             </h2>
             <p className="text-sm text-muted-foreground">
-              GET /storage-gate-pass/report with the selected date range.
+              A simple table for the selected date range.
             </p>
           </div>
 
-          <Badge variant="outline" className="w-fit gap-1.5">
-            <FileJson2 className="size-3" />
-            JSON.stringify
-          </Badge>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <Tabs
+              value={quantityMode}
+              onValueChange={(value) =>
+                setQuantityMode(value as StorageQuantityMode)
+              }
+            >
+              <TabsList aria-label="Quantity view">
+                <TabsTrigger value="current">Current Qty</TabsTrigger>
+                <TabsTrigger value="initial">Initial Qty</TabsTrigger>
+              </TabsList>
+            </Tabs>
+
+            <Badge variant="outline" className="w-fit gap-1.5">
+              <span className="tabular-nums">{reportRows.length}</span>
+              rows
+            </Badge>
+          </div>
         </div>
 
         <div className="relative">
@@ -171,13 +196,17 @@ const StorageReportPage = () => {
               <Loader2 className="size-4 animate-spin" />
               Loading storage report...
             </div>
-          ) : formattedResponse ? (
-            <pre className="max-h-[640px] min-h-56 overflow-auto p-4 font-mono text-sm leading-relaxed text-foreground sm:p-6">
-              {formattedResponse}
-            </pre>
+          ) : data ? (
+            <div className="min-w-0">
+              <DataTable
+                columns={tableColumns}
+                data={reportRows}
+                quantityMode={quantityMode}
+              />
+            </div>
           ) : (
             <div className="flex min-h-56 items-center justify-center p-6 text-center text-sm text-muted-foreground">
-              Apply filters to load the storage report response.
+              Apply filters to load the storage report.
             </div>
           )}
         </div>
