@@ -29,6 +29,7 @@ import {
   DEFAULT_CHAMBER,
   DEFAULT_FLOOR,
   DEFAULT_STORAGE_ROW,
+  type BagType,
 } from "@/lib/constants"
 import { Plus, Trash2 } from "lucide-react"
 
@@ -173,7 +174,9 @@ export function StorageQuantitiesSection({ form }: StorageQuantitiesSectionProps
                               </FieldLabel>
                               <Select
                                 value={subField.state.value}
-                                onValueChange={subField.handleChange}
+                                onValueChange={(value) =>
+                                  subField.handleChange(value as BagType)
+                                }
                               >
                                 <SelectTrigger
                                   id={subField.name}

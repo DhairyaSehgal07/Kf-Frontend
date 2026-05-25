@@ -29,6 +29,7 @@ import { cn } from "@/lib/utils"
 import { Skeleton } from "@/components/ui/skeleton"
 import type {
   GradingGatePass,
+  GradingGatePassFarmerStorageLink,
   GradingOrderDetail,
 } from "@/features/grading/api/types"
 
@@ -87,6 +88,12 @@ export function gradingTotalWeightKg(orderDetails: readonly GradingOrderDetail[]
   )
 }
 
+function isPopulatedFarmerStorageLink(
+  value: GradingGatePass["farmerStorageLinkId"],
+): value is GradingGatePassFarmerStorageLink {
+  return typeof value !== "string"
+}
+
 interface GradingGatePassCardProps {
   data: GradingGatePass
   canUpdate?: boolean
@@ -99,8 +106,12 @@ export function GradingGatePassCard({
   const navigate = useNavigate()
   const [isExpanded, setIsExpanded] = useState(false)
 
-  const farmer = gatePass.farmerStorageLinkId.farmerId
-  const farmerStorageLink = gatePass.farmerStorageLinkId
+  const farmerStorageLink = isPopulatedFarmerStorageLink(
+    gatePass.farmerStorageLinkId,
+  )
+    ? gatePass.farmerStorageLinkId
+    : undefined
+  const farmer = farmerStorageLink?.farmerId
   const totalBags = gradingTotalBags(gatePass.orderDetails)
   const totalWeightKg = gradingTotalWeightKg(gatePass.orderDetails)
   const incomingCount = gatePass.incomingGatePassIds.length
@@ -142,7 +153,7 @@ export function GradingGatePassCard({
         <div className="flex flex-wrap items-center justify-end gap-2">
           <Badge
             variant="outline"
-            className="max-w-[9rem] truncate bg-background text-[11px]"
+            className="max-w-36 truncate bg-background text-[11px]"
             title={gatePass.variety}
           >
             {gatePass.variety}
@@ -161,10 +172,10 @@ export function GradingGatePassCard({
 
       <CardContent className="pt-5">
         <div className="grid grid-cols-2 gap-6 sm:grid-cols-4">
-          <InfoBlock label="Farmer" value={farmer.name ?? "—"} icon={User} />
+          <InfoBlock label="Farmer" value={farmer?.name ?? "—"} icon={User} />
           <InfoBlock
             label="Account"
-            value={farmerStorageLink.accountNumber ?? "—"}
+            value={farmerStorageLink?.accountNumber ?? "—"}
             valueClassName="tabular-nums"
           />
           <InfoBlock label="Variety" value={gatePass.variety} icon={Sprout} />

@@ -1,12 +1,10 @@
 import type { QueryClient } from "@tanstack/react-query"
 
 import { findIncomingGatePassByGatePassNoInCache } from "@/features/incoming/api/find-incoming-gate-pass-by-gate-pass-no-in-cache"
+import type { GatePassStatus } from "@/features/incoming/api/types"
 import type { GradingOrderDetail } from "@/features/grading/api/types"
 import type { GradingGatePass, GradingGatePassIncomingRef } from "@/features/grading/api/types"
-import {
-  BAG_SIZES,
-  DEFAULT_BAG_TYPE,
-} from "@/lib/constants"
+import { BAG_SIZES } from "@/lib/constants"
 import {
   createDefaultQuantities,
   type GradingQuantityRow,
@@ -22,6 +20,10 @@ function toIsoDateTime(value: string): string {
 
 function isStandardBagSize(size: string): size is (typeof BAG_SIZES)[number] {
   return (BAG_SIZES as readonly string[]).includes(size)
+}
+
+function toGatePassStatus(status: string | undefined): GatePassStatus {
+  return status === "NOT_GRADED" ? "NOT_GRADED" : "GRADED"
 }
 
 export function orderDetailsToQuantities(
@@ -96,7 +98,7 @@ export function gradingIncomingRefsToSelectRows(
           variety,
           truckNumber: ref.truckNumber ?? "—",
           bagsReceived: ref.bagsReceived,
-          status: ref.status ?? "GRADED",
+          status: toGatePassStatus(ref.status),
         },
       ]
     }
@@ -131,7 +133,7 @@ export function gradingIncomingRefsToSelectRows(
         variety,
         truckNumber: ref.truckNumber ?? "—",
         bagsReceived: ref.bagsReceived,
-        status: ref.status ?? "GRADED",
+        status: toGatePassStatus(ref.status),
       },
     ]
   })

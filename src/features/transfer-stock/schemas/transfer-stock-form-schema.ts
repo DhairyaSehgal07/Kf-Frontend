@@ -21,7 +21,7 @@ export const transferStockFormSchema = z
     fromFarmerStorageLinkId: objectId,
     toFarmerStorageLinkId: objectId,
     date: z.string().min(1, "Date is required"),
-    remarks: z.string().max(500).optional().default(""),
+    remarks: z.string().max(500),
     allocations: z
       .record(z.string(), z.number().int().min(1))
       .refine((obj) => Object.keys(obj).length > 0, {

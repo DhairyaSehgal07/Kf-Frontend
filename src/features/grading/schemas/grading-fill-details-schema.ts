@@ -2,10 +2,7 @@ import * as z from "zod"
 import { BAG_SIZES, DEFAULT_BAG_TYPE } from "@/lib/constants"
 
 const quantityRowSchema = z.object({
-  size: z.union([
-    z.enum(BAG_SIZES),
-    z.literal(""),
-  ]),
+  size: z.string(),
   isExtra: z.boolean(),
   qty: z
     .number()

@@ -20,6 +20,8 @@ const storageBaseSchema = z.object({
 
 export const storageFormSchema = storageBaseSchema.merge(storageQuantitiesSchema)
 
+export type StorageFormValues = z.infer<typeof storageFormSchema>
+
 export {
   storageQuantitiesSchema,
   createDefaultStorageQuantities,

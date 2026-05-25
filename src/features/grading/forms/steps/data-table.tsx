@@ -5,6 +5,7 @@ import {
   type OnChangeFn,
   type PaginationState,
   type RowSelectionState,
+  type SortingFn,
   type SortingState,
   type Updater,
   flexRender,
@@ -35,6 +36,8 @@ import {
 } from "@/components/ui/table"
 import { cn } from "@/lib/utils"
 import { DataTablePagination } from "./data-table-pagination"
+
+const noopSortingFn: SortingFn<unknown> = () => 0
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -101,6 +104,10 @@ export function DataTable<TData, TValue>({
     onPaginationChange: setPagination,
     enableRowSelection: true,
     autoResetPageIndex: true,
+    sortingFns: {
+      reportNumeric: noopSortingFn,
+      reportDate: noopSortingFn,
+    },
     state: {
       sorting,
       columnFilters,
