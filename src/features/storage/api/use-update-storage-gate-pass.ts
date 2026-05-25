@@ -1,19 +1,18 @@
 import { useMutation } from "@tanstack/react-query"
 import { useRouter } from "@tanstack/react-router"
 
-import { createStorageGatePass } from "@/features/storage/api/create-storage-gate-pass"
 import { storageGatePassKeys } from "@/features/storage/api/query-keys"
-import type { CreateStorageGatePassInput } from "@/features/storage/api/types"
-import { voucherNumberKeys } from "@/hooks/use-get-voucher-number"
+import type { UpdateStorageGatePassInput } from "@/features/storage/api/types"
+import { updateStorageGatePass } from "@/features/storage/api/update-storage-gate-pass"
 import { queryClient } from "@/lib/queryClient"
 
-export function useCreateStorageGatePass() {
+export function useUpdateStorageGatePass(id: string) {
   const router = useRouter()
 
   return useMutation({
-    mutationKey: storageGatePassKeys.create(),
-    mutationFn: (input: CreateStorageGatePassInput) =>
-      createStorageGatePass(input),
+    mutationKey: storageGatePassKeys.update(id),
+    mutationFn: (input: UpdateStorageGatePassInput) =>
+      updateStorageGatePass(input),
     retry: false,
     meta: { suppressGlobalError: true },
     onSuccess: () => {
@@ -21,7 +20,10 @@ export function useCreateStorageGatePass() {
         queryKey: storageGatePassKeys.lists(),
       })
       void queryClient.invalidateQueries({
-        queryKey: voucherNumberKeys.detail("storage-gate-pass"),
+        queryKey: storageGatePassKeys.byFarmerLists(),
+      })
+      void queryClient.invalidateQueries({
+        queryKey: storageGatePassKeys.searches(),
       })
 
       void router.navigate({ to: "/daybook", search: { tab: "storage" } })

@@ -125,3 +125,69 @@ export type CreateStorageGatePassInput = {
   form: StorageFormValues
   gatePassNo: number
 }
+
+export type UpdateStorageGatePassBody = {
+  manualGatePassNumber?: number | null
+  date: string
+  farmerStorageLinkId: string
+  variety: string
+  storageCategory: string
+  bagSizes: StorageGatePassBagSize[]
+  remarks?: string
+}
+
+export type UpdateStorageGatePassResponse = {
+  success?: boolean
+  status?: string
+  data?: Record<string, unknown> | null
+  message?: string
+}
+
+export type UpdateStorageGatePassInput = {
+  id: string
+  form: StorageFormValues
+}
+
+export type StorageGatePassAuditEditor = {
+  _id: string
+  name: string
+  mobileNumber?: string
+}
+
+export type StorageGatePassAuditState = Partial<{
+  manualGatePassNumber: number | null
+  date: string
+  farmerStorageLinkId: StorageGatePassFarmerStorageLink | string
+  variety: string
+  storageCategory: string
+  bagSizes: StorageGatePassBagSize[]
+  remarks: string
+}>
+
+export type StorageGatePassAudit = {
+  _id: string
+  storageGatePassId: string
+  editedById: StorageGatePassAuditEditor
+  previousState: StorageGatePassAuditState
+  modifiedState: StorageGatePassAuditState
+  reason?: string
+  ipAddress?: string
+  userAgent?: string
+  createdAt: string
+}
+
+export type StorageGatePassEditsListParams = {
+  page?: number
+  limit?: number
+}
+
+export type StorageGatePassEditsListResult = {
+  audits: StorageGatePassAudit[]
+  pagination: StorageGatePassPagination
+}
+
+export type GetStorageGatePassEditsResponse = {
+  success: boolean
+  data: StorageGatePassEditsListResult
+  message?: string
+}

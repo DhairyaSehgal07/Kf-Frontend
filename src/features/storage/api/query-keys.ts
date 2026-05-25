@@ -1,4 +1,5 @@
 import type {
+  StorageGatePassEditsListParams,
   StorageGatePassListParams,
   StorageGatePassesByFarmerParams,
 } from "./types"
@@ -22,4 +23,8 @@ export const storageGatePassKeys = {
   search: (number: number) =>
     [...storageGatePassKeys.searches(), number] as const,
   create: () => [...storageGatePassKeys.all, "create"] as const,
+  update: (id: string) => [...storageGatePassKeys.all, "update", id] as const,
+  editsLists: () => [...storageGatePassKeys.all, "edits"] as const,
+  edits: (params: StorageGatePassEditsListParams) =>
+    [...storageGatePassKeys.editsLists(), params] as const,
 }

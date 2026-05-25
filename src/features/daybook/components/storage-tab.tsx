@@ -223,6 +223,10 @@ const DaybookStorageTab = () => {
     navigate({ to: "/storage" })
   }
 
+    const handleEditHistory= () => {
+    navigate({ to: "/storage/edit-history" })
+  }
+
   const handleTransferStock = () => {
     navigate({ to: "/transfer" })
   }
@@ -312,7 +316,7 @@ const DaybookStorageTab = () => {
               <span className="hidden sm:inline">Transfer Stock</span>
             </Button>
 
-            <Button variant="secondary" className="min-w-0 px-2.5 sm:px-3" disabled>
+           <Button variant="secondary" className="min-w-0 px-2.5 sm:px-3" onClick={handleEditHistory}>
               <span className="truncate sm:hidden">Edit History</span>
               <span className="hidden sm:inline">Storage Edit History</span>
             </Button>

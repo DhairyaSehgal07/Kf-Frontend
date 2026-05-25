@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1] - 2026-05-26
+
+Storage gate passes can now be edited, audited, and reviewed through API-backed storage report and edit-history views.
+
+### Added
+
+- **Storage gate pass edit API** — Update, by-ID lookup, cache lookup, edit-history fetch, query keys, mutation hooks, and audit formatting helpers for storage gate passes.
+- **Edit storage gate pass form** — `/storage/$id` loads an existing gate pass, pre-fills the shared storage form, supports review before submit, and updates with success/error toasts.
+- **Storage edit history page** — `/storage/edit-history` shows paginated audit cards with field diffs, editor metadata, refresh controls, and edit links.
+- **Storage report API** — `/storage-gate-pass/report` query hook and storage report page with date filters and JSON response review.
+
+### Changed
+
+- **Daybook storage tab** — “Storage Edit History” now navigates to the storage edit-history route.
+- **Create storage gate pass flow** — Navigates back to the daybook storage tab after a successful create.
+- **Storage form hook** — Accepts default values so create and edit flows can share the same form setup.
+
 ## [0.3.0] - 2026-05-25
 
 Grading report view settings now support saved columns, grouping, and advanced logic, with grouped summaries and incoming report totals for faster report review.
@@ -385,6 +402,7 @@ First application scaffold for the Kapur frontend (`kf-frontend`).
 
 - Default Vite starter styles (`App.css`) and demo application UI from the initial template.
 
+[0.3.1]: https://github.com/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/compare/v0.2.9...v0.3.0
 [0.2.9]: https://github.com/compare/v0.2.8...v0.2.9
 [0.2.8]: https://github.com/compare/v0.2.7...v0.2.8
