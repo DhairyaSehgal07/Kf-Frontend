@@ -2,6 +2,7 @@ import { useState } from "react"
 import type {
   ColumnFiltersState,
   ColumnOrderState,
+  GroupingState,
   Table,
   VisibilityState,
 } from "@tanstack/react-table"
@@ -36,7 +37,11 @@ export function ViewFiltersSheet({ table }: ViewFiltersSheetProps) {
   const [draftColumnOrder, setDraftColumnOrder] = useState<ColumnOrderState>(
     () => table.getState().columnOrder,
   )
+  const [draftGrouping, setDraftGrouping] = useState<GroupingState>(
+    () => table.getState().grouping,
+  )
   const activeFilterCount = table.getState().columnFilters.length
+  const activeGroupingCount = table.getState().grouping.length
   const hiddenColumnCount = table
     .getAllLeafColumns()
     .filter((column) => table.getState().columnVisibility[column.id] === false)
@@ -48,6 +53,7 @@ export function ViewFiltersSheet({ table }: ViewFiltersSheetProps) {
       setDraftColumnFilters(tableState.columnFilters)
       setDraftColumnVisibility(tableState.columnVisibility)
       setDraftColumnOrder(tableState.columnOrder)
+      setDraftGrouping(tableState.grouping)
     }
     setOpen(nextOpen)
   }
@@ -56,6 +62,8 @@ export function ViewFiltersSheet({ table }: ViewFiltersSheetProps) {
     table.setColumnFilters(draftColumnFilters)
     table.setColumnVisibility(draftColumnVisibility)
     table.setColumnOrder(draftColumnOrder)
+    table.setGrouping(draftGrouping)
+    table.setExpanded(draftGrouping.length > 0 ? true : {})
     setOpen(false)
   }
 
@@ -112,7 +120,14 @@ export function ViewFiltersSheet({ table }: ViewFiltersSheetProps) {
                   </span>
                 ) : null}
               </TabsTrigger>
-              <TabsTrigger value="grouping">Grouping</TabsTrigger>
+              <TabsTrigger value="grouping">
+                Grouping
+                {activeGroupingCount > 0 ? (
+                  <span className="ml-1 rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary">
+                    {activeGroupingCount.toLocaleString("en-IN")}
+                  </span>
+                ) : null}
+              </TabsTrigger>
               <TabsTrigger value="advanced">Advanced</TabsTrigger>
             </TabsList>
 
@@ -134,8 +149,12 @@ export function ViewFiltersSheet({ table }: ViewFiltersSheetProps) {
               />
             </TabsContent>
 
-            <TabsContent value="grouping" >
-            <GroupingTab/>
+            <TabsContent value="grouping">
+              <GroupingTab
+                table={table}
+                draftGrouping={draftGrouping}
+                onDraftGroupingChange={setDraftGrouping}
+              />
             </TabsContent>
 
             <TabsContent value="advanced" >

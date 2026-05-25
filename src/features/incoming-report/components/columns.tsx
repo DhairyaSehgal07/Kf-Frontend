@@ -1,4 +1,5 @@
 import type {
+  AggregationFn,
   CellContext,
   Column,
   ColumnDef,
@@ -16,6 +17,7 @@ import {
 import {
   formatIndianInteger,
   formatIndianWeight,
+  parseReportNumber,
 } from "@/features/incoming-report/utils/report-formatters"
 import { cn } from "@/lib/utils"
 
@@ -215,6 +217,16 @@ const sortNumeric = {
   sortUndefined: "last" as const,
 }
 const sortDate = { sortingFn: "reportDate" as const, sortUndefined: "last" as const }
+const aggregateUnique = { aggregationFn: "uniqueCount" as const }
+const reportSumAggregation: AggregationFn<IncomingGatePassReportRow> = (
+  columnId,
+  leafRows,
+) =>
+  leafRows.reduce((sum, row) => {
+    const parsed = parseReportNumber(row.getValue(columnId))
+    return sum + (parsed ?? 0)
+  }, 0)
+const aggregateSum = { aggregationFn: reportSumAggregation }
 
 export const columns: ColumnDef<IncomingGatePassReportRow>[] = [
   {
@@ -222,12 +234,14 @@ export const columns: ColumnDef<IncomingGatePassReportRow>[] = [
     header: reportColumnHeader("Name"),
     footer: ReportTotalLabel,
     meta: { filterLabel: "Farmer" },
+    ...aggregateUnique,
     ...sortText,
   },
   {
     accessorKey: "address",
     header: reportColumnHeader("Address"),
     meta: { filterLabel: "Farmer address" },
+    ...aggregateUnique,
     ...sortText,
   },
   {
@@ -262,18 +276,21 @@ export const columns: ColumnDef<IncomingGatePassReportRow>[] = [
       filterValueFormatter: formatDateFilterValue,
     },
     cell: reportDateCell,
+    ...aggregateUnique,
     ...sortDate,
   },
   {
     accessorKey: "variety",
     header: reportColumnHeader("Variety"),
     meta: { filterLabel: "Variety" },
+    ...aggregateUnique,
     ...sortText,
   },
   {
     accessorKey: "stage",
     header: reportColumnHeader("Stage"),
     meta: { filterLabel: "Stage" },
+    ...aggregateUnique,
     ...sortText,
   },
   {
@@ -294,6 +311,7 @@ export const columns: ColumnDef<IncomingGatePassReportRow>[] = [
     },
     cell: indianNumberCell("integer"),
     footer: createReportTotalFooter("bags", "integer"),
+    ...aggregateSum,
     ...sortNumeric,
   },
   {
@@ -318,6 +336,7 @@ export const columns: ColumnDef<IncomingGatePassReportRow>[] = [
     },
     cell: indianNumberCell("weight"),
     footer: createReportTotalFooter("grossWeightKg", "weight"),
+    ...aggregateSum,
     ...sortNumeric,
   },
   {
@@ -335,6 +354,7 @@ export const columns: ColumnDef<IncomingGatePassReportRow>[] = [
     },
     cell: indianNumberCell("weight"),
     footer: createReportTotalFooter("tareWeightKg", "weight"),
+    ...aggregateSum,
     ...sortNumeric,
   },
   {
@@ -352,6 +372,7 @@ export const columns: ColumnDef<IncomingGatePassReportRow>[] = [
     },
     cell: indianNumberCell("weight"),
     footer: createReportTotalFooter("bardanaWeightKg", "weight"),
+    ...aggregateSum,
     ...sortNumeric,
   },
   {
@@ -372,6 +393,7 @@ export const columns: ColumnDef<IncomingGatePassReportRow>[] = [
     footer: createReportTotalFooter("netWeightKg", "weight", {
       emphasize: true,
     }),
+    ...aggregateSum,
     ...sortNumeric,
   },
   {
@@ -383,6 +405,7 @@ export const columns: ColumnDef<IncomingGatePassReportRow>[] = [
       filterValueFormatter: (value: unknown) =>
         value == null || value === "" ? "Blank" : getStatusLabel(String(value)),
     },
+    ...aggregateUnique,
     ...sortText,
     cell: ({ row }) => {
       const status = row.getValue<string>("status")
@@ -410,12 +433,14 @@ export const columns: ColumnDef<IncomingGatePassReportRow>[] = [
     accessorKey: "createdBy",
     header: reportColumnHeader("Created by"),
     meta: { filterLabel: "Created by" },
+    ...aggregateUnique,
     ...sortText,
   },
   {
     accessorKey: "remarks",
     header: reportColumnHeader("Remarks"),
     meta: { wrap: true, groupStart: true, filterLabel: "Remarks" },
+    ...aggregateUnique,
     ...sortText,
   },
 ]

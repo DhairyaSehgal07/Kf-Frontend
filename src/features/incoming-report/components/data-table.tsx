@@ -4,7 +4,7 @@ import {
   flexRender,
   type Table as TanStackTable,
 } from "@tanstack/react-table"
-import { ClipboardList } from "lucide-react"
+import { ChevronDown, ChevronRight, ClipboardList } from "lucide-react"
 
 import type { DensityState } from "@/lib/tanstack-table/density-feature"
 import {
@@ -160,6 +160,15 @@ function getValueSpanClassName(
     meta?.mono === true && "font-mono text-sm",
     meta?.emphasize === true && "font-semibold",
   )
+}
+
+function formatDisplayValue(
+  value: unknown,
+  meta: ColumnMeta | undefined,
+): string {
+  if (meta?.filterValueFormatter) return meta.filterValueFormatter(value)
+  if (value == null || value === "") return "Blank"
+  return String(value)
 }
 
 type ColumnClassEntry = {
@@ -322,49 +331,105 @@ export function DataTable<TData, TValue>({
                 </TableRow>
               ))
             ) : rowCount ? (
-              rows.map((row) => (
-                <TableRow key={row.id} className="border-0 even:bg-muted/20">
-                  {row.getVisibleCells().map((cell) => {
-                    const columnId = cell.column.id
-                    const meta = cell.column.columnDef.meta
-                    const isStatusColumn = columnId === "status"
-                    const value = cell.getValue()
-                    const isEmpty = value == null || value === ""
-                    const display = isEmpty ? "—" : String(value)
-                    const columnClasses = columnClassMap.get(columnId)
+              rows.map((row) => {
+                const isGroupedRow = row.getIsGrouped()
 
-                    return (
-                      <TableCell
-                        key={cell.id}
-                        className={columnClasses?.cell(isEmpty)}
-                      >
-                        {isStatusColumn ? (
-                          flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext(),
-                          )
-                        ) : isEmpty ? (
-                          <span className="text-sm text-muted-foreground">
-                            —
-                          </span>
-                        ) : (
-                          <span
-                            className={columnClasses?.span}
-                            title={
-                              isWrapColumn(meta) ? undefined : display
-                            }
-                          >
-                            {flexRender(
+                return (
+                  <TableRow
+                    key={row.id}
+                    className={cn(
+                      "border-0 even:bg-muted/20",
+                      isGroupedRow &&
+                        "bg-primary/5 even:bg-primary/5 hover:bg-primary/10 [&>td]:border-b-border/60 [&>td]:border-t-border/60 [&>td]:shadow-[inset_0_1px_0_hsl(var(--primary)/0.12)]",
+                    )}
+                  >
+                    {row.getVisibleCells().map((cell) => {
+                      const columnId = cell.column.id
+                      const meta = cell.column.columnDef.meta
+                      const isStatusColumn = columnId === "status"
+                      const value = cell.getValue()
+                      const isEmpty = value == null || value === ""
+                      const display = isEmpty ? "—" : String(value)
+                      const columnClasses = columnClassMap.get(columnId)
+                      const isGroupedCell = cell.getIsGrouped()
+                      const isAggregatedCell = cell.getIsAggregated()
+                      const isPlaceholderCell = cell.getIsPlaceholder()
+
+                      return (
+                        <TableCell
+                          key={cell.id}
+                          className={cn(
+                            columnClasses?.cell(isEmpty),
+                            isGroupedRow && "bg-transparent",
+                          )}
+                        >
+                          {isGroupedCell ? (
+                            <button
+                              type="button"
+                              className="flex min-w-0 items-center gap-2 rounded-md text-left text-sm font-semibold text-foreground transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
+                              style={{ paddingLeft: `${row.depth * 0.75}rem` }}
+                              onClick={row.getToggleExpandedHandler()}
+                              aria-expanded={row.getIsExpanded()}
+                            >
+                              {row.getCanExpand() ? (
+                                row.getIsExpanded() ? (
+                                  <ChevronDown
+                                    className="size-4 shrink-0 text-primary"
+                                    aria-hidden
+                                  />
+                                ) : (
+                                  <ChevronRight
+                                    className="size-4 shrink-0 text-primary"
+                                    aria-hidden
+                                  />
+                                )
+                              ) : null}
+                              <span className="min-w-0 truncate">
+                                {formatDisplayValue(value, meta)}
+                              </span>
+                              <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold tabular-nums text-primary">
+                                {row.subRows.length.toLocaleString("en-IN")}
+                              </span>
+                            </button>
+                          ) : isAggregatedCell ? (
+                            meta?.numeric === true ? (
+                              <span className="font-semibold text-foreground">
+                                {flexRender(
+                                  cell.column.columnDef.cell,
+                                  cell.getContext(),
+                                )}
+                              </span>
+                            ) : (
+                              <span aria-hidden />
+                            )
+                          ) : isPlaceholderCell ? null : isStatusColumn ? (
+                            flexRender(
                               cell.column.columnDef.cell,
                               cell.getContext(),
-                            )}
-                          </span>
-                        )}
-                      </TableCell>
-                    )
-                  })}
-                </TableRow>
-              ))
+                            )
+                          ) : isEmpty ? (
+                            <span className="text-sm text-muted-foreground">
+                              —
+                            </span>
+                          ) : (
+                            <span
+                              className={columnClasses?.span}
+                              title={
+                                isWrapColumn(meta) ? undefined : display
+                              }
+                            >
+                              {flexRender(
+                                cell.column.columnDef.cell,
+                                cell.getContext(),
+                              )}
+                            </span>
+                          )}
+                        </TableCell>
+                      )
+                    })}
+                  </TableRow>
+                )
+              })
             ) : (
               <TableRow className="border-0 hover:bg-transparent">
                 <TableCell

@@ -8,6 +8,8 @@ import {
 } from "@/features/incoming-report/utils/report-formatters"
 import { cn } from "@/lib/utils"
 
+/* eslint-disable react-refresh/only-export-components -- footer helpers are consumed by column definitions */
+
 type TotalFormat = "integer" | "weight"
 
 export function ReportTotalLabel() {
@@ -22,7 +24,7 @@ export function createReportTotalFooter(
   options?: { emphasize?: boolean },
 ) {
   return ({ table }: { table: Table<IncomingGatePassReportRow> }) => {
-    const rows = table.getRowModel().rows
+    const rows = table.getFilteredRowModel().rows
     if (rows.length === 0) return null
 
     const total = sumReportNumericColumn(rows, key)
@@ -43,3 +45,5 @@ export function createReportTotalFooter(
     )
   }
 }
+
+/* eslint-enable react-refresh/only-export-components */

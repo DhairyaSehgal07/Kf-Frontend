@@ -3,11 +3,15 @@ import { format } from "date-fns"
 import {
   type ColumnFiltersState,
   type ColumnOrderState,
+  type ExpandedState,
   functionalUpdate,
   getCoreRowModel,
+  getExpandedRowModel,
   getFacetedRowModel,
   getFacetedUniqueValues,
   getFilteredRowModel,
+  getGroupedRowModel,
+  type GroupingState,
   getSortedRowModel,
   type SortingState,
   useReactTable,
@@ -43,6 +47,8 @@ const IncomingReportPage = () => {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
   const [columnOrder, setColumnOrder] = useState<ColumnOrderState>([])
+  const [grouping, setGrouping] = useState<GroupingState>([])
+  const [expanded, setExpanded] = useState<ExpandedState>({})
   const [density, setDensity] = useState<DensityState>("lg")
 
   const { data, error, isLoading } = useIncomingGatePassReport(appliedParams)
@@ -62,6 +68,8 @@ const IncomingReportPage = () => {
     },
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
+    getGroupedRowModel: getGroupedRowModel(),
+    getExpandedRowModel: getExpandedRowModel(),
     getFacetedRowModel: getFacetedRowModel(),
     getFacetedUniqueValues: getFacetedUniqueValues(),
     getSortedRowModel: getSortedRowModel(),
@@ -75,6 +83,8 @@ const IncomingReportPage = () => {
       columnFilters,
       columnVisibility,
       columnOrder,
+      grouping,
+      expanded,
     },
     onDensityChange: (updater) => {
       setDensity((previous) => functionalUpdate(updater, previous))
@@ -83,6 +93,8 @@ const IncomingReportPage = () => {
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
     onColumnOrderChange: setColumnOrder,
+    onGroupingChange: setGrouping,
+    onExpandedChange: setExpanded,
   })
   const rowCount = table.getFilteredRowModel().rows.length
 
