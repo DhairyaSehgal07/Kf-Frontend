@@ -1,12 +1,15 @@
 import { Fragment, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   type ColumnDef,
+  type SortDirection,
   type SortingFn,
+  type SortingState,
   flexRender,
   getCoreRowModel,
+  getSortedRowModel,
   useReactTable,
 } from '@tanstack/react-table';
-import { ClipboardList } from 'lucide-react';
+import { ArrowDown, ArrowUp, ArrowUpDown, ClipboardList } from 'lucide-react';
 
 import {
   Empty,
@@ -68,6 +71,18 @@ type OrderDetailRow = {
   size?: string;
   quantity?: number | string;
 };
+
+function SortIcon({ sorted }: { sorted: false | SortDirection }) {
+  if (sorted === 'desc') {
+    return <ArrowDown className="size-3.5 shrink-0" aria-hidden />;
+  }
+
+  if (sorted === 'asc') {
+    return <ArrowUp className="size-3.5 shrink-0" aria-hidden />;
+  }
+
+  return <ArrowUpDown className="size-3.5 shrink-0" aria-hidden />;
+}
 
 function getIncomingGatePasses(row: unknown): IncomingGatePassRow[] {
   if (typeof row !== 'object' || row === null || !('incomingGatePassIds' in row)) {
@@ -284,6 +299,7 @@ export function DataTable<TData, TValue>({
   data,
   isLoading = false,
 }: DataTableProps<TData, TValue>) {
+  const [sorting, setSorting] = useState<SortingState>([]);
   const [isHeaderScrolled, setIsHeaderScrolled] = useState(false);
   const [isFooterElevated, setIsFooterElevated] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -297,7 +313,12 @@ export function DataTable<TData, TValue>({
       reportNumeric: noopSortingFn,
       reportDate: noopSortingFn,
     },
+    state: { sorting },
+    onSortingChange: setSorting,
     getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    sortDescFirst: false,
+    enableSortingRemoval: true,
   });
   const rows = table.getRowModel().rows;
   const visibleColumns = table.getVisibleLeafColumns();
@@ -334,12 +355,22 @@ export function DataTable<TData, TValue>({
               <TableRow key={headerGroup.id} className="border-0">
                 {headerGroup.headers.map((header) => {
                   const meta = header.column.columnDef.meta;
+                  const sorted = header.column.getIsSorted();
+                  const canSort = header.column.getCanSort() && header.subHeaders.length === 0;
+                  const align = getColumnAlign(meta);
+                  const headerContent = header.isPlaceholder
+                    ? null
+                    : flexRender(header.column.columnDef.header, header.getContext());
 
                   return (
                     <TableHead
                       key={header.id}
                       colSpan={header.colSpan}
+                      aria-sort={
+                        sorted === 'asc' ? 'ascending' : sorted === 'desc' ? 'descending' : 'none'
+                      }
                       className={cn(
+                        'group/head',
                         getHeadClassName(meta, isHeaderScrolled),
                         header.subHeaders.length > 0 &&
                           'h-10 text-center [&>span]:items-center [&>span>span:first-child]:text-xs [&>span>span:first-child]:font-semibold [&>span>span:first-child]:tracking-[0.08em] [&>span>span:first-child]:uppercase',
@@ -347,9 +378,30 @@ export function DataTable<TData, TValue>({
                           '[&>span>span:first-child]:font-semibold',
                       )}
                     >
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(header.column.columnDef.header, header.getContext())}
+                      {canSort ? (
+                        <button
+                          type="button"
+                          className={cn(
+                            'flex w-full min-w-0 items-center gap-1.5 rounded-md text-inherit transition-colors hover:text-foreground focus-visible:ring-ring/30 focus-visible:ring-2 focus-visible:outline-none',
+                            align === 'right'
+                              ? 'justify-end text-right'
+                              : 'justify-between text-left',
+                          )}
+                          onClick={header.column.getToggleSortingHandler()}
+                        >
+                          {headerContent}
+                          <span
+                            className={cn(
+                              'text-muted-foreground shrink-0 transition-opacity',
+                              sorted ? 'opacity-100' : 'opacity-0 group-hover/head:opacity-70',
+                            )}
+                          >
+                            <SortIcon sorted={sorted} />
+                          </span>
+                        </button>
+                      ) : (
+                        headerContent
+                      )}
                     </TableHead>
                   );
                 })}
