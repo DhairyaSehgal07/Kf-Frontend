@@ -26,6 +26,36 @@ export default defineConfig({
      tailwindcss(),
     babel({ presets: [reactCompilerPreset()] }),
   ],
+  build: {
+    rolldownOptions: {
+      output: {
+        codeSplitting: {
+          groups: [
+            {
+              name: 'react-vendor',
+              test: /[\\/]node_modules[\\/](react|react-dom|scheduler)[\\/]/,
+              priority: 30,
+            },
+            {
+              name: 'tanstack-vendor',
+              test: /[\\/]node_modules[\\/]@tanstack[\\/]/,
+              priority: 20,
+            },
+            {
+              name: 'ui-vendor',
+              test: /[\\/]node_modules[\\/](@radix-ui|radix-ui|lucide-react)[\\/]/,
+              priority: 10,
+            },
+            {
+              name: 'vendor',
+              test: /[\\/]node_modules[\\/]/,
+              priority: 0,
+            },
+          ],
+        },
+      },
+    },
+  },
   server: {
     port:3000
   }
