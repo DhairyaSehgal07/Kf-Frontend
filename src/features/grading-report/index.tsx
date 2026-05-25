@@ -1,17 +1,23 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
+import type { Table as TanStackTable } from '@tanstack/react-table';
 import { format } from 'date-fns';
-import { ArrowRight, FileSpreadsheet, RefreshCw, Search } from 'lucide-react';
 
-import { DatePickerInput } from '@/components/date-picker';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import {
   useGradingGatePassReport,
   type GradingGatePassReportParams,
 } from './api/use-grading-gate-pass-report';
-import { getGradingReportColumns } from './components/grading-columns';
-import { DataTable } from './components/grading-data-table';
+import type { GradingGatePassReportRow } from './api/types';
+import { getGradingReportColumns } from './components/columns';
+import { DataTable } from './components/data-table';
+import { ReportToolbar } from './components/report-toolbar';
+import {
+  formatIndianIntegerTotal,
+  formatIndianPercentageTotal,
+  formatIndianWeightTotal,
+  getIncomingGatePassObjects,
+  parseReportNumber,
+} from './utils/report-formatters';
 
 function toReportDateParam(date: Date | undefined): string | undefined {
   return date ? format(date, 'yyyy-MM-dd') : undefined;
@@ -21,17 +27,6 @@ const DEFAULT_GRADING_REPORT_PARAMS = {} satisfies GradingGatePassReportParams;
 
 function matchesSearch(value: unknown, query: string): boolean {
   return (JSON.stringify(value) ?? '').toLowerCase().includes(query);
-}
-
-function parseReportNumber(value: unknown): number {
-  if (value == null || value === '') return 0;
-
-  const parsed = Number(String(value).replace(/,/g, '').trim());
-  return Number.isFinite(parsed) ? parsed : 0;
-}
-
-function formatIndianNumber(value: number, maximumFractionDigits = 3): string {
-  return value.toLocaleString('en-IN', { maximumFractionDigits });
 }
 
 function average(values: number[]): number {
@@ -44,6 +39,8 @@ const GradingReportPage = () => {
   const [fromDate, setFromDate] = useState<Date | undefined>();
   const [toDate, setToDate] = useState<Date | undefined>();
   const [searchQuery, setSearchQuery] = useState('');
+  const [reportTable, setReportTable] =
+    useState<TanStackTable<GradingGatePassReportRow> | null>(null);
   const [appliedParams, setAppliedParams] = useState<GradingGatePassReportParams>(
     DEFAULT_GRADING_REPORT_PARAMS,
   );
@@ -83,17 +80,15 @@ const GradingReportPage = () => {
             totals.gradingBags += detail.quantity;
           });
 
-          gatePass.incomingGatePassIds.forEach((incomingGatePass) => {
-            if (typeof incomingGatePass === 'string') return;
-
-            totals.incomingBags += parseReportNumber(incomingGatePass.bagsReceived);
+          getIncomingGatePassObjects(gatePass).forEach((incomingGatePass) => {
+            totals.incomingBags += parseReportNumber(incomingGatePass.bagsReceived) ?? 0;
           });
 
-          totals.incomingNetWeight += parseReportNumber(gatePass.incomingNetWeightKg);
-          totals.gradingNetWeight += parseReportNumber(gatePass.netWeightKg);
+          totals.incomingNetWeight += parseReportNumber(gatePass.incomingNetWeightKg) ?? 0;
+          totals.gradingNetWeight += parseReportNumber(gatePass.netWeightKg) ?? 0;
 
-          wastageValues.push(parseReportNumber(gatePass.wastageKg));
-          wastagePercentageValues.push(parseReportNumber(gatePass.wastagePercentage));
+          wastageValues.push(parseReportNumber(gatePass.wastageKg) ?? 0);
+          wastagePercentageValues.push(parseReportNumber(gatePass.wastagePercentage) ?? 0);
 
           return totals;
         },
@@ -113,6 +108,9 @@ const GradingReportPage = () => {
     },
     [reportRows],
   );
+  const handleTableReady = useCallback((table: TanStackTable<GradingGatePassReportRow>) => {
+    setReportTable((current) => (current === table ? current : table));
+  }, []);
   const handleApply = () => {
     const next: GradingGatePassReportParams = {};
     const dateFrom = toReportDateParam(fromDate);
@@ -165,111 +163,34 @@ const GradingReportPage = () => {
           </div>
         </div>
 
-        <div className="overflow-x-auto px-4 py-3 sm:px-6 sm:py-4">
-          <div className="flex min-w-min flex-col gap-3 sm:gap-4 lg:min-w-0 lg:flex-row lg:flex-nowrap lg:items-end lg:gap-3">
-            <div className="flex min-w-0 shrink-0 flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
-              <div className="flex min-w-0 items-end gap-2">
-                <DatePickerInput
-                  id="grading-report-from"
-                  label="From"
-                  placeholder="dd.mm.yyyy"
-                  value={fromDate}
-                  onChange={setFromDate}
-                  disabled={isFetching}
-                  className="w-full min-w-0 sm:w-[150px]"
-                />
-
-                <span className="flex h-9 shrink-0 items-center" aria-hidden>
-                  <ArrowRight className="text-muted-foreground size-4" />
-                </span>
-
-                <DatePickerInput
-                  id="grading-report-to"
-                  label="To"
-                  placeholder="dd.mm.yyyy"
-                  value={toDate}
-                  onChange={setToDate}
-                  disabled={isFetching}
-                  className="w-full min-w-0 sm:w-[150px]"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-2 sm:flex sm:shrink-0">
-                <Button
-                  type="button"
-                  className="min-w-0"
-                  disabled={isFetching}
-                  onClick={handleApply}
-                >
-                  Apply
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="min-w-0"
-                  disabled={isFetching}
-                  onClick={handleReset}
-                >
-                  Reset
-                </Button>
-              </div>
-            </div>
-
-            <div className="relative min-w-0 lg:min-w-44 lg:flex-1">
-              <Search
-                className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2"
-                aria-hidden
-              />
-              <Input
-                type="search"
-                placeholder="Search grading report..."
-                value={searchQuery}
-                onChange={(event) => setSearchQuery(event.target.value)}
-                disabled={isLoading}
-                className="w-full pl-9"
-                aria-label="Search grading report"
-              />
-            </div>
-
-            <div className="flex shrink-0 items-center gap-2">
-              <Button
-                type="button"
-                className="min-w-0 flex-1 gap-1.5 lg:flex-none"
-                aria-label="Export grading report to Excel"
-                disabled
-              >
-                <FileSpreadsheet className="size-4 shrink-0" aria-hidden />
-                <span className="truncate">Excel</span>
-              </Button>
-
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                className="shrink-0"
-                aria-label="Refresh grading report"
-                disabled={isFetching}
-                onClick={() => void refetch()}
-              >
-                <RefreshCw className={`size-4 ${isFetching ? 'animate-spin' : ''}`} aria-hidden />
-              </Button>
-            </div>
-          </div>
-        </div>
+        <ReportToolbar
+          table={reportTable}
+          fromDate={fromDate}
+          toDate={toDate}
+          onFromDateChange={setFromDate}
+          onToDateChange={setToDate}
+          onApply={handleApply}
+          onReset={handleReset}
+          onRefresh={() => void refetch()}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          isLoading={isLoading}
+          isRefreshing={isFetching}
+        />
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6">
         <div className="border-border bg-card rounded-xl border px-4 py-3 shadow-sm">
           <p className="text-muted-foreground text-sm">Incoming bags</p>
           <p className="text-foreground text-xl font-semibold tabular-nums">
-            {isLoading ? 'Loading...' : formatIndianNumber(reportTotals.incomingBags, 0)}
+            {isLoading ? 'Loading...' : formatIndianIntegerTotal(reportTotals.incomingBags)}
           </p>
         </div>
 
         <div className="border-border bg-card rounded-xl border px-4 py-3 shadow-sm">
           <p className="text-muted-foreground text-sm">Incoming net</p>
           <p className="text-foreground text-xl font-semibold tabular-nums">
-            {isLoading ? 'Loading...' : formatIndianNumber(reportTotals.incomingNetWeight)}{' '}
+            {isLoading ? 'Loading...' : formatIndianWeightTotal(reportTotals.incomingNetWeight)}{' '}
             {!isLoading ? (
               <span className="text-muted-foreground text-sm font-medium">kg</span>
             ) : null}
@@ -279,14 +200,14 @@ const GradingReportPage = () => {
         <div className="border-border bg-card rounded-xl border px-4 py-3 shadow-sm">
           <p className="text-muted-foreground text-sm">Grading bags</p>
           <p className="text-foreground text-xl font-semibold tabular-nums">
-            {isLoading ? 'Loading...' : formatIndianNumber(reportTotals.gradingBags, 0)}
+            {isLoading ? 'Loading...' : formatIndianIntegerTotal(reportTotals.gradingBags)}
           </p>
         </div>
 
         <div className="border-border bg-card rounded-xl border px-4 py-3 shadow-sm">
           <p className="text-muted-foreground text-sm">Grading net</p>
           <p className="text-foreground text-xl font-semibold tabular-nums">
-            {isLoading ? 'Loading...' : formatIndianNumber(reportTotals.gradingNetWeight)}{' '}
+            {isLoading ? 'Loading...' : formatIndianWeightTotal(reportTotals.gradingNetWeight)}{' '}
             {!isLoading ? (
               <span className="text-muted-foreground text-sm font-medium">kg</span>
             ) : null}
@@ -296,7 +217,7 @@ const GradingReportPage = () => {
         <div className="border-border bg-card rounded-xl border px-4 py-3 shadow-sm">
           <p className="text-muted-foreground text-sm">Avg wastage</p>
           <p className="text-foreground text-xl font-semibold tabular-nums">
-            {isLoading ? 'Loading...' : formatIndianNumber(reportTotals.averageWastageKg)}{' '}
+            {isLoading ? 'Loading...' : formatIndianWeightTotal(reportTotals.averageWastageKg)}{' '}
             {!isLoading ? (
               <span className="text-muted-foreground text-sm font-medium">kg</span>
             ) : null}
@@ -306,7 +227,9 @@ const GradingReportPage = () => {
         <div className="border-border bg-card rounded-xl border px-4 py-3 shadow-sm">
           <p className="text-muted-foreground text-sm">Avg wastage %</p>
           <p className="text-foreground text-xl font-semibold tabular-nums">
-            {isLoading ? 'Loading...' : formatIndianNumber(reportTotals.averageWastagePercentage, 2)}
+            {isLoading
+              ? 'Loading...'
+              : formatIndianPercentageTotal(reportTotals.averageWastagePercentage)}
             {!isLoading ? (
               <span className="text-muted-foreground text-sm font-medium">%</span>
             ) : null}
@@ -320,7 +243,12 @@ const GradingReportPage = () => {
         </p>
       ) : null}
 
-      <DataTable columns={tableColumns} data={reportRows} isLoading={isLoading} />
+      <DataTable
+        columns={tableColumns}
+        data={reportRows}
+        isLoading={isLoading}
+        onTableReady={handleTableReady}
+      />
     </div>
   );
 };

@@ -1,11 +1,15 @@
-import { Fragment, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
 import {
+  type ColumnFiltersState,
   type ColumnDef,
   type SortDirection,
-  type SortingFn,
   type SortingState,
+  type Table as TanStackTable,
   flexRender,
   getCoreRowModel,
+  getFacetedRowModel,
+  getFacetedUniqueValues,
+  getFilteredRowModel,
   getSortedRowModel,
   useReactTable,
 } from '@tanstack/react-table';
@@ -28,6 +32,10 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import type { GradingGatePassReportRow } from '@/features/grading-report/api/types';
+import { getGradingReportFooterContent } from '@/features/grading-report/components/report-totals-footer';
+import { selectedValuesFilterFn } from '@/features/grading-report/utils/report-filter-fns';
+import { reportSortingFns } from '@/features/grading-report/utils/report-sorting-fns';
 import { cn } from '@/lib/utils';
 
 const INCOMING_GATE_PASS_COLUMN_IDS = new Set([
@@ -50,10 +58,11 @@ const TABLE_GRID_CLASS = cn(
 
 type ColumnMeta = NonNullable<ColumnDef<unknown, unknown>['meta']>;
 
-interface DataTableProps<TData, TValue> {
-  columns: ColumnDef<TData, TValue>[];
-  data: TData[];
+interface DataTableProps<TValue> {
+  columns: ColumnDef<GradingGatePassReportRow, TValue>[];
+  data: GradingGatePassReportRow[];
   isLoading?: boolean;
+  onTableReady?: (table: TanStackTable<GradingGatePassReportRow>) => void;
 }
 
 type IncomingGatePassRow =
@@ -66,11 +75,6 @@ type IncomingGatePassRow =
       category?: string;
       netWeightKg?: number | string;
     };
-
-type OrderDetailRow = {
-  size?: string;
-  quantity?: number | string;
-};
 
 function SortIcon({ sorted }: { sorted: false | SortDirection }) {
   if (sorted === 'desc') {
@@ -101,93 +105,6 @@ function formatIndianNumber(value: unknown, maximumFractionDigits = 3) {
   if (!Number.isFinite(parsed)) return String(value);
 
   return parsed.toLocaleString('en-IN', { maximumFractionDigits });
-}
-
-function parseReportNumber(value: unknown): number | null {
-  if (value == null || value === '') return null;
-
-  const parsed = Number(String(value).replace(/,/g, '').trim());
-  return Number.isFinite(parsed) ? parsed : null;
-}
-
-function getRecord(value: unknown): Record<string, unknown> | null {
-  return typeof value === 'object' && value !== null ? (value as Record<string, unknown>) : null;
-}
-
-function getOrderDetails(row: unknown): OrderDetailRow[] {
-  const record = getRecord(row);
-  if (!record || !Array.isArray(record.orderDetails)) return [];
-
-  return record.orderDetails.filter((detail): detail is OrderDetailRow => getRecord(detail) !== null);
-}
-
-function getRowNumericValue(row: unknown, key: string): number | null {
-  const record = getRecord(row);
-  return record ? parseReportNumber(record[key]) : null;
-}
-
-function sumRowNumericValue(rows: unknown[], key: string): number {
-  return rows.reduce<number>((sum, row) => sum + (getRowNumericValue(row, key) ?? 0), 0);
-}
-
-function averageRowNumericValue(rows: unknown[], key: string): number | null {
-  const values = rows
-    .map((row) => getRowNumericValue(row, key))
-    .filter((value): value is number => value !== null);
-
-  if (!values.length) return null;
-
-  return values.reduce((sum, value) => sum + value, 0) / values.length;
-}
-
-function sumIncomingGatePassNumericValue(
-  rows: unknown[],
-  key: keyof Exclude<IncomingGatePassRow, string>,
-): number {
-  return rows.reduce<number>((sum, row) => {
-    const incomingTotal = getIncomingGatePasses(row).reduce<number>((incomingSum, gatePass) => {
-      if (typeof gatePass === 'string') return incomingSum;
-
-      return incomingSum + (parseReportNumber(gatePass[key]) ?? 0);
-    }, 0);
-
-    return sum + incomingTotal;
-  }, 0);
-}
-
-function sumOrderDetailSizeQuantity(rows: unknown[], size: string): number {
-  return rows.reduce<number>((sum, row) => {
-    const sizeTotal = getOrderDetails(row).reduce<number>((detailSum, detail) => {
-      if (detail.size !== size) return detailSum;
-
-      return detailSum + (parseReportNumber(detail.quantity) ?? 0);
-    }, 0);
-
-    return sum + sizeTotal;
-  }, 0);
-}
-
-function renderFooterNumber(value: number | null, maximumFractionDigits = 3, suffix?: string) {
-  if (value == null) return null;
-
-  return (
-    <span className="text-foreground tabular-nums font-semibold">
-      {value.toLocaleString('en-IN', { maximumFractionDigits })}
-      {suffix ? <span className="text-muted-foreground font-medium">{suffix}</span> : null}
-    </span>
-  );
-}
-
-function renderAverageFooterValue(value: number | null, maximumFractionDigits = 3, suffix?: string) {
-  if (value == null) return null;
-
-  return (
-    <span className="text-foreground tabular-nums font-semibold">
-      <span className="text-muted-foreground mr-1 font-medium">Avg</span>
-      {value.toLocaleString('en-IN', { maximumFractionDigits })}
-      {suffix ? <span className="text-muted-foreground font-medium">{suffix}</span> : null}
-    </span>
-  );
 }
 
 function getIncomingGatePassValue(gatePass: IncomingGatePassRow | undefined, columnId: string) {
@@ -271,51 +188,33 @@ function getFooterClassName(meta: ColumnMeta | undefined) {
   );
 }
 
-function getFooterContent(columnId: string, rows: unknown[]): ReactNode {
-  if (columnId.startsWith('size-')) {
-    return renderFooterNumber(sumOrderDetailSizeQuantity(rows, columnId.replace(/^size-/, '')), 0);
-  }
-
-  switch (columnId) {
-    case 'incomingBagsReceived':
-      return renderFooterNumber(sumIncomingGatePassNumericValue(rows, 'bagsReceived'), 0);
-    case 'incomingGatePassNetWeightKg':
-      return renderFooterNumber(sumIncomingGatePassNumericValue(rows, 'netWeightKg'));
-    case 'incomingNetWeightKg':
-      return renderFooterNumber(sumRowNumericValue(rows, 'incomingNetWeightKg'));
-    case 'netWeightKg':
-      return renderFooterNumber(sumRowNumericValue(rows, 'netWeightKg'));
-    case 'wastageKg':
-      return renderAverageFooterValue(averageRowNumericValue(rows, 'wastageKg'));
-    case 'wastagePercentage':
-      return renderAverageFooterValue(averageRowNumericValue(rows, 'wastagePercentage'), 2, '%');
-    default:
-      return null;
-  }
-}
-
-export function DataTable<TData, TValue>({
+export function DataTable<TValue>({
   columns,
   data,
   isLoading = false,
-}: DataTableProps<TData, TValue>) {
+  onTableReady,
+}: DataTableProps<TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [isHeaderScrolled, setIsHeaderScrolled] = useState(false);
   const [isFooterElevated, setIsFooterElevated] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const noopSortingFn: SortingFn<TData> = () => 0;
 
   // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
     data,
     columns,
-    sortingFns: {
-      reportNumeric: noopSortingFn,
-      reportDate: noopSortingFn,
+    defaultColumn: {
+      filterFn: selectedValuesFilterFn,
     },
-    state: { sorting },
+    sortingFns: reportSortingFns,
+    state: { sorting, columnFilters },
     onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getFacetedRowModel: getFacetedRowModel(),
+    getFacetedUniqueValues: getFacetedUniqueValues(),
     getSortedRowModel: getSortedRowModel(),
     sortDescFirst: false,
     enableSortingRemoval: true,
@@ -323,7 +222,6 @@ export function DataTable<TData, TValue>({
   const rows = table.getRowModel().rows;
   const visibleColumns = table.getVisibleLeafColumns();
   const columnCount = Math.max(visibleColumns.length, 1);
-  const sourceRows = useMemo(() => rows.map((row) => row.original), [rows]);
   const hasDataRows = !isLoading && rows.length > 0;
   const handleTableScroll = useCallback(() => {
     const el = scrollContainerRef.current;
@@ -336,6 +234,10 @@ export function DataTable<TData, TValue>({
   useEffect(() => {
     handleTableScroll();
   }, [handleTableScroll, isLoading, rows.length]);
+
+  useEffect(() => {
+    onTableReady?.(table);
+  }, [onTableReady, table]);
 
   return (
     <div className="border-border bg-card text-card-foreground flex w-full min-w-0 flex-col overflow-hidden rounded-xl border shadow-sm">
@@ -525,7 +427,7 @@ export function DataTable<TData, TValue>({
                     columnIndex === 0 ? (
                       <span className="text-foreground text-sm font-semibold">Total</span>
                     ) : (
-                      getFooterContent(column.id, sourceRows)
+                      getGradingReportFooterContent(column.id, rows)
                     );
 
                   if (columnIndex === 0) {

@@ -1,12 +1,18 @@
-import { type ColumnDef, type SortingFn } from '@tanstack/react-table';
+import { type ColumnDef } from '@tanstack/react-table';
 import { format, isValid, parseISO } from 'date-fns';
 
 import type {
   GradingGatePassReportFarmerStorageLink,
-  GradingGatePassReportIncomingGatePass,
   GradingGatePassReportOrderDetail,
   GradingGatePassReportRow,
 } from '../api/types';
+import {
+  formatIndianInteger,
+  formatIndianPercentage,
+  formatIndianWeight,
+  getIncomingGatePassObjects,
+  parseReportNumber,
+} from '../utils/report-formatters';
 
 function reportColumnHeader(title: string, unit?: string) {
   return () => (
@@ -40,65 +46,44 @@ function emptyCell() {
   return <span className="text-muted-foreground">-</span>;
 }
 
-function formatIndianNumber(value: unknown, maximumFractionDigits = 3) {
-  if (value == null || value === '') return null;
-
-  const parsed = Number(value);
-  if (!Number.isFinite(parsed)) return String(value);
-
-  return parsed.toLocaleString('en-IN', { maximumFractionDigits });
-}
-
-function parseReportNumber(value: unknown): number | null {
-  if (value == null || value === '') return null;
-
-  const parsed = Number(String(value).replace(/,/g, '').trim());
-  return Number.isFinite(parsed) ? parsed : null;
-}
-
-function compareNullableNumbers(a: number | null, b: number | null) {
-  if (a == null && b == null) return 0;
-  if (a == null) return -1;
-  if (b == null) return 1;
-
-  return a === b ? 0 : a > b ? 1 : -1;
-}
-
-function parseReportDateValue(value: unknown): number | null {
-  if (value == null || value === '') return null;
-
-  const parsed = parseISO(String(value));
-  if (!isValid(parsed)) return null;
-
-  return parsed.getTime();
-}
-
-const reportNumericSortingFn: SortingFn<GradingGatePassReportRow> = (rowA, rowB, columnId) =>
-  compareNullableNumbers(
-    parseReportNumber(rowA.getValue(columnId)),
-    parseReportNumber(rowB.getValue(columnId)),
-  );
-
-const reportDateSortingFn: SortingFn<GradingGatePassReportRow> = (rowA, rowB, columnId) =>
-  compareNullableNumbers(
-    parseReportDateValue(rowA.getValue(columnId)),
-    parseReportDateValue(rowB.getValue(columnId)),
-  );
-
 const sortText = { sortingFn: 'text' as const, sortUndefined: 'last' as const };
-const sortNumeric = { sortingFn: reportNumericSortingFn, sortUndefined: 'last' as const };
-const sortDate = { sortingFn: reportDateSortingFn, sortUndefined: 'last' as const };
+const sortNumeric = { sortingFn: 'reportNumeric' as const, sortUndefined: 'last' as const };
+const sortDate = { sortingFn: 'reportDate' as const, sortUndefined: 'last' as const };
 
 function numberCell({ getValue }: { getValue: () => unknown }) {
-  const formatted = formatIndianNumber(getValue());
+  const formatted = formatIndianWeight(getValue());
 
   return formatted ? <span className="tabular-nums">{formatted}</span> : emptyCell();
 }
 
 function percentageCell({ getValue }: { getValue: () => unknown }) {
-  const formatted = formatIndianNumber(getValue(), 2);
+  const formatted = formatIndianPercentage(getValue());
 
   return formatted ? <span className="tabular-nums">{formatted}%</span> : emptyCell();
+}
+
+function formatFilterFallback(value: unknown): string {
+  if (value == null || value === '') return 'Blank';
+
+  return String(value);
+}
+
+function formatDateFilterValue(value: unknown): string {
+  return formatReportDate(value) ?? formatFilterFallback(value);
+}
+
+function formatIntegerFilterValue(value: unknown): string {
+  return formatIndianInteger(value) ?? formatFilterFallback(value);
+}
+
+function formatWeightFilterValue(value: unknown): string {
+  return formatIndianWeight(value) ?? formatFilterFallback(value);
+}
+
+function formatPercentageFilterValue(value: unknown): string {
+  const formatted = formatIndianPercentage(value);
+
+  return formatted ? `${formatted}%` : formatFilterFallback(value);
 }
 
 function getFarmerObject(link: GradingGatePassReportFarmerStorageLink) {
@@ -136,15 +121,6 @@ function getCreatedByName(row: GradingGatePassReportRow) {
   const { createdBy } = row;
 
   return typeof createdBy === 'object' && createdBy !== null ? createdBy.name : createdBy;
-}
-
-function getIncomingGatePassObjects(row: GradingGatePassReportRow) {
-  return row.incomingGatePassIds.filter(
-    (
-      gatePass,
-    ): gatePass is Exclude<GradingGatePassReportIncomingGatePass, string> =>
-      typeof gatePass === 'object' && gatePass !== null,
-  );
 }
 
 function getFirstIncomingGatePassNumber(row: GradingGatePassReportRow) {
@@ -217,6 +193,7 @@ const baseColumns: ColumnDef<GradingGatePassReportRow>[] = [
 
       return value ? <span className="font-medium">{value}</span> : emptyCell();
     },
+    meta: { filterLabel: 'Farmer' },
     ...sortText,
   },
   {
@@ -228,7 +205,7 @@ const baseColumns: ColumnDef<GradingGatePassReportRow>[] = [
 
       return value || emptyCell();
     },
-    meta: { wrap: true },
+    meta: { wrap: true, filterLabel: 'Farmer address' },
     ...sortText,
   },
   {
@@ -240,28 +217,47 @@ const baseColumns: ColumnDef<GradingGatePassReportRow>[] = [
 
       return value ? <span className="tabular-nums">{String(value)}</span> : emptyCell();
     },
-    meta: { align: 'right', numeric: true, mono: true, groupStart: true },
+    meta: {
+      align: 'right',
+      numeric: true,
+      mono: true,
+      groupStart: true,
+      filterLabel: 'Account number',
+    },
     ...sortNumeric,
   },
   {
     accessorKey: 'gatePassNo',
     header: reportColumnHeader('Gate Pass'),
     cell: ({ row }) => <div className="tabular-nums">{row.getValue('gatePassNo')}</div>,
-    meta: { align: 'right', numeric: true, mono: true, emphasize: true },
+    meta: {
+      align: 'right',
+      numeric: true,
+      mono: true,
+      emphasize: true,
+      filterLabel: 'Gate pass number',
+      filterValueFormatter: formatIntegerFilterValue,
+    },
     ...sortNumeric,
   },
   {
     accessorKey: 'manualGatePassNumber',
     header: reportColumnHeader('Manual GP'),
     cell: ({ row }) => <div className="tabular-nums">{row.getValue('manualGatePassNumber')}</div>,
-    meta: { align: 'right', numeric: true, mono: true },
+    meta: {
+      align: 'right',
+      numeric: true,
+      mono: true,
+      filterLabel: 'Manual gate pass number',
+      filterValueFormatter: formatIntegerFilterValue,
+    },
     ...sortNumeric,
   },
   {
     accessorKey: 'date',
     header: reportColumnHeader('Date'),
     cell: reportDateCell,
-    meta: { groupStart: true },
+    meta: { groupStart: true, filterLabel: 'Date', filterValueFormatter: formatDateFilterValue },
     ...sortDate,
   },
   {
@@ -273,11 +269,13 @@ const baseColumns: ColumnDef<GradingGatePassReportRow>[] = [
 
       return value ? <span className="font-medium">{value}</span> : emptyCell();
     },
+    meta: { filterLabel: 'Created by' },
     ...sortText,
   },
   {
     accessorKey: 'variety',
     header: reportColumnHeader('Variety'),
+    meta: { filterLabel: 'Variety' },
     ...sortText,
   },
   {
@@ -290,33 +288,52 @@ const baseColumns: ColumnDef<GradingGatePassReportRow>[] = [
         id: 'incomingManualGatePassNumber',
         accessorFn: getFirstIncomingGatePassNumber,
         header: reportColumnHeader('Manual GP'),
-        meta: { align: 'right', numeric: true, mono: true, groupStart: true },
+        meta: {
+          align: 'right',
+          numeric: true,
+          mono: true,
+          groupStart: true,
+          filterLabel: 'Incoming manual gate pass number',
+          filterValueFormatter: formatIntegerFilterValue,
+        },
         ...sortNumeric,
       },
       {
         id: 'incomingBagsReceived',
         accessorFn: (row) => sumIncomingGatePassNumber(row, 'bagsReceived'),
         header: reportColumnHeader('Bags'),
-        meta: { align: 'right', numeric: true },
+        meta: {
+          align: 'right',
+          numeric: true,
+          filterLabel: 'Incoming bags',
+          filterValueFormatter: formatIntegerFilterValue,
+        },
         ...sortNumeric,
       },
       {
         id: 'incomingStage',
         accessorFn: (row) => getIncomingGatePassText(row, 'stage'),
         header: reportColumnHeader('Stage'),
+        meta: { filterLabel: 'Incoming stage' },
         ...sortText,
       },
       {
         id: 'incomingCategory',
         accessorFn: (row) => getIncomingGatePassText(row, 'category'),
         header: reportColumnHeader('Category'),
+        meta: { filterLabel: 'Incoming category' },
         ...sortText,
       },
       {
         id: 'incomingGatePassNetWeightKg',
         accessorFn: (row) => sumIncomingGatePassNumber(row, 'netWeightKg'),
         header: reportColumnHeader('Net', 'kg'),
-        meta: { align: 'right', numeric: true },
+        meta: {
+          align: 'right',
+          numeric: true,
+          filterLabel: 'Incoming net weight',
+          filterValueFormatter: formatWeightFilterValue,
+        },
         ...sortNumeric,
       },
     ],
@@ -328,28 +345,50 @@ const summaryColumns: ColumnDef<GradingGatePassReportRow>[] = [
     accessorKey: 'incomingNetWeightKg',
     header: reportColumnHeader('Total Incoming Net', 'kg'),
     cell: numberCell,
-    meta: { align: 'right', numeric: true, groupStart: true },
+    meta: {
+      align: 'right',
+      numeric: true,
+      groupStart: true,
+      filterLabel: 'Total incoming net',
+      filterValueFormatter: formatWeightFilterValue,
+    },
     ...sortNumeric,
   },
   {
     accessorKey: 'netWeightKg',
     header: reportColumnHeader('Grading Net', 'kg'),
     cell: numberCell,
-    meta: { align: 'right', numeric: true, emphasize: true },
+    meta: {
+      align: 'right',
+      numeric: true,
+      emphasize: true,
+      filterLabel: 'Grading net',
+      filterValueFormatter: formatWeightFilterValue,
+    },
     ...sortNumeric,
   },
   {
     accessorKey: 'wastageKg',
     header: reportColumnHeader('Wastage', 'kg'),
     cell: numberCell,
-    meta: { align: 'right', numeric: true },
+    meta: {
+      align: 'right',
+      numeric: true,
+      filterLabel: 'Wastage',
+      filterValueFormatter: formatWeightFilterValue,
+    },
     ...sortNumeric,
   },
   {
     accessorKey: 'wastagePercentage',
     header: reportColumnHeader('Wastage', '%'),
     cell: percentageCell,
-    meta: { align: 'right', numeric: true },
+    meta: {
+      align: 'right',
+      numeric: true,
+      filterLabel: 'Wastage percentage',
+      filterValueFormatter: formatPercentageFilterValue,
+    },
     ...sortNumeric,
   },
 ];
@@ -357,7 +396,7 @@ const summaryColumns: ColumnDef<GradingGatePassReportRow>[] = [
 const remarksColumn: ColumnDef<GradingGatePassReportRow> = {
   accessorKey: 'remarks',
   header: reportColumnHeader('Remarks'),
-  meta: { wrap: true, groupStart: true },
+  meta: { wrap: true, groupStart: true, filterLabel: 'Remarks' },
   ...sortText,
 };
 
@@ -372,7 +411,13 @@ export function getGradingReportColumns(
     id: `size-${size}`,
     accessorFn: (row) => sumOrderDetailSizeQuantity(row, size),
     header: reportColumnHeader(size, 'bags'),
-    meta: { align: 'right', numeric: true, groupStart: true },
+    meta: {
+      align: 'right',
+      numeric: true,
+      groupStart: true,
+      filterLabel: `${size} bags`,
+      filterValueFormatter: formatIntegerFilterValue,
+    },
     ...sortNumeric,
     cell: ({ row }) => {
       const details = row.original.orderDetails.filter((detail) => detail.size === size);
@@ -400,7 +445,7 @@ export const columns: ColumnDef<GradingGatePassReportRow>[] = [
     accessorKey: 'orderDetails',
     header: reportColumnHeader('Order Details'),
     cell: ({ row }) => row.original.orderDetails.map(formatOrderDetailText).join(', '),
-    meta: { wrap: true },
+    meta: { wrap: true, filterLabel: 'Order details' },
     ...sortText,
   },
   ...summaryColumns,
