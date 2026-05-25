@@ -23,6 +23,23 @@ function matchesSearch(value: unknown, query: string): boolean {
   return (JSON.stringify(value) ?? '').toLowerCase().includes(query);
 }
 
+function parseReportNumber(value: unknown): number {
+  if (value == null || value === '') return 0;
+
+  const parsed = Number(String(value).replace(/,/g, '').trim());
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function formatIndianNumber(value: number, maximumFractionDigits = 3): string {
+  return value.toLocaleString('en-IN', { maximumFractionDigits });
+}
+
+function average(values: number[]): number {
+  if (!values.length) return 0;
+
+  return values.reduce((sum, value) => sum + value, 0) / values.length;
+}
+
 const GradingReportPage = () => {
   const [fromDate, setFromDate] = useState<Date | undefined>();
   const [toDate, setToDate] = useState<Date | undefined>();
@@ -57,18 +74,43 @@ const GradingReportPage = () => {
   const tableColumns = useMemo(() => getGradingReportColumns(reportRows), [reportRows]);
   const rowCount = reportRows.length;
   const reportTotals = useMemo(
-    () =>
-      reportRows.reduce(
+    () => {
+      const wastageValues: number[] = [];
+      const wastagePercentageValues: number[] = [];
+      const totals = reportRows.reduce(
         (totals, gatePass) => {
           gatePass.orderDetails.forEach((detail) => {
-            totals.totalBags += detail.quantity;
-            totals.totalWeight += detail.quantity * detail.weightPerBagKg;
+            totals.gradingBags += detail.quantity;
           });
+
+          gatePass.incomingGatePassIds.forEach((incomingGatePass) => {
+            if (typeof incomingGatePass === 'string') return;
+
+            totals.incomingBags += parseReportNumber(incomingGatePass.bagsReceived);
+          });
+
+          totals.incomingNetWeight += parseReportNumber(gatePass.incomingNetWeightKg);
+          totals.gradingNetWeight += parseReportNumber(gatePass.netWeightKg);
+
+          wastageValues.push(parseReportNumber(gatePass.wastageKg));
+          wastagePercentageValues.push(parseReportNumber(gatePass.wastagePercentage));
 
           return totals;
         },
-        { totalBags: 0, totalWeight: 0 },
-      ),
+        {
+          incomingBags: 0,
+          incomingNetWeight: 0,
+          gradingBags: 0,
+          gradingNetWeight: 0,
+        },
+      );
+
+      return {
+        ...totals,
+        averageWastageKg: average(wastageValues),
+        averageWastagePercentage: average(wastagePercentageValues),
+      };
+    },
     [reportRows],
   );
   const handleApply = () => {
@@ -107,13 +149,18 @@ const GradingReportPage = () => {
                       {rowCount.toLocaleString('en-IN')}
                     </span>{' '}
                     {rowCount === 1 ? 'grading entry' : 'grading entries'}
+                    <span className="hidden sm:inline"> linked to incoming gate passes</span>
                   </>
                 )}
               </p>
             </div>
 
-            <Badge variant="secondary" className="w-fit">
-              Live API
+            <Badge
+              variant="secondary"
+              className="border-border/60 bg-background/80 text-foreground w-fit gap-1.5"
+            >
+              <span className="bg-primary size-1.5 rounded-full" aria-hidden />
+              {isFetching ? 'Refreshing' : 'Live API'}
             </Badge>
           </div>
         </div>
@@ -128,6 +175,7 @@ const GradingReportPage = () => {
                   placeholder="dd.mm.yyyy"
                   value={fromDate}
                   onChange={setFromDate}
+                  disabled={isFetching}
                   className="w-full min-w-0 sm:w-[150px]"
                 />
 
@@ -141,12 +189,18 @@ const GradingReportPage = () => {
                   placeholder="dd.mm.yyyy"
                   value={toDate}
                   onChange={setToDate}
+                  disabled={isFetching}
                   className="w-full min-w-0 sm:w-[150px]"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-2 sm:flex sm:shrink-0">
-                <Button type="button" className="min-w-0" onClick={handleApply}>
+                <Button
+                  type="button"
+                  className="min-w-0"
+                  disabled={isFetching}
+                  onClick={handleApply}
+                >
                   Apply
                 </Button>
                 <Button
@@ -171,6 +225,7 @@ const GradingReportPage = () => {
                 placeholder="Search grading report..."
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
+                disabled={isLoading}
                 className="w-full pl-9"
                 aria-label="Search grading report"
               />
@@ -203,22 +258,18 @@ const GradingReportPage = () => {
         </div>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6">
         <div className="border-border bg-card rounded-xl border px-4 py-3 shadow-sm">
-          <p className="text-muted-foreground text-sm">Total bags</p>
+          <p className="text-muted-foreground text-sm">Incoming bags</p>
           <p className="text-foreground text-xl font-semibold tabular-nums">
-            {isLoading ? 'Loading...' : reportTotals.totalBags.toLocaleString('en-IN')}
+            {isLoading ? 'Loading...' : formatIndianNumber(reportTotals.incomingBags, 0)}
           </p>
         </div>
 
         <div className="border-border bg-card rounded-xl border px-4 py-3 shadow-sm">
-          <p className="text-muted-foreground text-sm">Total weight</p>
+          <p className="text-muted-foreground text-sm">Incoming net</p>
           <p className="text-foreground text-xl font-semibold tabular-nums">
-            {isLoading
-              ? 'Loading...'
-              : reportTotals.totalWeight.toLocaleString('en-IN', {
-                  maximumFractionDigits: 3,
-                })}{' '}
+            {isLoading ? 'Loading...' : formatIndianNumber(reportTotals.incomingNetWeight)}{' '}
             {!isLoading ? (
               <span className="text-muted-foreground text-sm font-medium">kg</span>
             ) : null}
@@ -226,9 +277,39 @@ const GradingReportPage = () => {
         </div>
 
         <div className="border-border bg-card rounded-xl border px-4 py-3 shadow-sm">
-          <p className="text-muted-foreground text-sm">API status</p>
+          <p className="text-muted-foreground text-sm">Grading bags</p>
           <p className="text-foreground text-xl font-semibold tabular-nums">
-            {isLoading ? 'Loading...' : data?.success ? 'Success' : 'No data'}
+            {isLoading ? 'Loading...' : formatIndianNumber(reportTotals.gradingBags, 0)}
+          </p>
+        </div>
+
+        <div className="border-border bg-card rounded-xl border px-4 py-3 shadow-sm">
+          <p className="text-muted-foreground text-sm">Grading net</p>
+          <p className="text-foreground text-xl font-semibold tabular-nums">
+            {isLoading ? 'Loading...' : formatIndianNumber(reportTotals.gradingNetWeight)}{' '}
+            {!isLoading ? (
+              <span className="text-muted-foreground text-sm font-medium">kg</span>
+            ) : null}
+          </p>
+        </div>
+
+        <div className="border-border bg-card rounded-xl border px-4 py-3 shadow-sm">
+          <p className="text-muted-foreground text-sm">Avg wastage</p>
+          <p className="text-foreground text-xl font-semibold tabular-nums">
+            {isLoading ? 'Loading...' : formatIndianNumber(reportTotals.averageWastageKg)}{' '}
+            {!isLoading ? (
+              <span className="text-muted-foreground text-sm font-medium">kg</span>
+            ) : null}
+          </p>
+        </div>
+
+        <div className="border-border bg-card rounded-xl border px-4 py-3 shadow-sm">
+          <p className="text-muted-foreground text-sm">Avg wastage %</p>
+          <p className="text-foreground text-xl font-semibold tabular-nums">
+            {isLoading ? 'Loading...' : formatIndianNumber(reportTotals.averageWastagePercentage, 2)}
+            {!isLoading ? (
+              <span className="text-muted-foreground text-sm font-medium">%</span>
+            ) : null}
           </p>
         </div>
       </div>
