@@ -1,4 +1,4 @@
-import type { ColumnDef } from "@tanstack/react-table"
+import type { AggregationFn, ColumnDef } from "@tanstack/react-table"
 
 import type {
   StorageGatePass,
@@ -24,14 +24,50 @@ const formatDate = (date: string) => {
 }
 
 const formatQuantity = (quantity: number) => numberFormatter.format(quantity)
+const sortText = { sortingFn: "text" as const, sortUndefined: "last" as const }
+const sortNumeric = {
+  sortingFn: "reportNumeric" as const,
+  sortUndefined: "last" as const,
+}
+const sortDate = {
+  sortingFn: "reportDate" as const,
+  sortUndefined: "last" as const,
+}
+const reportEmptyAggregation: AggregationFn<StorageGatePass> = () => null
+const reportSumAggregation: AggregationFn<StorageGatePass> = (
+  columnId,
+  leafRows,
+) =>
+  leafRows.reduce((sum, row) => {
+    const value = row.getValue(columnId)
+
+    return (
+      sum + (typeof value === "number" && Number.isFinite(value) ? value : 0)
+    )
+  }, 0)
+const aggregateNone = { aggregationFn: reportEmptyAggregation }
+const aggregateSum = { aggregationFn: reportSumAggregation }
+
+const getBagQuantity = (
+  bag: StorageGatePassBagSize,
+  quantityMode: StorageQuantityMode,
+) => (quantityMode === "current" ? bag.currentQuantity : bag.initialQuantity)
+
+const getBagSizeQuantity = (
+  row: StorageGatePass,
+  size: string,
+  quantityMode: StorageQuantityMode,
+) =>
+  row.bagSizes
+    .filter((bag) => bag.size === size)
+    .reduce((total, bag) => total + getBagQuantity(bag, quantityMode), 0)
 
 const renderBagSizeValue = (
   bag: StorageGatePassBagSize,
   quantityMode: StorageQuantityMode,
 ) => {
   const location = [bag.chamber, bag.floor, bag.row].filter(Boolean).join("-")
-  const quantity =
-    quantityMode === "current" ? bag.currentQuantity : bag.initialQuantity
+  const quantity = getBagQuantity(bag, quantityMode)
 
   return (
     <div className="space-y-0.5 tabular-nums">
@@ -51,19 +87,25 @@ const baseColumns: ColumnDef<StorageGatePass>[] = [
     id: "name",
     accessorFn: (row) => row.farmerStorageLinkId.farmerId.name,
     header: "Name",
-    meta: { emphasize: true },
+    meta: { emphasize: true, filterLabel: "Farmer" },
+    ...sortText,
+    ...aggregateNone,
   },
   {
     id: "address",
     accessorFn: (row) => row.farmerStorageLinkId.farmerId.address ?? "-",
     header: "Address",
-    meta: { wrap: true },
+    meta: { filterLabel: "Farmer address", wrap: true },
+    ...sortText,
+    ...aggregateNone,
   },
   {
     id: "accountNumber",
     accessorFn: (row) => row.farmerStorageLinkId.accountNumber,
     header: "Account Number",
-    meta: { numeric: true },
+    meta: { filterLabel: "Account number", numeric: true },
+    ...sortNumeric,
+    ...aggregateNone,
     cell: ({ getValue }) => (
       <span className="tabular-nums">{String(getValue())}</span>
     ),
@@ -71,7 +113,9 @@ const baseColumns: ColumnDef<StorageGatePass>[] = [
   {
     accessorKey: "gatePassNo",
     header: "Gate Pass No",
-    meta: { numeric: true },
+    meta: { filterLabel: "Gate pass number", numeric: true },
+    ...sortNumeric,
+    ...aggregateNone,
     cell: ({ getValue }) => (
       <span className="tabular-nums">{String(getValue())}</span>
     ),
@@ -79,7 +123,9 @@ const baseColumns: ColumnDef<StorageGatePass>[] = [
   {
     accessorKey: "manualGatePassNumber",
     header: "Manual Gate Pass No",
-    meta: { numeric: true },
+    meta: { filterLabel: "Manual gate pass number", numeric: true },
+    ...sortNumeric,
+    ...aggregateNone,
     cell: ({ getValue }) => {
       const value = getValue<number | undefined>()
 
@@ -89,16 +135,28 @@ const baseColumns: ColumnDef<StorageGatePass>[] = [
   {
     accessorKey: "date",
     header: "Date",
-    meta: { mono: true },
+    meta: {
+      filterLabel: "Date",
+      filterValueFormatter: (value) => formatDate(String(value ?? "")),
+      mono: true,
+    },
+    ...sortDate,
+    ...aggregateNone,
     cell: ({ getValue }) => formatDate(getValue<string>()),
   },
   {
     accessorKey: "variety",
     header: "Variety",
+    meta: { filterLabel: "Variety" },
+    ...sortText,
+    ...aggregateNone,
   },
   {
     accessorKey: "storageCategory",
     header: "Storage Category",
+    meta: { filterLabel: "Storage category" },
+    ...sortText,
+    ...aggregateNone,
   },
 ]
 
@@ -107,11 +165,16 @@ const trailingColumns: ColumnDef<StorageGatePass>[] = [
     id: "createdBy",
     accessorFn: (row) => row.createdBy?.name ?? "-",
     header: "Created By",
+    meta: { filterLabel: "Created by" },
+    ...sortText,
+    ...aggregateNone,
   },
   {
     accessorKey: "remarks",
     header: "Remarks",
-    meta: { wrap: true },
+    meta: { filterLabel: "Remarks", wrap: true },
+    ...sortText,
+    ...aggregateNone,
     cell: ({ getValue }) => getValue<string | undefined>() || "-",
   },
 ]
@@ -126,9 +189,25 @@ export function getStorageReportColumns(
 
   const sizeColumns: ColumnDef<StorageGatePass>[] = sizes.map((size) => ({
     id: `size-${size}`,
+    accessorFn: (row) => getBagSizeQuantity(row, size, quantityMode),
     header: size,
-    meta: { align: "right", groupStart: true, numeric: true },
-    cell: ({ row }) => {
+    meta: {
+      align: "right",
+      filterLabel: size,
+      groupStart: true,
+      numeric: true,
+    },
+    ...sortNumeric,
+    ...aggregateSum,
+    cell: ({ cell, getValue, row }) => {
+      if (cell.getIsAggregated()) {
+        return (
+          <span className="tabular-nums">
+            {formatQuantity(getValue<number>() ?? 0)}
+          </span>
+        )
+      }
+
       const bags = row.original.bagSizes.filter((bag) => bag.size === size)
 
       if (!bags.length) return "-"

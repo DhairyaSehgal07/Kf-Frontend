@@ -1,10 +1,10 @@
-import { type FormEvent, useMemo, useState } from "react"
-import { Loader2, RefreshCw } from "lucide-react"
+import { useCallback, useMemo, useState } from "react"
+import type { Table as TanStackTable } from "@tanstack/react-table"
+import { Loader2 } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import type { StorageGatePass } from "@/features/storage/api/types"
 
 import {
   useStorageGatePassReport,
@@ -15,12 +15,20 @@ import {
   type StorageQuantityMode,
 } from "./components/columns"
 import { DataTable } from "./components/data-table"
+import { ReportToolbar } from "./components/report-toolbar"
 
 const DEFAULT_REPORT_PARAMS = {} satisfies StorageGatePassReportParams
+
+function matchesSearch(value: unknown, query: string): boolean {
+  return (JSON.stringify(value) ?? "").toLowerCase().includes(query)
+}
 
 const StorageReportPage = () => {
   const [dateFrom, setDateFrom] = useState("")
   const [dateTo, setDateTo] = useState("")
+  const [searchQuery, setSearchQuery] = useState("")
+  const [reportTable, setReportTable] =
+    useState<TanStackTable<StorageGatePass> | null>(null)
   const [quantityMode, setQuantityMode] =
     useState<StorageQuantityMode>("current")
   const [appliedParams, setAppliedParams] =
@@ -33,14 +41,25 @@ const StorageReportPage = () => {
     () => data?.data.storageGatePasses ?? [],
     [data?.data.storageGatePasses],
   )
+  const displayedRows = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase()
+    if (!query) return reportRows
+
+    return reportRows.filter((row) => matchesSearch(row, query))
+  }, [reportRows, searchQuery])
   const tableColumns = useMemo(
-    () => getStorageReportColumns(reportRows, quantityMode),
-    [quantityMode, reportRows],
+    () => getStorageReportColumns(displayedRows, quantityMode),
+    [quantityMode, displayedRows],
   )
 
-  const handleApply = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
+  const handleTableReady = useCallback(
+    (table: TanStackTable<StorageGatePass>) => {
+      setReportTable((current) => (current === table ? current : table))
+    },
+    [],
+  )
 
+  const handleApply = () => {
     const next: StorageGatePassReportParams = {}
     if (dateFrom) next.dateFrom = dateFrom
     if (dateTo) next.dateTo = dateTo
@@ -51,6 +70,7 @@ const StorageReportPage = () => {
   const handleReset = () => {
     setDateFrom("")
     setDateTo("")
+    setSearchQuery("")
     setAppliedParams(DEFAULT_REPORT_PARAMS)
   }
 
@@ -69,9 +89,9 @@ const StorageReportPage = () => {
                 ) : (
                   <>
                     <span className="tabular-nums font-medium text-foreground">
-                      {reportRows.length.toLocaleString("en-IN")}
+                      {displayedRows.length.toLocaleString("en-IN")}
                     </span>{" "}
-                    {reportRows.length === 1
+                    {displayedRows.length === 1
                       ? "storage gate pass"
                       : "storage gate passes"}
                   </>
@@ -89,65 +109,20 @@ const StorageReportPage = () => {
           </div>
         </div>
 
-        <form
-          className="grid gap-3 p-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] sm:items-end sm:px-6"
-          onSubmit={handleApply}
-        >
-          <label className="grid min-w-0 gap-1.5">
-            <span className="text-sm font-medium text-foreground">
-              From date
-            </span>
-            <Input
-              type="date"
-              value={dateFrom}
-              onChange={(event) => setDateFrom(event.target.value)}
-              className="h-11"
-            />
-          </label>
-
-          <label className="grid min-w-0 gap-1.5">
-            <span className="text-sm font-medium text-foreground">
-              To date
-            </span>
-            <Input
-              type="date"
-              value={dateTo}
-              onChange={(event) => setDateTo(event.target.value)}
-              className="h-11"
-            />
-          </label>
-
-          <div className="flex flex-col gap-2 sm:flex-row">
-            <Button
-              type="submit"
-              className="h-11 w-full sm:w-auto"
-              disabled={isFetching}
-            >
-              {isFetching ? <Loader2 className="size-4 animate-spin" /> : null}
-              Apply
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              className="h-11 w-full sm:w-auto"
-              onClick={handleReset}
-              disabled={isFetching}
-            >
-              Reset
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-lg"
-              className="hidden sm:inline-flex"
-              onClick={() => void refetch()}
-              disabled={isFetching}
-              aria-label="Refresh storage report"
-            >
-              <RefreshCw className={isFetching ? "animate-spin" : undefined} />
-            </Button>
-          </div>
-        </form>
+        <ReportToolbar
+          table={reportTable}
+          dateFrom={dateFrom}
+          dateTo={dateTo}
+          onDateFromChange={setDateFrom}
+          onDateToChange={setDateTo}
+          onApply={handleApply}
+          onReset={handleReset}
+          onRefresh={() => void refetch()}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          isLoading={isLoading}
+          isRefreshing={isFetching}
+        />
       </div>
 
       {error ? (
@@ -184,7 +159,7 @@ const StorageReportPage = () => {
             </Tabs>
 
             <Badge variant="outline" className="w-fit gap-1.5">
-              <span className="tabular-nums">{reportRows.length}</span>
+              <span className="tabular-nums">{displayedRows.length}</span>
               rows
             </Badge>
           </div>
@@ -200,8 +175,9 @@ const StorageReportPage = () => {
             <div className="min-w-0">
               <DataTable
                 columns={tableColumns}
-                data={reportRows}
+                data={displayedRows}
                 quantityMode={quantityMode}
+                onTableReady={handleTableReady}
               />
             </div>
           ) : (

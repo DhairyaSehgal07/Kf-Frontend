@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.2] - 2026-05-26
+
+Storage report views now support saved table settings, richer filters, grouping, sorting, and paginated review for large report runs.
+
+### Added
+
+- **Storage report toolbar** — Date filters, text search, refresh, and view settings are combined into a responsive report toolbar.
+- **Storage report view settings** — Filters, columns, grouping, and advanced logic tabs let users refine report views without leaving the table.
+- **Storage report column defaults** — Browser-local storage saves column visibility and order preferences for repeat report review.
+
+### Changed
+
+- **Storage report table** — Adds sorting, pagination, grouping, aggregate quantity rows, and column-aware filtering for denser report analysis.
+- **Storage report columns** — Bag-size columns now expose numeric accessors, sum aggregation, filter labels, and report-specific sort behavior.
+
 ## [0.3.1] - 2026-05-26
 
 Storage gate passes can now be edited, audited, and reviewed through API-backed storage report and edit-history views.
@@ -402,6 +417,7 @@ First application scaffold for the Kapur frontend (`kf-frontend`).
 
 - Default Vite starter styles (`App.css`) and demo application UI from the initial template.
 
+[0.3.2]: https://github.com/compare/v0.3.1...v0.3.2
 [0.3.1]: https://github.com/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/compare/v0.2.9...v0.3.0
 [0.2.9]: https://github.com/compare/v0.2.8...v0.2.9
