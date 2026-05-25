@@ -1,4 +1,4 @@
-import { type ColumnDef } from '@tanstack/react-table';
+import { type AggregationFn, type ColumnDef } from '@tanstack/react-table';
 import { format, isValid, parseISO } from 'date-fns';
 
 import type {
@@ -49,9 +49,47 @@ function emptyCell() {
 const sortText = { sortingFn: 'text' as const, sortUndefined: 'last' as const };
 const sortNumeric = { sortingFn: 'reportNumeric' as const, sortUndefined: 'last' as const };
 const sortDate = { sortingFn: 'reportDate' as const, sortUndefined: 'last' as const };
+const aggregateUnique = { aggregationFn: 'uniqueCount' as const };
+const reportEmptyAggregation: AggregationFn<GradingGatePassReportRow> = () => null;
+const reportSumAggregation: AggregationFn<GradingGatePassReportRow> = (columnId, leafRows) =>
+  leafRows.reduce((sum, row) => sum + (parseReportNumber(row.getValue(columnId)) ?? 0), 0);
+const reportAverageAggregation: AggregationFn<GradingGatePassReportRow> = (columnId, leafRows) => {
+  const values = leafRows
+    .map((row) => parseReportNumber(row.getValue(columnId)))
+    .filter((value): value is number => value != null);
+
+  if (!values.length) return null;
+
+  return values.reduce((sum, value) => sum + value, 0) / values.length;
+};
+const aggregateSum = { aggregationFn: reportSumAggregation };
+const aggregateAverage = { aggregationFn: reportAverageAggregation };
+const aggregateNone = { aggregationFn: reportEmptyAggregation };
+
+type SizeAggregateValue = {
+  quantity: number;
+  averageWeightPerBagKg: number | null;
+  bagTypes: string[];
+};
+
+function isSizeAggregateValue(value: unknown): value is SizeAggregateValue {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'quantity' in value &&
+    'averageWeightPerBagKg' in value &&
+    'bagTypes' in value
+  );
+}
 
 function numberCell({ getValue }: { getValue: () => unknown }) {
   const formatted = formatIndianWeight(getValue());
+
+  return formatted ? <span className="tabular-nums">{formatted}</span> : emptyCell();
+}
+
+function integerCell({ getValue }: { getValue: () => unknown }) {
+  const formatted = formatIndianInteger(getValue());
 
   return formatted ? <span className="tabular-nums">{formatted}</span> : emptyCell();
 }
@@ -183,6 +221,25 @@ function renderOrderDetailValue(detail: GradingGatePassReportOrderDetail) {
   );
 }
 
+function renderSizeAggregateValue(value: SizeAggregateValue) {
+  return (
+    <div className="space-y-0.5 text-right tabular-nums">
+      <div className="text-foreground font-semibold">
+        {value.quantity.toLocaleString('en-IN')} bags
+      </div>
+      {value.averageWeightPerBagKg != null ? (
+        <div className="text-muted-foreground text-xs font-medium">
+          Avg{' '}
+          {value.averageWeightPerBagKg.toLocaleString('en-IN', {
+            maximumFractionDigits: 3,
+          })}
+          {value.bagTypes.length ? ` (${value.bagTypes.join(', ')})` : null}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 const baseColumns: ColumnDef<GradingGatePassReportRow>[] = [
   {
     id: 'farmerName',
@@ -194,6 +251,7 @@ const baseColumns: ColumnDef<GradingGatePassReportRow>[] = [
       return value ? <span className="font-medium">{value}</span> : emptyCell();
     },
     meta: { filterLabel: 'Farmer' },
+    ...aggregateUnique,
     ...sortText,
   },
   {
@@ -206,6 +264,7 @@ const baseColumns: ColumnDef<GradingGatePassReportRow>[] = [
       return value || emptyCell();
     },
     meta: { wrap: true, filterLabel: 'Farmer address' },
+    ...aggregateUnique,
     ...sortText,
   },
   {
@@ -224,6 +283,7 @@ const baseColumns: ColumnDef<GradingGatePassReportRow>[] = [
       groupStart: true,
       filterLabel: 'Account number',
     },
+    ...aggregateNone,
     ...sortNumeric,
   },
   {
@@ -238,6 +298,7 @@ const baseColumns: ColumnDef<GradingGatePassReportRow>[] = [
       filterLabel: 'Gate pass number',
       filterValueFormatter: formatIntegerFilterValue,
     },
+    ...aggregateNone,
     ...sortNumeric,
   },
   {
@@ -251,6 +312,7 @@ const baseColumns: ColumnDef<GradingGatePassReportRow>[] = [
       filterLabel: 'Manual gate pass number',
       filterValueFormatter: formatIntegerFilterValue,
     },
+    ...aggregateNone,
     ...sortNumeric,
   },
   {
@@ -258,6 +320,7 @@ const baseColumns: ColumnDef<GradingGatePassReportRow>[] = [
     header: reportColumnHeader('Date'),
     cell: reportDateCell,
     meta: { groupStart: true, filterLabel: 'Date', filterValueFormatter: formatDateFilterValue },
+    ...aggregateUnique,
     ...sortDate,
   },
   {
@@ -270,12 +333,14 @@ const baseColumns: ColumnDef<GradingGatePassReportRow>[] = [
       return value ? <span className="font-medium">{value}</span> : emptyCell();
     },
     meta: { filterLabel: 'Created by' },
+    ...aggregateUnique,
     ...sortText,
   },
   {
     accessorKey: 'variety',
     header: reportColumnHeader('Variety'),
     meta: { filterLabel: 'Variety' },
+    ...aggregateUnique,
     ...sortText,
   },
   {
@@ -296,18 +361,21 @@ const baseColumns: ColumnDef<GradingGatePassReportRow>[] = [
           filterLabel: 'Incoming manual gate pass number',
           filterValueFormatter: formatIntegerFilterValue,
         },
+        ...aggregateNone,
         ...sortNumeric,
       },
       {
         id: 'incomingBagsReceived',
         accessorFn: (row) => sumIncomingGatePassNumber(row, 'bagsReceived'),
         header: reportColumnHeader('Bags'),
+        cell: integerCell,
         meta: {
           align: 'right',
           numeric: true,
           filterLabel: 'Incoming bags',
           filterValueFormatter: formatIntegerFilterValue,
         },
+        ...aggregateSum,
         ...sortNumeric,
       },
       {
@@ -315,6 +383,7 @@ const baseColumns: ColumnDef<GradingGatePassReportRow>[] = [
         accessorFn: (row) => getIncomingGatePassText(row, 'stage'),
         header: reportColumnHeader('Stage'),
         meta: { filterLabel: 'Incoming stage' },
+        ...aggregateUnique,
         ...sortText,
       },
       {
@@ -322,18 +391,21 @@ const baseColumns: ColumnDef<GradingGatePassReportRow>[] = [
         accessorFn: (row) => getIncomingGatePassText(row, 'category'),
         header: reportColumnHeader('Category'),
         meta: { filterLabel: 'Incoming category' },
+        ...aggregateUnique,
         ...sortText,
       },
       {
         id: 'incomingGatePassNetWeightKg',
         accessorFn: (row) => sumIncomingGatePassNumber(row, 'netWeightKg'),
         header: reportColumnHeader('Net', 'kg'),
+        cell: numberCell,
         meta: {
           align: 'right',
           numeric: true,
           filterLabel: 'Incoming net weight',
           filterValueFormatter: formatWeightFilterValue,
         },
+        ...aggregateSum,
         ...sortNumeric,
       },
     ],
@@ -352,6 +424,7 @@ const summaryColumns: ColumnDef<GradingGatePassReportRow>[] = [
       filterLabel: 'Total incoming net',
       filterValueFormatter: formatWeightFilterValue,
     },
+    ...aggregateSum,
     ...sortNumeric,
   },
   {
@@ -365,6 +438,7 @@ const summaryColumns: ColumnDef<GradingGatePassReportRow>[] = [
       filterLabel: 'Grading net',
       filterValueFormatter: formatWeightFilterValue,
     },
+    ...aggregateSum,
     ...sortNumeric,
   },
   {
@@ -377,6 +451,7 @@ const summaryColumns: ColumnDef<GradingGatePassReportRow>[] = [
       filterLabel: 'Wastage',
       filterValueFormatter: formatWeightFilterValue,
     },
+    ...aggregateAverage,
     ...sortNumeric,
   },
   {
@@ -389,6 +464,7 @@ const summaryColumns: ColumnDef<GradingGatePassReportRow>[] = [
       filterLabel: 'Wastage percentage',
       filterValueFormatter: formatPercentageFilterValue,
     },
+    ...aggregateAverage,
     ...sortNumeric,
   },
 ];
@@ -397,6 +473,7 @@ const remarksColumn: ColumnDef<GradingGatePassReportRow> = {
   accessorKey: 'remarks',
   header: reportColumnHeader('Remarks'),
   meta: { wrap: true, groupStart: true, filterLabel: 'Remarks' },
+  ...aggregateUnique,
   ...sortText,
 };
 
@@ -418,8 +495,34 @@ export function getGradingReportColumns(
       filterLabel: `${size} bags`,
       filterValueFormatter: formatIntegerFilterValue,
     },
+    aggregationFn: (_columnId, leafRows) => {
+      const details = leafRows.flatMap((row) =>
+        row.original.orderDetails.filter((detail) => detail.size === size),
+      );
+      const quantity = details.reduce((sum, detail) => sum + detail.quantity, 0);
+      const weights = details
+        .map((detail) => ({
+          quantity: detail.quantity,
+          weight: parseReportNumber(detail.weightPerBagKg),
+        }))
+        .filter((detail): detail is { quantity: number; weight: number } => detail.weight != null);
+      const weightQuantity = weights.reduce((sum, detail) => sum + detail.quantity, 0);
+      const averageWeightPerBagKg =
+        weights.length && weightQuantity > 0
+          ? weights.reduce((sum, detail) => sum + detail.weight * detail.quantity, 0) /
+            weightQuantity
+          : weights.length
+            ? weights.reduce((sum, detail) => sum + detail.weight, 0) / weights.length
+            : null;
+      const bagTypes = Array.from(new Set(details.map((detail) => detail.bagType).filter(Boolean)));
+
+      return { quantity, averageWeightPerBagKg, bagTypes } satisfies SizeAggregateValue;
+    },
     ...sortNumeric,
-    cell: ({ row }) => {
+    cell: ({ row, getValue }) => {
+      const aggregateValue = getValue();
+      if (isSizeAggregateValue(aggregateValue)) return renderSizeAggregateValue(aggregateValue);
+
       const details = row.original.orderDetails.filter((detail) => detail.size === size);
 
       if (!details.length) return '-';
@@ -446,6 +549,7 @@ export const columns: ColumnDef<GradingGatePassReportRow>[] = [
     header: reportColumnHeader('Order Details'),
     cell: ({ row }) => row.original.orderDetails.map(formatOrderDetailText).join(', '),
     meta: { wrap: true, filterLabel: 'Order details' },
+    ...aggregateUnique,
     ...sortText,
   },
   ...summaryColumns,

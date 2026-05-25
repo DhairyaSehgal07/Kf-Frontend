@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-05-25
+
+Grading report view settings now support saved columns, grouping, and advanced logic, with grouped summaries and incoming report totals for faster report review.
+
+### Added
+
+- **Grading report columns tab** — Toggle visibility, drag columns into a custom order, and save or clear browser-local default column views.
+- **Grading report grouping tab** — Group rows by selected columns, reorder group priority, and expand grouped report sections.
+- **Advanced report filters** — AND/OR logic builder with text and numeric operators for grading report columns.
+- **Incoming report totals** — Summary cards for filtered total bags, gross weight, and net weight.
+
+### Changed
+
+- **Grading report table** — Supports grouped rows, aggregate values, expandable group sections, and footer totals across visible report data.
+- **Grading report columns** — Adds aggregation behavior and nested-column preference handling so saved views work with grouped incoming gate pass columns.
+- **View settings sheet** — Combines filters, columns, grouping, and advanced logic into one apply/reset flow.
+
 ## [0.2.9] - 2026-05-25
 
 Incoming report views can save reusable column defaults, reset filters back to defaults, and keep status styling readable in dark mode.
@@ -368,6 +385,7 @@ First application scaffold for the Kapur frontend (`kf-frontend`).
 
 - Default Vite starter styles (`App.css`) and demo application UI from the initial template.
 
+[0.3.0]: https://github.com/compare/v0.2.9...v0.3.0
 [0.2.9]: https://github.com/compare/v0.2.8...v0.2.9
 [0.2.8]: https://github.com/compare/v0.2.7...v0.2.8
 [0.2.7]: https://github.com/compare/v0.2.6...v0.2.7

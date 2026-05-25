@@ -34,6 +34,16 @@ function getColumnId(column: ColumnDef<unknown, unknown>, index: number) {
   return `col-${index}`;
 }
 
+function getLeafColumnIds(columns: ColumnDef<unknown, unknown>[]): string[] {
+  return columns.flatMap((column, index) => {
+    if ('columns' in column && Array.isArray(column.columns)) {
+      return getLeafColumnIds(column.columns as ColumnDef<unknown, unknown>[]);
+    }
+
+    return getColumnId(column, index);
+  });
+}
+
 function parsePreferences(value: string | null): StoredColumnPreferences | null {
   if (!value) return null;
 
@@ -89,7 +99,7 @@ function toColumnState(
 }
 
 export function getGradingReportColumnIds(columns: ColumnDef<unknown, unknown>[]) {
-  return columns.map(getColumnId);
+  return getLeafColumnIds(columns);
 }
 
 export function getStoredGradingReportColumnState(columnIds: string[]): GradingReportColumnState {

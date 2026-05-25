@@ -2,18 +2,31 @@ import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
 import {
   type ColumnFiltersState,
   type ColumnDef,
+  type ColumnOrderState,
+  type ExpandedState,
+  type GroupingState,
   type SortDirection,
   type SortingState,
   type Table as TanStackTable,
+  type VisibilityState,
   flexRender,
   getCoreRowModel,
+  getExpandedRowModel,
   getFacetedRowModel,
   getFacetedUniqueValues,
   getFilteredRowModel,
+  getGroupedRowModel,
   getSortedRowModel,
   useReactTable,
 } from '@tanstack/react-table';
-import { ArrowDown, ArrowUp, ArrowUpDown, ClipboardList } from 'lucide-react';
+import {
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
+  ChevronDown,
+  ChevronRight,
+  ClipboardList,
+} from 'lucide-react';
 
 import {
   Empty,
@@ -34,7 +47,15 @@ import {
 } from '@/components/ui/table';
 import type { GradingGatePassReportRow } from '@/features/grading-report/api/types';
 import { getGradingReportFooterContent } from '@/features/grading-report/components/report-totals-footer';
-import { selectedValuesFilterFn } from '@/features/grading-report/utils/report-filter-fns';
+import {
+  advancedReportGlobalFilterFn,
+  selectedValuesFilterFn,
+  type AdvancedReportGlobalFilter,
+} from '@/features/grading-report/utils/report-filter-fns';
+import {
+  getGradingReportColumnIds,
+  getStoredGradingReportColumnState,
+} from '@/features/grading-report/utils/report-column-preferences';
 import { reportSortingFns } from '@/features/grading-report/utils/report-sorting-fns';
 import { cn } from '@/lib/utils';
 
@@ -134,6 +155,12 @@ function getColumnAlign(meta: ColumnMeta | undefined): 'left' | 'right' {
   return meta?.align ?? 'left';
 }
 
+function formatDisplayValue(value: unknown, meta: ColumnMeta | undefined) {
+  if (value == null || value === '') return 'Blank';
+
+  return meta?.filterValueFormatter?.(value) ?? String(value);
+}
+
 function isWrapColumn(meta: ColumnMeta | undefined) {
   return meta?.wrap === true;
 }
@@ -196,6 +223,21 @@ export function DataTable<TValue>({
 }: DataTableProps<TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [grouping, setGrouping] = useState<GroupingState>([]);
+  const [expanded, setExpanded] = useState<ExpandedState>({});
+  const [globalFilter, setGlobalFilter] = useState<AdvancedReportGlobalFilter>({
+    logic: 'AND',
+    conditions: [],
+    manualGatePassSearch: '',
+  });
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(() => {
+    const columnIds = getGradingReportColumnIds(columns as ColumnDef<unknown, unknown>[]);
+    return getStoredGradingReportColumnState(columnIds).columnVisibility;
+  });
+  const [columnOrder, setColumnOrder] = useState<ColumnOrderState>(() => {
+    const columnIds = getGradingReportColumnIds(columns as ColumnDef<unknown, unknown>[]);
+    return getStoredGradingReportColumnState(columnIds).columnOrder;
+  });
   const [isHeaderScrolled, setIsHeaderScrolled] = useState(false);
   const [isFooterElevated, setIsFooterElevated] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -208,11 +250,27 @@ export function DataTable<TValue>({
       filterFn: selectedValuesFilterFn,
     },
     sortingFns: reportSortingFns,
-    state: { sorting, columnFilters },
+    globalFilterFn: advancedReportGlobalFilterFn,
+    state: {
+      sorting,
+      columnFilters,
+      columnVisibility,
+      columnOrder,
+      grouping,
+      expanded,
+      globalFilter,
+    },
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
+    onGroupingChange: setGrouping,
+    onExpandedChange: setExpanded,
+    onGlobalFilterChange: setGlobalFilter,
+    onColumnVisibilityChange: setColumnVisibility,
+    onColumnOrderChange: setColumnOrder,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
+    getGroupedRowModel: getGroupedRowModel(),
+    getExpandedRowModel: getExpandedRowModel(),
     getFacetedRowModel: getFacetedRowModel(),
     getFacetedUniqueValues: getFacetedUniqueValues(),
     getSortedRowModel: getSortedRowModel(),
@@ -220,6 +278,7 @@ export function DataTable<TValue>({
     enableSortingRemoval: true,
   });
   const rows = table.getRowModel().rows;
+  const footerRows = table.getFilteredRowModel().rows;
   const visibleColumns = table.getVisibleLeafColumns();
   const columnCount = Math.max(visibleColumns.length, 1);
   const hasDataRows = !isLoading && rows.length > 0;
@@ -330,6 +389,71 @@ export function DataTable<TValue>({
               ))
             ) : rows.length ? (
               rows.map((row) => {
+                const isGroupedRow = row.getIsGrouped();
+                if (isGroupedRow) {
+                  return (
+                    <TableRow
+                      key={row.id}
+                      className="bg-primary/5 hover:bg-primary/10 [&>td]:border-b-border/60 [&>td]:border-t-border/60 border-0 even:bg-primary/5 [&>td]:shadow-[inset_0_1px_0_hsl(var(--primary)/0.12)]"
+                    >
+                      {row.getVisibleCells().map((cell) => {
+                        const meta = cell.column.columnDef.meta;
+                        const value = cell.getValue();
+                        const isGroupedCell = cell.getIsGrouped();
+                        const isAggregatedCell = cell.getIsAggregated();
+                        const isPlaceholderCell = cell.getIsPlaceholder();
+
+                        return (
+                          <TableCell
+                            key={cell.id}
+                            className={cn(getBodyCellClassName(meta), 'bg-transparent')}
+                          >
+                            {isGroupedCell ? (
+                              <button
+                                type="button"
+                                className="text-foreground hover:text-primary focus-visible:ring-ring/30 flex min-w-0 items-center gap-2 rounded-md text-left text-sm font-semibold transition-colors focus-visible:ring-2 focus-visible:outline-none"
+                                style={{ paddingLeft: `${row.depth * 0.75}rem` }}
+                                onClick={row.getToggleExpandedHandler()}
+                                aria-expanded={row.getIsExpanded()}
+                              >
+                                {row.getCanExpand() ? (
+                                  row.getIsExpanded() ? (
+                                    <ChevronDown
+                                      className="text-primary size-4 shrink-0"
+                                      aria-hidden
+                                    />
+                                  ) : (
+                                    <ChevronRight
+                                      className="text-primary size-4 shrink-0"
+                                      aria-hidden
+                                    />
+                                  )
+                                ) : null}
+                                <span className="min-w-0 truncate">
+                                  {formatDisplayValue(value, meta)}
+                                </span>
+                                <span className="bg-primary/10 text-primary shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold tabular-nums">
+                                  {row.subRows.length.toLocaleString('en-IN')}
+                                </span>
+                              </button>
+                            ) : isAggregatedCell ? (
+                              meta?.numeric === true ? (
+                                <span className="text-foreground font-semibold">
+                                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                </span>
+                              ) : (
+                                <span aria-hidden />
+                              )
+                            ) : isPlaceholderCell ? null : (
+                              <span aria-hidden />
+                            )}
+                          </TableCell>
+                        );
+                      })}
+                    </TableRow>
+                  );
+                }
+
                 const incomingGatePasses = getIncomingGatePasses(row.original);
                 const rowSpan = Math.max(incomingGatePasses.length, 1);
                 const groupBackground = row.index % 2 === 1 ? 'bg-muted/15' : 'bg-card';
@@ -427,7 +551,7 @@ export function DataTable<TValue>({
                     columnIndex === 0 ? (
                       <span className="text-foreground text-sm font-semibold">Total</span>
                     ) : (
-                      getGradingReportFooterContent(column.id, rows)
+                      getGradingReportFooterContent(column.id, footerRows)
                     );
 
                   if (columnIndex === 0) {

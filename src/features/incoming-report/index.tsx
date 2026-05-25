@@ -40,6 +40,11 @@ import {
   type DensityState,
 } from "@/lib/tanstack-table/density-feature"
 import {
+  formatIndianIntegerTotal,
+  formatIndianWeightTotal,
+  sumReportNumericColumn,
+} from "./utils/report-formatters"
+import {
   getIncomingReportColumnIds,
   getStoredIncomingReportColumnState,
 } from "./utils/report-column-preferences"
@@ -139,7 +144,16 @@ const IncomingReportPage = () => {
     onPaginationChange: setPagination,
     onGlobalFilterChange: setGlobalFilter,
   })
-  const rowCount = table.getFilteredRowModel().rows.length
+  const filteredRows = table.getFilteredRowModel().rows
+  const rowCount = filteredRows.length
+  const reportTotals = useMemo(
+    () => ({
+      totalBags: sumReportNumericColumn(filteredRows, "bags"),
+      totalGrossWeight: sumReportNumericColumn(filteredRows, "grossWeightKg"),
+      totalNetWeight: sumReportNumericColumn(filteredRows, "netWeightKg"),
+    }),
+    [filteredRows],
+  )
 
   useEffect(() => {
     const pageCount = Math.max(1, Math.ceil(rowCount / pagination.pageSize))
@@ -209,6 +223,45 @@ const IncomingReportPage = () => {
           onSearchChange={handleSearchChange}
           isLoading={isLoading}
         />
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-3">
+        <div className="rounded-xl border border-border bg-card px-4 py-3 shadow-sm">
+          <p className="text-sm text-muted-foreground">Total bags</p>
+          <p className="tabular-nums text-xl font-semibold text-foreground">
+            {isLoading
+              ? "Loading..."
+              : formatIndianIntegerTotal(reportTotals.totalBags)}
+          </p>
+        </div>
+
+        <div className="rounded-xl border border-border bg-card px-4 py-3 shadow-sm">
+          <p className="text-sm text-muted-foreground">Gross weight</p>
+          <p className="tabular-nums text-xl font-semibold text-foreground">
+            {isLoading
+              ? "Loading..."
+              : formatIndianWeightTotal(reportTotals.totalGrossWeight)}{" "}
+            {!isLoading ? (
+              <span className="text-sm font-medium text-muted-foreground">
+                kg
+              </span>
+            ) : null}
+          </p>
+        </div>
+
+        <div className="rounded-xl border border-border bg-card px-4 py-3 shadow-sm">
+          <p className="text-sm text-muted-foreground">Net weight</p>
+          <p className="tabular-nums text-xl font-semibold text-foreground">
+            {isLoading
+              ? "Loading..."
+              : formatIndianWeightTotal(reportTotals.totalNetWeight)}{" "}
+            {!isLoading ? (
+              <span className="text-sm font-medium text-muted-foreground">
+                kg
+              </span>
+            ) : null}
+          </p>
+        </div>
       </div>
 
       {error ? (
