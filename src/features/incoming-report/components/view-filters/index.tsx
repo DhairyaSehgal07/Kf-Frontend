@@ -23,6 +23,7 @@ import ColumnsTab from "./columns-tab"
 import GroupingTab from "./grouping-tab"
 import AdvancedTab from "./advanced-tab"
 import type { IncomingGatePassReportRow } from "@/features/incoming-report/api/types"
+import type { AdvancedReportGlobalFilter } from "@/features/incoming-report/utils/report-filter-fns"
 
 interface ViewFiltersSheetProps {
   table: Table<IncomingGatePassReportRow>
@@ -40,8 +41,21 @@ export function ViewFiltersSheet({ table }: ViewFiltersSheetProps) {
   const [draftGrouping, setDraftGrouping] = useState<GroupingState>(
     () => table.getState().grouping,
   )
+  const [draftGlobalFilter, setDraftGlobalFilter] =
+    useState<AdvancedReportGlobalFilter>(() => ({
+      logic: "AND",
+      conditions: [],
+      ...table.getState().globalFilter,
+    }))
   const activeFilterCount = table.getState().columnFilters.length
   const activeGroupingCount = table.getState().grouping.length
+  const activeAdvancedCount =
+    table.getState().globalFilter?.conditions?.filter(
+      (condition: { operator: string; value: string }) =>
+        condition.operator === "isEmpty" ||
+        condition.operator === "isNotEmpty" ||
+        condition.value.trim().length > 0,
+    ).length ?? 0
   const hiddenColumnCount = table
     .getAllLeafColumns()
     .filter((column) => table.getState().columnVisibility[column.id] === false)
@@ -54,6 +68,11 @@ export function ViewFiltersSheet({ table }: ViewFiltersSheetProps) {
       setDraftColumnVisibility(tableState.columnVisibility)
       setDraftColumnOrder(tableState.columnOrder)
       setDraftGrouping(tableState.grouping)
+      setDraftGlobalFilter({
+        logic: "AND",
+        conditions: [],
+        ...tableState.globalFilter,
+      })
     }
     setOpen(nextOpen)
   }
@@ -64,6 +83,7 @@ export function ViewFiltersSheet({ table }: ViewFiltersSheetProps) {
     table.setColumnOrder(draftColumnOrder)
     table.setGrouping(draftGrouping)
     table.setExpanded(draftGrouping.length > 0 ? true : {})
+    table.setGlobalFilter(draftGlobalFilter)
     setOpen(false)
   }
 
@@ -128,7 +148,14 @@ export function ViewFiltersSheet({ table }: ViewFiltersSheetProps) {
                   </span>
                 ) : null}
               </TabsTrigger>
-              <TabsTrigger value="advanced">Advanced</TabsTrigger>
+              <TabsTrigger value="advanced">
+                Advanced
+                {activeAdvancedCount > 0 ? (
+                  <span className="ml-1 rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary">
+                    {activeAdvancedCount.toLocaleString("en-IN")}
+                  </span>
+                ) : null}
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="filters">
@@ -157,8 +184,12 @@ export function ViewFiltersSheet({ table }: ViewFiltersSheetProps) {
               />
             </TabsContent>
 
-            <TabsContent value="advanced" >
-            <AdvancedTab/>
+            <TabsContent value="advanced">
+              <AdvancedTab
+                table={table}
+                draftGlobalFilter={draftGlobalFilter}
+                onDraftGlobalFilterChange={setDraftGlobalFilter}
+              />
             </TabsContent>
           </Tabs>
         </div>

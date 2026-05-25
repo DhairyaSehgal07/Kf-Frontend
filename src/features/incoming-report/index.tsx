@@ -26,7 +26,11 @@ import type {
   IncomingGatePassReportParams,
   IncomingGatePassReportRow,
 } from "./api/types"
-import { selectedValuesFilterFn } from "./utils/report-filter-fns"
+import {
+  advancedReportGlobalFilterFn,
+  type AdvancedReportGlobalFilter,
+  selectedValuesFilterFn,
+} from "./utils/report-filter-fns"
 import { reportSortingFns } from "./utils/report-sorting-fns"
 import {
   DensityFeature,
@@ -49,6 +53,10 @@ const IncomingReportPage = () => {
   const [columnOrder, setColumnOrder] = useState<ColumnOrderState>([])
   const [grouping, setGrouping] = useState<GroupingState>([])
   const [expanded, setExpanded] = useState<ExpandedState>({})
+  const [globalFilter, setGlobalFilter] = useState<AdvancedReportGlobalFilter>({
+    logic: "AND",
+    conditions: [],
+  })
   const [density, setDensity] = useState<DensityState>("lg")
 
   const { data, error, isLoading } = useIncomingGatePassReport(appliedParams)
@@ -66,6 +74,7 @@ const IncomingReportPage = () => {
     filterFns: {
       selectedValues: selectedValuesFilterFn,
     },
+    globalFilterFn: advancedReportGlobalFilterFn,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getGroupedRowModel: getGroupedRowModel(),
@@ -85,6 +94,7 @@ const IncomingReportPage = () => {
       columnOrder,
       grouping,
       expanded,
+      globalFilter,
     },
     onDensityChange: (updater) => {
       setDensity((previous) => functionalUpdate(updater, previous))
@@ -95,6 +105,7 @@ const IncomingReportPage = () => {
     onColumnOrderChange: setColumnOrder,
     onGroupingChange: setGrouping,
     onExpandedChange: setExpanded,
+    onGlobalFilterChange: setGlobalFilter,
   })
   const rowCount = table.getFilteredRowModel().rows.length
 
