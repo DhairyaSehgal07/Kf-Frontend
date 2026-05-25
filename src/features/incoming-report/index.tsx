@@ -2,6 +2,7 @@ import { useState } from "react"
 import { format } from "date-fns"
 import {
   type ColumnFiltersState,
+  type ColumnOrderState,
   functionalUpdate,
   getCoreRowModel,
   getFacetedRowModel,
@@ -10,6 +11,7 @@ import {
   getSortedRowModel,
   type SortingState,
   useReactTable,
+  type VisibilityState,
 } from "@tanstack/react-table"
 
 import { columns } from "./components/columns"
@@ -39,6 +41,8 @@ const IncomingReportPage = () => {
   const [searchQuery, setSearchQuery] = useState("")
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
+  const [columnOrder, setColumnOrder] = useState<ColumnOrderState>([])
   const [density, setDensity] = useState<DensityState>("lg")
 
   const { data, error, isLoading } = useIncomingGatePassReport(appliedParams)
@@ -69,12 +73,16 @@ const IncomingReportPage = () => {
       density,
       sorting,
       columnFilters,
+      columnVisibility,
+      columnOrder,
     },
     onDensityChange: (updater) => {
       setDensity((previous) => functionalUpdate(updater, previous))
     },
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
+    onColumnVisibilityChange: setColumnVisibility,
+    onColumnOrderChange: setColumnOrder,
   })
   const rowCount = table.getFilteredRowModel().rows.length
 

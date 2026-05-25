@@ -1,5 +1,10 @@
 import { useState } from "react"
-import type { ColumnFiltersState, Table } from "@tanstack/react-table"
+import type {
+  ColumnFiltersState,
+  ColumnOrderState,
+  Table,
+  VisibilityState,
+} from "@tanstack/react-table"
 import { Button } from "@/components/ui/button"
 import {
   Sheet,
@@ -26,17 +31,31 @@ export function ViewFiltersSheet({ table }: ViewFiltersSheetProps) {
   const [open, setOpen] = useState(false)
   const [draftColumnFilters, setDraftColumnFilters] =
     useState<ColumnFiltersState>(() => table.getState().columnFilters)
+  const [draftColumnVisibility, setDraftColumnVisibility] =
+    useState<VisibilityState>(() => table.getState().columnVisibility)
+  const [draftColumnOrder, setDraftColumnOrder] = useState<ColumnOrderState>(
+    () => table.getState().columnOrder,
+  )
   const activeFilterCount = table.getState().columnFilters.length
+  const hiddenColumnCount = table
+    .getAllLeafColumns()
+    .filter((column) => table.getState().columnVisibility[column.id] === false)
+    .length
 
   const handleOpenChange = (nextOpen: boolean) => {
     if (nextOpen) {
-      setDraftColumnFilters(table.getState().columnFilters)
+      const tableState = table.getState()
+      setDraftColumnFilters(tableState.columnFilters)
+      setDraftColumnVisibility(tableState.columnVisibility)
+      setDraftColumnOrder(tableState.columnOrder)
     }
     setOpen(nextOpen)
   }
 
   const handleApplyChanges = () => {
     table.setColumnFilters(draftColumnFilters)
+    table.setColumnVisibility(draftColumnVisibility)
+    table.setColumnOrder(draftColumnOrder)
     setOpen(false)
   }
 
@@ -85,7 +104,14 @@ export function ViewFiltersSheet({ table }: ViewFiltersSheetProps) {
           <Tabs defaultValue="filters" className="w-full">
             <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="filters">Filters</TabsTrigger>
-              <TabsTrigger value="columns">Columns</TabsTrigger>
+              <TabsTrigger value="columns">
+                Columns
+                {hiddenColumnCount > 0 ? (
+                  <span className="ml-1 rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary">
+                    {hiddenColumnCount.toLocaleString("en-IN")} hidden
+                  </span>
+                ) : null}
+              </TabsTrigger>
               <TabsTrigger value="grouping">Grouping</TabsTrigger>
               <TabsTrigger value="advanced">Advanced</TabsTrigger>
             </TabsList>
@@ -98,8 +124,14 @@ export function ViewFiltersSheet({ table }: ViewFiltersSheetProps) {
               />
             </TabsContent>
 
-            <TabsContent value="columns" >
-            <ColumnsTab/>
+            <TabsContent value="columns">
+              <ColumnsTab
+                table={table}
+                draftColumnVisibility={draftColumnVisibility}
+                draftColumnOrder={draftColumnOrder}
+                onDraftColumnVisibilityChange={setDraftColumnVisibility}
+                onDraftColumnOrderChange={setDraftColumnOrder}
+              />
             </TabsContent>
 
             <TabsContent value="grouping" >

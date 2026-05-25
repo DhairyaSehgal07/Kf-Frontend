@@ -196,7 +196,8 @@ export function DataTable<TData, TValue>({
 
   const rows = table.getRowModel().rows
   const rowCount = rows.length
-  const columnCount = table.getAllLeafColumns().length
+  const visibleColumns = table.getVisibleLeafColumns()
+  const columnCount = Math.max(visibleColumns.length, 1)
   const hasDataRows = !isLoading && rowCount > 0
 
   const columnClassMap = useMemo(() => {
@@ -251,7 +252,12 @@ export function DataTable<TData, TValue>({
           >
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id} className="border-0">
-                {headerGroup.headers.map((header) => {
+                {visibleColumns.map((column) => {
+                  const header = headerGroup.headers.find(
+                    (item) => item.column.id === column.id,
+                  )
+                  if (!header) return null
+
                   const columnId = header.column.id
                   const sorted = header.column.getIsSorted()
                   const columnClasses = columnClassMap.get(columnId)
@@ -287,12 +293,9 @@ export function DataTable<TData, TValue>({
                   key={`skeleton-row-${rowIndex}`}
                   className="border-0 even:bg-muted/15"
                 >
-                  {columns.map((column, colIndex) => {
-                    const columnId = getColId(
-                      column as ColumnDef<unknown>,
-                      colIndex,
-                    )
-                    const meta = column.meta
+                  {visibleColumns.map((column) => {
+                    const columnId = column.id
+                    const meta = column.columnDef.meta
                     const align = getColumnAlign(meta)
                     const columnClasses = columnClassMap.get(columnId)
                     const isHeaderNumeric =
@@ -300,7 +303,7 @@ export function DataTable<TData, TValue>({
 
                     return (
                       <TableCell
-                        key={`skeleton-${rowIndex}-${colIndex}`}
+                        key={`skeleton-${rowIndex}-${columnId}`}
                         className={columnClasses?.cell(true)}
                       >
                         <Skeleton
@@ -394,7 +397,12 @@ export function DataTable<TData, TValue>({
             >
               {table.getFooterGroups().map((footerGroup) => (
                 <TableRow key={footerGroup.id} className="border-0 hover:bg-transparent">
-                  {footerGroup.headers.map((header, headerIndex) => {
+                  {visibleColumns.map((column, headerIndex) => {
+                    const header = footerGroup.headers.find(
+                      (item) => item.column.id === column.id,
+                    )
+                    if (!header) return null
+
                     const columnId = header.column.id
                     const meta = header.column.columnDef.meta
                     const columnClasses = columnClassMap.get(columnId)
