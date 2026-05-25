@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import {
   type ColumnDef,
   flexRender,
+  functionalUpdate,
   getCoreRowModel,
   getSortedRowModel,
   type SortingState,
@@ -40,33 +41,6 @@ import { cn } from "@/lib/utils"
 
 const SKELETON_ROW_COUNT = 8
 
-const NUMERIC_COLUMN_IDS = new Set([
-  "manualGatePassNumber",
-  "gatePassNo",
-  "bags",
-  "grossWeightKg",
-  "tareWeightKg",
-  "bardanaWeightKg",
-  "netWeightKg",
-])
-
-const MONO_COLUMN_IDS = new Set([
-  "manualGatePassNumber",
-  "gatePassNo",
-  "slipNumber",
-  "truckNumber",
-])
-
-/** Slightly stronger vertical rule between logical column groups */
-const GROUP_START_COLUMN_IDS = new Set([
-  "manualGatePassNumber",
-  "date",
-  "bags",
-  "grossWeightKg",
-  "status",
-  "remarks",
-])
-
 const TABLE_GRID_CLASS = cn(
   "border-collapse",
   "[&_th]:border-b [&_th]:border-r [&_td]:border-b [&_td]:border-r",
@@ -79,9 +53,12 @@ const TABLE_GRID_CLASS = cn(
   "[&_tfoot_th:last-child]:border-r-0 [&_tfoot_td:last-child]:border-r-0",
 )
 
-type ColumnMeta = {
-  align?: "left" | "right"
-  wrap?: boolean
+type ColumnMeta = NonNullable<ColumnDef<unknown, unknown>["meta"]>
+
+function getColId(col: ColumnDef<unknown>, index: number): string {
+  if ("id" in col && col.id) return col.id
+  if ("accessorKey" in col && col.accessorKey) return String(col.accessorKey)
+  return `col-${index}`
 }
 
 function getColumnAlign(meta: ColumnMeta | undefined): "left" | "right" {
@@ -98,7 +75,7 @@ const REMARKS_COLUMN_WIDTH_CLASS =
 const REMARKS_BODY_CELL_CLASS = cn(REMARKS_COLUMN_WIDTH_CLASS, "align-top")
 
 function getGridCellClasses(
-  columnId: string,
+  meta: ColumnMeta | undefined,
   variant: "head" | "body",
   isHeaderScrolled = false,
 ) {
@@ -107,7 +84,7 @@ function getGridCellClasses(
       (isHeaderScrolled
         ? "bg-muted/60 text-foreground supports-backdrop-filter:bg-muted/55 backdrop-blur-sm"
         : "bg-secondary text-secondary-foreground"),
-    GROUP_START_COLUMN_IDS.has(columnId) &&
+    meta?.groupStart === true &&
       (variant === "head"
         ? "border-l-2 border-l-border/70"
         : "border-l-2 border-l-border/55"),
@@ -115,24 +92,22 @@ function getGridCellClasses(
 }
 
 function getFooterClassName(
-  columnId: string,
   align: "left" | "right",
   density: DensityState,
   meta: ColumnMeta | undefined,
 ) {
   return cn(
     getDensityCellClasses(density),
-    getGridCellClasses(columnId, "body"),
+    getGridCellClasses(meta, "body"),
     "bg-muted/60 text-sm transition-[padding,background-color] duration-200 supports-backdrop-filter:bg-muted/55 backdrop-blur-sm",
     isWrapColumn(meta) ? REMARKS_COLUMN_WIDTH_CLASS : "align-middle",
     align === "right" && "text-right",
-    NUMERIC_COLUMN_IDS.has(columnId) && "tabular-nums",
-    columnId === "netWeightKg" && "font-semibold",
+    meta?.numeric === true && "tabular-nums",
+    meta?.emphasize === true && "font-semibold",
   )
 }
 
 function getHeadClassName(
-  columnId: string,
   align: "left" | "right",
   density: DensityState,
   isHeaderScrolled: boolean,
@@ -140,13 +115,13 @@ function getHeadClassName(
 ) {
   return cn(
     getDensityHeadClasses(density),
-    getGridCellClasses(columnId, "head", isHeaderScrolled),
+    getGridCellClasses(meta, "head", isHeaderScrolled),
     "transition-[padding,background-color,color] duration-200",
     isWrapColumn(meta) ? REMARKS_COLUMN_WIDTH_CLASS : undefined,
     "align-middle",
     align === "right" && "text-right",
-    NUMERIC_COLUMN_IDS.has(columnId) && "tabular-nums",
-    columnId === "netWeightKg" && "font-semibold",
+    meta?.numeric === true && "tabular-nums",
+    meta?.emphasize === true && "font-semibold",
   )
 }
 
@@ -159,15 +134,15 @@ function getBodyCellClassName(
 ) {
   return cn(
     getDensityCellClasses(density),
-    getGridCellClasses(columnId, "body"),
+    getGridCellClasses(meta, "body"),
     "text-sm transition-[padding] duration-200",
     isWrapColumn(meta) ? REMARKS_BODY_CELL_CLASS : "align-middle",
     align === "right" && "text-right",
-    NUMERIC_COLUMN_IDS.has(columnId) &&
+    meta?.numeric === true &&
       !isEmpty &&
       "tabular-nums font-medium text-foreground",
-    MONO_COLUMN_IDS.has(columnId) && !isEmpty && "font-mono",
-    columnId === "netWeightKg" && !isEmpty && "text-foreground",
+    meta?.mono === true && !isEmpty && "font-mono",
+    meta?.emphasize === true && !isEmpty && "text-foreground",
     columnId === "address" && "max-w-[11rem] sm:max-w-[14rem]",
   )
 }
@@ -189,10 +164,17 @@ function getValueSpanClassName(
     align === "right" && "ml-auto max-w-none",
     columnId === "address" && "max-w-[11rem] sm:max-w-[14rem]",
     columnId === "name" && "max-w-[10rem] font-medium sm:max-w-[12rem]",
-    NUMERIC_COLUMN_IDS.has(columnId) && "tabular-nums",
-    MONO_COLUMN_IDS.has(columnId) && "font-mono text-sm",
-    columnId === "netWeightKg" && "font-semibold",
+    meta?.numeric === true && "tabular-nums",
+    meta?.mono === true && "font-mono text-sm",
+    meta?.emphasize === true && "font-semibold",
   )
+}
+
+type ColumnClassEntry = {
+  head: string
+  cell: (isEmpty: boolean) => string
+  span: string
+  footer: string
 }
 
 interface DataTableProps<TData, TValue> {
@@ -202,6 +184,7 @@ interface DataTableProps<TData, TValue> {
   getRowId?: (row: TData) => string
   /** Table row/cell padding — defaults to `lg` for easier reading on reports */
   density?: DensityState
+  onDensityChange?: (density: DensityState) => void
 }
 
 export function DataTable<TData, TValue>({
@@ -210,8 +193,8 @@ export function DataTable<TData, TValue>({
   isLoading = false,
   getRowId,
   density: densityProp = "lg",
+  onDensityChange,
 }: DataTableProps<TData, TValue>) {
-  const [density, setDensity] = useState<DensityState>(densityProp)
   const [sorting, setSorting] = useState<SortingState>([])
   const [isHeaderScrolled, setIsHeaderScrolled] = useState(false)
   const [isFooterElevated, setIsFooterElevated] = useState(false)
@@ -235,14 +218,46 @@ export function DataTable<TData, TValue>({
     getRowId,
     sortingFns: reportSortingFns,
     enableSortingRemoval: true,
-    state: { density, sorting },
-    onDensityChange: setDensity,
+    state: { density: densityProp, sorting },
+    onDensityChange: (updater) => {
+      onDensityChange?.(functionalUpdate(updater, densityProp))
+    },
     onSortingChange: setSorting,
   })
 
-  const tableDensity = table.getState().density
   const columnCount = columns.length
   const hasDataRows = !isLoading && table.getRowModel().rows.length > 0
+
+  const columnClassMap = useMemo(() => {
+    const map = new Map<string, ColumnClassEntry>()
+
+    columns.forEach((col, index) => {
+      const columnId = getColId(col as ColumnDef<unknown>, index)
+      const meta = col.meta
+      const align = getColumnAlign(meta)
+
+      map.set(columnId, {
+        head: getHeadClassName(
+          align,
+          densityProp,
+          isHeaderScrolled,
+          meta,
+        ),
+        cell: (isEmpty) =>
+          getBodyCellClassName(
+            columnId,
+            align,
+            isEmpty,
+            densityProp,
+            meta,
+          ),
+        span: getValueSpanClassName(columnId, align, false, meta),
+        footer: getFooterClassName(align, densityProp, meta),
+      })
+    })
+
+    return map
+  }, [densityProp, isHeaderScrolled])
 
   useEffect(() => {
     handleTableScroll()
@@ -267,11 +282,8 @@ export function DataTable<TData, TValue>({
               <TableRow key={headerGroup.id} className="border-0">
                 {headerGroup.headers.map((header) => {
                   const columnId = header.column.id
-                  const meta = header.column.columnDef.meta as
-                    | ColumnMeta
-                    | undefined
-                  const align = getColumnAlign(meta)
                   const sorted = header.column.getIsSorted()
+                  const columnClasses = columnClassMap.get(columnId)
 
                   return (
                     <TableHead
@@ -283,16 +295,7 @@ export function DataTable<TData, TValue>({
                             ? "descending"
                             : "none"
                       }
-                      className={cn(
-                        "group/head",
-                        getHeadClassName(
-                          columnId,
-                          align,
-                          tableDensity,
-                          isHeaderScrolled,
-                          meta,
-                        ),
-                      )}
+                      className={cn("group/head", columnClasses?.head)}
                     >
                       {header.isPlaceholder
                         ? null
@@ -314,26 +317,20 @@ export function DataTable<TData, TValue>({
                   className="border-0 even:bg-muted/15"
                 >
                   {columns.map((column, colIndex) => {
-                    const columnId =
-                      "accessorKey" in column && column.accessorKey
-                        ? String(column.accessorKey)
-                        : `col-${colIndex}`
-                    const meta = column.meta as ColumnMeta | undefined
+                    const columnId = getColId(
+                      column as ColumnDef<unknown>,
+                      colIndex,
+                    )
+                    const meta = column.meta
                     const align = getColumnAlign(meta)
+                    const columnClasses = columnClassMap.get(columnId)
                     const isHeaderNumeric =
-                      NUMERIC_COLUMN_IDS.has(columnId) ||
-                      MONO_COLUMN_IDS.has(columnId)
+                      meta?.numeric === true || meta?.mono === true
 
                     return (
                       <TableCell
                         key={`skeleton-${rowIndex}-${colIndex}`}
-                        className={cn(
-                          getDensityCellClasses(tableDensity),
-                          getGridCellClasses(columnId, "body"),
-                          "transition-[padding] duration-200",
-                          isWrapColumn(meta) && REMARKS_BODY_CELL_CLASS,
-                          align === "right" && "text-right",
-                        )}
+                        className={columnClasses?.cell(true)}
                       >
                         <Skeleton
                           className={cn(
@@ -355,25 +352,17 @@ export function DataTable<TData, TValue>({
                 <TableRow key={row.id} className="border-0 even:bg-muted/20">
                   {row.getVisibleCells().map((cell) => {
                     const columnId = cell.column.id
-                    const meta = cell.column.columnDef.meta as
-                      | ColumnMeta
-                      | undefined
-                    const align = getColumnAlign(meta)
+                    const meta = cell.column.columnDef.meta
                     const isStatusColumn = columnId === "status"
                     const value = cell.getValue()
                     const isEmpty = value == null || value === ""
                     const display = isEmpty ? "—" : String(value)
+                    const columnClasses = columnClassMap.get(columnId)
 
                     return (
                       <TableCell
                         key={cell.id}
-                        className={getBodyCellClassName(
-                          columnId,
-                          align,
-                          isEmpty,
-                          tableDensity,
-                          meta,
-                        )}
+                        className={columnClasses?.cell(isEmpty)}
                       >
                         {isStatusColumn ? (
                           flexRender(
@@ -386,12 +375,7 @@ export function DataTable<TData, TValue>({
                           </span>
                         ) : (
                           <span
-                            className={getValueSpanClassName(
-                              columnId,
-                              align,
-                              isEmpty,
-                              meta,
-                            )}
+                            className={columnClasses?.span}
                             title={
                               isWrapColumn(meta) ? undefined : display
                             }
@@ -439,29 +423,38 @@ export function DataTable<TData, TValue>({
             >
               {table.getFooterGroups().map((footerGroup) => (
                 <TableRow key={footerGroup.id} className="border-0 hover:bg-transparent">
-                  {footerGroup.headers.map((header) => {
+                  {footerGroup.headers.map((header, headerIndex) => {
                     const columnId = header.column.id
-                    const meta = header.column.columnDef.meta as
-                      | ColumnMeta
-                      | undefined
-                    const align = getColumnAlign(meta)
+                    const meta = header.column.columnDef.meta
+                    const columnClasses = columnClassMap.get(columnId)
+                    const footerContent = header.isPlaceholder
+                      ? null
+                      : flexRender(
+                          header.column.columnDef.footer,
+                          header.getContext(),
+                        )
+
+                    if (headerIndex === 0) {
+                      return (
+                        <TableHead
+                          key={header.id}
+                          scope="row"
+                          className={columnClasses?.footer}
+                        >
+                          {footerContent}
+                        </TableHead>
+                      )
+                    }
 
                     return (
                       <TableCell
                         key={header.id}
-                        className={getFooterClassName(
-                          columnId,
-                          align,
-                          tableDensity,
-                          meta,
-                        )}
+                        className={columnClasses?.footer}
+                        aria-label={
+                          meta?.numeric === true ? "column total" : undefined
+                        }
                       >
-                        {header.isPlaceholder
-                          ? null
-                          : flexRender(
-                              header.column.columnDef.footer,
-                              header.getContext(),
-                            )}
+                        {footerContent}
                       </TableCell>
                     )
                   })}

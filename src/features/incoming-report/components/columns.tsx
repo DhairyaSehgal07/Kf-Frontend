@@ -109,10 +109,11 @@ function ReportColumnHeader<TData, TValue>({
 
 /* eslint-enable react-refresh/only-export-components */
 
-type HeaderOptions = Omit<
-  ReportColumnHeaderProps<IncomingGatePassReportRow, unknown>,
-  "title" | "column" | "sorted"
->
+type HeaderOptions = {
+  unit?: string
+  align?: "left" | "right"
+  numeric?: boolean
+}
 
 /** ColumnDef header factory with sortable label + hover icon */
 function reportColumnHeader<TData>(
@@ -213,18 +214,24 @@ export const columns: ColumnDef<IncomingGatePassReportRow>[] = [
   {
     accessorKey: "manualGatePassNumber",
     header: reportColumnHeader("Manual GP", { align: "right", numeric: true }),
-    meta: { align: "right" },
+    meta: {
+      align: "right",
+      numeric: true,
+      mono: true,
+      groupStart: true,
+    },
     ...sortNumeric,
   },
   {
     accessorKey: "gatePassNo",
     header: reportColumnHeader("Gate pass", { align: "right", numeric: true }),
-    meta: { align: "right" },
+    meta: { align: "right", numeric: true, mono: true },
     ...sortNumeric,
   },
   {
     accessorKey: "date",
     header: reportColumnHeader("Date"),
+    meta: { groupStart: true },
     cell: reportDateCell,
     ...sortDate,
   },
@@ -241,12 +248,13 @@ export const columns: ColumnDef<IncomingGatePassReportRow>[] = [
   {
     accessorKey: "truckNumber",
     header: reportColumnHeader("Truck", { numeric: true }),
+    meta: { numeric: true, mono: true },
     ...sortNumeric,
   },
   {
     accessorKey: "bags",
     header: reportColumnHeader("Bags", { align: "right", numeric: true }),
-    meta: { align: "right" },
+    meta: { align: "right", numeric: true, groupStart: true },
     cell: indianNumberCell("integer"),
     footer: createReportTotalFooter("bags", "integer"),
     ...sortNumeric,
@@ -254,6 +262,7 @@ export const columns: ColumnDef<IncomingGatePassReportRow>[] = [
   {
     accessorKey: "slipNumber",
     header: reportColumnHeader("Slip no.", { numeric: true }),
+    meta: { numeric: true, mono: true },
     ...sortNumeric,
   },
   {
@@ -263,7 +272,7 @@ export const columns: ColumnDef<IncomingGatePassReportRow>[] = [
       align: "right",
       numeric: true,
     }),
-    meta: { align: "right" },
+    meta: { align: "right", numeric: true, groupStart: true },
     cell: indianNumberCell("weight"),
     footer: createReportTotalFooter("grossWeightKg", "weight"),
     ...sortNumeric,
@@ -275,7 +284,7 @@ export const columns: ColumnDef<IncomingGatePassReportRow>[] = [
       align: "right",
       numeric: true,
     }),
-    meta: { align: "right" },
+    meta: { align: "right", numeric: true },
     cell: indianNumberCell("weight"),
     footer: createReportTotalFooter("tareWeightKg", "weight"),
     ...sortNumeric,
@@ -287,7 +296,7 @@ export const columns: ColumnDef<IncomingGatePassReportRow>[] = [
       align: "right",
       numeric: true,
     }),
-    meta: { align: "right" },
+    meta: { align: "right", numeric: true },
     cell: indianNumberCell("weight"),
     footer: createReportTotalFooter("bardanaWeightKg", "weight"),
     ...sortNumeric,
@@ -299,7 +308,7 @@ export const columns: ColumnDef<IncomingGatePassReportRow>[] = [
       align: "right",
       numeric: true,
     }),
-    meta: { align: "right" },
+    meta: { align: "right", numeric: true, emphasize: true },
     cell: indianNumberCell("weight", { emphasize: true }),
     footer: createReportTotalFooter("netWeightKg", "weight", {
       emphasize: true,
@@ -309,6 +318,7 @@ export const columns: ColumnDef<IncomingGatePassReportRow>[] = [
   {
     accessorKey: "status",
     header: reportColumnHeader("Status"),
+    meta: { groupStart: true },
     ...sortText,
     cell: ({ row }) => {
       const status = row.getValue<string>("status")
@@ -340,7 +350,7 @@ export const columns: ColumnDef<IncomingGatePassReportRow>[] = [
   {
     accessorKey: "remarks",
     header: reportColumnHeader("Remarks"),
-    meta: { wrap: true },
+    meta: { wrap: true, groupStart: true },
     ...sortText,
   },
 ]

@@ -1,9 +1,10 @@
-import { ArrowRight, FileSpreadsheet, RefreshCw, Search, SlidersHorizontal } from "lucide-react"
+import { ArrowRight, FileSpreadsheet, RefreshCw, Search } from "lucide-react"
 
 import { DatePickerInput } from "@/components/date-picker"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
+import { ViewFiltersSheet } from "./view-filters"
 
 export interface ReportToolbarProps {
   fromDate: Date | undefined
@@ -108,16 +109,7 @@ export function ReportToolbar({
         </div>
 
         <div className="flex shrink-0 items-center gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            className="min-w-0 flex-1 gap-1.5 border-primary text-primary hover:bg-primary/10 hover:text-primary lg:flex-none"
-            aria-label="View filters"
-          >
-            <SlidersHorizontal className="size-4 shrink-0" aria-hidden />
-            <span className="truncate">View filters</span>
-          </Button>
-
+          <ViewFiltersSheet />
           <Button
             type="button"
             className="min-w-0 flex-1 gap-1.5 lg:flex-none"
