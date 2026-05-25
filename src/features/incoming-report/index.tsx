@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { format } from "date-fns"
 import {
   type ColumnFiltersState,
@@ -11,7 +11,9 @@ import {
   getFacetedUniqueValues,
   getFilteredRowModel,
   getGroupedRowModel,
+  getPaginationRowModel,
   type GroupingState,
+  type PaginationState,
   getSortedRowModel,
   type SortingState,
   useReactTable,
@@ -53,6 +55,10 @@ const IncomingReportPage = () => {
   const [columnOrder, setColumnOrder] = useState<ColumnOrderState>([])
   const [grouping, setGrouping] = useState<GroupingState>([])
   const [expanded, setExpanded] = useState<ExpandedState>({})
+  const [pagination, setPagination] = useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: 100,
+  })
   const [globalFilter, setGlobalFilter] = useState<AdvancedReportGlobalFilter>({
     logic: "AND",
     conditions: [],
@@ -62,7 +68,10 @@ const IncomingReportPage = () => {
 
   const { data, error, isLoading } = useIncomingGatePassReport(appliedParams)
 
-  const reportRows = data?.incomingGatePasses ?? []
+  const reportRows = useMemo(
+    () => data?.incomingGatePasses ?? [],
+    [data?.incomingGatePasses],
+  )
   // TanStack Table returns stable APIs that React Compiler cannot memoize safely.
   // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable<IncomingGatePassReportRow>({
@@ -80,6 +89,7 @@ const IncomingReportPage = () => {
     getFilteredRowModel: getFilteredRowModel(),
     getGroupedRowModel: getGroupedRowModel(),
     getExpandedRowModel: getExpandedRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
     getFacetedRowModel: getFacetedRowModel(),
     getFacetedUniqueValues: getFacetedUniqueValues(),
     getSortedRowModel: getSortedRowModel(),
@@ -87,6 +97,9 @@ const IncomingReportPage = () => {
       `${row.gatePassNo}-${row.date}-${row.manualGatePassNumber}`,
     sortingFns: reportSortingFns,
     enableSortingRemoval: true,
+    autoResetPageIndex: false,
+    pageCount: Math.max(1, Math.ceil(reportRows.length / pagination.pageSize)),
+    paginateExpandedRows: false,
     state: {
       density,
       sorting,
@@ -95,6 +108,7 @@ const IncomingReportPage = () => {
       columnOrder,
       grouping,
       expanded,
+      pagination,
       globalFilter,
     },
     onDensityChange: (updater) => {
@@ -106,9 +120,20 @@ const IncomingReportPage = () => {
     onColumnOrderChange: setColumnOrder,
     onGroupingChange: setGrouping,
     onExpandedChange: setExpanded,
+    onPaginationChange: setPagination,
     onGlobalFilterChange: setGlobalFilter,
   })
   const rowCount = table.getFilteredRowModel().rows.length
+
+  useEffect(() => {
+    const pageCount = Math.max(1, Math.ceil(rowCount / pagination.pageSize))
+    if (pagination.pageIndex < pageCount) return
+
+    setPagination((current) => ({
+      ...current,
+      pageIndex: Math.max(pageCount - 1, 0),
+    }))
+  }, [pagination.pageIndex, pagination.pageSize, rowCount])
 
   const handleApply = () => {
     const next: IncomingGatePassReportParams = {}
@@ -180,6 +205,8 @@ const IncomingReportPage = () => {
         columns={columns}
         table={table}
         isLoading={isLoading}
+        paginationState={pagination}
+        totalRowCount={rowCount}
       />
     </div>
   )

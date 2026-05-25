@@ -2,9 +2,16 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import {
   type ColumnDef,
   flexRender,
+  type PaginationState,
   type Table as TanStackTable,
 } from "@tanstack/react-table"
-import { ChevronDown, ChevronRight, ClipboardList } from "lucide-react"
+import {
+  ChevronDown,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+  ClipboardList,
+} from "lucide-react"
 
 import type { DensityState } from "@/lib/tanstack-table/density-feature"
 import {
@@ -21,6 +28,15 @@ import {
 } from "@/components/ui/empty"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination"
+import {
   Table,
   TableBody,
   TableCell,
@@ -32,6 +48,38 @@ import {
 import { cn } from "@/lib/utils"
 
 const SKELETON_ROW_COUNT = 8
+
+type PaginationItemValue = number | "ellipsis"
+
+function getPaginationItems(
+  pageIndex: number,
+  pageCount: number,
+): PaginationItemValue[] {
+  if (pageCount <= 7) {
+    return Array.from({ length: pageCount }, (_, index) => index)
+  }
+
+  const visiblePages = Array.from(
+    new Set([0, pageIndex - 1, pageIndex, pageIndex + 1, pageCount - 1]),
+  )
+    .filter((page) => page >= 0 && page < pageCount)
+    .sort((a, b) => a - b)
+
+  return visiblePages.reduce<PaginationItemValue[]>((items, page) => {
+    const previousPage = items[items.length - 1]
+
+    if (typeof previousPage === "number") {
+      if (page - previousPage === 2) {
+        items.push(previousPage + 1)
+      } else if (page - previousPage > 2) {
+        items.push("ellipsis")
+      }
+    }
+
+    items.push(page)
+    return items
+  }, [])
+}
 
 const TABLE_GRID_CLASS = cn(
   "border-collapse",
@@ -182,12 +230,16 @@ interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
   table: TanStackTable<TData>
   isLoading?: boolean
+  paginationState?: PaginationState
+  totalRowCount?: number
 }
 
 export function DataTable<TData, TValue>({
   columns,
   table,
   isLoading = false,
+  paginationState,
+  totalRowCount: totalRowCountProp,
 }: DataTableProps<TData, TValue>) {
   const [isHeaderScrolled, setIsHeaderScrolled] = useState(false)
   const [isFooterElevated, setIsFooterElevated] = useState(false)
@@ -205,6 +257,24 @@ export function DataTable<TData, TValue>({
 
   const rows = table.getRowModel().rows
   const rowCount = rows.length
+  const totalRowCount =
+    totalRowCountProp ?? table.getFilteredRowModel().rows.length
+  const { pageIndex, pageSize } = paginationState ?? table.getState().pagination
+  const pageCount = Math.max(Math.ceil(totalRowCount / pageSize), 1)
+  const canPreviousPage = pageIndex > 0
+  const canNextPage = pageIndex < pageCount - 1
+  const pageItems = useMemo(
+    () => getPaginationItems(pageIndex, pageCount),
+    [pageCount, pageIndex],
+  )
+  const rangeStart =
+    totalRowCount === 0
+      ? 0
+      : Math.min(pageIndex * pageSize + 1, totalRowCount)
+  const rangeEnd =
+    totalRowCount === 0
+      ? 0
+      : Math.min((pageIndex + 1) * pageSize, totalRowCount)
   const visibleColumns = table.getVisibleLeafColumns()
   const columnCount = Math.max(visibleColumns.length, 1)
   const hasDataRows = !isLoading && rowCount > 0
@@ -243,6 +313,12 @@ export function DataTable<TData, TValue>({
   useEffect(() => {
     handleTableScroll()
   }, [rowCount, isLoading, handleTableScroll])
+
+  useEffect(() => {
+    const el = scrollContainerRef.current
+    if (!el) return
+    el.scrollTo({ left: el.scrollLeft, top: 0 })
+  }, [pageIndex])
 
   return (
     <div className="flex min-w-0 flex-col overflow-hidden rounded-xl border border-border bg-card text-card-foreground shadow-sm">
@@ -508,6 +584,144 @@ export function DataTable<TData, TValue>({
           ) : null}
         </Table>
       </div>
+      {hasDataRows ? (
+        <div className="flex flex-col gap-3 border-t border-border/60 bg-muted/20 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+          <p className="text-sm text-muted-foreground">
+            Showing{" "}
+            <span className="font-medium tabular-nums text-foreground">
+              {rangeStart.toLocaleString("en-IN")}–
+              {rangeEnd.toLocaleString("en-IN")}
+            </span>{" "}
+            of{" "}
+            <span className="font-medium tabular-nums text-foreground">
+              {totalRowCount.toLocaleString("en-IN")}
+            </span>{" "}
+            visible rows
+            <span className="hidden sm:inline">
+              {" "}
+              · {pageSize.toLocaleString("en-IN")} per page
+            </span>
+          </p>
+          <Pagination className="mx-0 w-auto justify-start sm:justify-end">
+            <PaginationContent className="flex-wrap justify-start sm:justify-end">
+              <PaginationItem className="hidden sm:list-item">
+                <PaginationLink
+                  href="#"
+                  aria-label="Go to first page"
+                  aria-disabled={!canPreviousPage}
+                  tabIndex={canPreviousPage ? undefined : -1}
+                  className={cn(
+                    "size-9",
+                    !canPreviousPage && "pointer-events-none opacity-50",
+                  )}
+                  onClick={(event) => {
+                    event.preventDefault()
+                    table.setPagination((current) => ({
+                      ...current,
+                      pageIndex: 0,
+                    }))
+                  }}
+                >
+                  <ChevronsLeft className="size-4" aria-hidden />
+                </PaginationLink>
+              </PaginationItem>
+              <PaginationItem>
+                <PaginationPrevious
+                  href="#"
+                  text="Prev"
+                  aria-disabled={!canPreviousPage}
+                  tabIndex={canPreviousPage ? undefined : -1}
+                  className={cn(
+                    !canPreviousPage && "pointer-events-none opacity-50",
+                  )}
+                  onClick={(event) => {
+                    event.preventDefault()
+                    table.setPagination((current) => ({
+                      ...current,
+                      pageIndex: Math.max(current.pageIndex - 1, 0),
+                    }))
+                  }}
+                />
+              </PaginationItem>
+              {pageItems.map((item, itemIndex) =>
+                typeof item === "number" ? (
+                  <PaginationItem
+                    key={`incoming-report-page-${item}`}
+                    className="hidden sm:list-item"
+                  >
+                    <PaginationLink
+                      href="#"
+                      isActive={item === pageIndex}
+                      onClick={(event) => {
+                        event.preventDefault()
+                        table.setPagination((current) => ({
+                          ...current,
+                          pageIndex: item,
+                        }))
+                      }}
+                    >
+                      {item + 1}
+                    </PaginationLink>
+                  </PaginationItem>
+                ) : (
+                  <PaginationItem
+                    key={`incoming-report-${item}-${itemIndex}`}
+                    className="hidden sm:list-item"
+                  >
+                    <PaginationEllipsis />
+                  </PaginationItem>
+                ),
+              )}
+              <PaginationItem className="sm:hidden">
+                <span
+                  className="flex h-10 min-w-16 items-center justify-center rounded-md px-2 text-sm font-medium tabular-nums text-foreground"
+                  aria-live="polite"
+                >
+                  {pageIndex + 1} / {pageCount}
+                </span>
+              </PaginationItem>
+              <PaginationItem>
+                <PaginationNext
+                  href="#"
+                  aria-disabled={!canNextPage}
+                  tabIndex={canNextPage ? undefined : -1}
+                  className={cn(
+                    !canNextPage && "pointer-events-none opacity-50",
+                  )}
+                  onClick={(event) => {
+                    event.preventDefault()
+                    table.setPagination((current) => ({
+                      ...current,
+                      pageIndex: Math.min(current.pageIndex + 1, pageCount - 1),
+                    }))
+                  }}
+                />
+              </PaginationItem>
+              <PaginationItem className="hidden sm:list-item">
+                <PaginationLink
+                  href="#"
+                  aria-label="Go to last page"
+                  aria-disabled={!canNextPage}
+                  tabIndex={canNextPage ? undefined : -1}
+                  className={cn(
+                    "size-9",
+                    !canNextPage && "pointer-events-none opacity-50",
+                  )}
+                  onClick={(event) => {
+                    event.preventDefault()
+                    table.setPagination((current) => ({
+                      ...current,
+                      pageIndex: pageCount - 1,
+                    }))
+                  }}
+                >
+                  <ChevronsRight className="size-4" aria-hidden />
+                </PaginationLink>
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
+      ) : null}
     </div>
   )
 }
