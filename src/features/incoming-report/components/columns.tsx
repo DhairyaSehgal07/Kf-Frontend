@@ -419,9 +419,9 @@ export const columns: ColumnDef<IncomingGatePassReportRow>[] = [
         <Badge
           variant={isNotGraded ? "secondary" : "default"}
           className={cn(
-            "text-xs font-medium",
+            "text-xs font-semibold",
             !isNotGraded &&
-              "border-transparent bg-primary/10 text-primary hover:bg-primary/15",
+              "border-primary/20 bg-primary/10 text-primary hover:bg-primary/15 dark:border-primary/30 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/25",
           )}
         >
           {getStatusLabel(status)}

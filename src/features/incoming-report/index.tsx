@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react"
 import { format } from "date-fns"
 import {
+  type ColumnDef,
   type ColumnFiltersState,
   type ColumnOrderState,
   type ExpandedState,
@@ -38,10 +39,18 @@ import {
   DensityFeature,
   type DensityState,
 } from "@/lib/tanstack-table/density-feature"
+import {
+  getIncomingReportColumnIds,
+  getStoredIncomingReportColumnState,
+} from "./utils/report-column-preferences"
 
 function toReportDateParam(date: Date | undefined): string | undefined {
   return date ? format(date, "yyyy-MM-dd") : undefined
 }
+
+const INCOMING_REPORT_COLUMN_IDS = getIncomingReportColumnIds(
+  columns as ColumnDef<unknown, unknown>[],
+)
 
 const IncomingReportPage = () => {
   const [fromDate, setFromDate] = useState<Date | undefined>()
@@ -51,8 +60,15 @@ const IncomingReportPage = () => {
   const [searchQuery, setSearchQuery] = useState("")
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
-  const [columnOrder, setColumnOrder] = useState<ColumnOrderState>([])
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(
+    () =>
+      getStoredIncomingReportColumnState(INCOMING_REPORT_COLUMN_IDS)
+        .columnVisibility,
+  )
+  const [columnOrder, setColumnOrder] = useState<ColumnOrderState>(
+    () =>
+      getStoredIncomingReportColumnState(INCOMING_REPORT_COLUMN_IDS).columnOrder,
+  )
   const [grouping, setGrouping] = useState<GroupingState>([])
   const [expanded, setExpanded] = useState<ExpandedState>({})
   const [pagination, setPagination] = useState<PaginationState>({

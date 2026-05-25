@@ -1,4 +1,4 @@
-import { useMemo } from "react"
+import { useMemo, useState } from "react"
 import { DragDropProvider, type DragEndEvent } from "@dnd-kit/react"
 import { useSortable } from "@dnd-kit/react/sortable"
 import { move } from "@dnd-kit/helpers"
@@ -9,11 +9,16 @@ import type {
   Table,
   VisibilityState,
 } from "@tanstack/react-table"
-import { GripVertical, RotateCcw } from "lucide-react"
+import { GripVertical, RotateCcw, Save, Trash2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
 import { cn } from "@/lib/utils"
+import {
+  clearStoredIncomingReportColumnState,
+  hasStoredIncomingReportColumnState,
+  saveIncomingReportColumnState,
+} from "@/features/incoming-report/utils/report-column-preferences"
 
 const COLUMN_ORDER_GROUP = "incoming-report-columns"
 
@@ -142,6 +147,13 @@ const ColumnsTab = <TData extends RowData>({
     getDraftColumnVisible(column.id, draftColumnVisibility),
   ).length
   const hiddenColumnCount = orderedColumns.length - visibleColumnCount
+  const columnIds = allColumns.map((column) => column.id)
+  const [hasSavedDefault, setHasSavedDefault] = useState(() =>
+    hasStoredIncomingReportColumnState(),
+  )
+  const [preferenceStatus, setPreferenceStatus] = useState<
+    "idle" | "saved" | "cleared" | "error"
+  >("idle")
 
   const handleVisibilityChange = (columnId: string, visible: boolean) => {
     const nextVisibility = { ...draftColumnVisibility }
@@ -161,6 +173,29 @@ const ColumnsTab = <TData extends RowData>({
 
   const handleResetOrder = () => {
     onDraftColumnOrderChange([])
+  }
+
+  const handleSaveDefaultColumns = () => {
+    const saved = saveIncomingReportColumnState(
+      columnIds,
+      draftColumnVisibility,
+      draftColumnOrder,
+    )
+
+    setHasSavedDefault(saved)
+    setPreferenceStatus(saved ? "saved" : "error")
+  }
+
+  const handleClearDefaultColumns = () => {
+    const cleared = clearStoredIncomingReportColumnState()
+
+    if (cleared) {
+      setHasSavedDefault(false)
+      setPreferenceStatus("cleared")
+      return
+    }
+
+    setPreferenceStatus("error")
   }
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -193,6 +228,56 @@ const ColumnsTab = <TData extends RowData>({
           </Button>
         </div>
       </div>
+
+      <section className="flex flex-col gap-3 rounded-xl border border-border bg-card px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0 space-y-1">
+          <p className="text-sm font-semibold text-foreground">
+            Default column view
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Save the current visible columns and order for this browser.
+          </p>
+          {preferenceStatus !== "idle" ? (
+            <p
+              className={cn(
+                "text-xs",
+                preferenceStatus === "error"
+                  ? "text-destructive"
+                  : "text-muted-foreground",
+              )}
+            >
+              {preferenceStatus === "saved"
+                ? "Default column view saved."
+                : preferenceStatus === "cleared"
+                  ? "Default column view cleared."
+                  : "Could not update local storage."}
+            </p>
+          ) : null}
+        </div>
+        <div className="grid grid-cols-2 gap-2 sm:flex sm:shrink-0">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="gap-1.5"
+            onClick={handleSaveDefaultColumns}
+          >
+            <Save className="size-3.5" aria-hidden />
+            Set default
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="gap-1.5"
+            disabled={!hasSavedDefault}
+            onClick={handleClearDefaultColumns}
+          >
+            <Trash2 className="size-3.5" aria-hidden />
+            Clear
+          </Button>
+        </div>
+      </section>
 
       <div className="rounded-xl border border-border bg-muted/10 p-2">
         <DragDropProvider onDragEnd={handleDragEnd}>

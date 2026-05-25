@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.9] - 2026-05-25
+
+Incoming report views can save reusable column defaults, reset filters back to defaults, and keep status styling readable in dark mode.
+
+### Added
+
+- **Incoming report column defaults** — Browser-local preferences for saved incoming report column visibility and order, with set/clear controls in the columns tab.
+- **View filter reset** — Reset action in the view filters sheet restores filters, grouping, global conditions, and saved column defaults in one step.
+- **UI** — shadcn-style Accordion component for collapsible surfaces.
+
+### Changed
+
+- **Incoming report table** — Initializes column visibility and order from saved defaults.
+- **Incoming report status badge** — Strengthened font weight and dark-mode styling for graded statuses.
+
 ## [0.2.8] - 2026-05-24
 
 Storage gate pass list, search, and create wired to the API; daybook storage tab shows live gate passes; Reports nav with report route shells.
@@ -353,6 +368,7 @@ First application scaffold for the Kapur frontend (`kf-frontend`).
 
 - Default Vite starter styles (`App.css`) and demo application UI from the initial template.
 
+[0.2.9]: https://github.com/compare/v0.2.8...v0.2.9
 [0.2.8]: https://github.com/compare/v0.2.7...v0.2.8
 [0.2.7]: https://github.com/compare/v0.2.6...v0.2.7
 [0.2.6]: https://github.com/compare/v0.2.5...v0.2.6
