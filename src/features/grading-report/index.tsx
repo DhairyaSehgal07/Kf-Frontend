@@ -239,20 +239,7 @@ const GradingReportPage = () => {
         </p>
       ) : null}
 
-      <div className="border-border bg-card overflow-hidden rounded-xl border shadow-sm">
-        <div className="border-border/60 border-b px-4 py-3 sm:px-6">
-          <h2 className="font-heading text-foreground text-base font-semibold">
-            Grading report table
-          </h2>
-          <p className="text-muted-foreground text-sm">
-            GET /grading-gate-pass/report with the selected date range.
-          </p>
-        </div>
-
-        <div className="p-4 sm:p-6">
-          <DataTable columns={tableColumns} data={isLoading ? [] : reportRows} />
-        </div>
-      </div>
+      <DataTable columns={tableColumns} data={reportRows} isLoading={isLoading} />
     </div>
   );
 };
