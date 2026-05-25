@@ -1,12 +1,15 @@
 import { ArrowRight, FileSpreadsheet, RefreshCw, Search } from "lucide-react"
+import type { Table } from "@tanstack/react-table"
 
 import { DatePickerInput } from "@/components/date-picker"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
+import type { IncomingGatePassReportRow } from "@/features/incoming-report/api/types"
 import { ViewFiltersSheet } from "./view-filters"
 
 export interface ReportToolbarProps {
+  table: Table<IncomingGatePassReportRow>
   fromDate: Date | undefined
   toDate: Date | undefined
   onFromDateChange: (date: Date | undefined) => void
@@ -20,6 +23,7 @@ export interface ReportToolbarProps {
 }
 
 export function ReportToolbar({
+  table,
   fromDate,
   toDate,
   onFromDateChange,
@@ -109,7 +113,7 @@ export function ReportToolbar({
         </div>
 
         <div className="flex shrink-0 items-center gap-2">
-          <ViewFiltersSheet />
+          <ViewFiltersSheet table={table} />
           <Button
             type="button"
             className="min-w-0 flex-1 gap-1.5 lg:flex-none"

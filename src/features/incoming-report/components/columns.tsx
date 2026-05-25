@@ -146,6 +146,23 @@ function formatReportDate(value: unknown): string | null {
   return format(parsed, "do MMMM yyyy")
 }
 
+function formatFilterFallback(value: unknown): string {
+  if (value == null || value === "") return "Blank"
+  return String(value)
+}
+
+function formatDateFilterValue(value: unknown): string {
+  return formatReportDate(value) ?? formatFilterFallback(value)
+}
+
+function formatIntegerFilterValue(value: unknown): string {
+  return formatIndianInteger(value) ?? formatFilterFallback(value)
+}
+
+function formatWeightFilterValue(value: unknown): string {
+  return formatIndianWeight(value) ?? formatFilterFallback(value)
+}
+
 function reportDateCell({ getValue }: CellContext<IncomingGatePassReportRow, unknown>) {
   const formatted = formatReportDate(getValue())
 
@@ -204,11 +221,13 @@ export const columns: ColumnDef<IncomingGatePassReportRow>[] = [
     accessorKey: "name",
     header: reportColumnHeader("Name"),
     footer: ReportTotalLabel,
+    meta: { filterLabel: "Farmer" },
     ...sortText,
   },
   {
     accessorKey: "address",
     header: reportColumnHeader("Address"),
+    meta: { filterLabel: "Farmer address" },
     ...sortText,
   },
   {
@@ -219,42 +238,60 @@ export const columns: ColumnDef<IncomingGatePassReportRow>[] = [
       numeric: true,
       mono: true,
       groupStart: true,
+      filterLabel: "Manual gate pass number",
     },
     ...sortNumeric,
   },
   {
     accessorKey: "gatePassNo",
     header: reportColumnHeader("Gate pass", { align: "right", numeric: true }),
-    meta: { align: "right", numeric: true, mono: true },
+    meta: {
+      align: "right",
+      numeric: true,
+      mono: true,
+      filterLabel: "System generated gate pass no",
+    },
     ...sortNumeric,
   },
   {
     accessorKey: "date",
     header: reportColumnHeader("Date"),
-    meta: { groupStart: true },
+    meta: {
+      groupStart: true,
+      filterLabel: "Date",
+      filterValueFormatter: formatDateFilterValue,
+    },
     cell: reportDateCell,
     ...sortDate,
   },
   {
     accessorKey: "variety",
     header: reportColumnHeader("Variety"),
+    meta: { filterLabel: "Variety" },
     ...sortText,
   },
   {
     accessorKey: "stage",
     header: reportColumnHeader("Stage"),
+    meta: { filterLabel: "Stage" },
     ...sortText,
   },
   {
     accessorKey: "truckNumber",
     header: reportColumnHeader("Truck", { numeric: true }),
-    meta: { numeric: true, mono: true },
+    meta: { numeric: true, mono: true, filterLabel: "Truck number" },
     ...sortNumeric,
   },
   {
     accessorKey: "bags",
     header: reportColumnHeader("Bags", { align: "right", numeric: true }),
-    meta: { align: "right", numeric: true, groupStart: true },
+    meta: {
+      align: "right",
+      numeric: true,
+      groupStart: true,
+      filterLabel: "Bags",
+      filterValueFormatter: formatIntegerFilterValue,
+    },
     cell: indianNumberCell("integer"),
     footer: createReportTotalFooter("bags", "integer"),
     ...sortNumeric,
@@ -262,7 +299,7 @@ export const columns: ColumnDef<IncomingGatePassReportRow>[] = [
   {
     accessorKey: "slipNumber",
     header: reportColumnHeader("Slip no.", { numeric: true }),
-    meta: { numeric: true, mono: true },
+    meta: { numeric: true, mono: true, filterLabel: "Slip number" },
     ...sortNumeric,
   },
   {
@@ -272,7 +309,13 @@ export const columns: ColumnDef<IncomingGatePassReportRow>[] = [
       align: "right",
       numeric: true,
     }),
-    meta: { align: "right", numeric: true, groupStart: true },
+    meta: {
+      align: "right",
+      numeric: true,
+      groupStart: true,
+      filterLabel: "Gross weight",
+      filterValueFormatter: formatWeightFilterValue,
+    },
     cell: indianNumberCell("weight"),
     footer: createReportTotalFooter("grossWeightKg", "weight"),
     ...sortNumeric,
@@ -284,7 +327,12 @@ export const columns: ColumnDef<IncomingGatePassReportRow>[] = [
       align: "right",
       numeric: true,
     }),
-    meta: { align: "right", numeric: true },
+    meta: {
+      align: "right",
+      numeric: true,
+      filterLabel: "Tare weight",
+      filterValueFormatter: formatWeightFilterValue,
+    },
     cell: indianNumberCell("weight"),
     footer: createReportTotalFooter("tareWeightKg", "weight"),
     ...sortNumeric,
@@ -296,7 +344,12 @@ export const columns: ColumnDef<IncomingGatePassReportRow>[] = [
       align: "right",
       numeric: true,
     }),
-    meta: { align: "right", numeric: true },
+    meta: {
+      align: "right",
+      numeric: true,
+      filterLabel: "Bardana weight",
+      filterValueFormatter: formatWeightFilterValue,
+    },
     cell: indianNumberCell("weight"),
     footer: createReportTotalFooter("bardanaWeightKg", "weight"),
     ...sortNumeric,
@@ -308,7 +361,13 @@ export const columns: ColumnDef<IncomingGatePassReportRow>[] = [
       align: "right",
       numeric: true,
     }),
-    meta: { align: "right", numeric: true, emphasize: true },
+    meta: {
+      align: "right",
+      numeric: true,
+      emphasize: true,
+      filterLabel: "Net weight",
+      filterValueFormatter: formatWeightFilterValue,
+    },
     cell: indianNumberCell("weight", { emphasize: true }),
     footer: createReportTotalFooter("netWeightKg", "weight", {
       emphasize: true,
@@ -318,7 +377,12 @@ export const columns: ColumnDef<IncomingGatePassReportRow>[] = [
   {
     accessorKey: "status",
     header: reportColumnHeader("Status"),
-    meta: { groupStart: true },
+    meta: {
+      groupStart: true,
+      filterLabel: "Status",
+      filterValueFormatter: (value: unknown) =>
+        value == null || value === "" ? "Blank" : getStatusLabel(String(value)),
+    },
     ...sortText,
     cell: ({ row }) => {
       const status = row.getValue<string>("status")
@@ -345,12 +409,13 @@ export const columns: ColumnDef<IncomingGatePassReportRow>[] = [
   {
     accessorKey: "createdBy",
     header: reportColumnHeader("Created by"),
+    meta: { filterLabel: "Created by" },
     ...sortText,
   },
   {
     accessorKey: "remarks",
     header: reportColumnHeader("Remarks"),
-    meta: { wrap: true, groupStart: true },
+    meta: { wrap: true, groupStart: true, filterLabel: "Remarks" },
     ...sortText,
   },
 ]

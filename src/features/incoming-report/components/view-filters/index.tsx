@@ -1,3 +1,5 @@
+import { useState } from "react"
+import type { ColumnFiltersState, Table } from "@tanstack/react-table"
 import { Button } from "@/components/ui/button"
 import {
   Sheet,
@@ -14,10 +16,32 @@ import FiltersTab from "./filters-tab"
 import ColumnsTab from "./columns-tab"
 import GroupingTab from "./grouping-tab"
 import AdvancedTab from "./advanced-tab"
+import type { IncomingGatePassReportRow } from "@/features/incoming-report/api/types"
 
-export function ViewFiltersSheet() {
+interface ViewFiltersSheetProps {
+  table: Table<IncomingGatePassReportRow>
+}
+
+export function ViewFiltersSheet({ table }: ViewFiltersSheetProps) {
+  const [open, setOpen] = useState(false)
+  const [draftColumnFilters, setDraftColumnFilters] =
+    useState<ColumnFiltersState>(() => table.getState().columnFilters)
+  const activeFilterCount = table.getState().columnFilters.length
+
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (nextOpen) {
+      setDraftColumnFilters(table.getState().columnFilters)
+    }
+    setOpen(nextOpen)
+  }
+
+  const handleApplyChanges = () => {
+    table.setColumnFilters(draftColumnFilters)
+    setOpen(false)
+  }
+
   return (
-    <Sheet>
+    <Sheet open={open} onOpenChange={handleOpenChange}>
       <SheetTrigger asChild>
         <Button
           type="button"
@@ -26,7 +50,12 @@ export function ViewFiltersSheet() {
           aria-label="View filters"
         >
           <SlidersHorizontal className="size-4 shrink-0" aria-hidden />
-          <span className="truncate">View filters</span>
+          <span className="truncate">
+            View filters
+            {activeFilterCount > 0
+              ? ` (${activeFilterCount.toLocaleString("en-IN")})`
+              : ""}
+          </span>
         </Button>
       </SheetTrigger>
       <SheetContent
@@ -62,7 +91,11 @@ export function ViewFiltersSheet() {
             </TabsList>
 
             <TabsContent value="filters">
-              <FiltersTab />
+              <FiltersTab
+                table={table}
+                draftColumnFilters={draftColumnFilters}
+                onDraftColumnFiltersChange={setDraftColumnFilters}
+              />
             </TabsContent>
 
             <TabsContent value="columns" >
@@ -82,9 +115,10 @@ export function ViewFiltersSheet() {
         {/* ── Footer ──────────────────────────────────────────── */}
         <SheetFooter className="border-t border-border/40 px-5 py-4">
           <Button
-            type="submit"
+            type="button"
             size="sm"
             className="w-full gap-1.5"
+            onClick={handleApplyChanges}
           >
             <CheckCircle2 className="size-3.5" />
             Apply changes

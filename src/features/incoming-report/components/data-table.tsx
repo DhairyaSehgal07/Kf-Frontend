@@ -2,23 +2,15 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import {
   type ColumnDef,
   flexRender,
-  functionalUpdate,
-  getCoreRowModel,
-  getSortedRowModel,
-  type SortingState,
-  useReactTable,
+  type Table as TanStackTable,
 } from "@tanstack/react-table"
 import { ClipboardList } from "lucide-react"
 
-import {
-  DensityFeature,
-  type DensityState,
-} from "@/lib/tanstack-table/density-feature"
+import type { DensityState } from "@/lib/tanstack-table/density-feature"
 import {
   getDensityCellClasses,
   getDensityHeadClasses,
 } from "@/lib/tanstack-table/density-classes"
-import { reportSortingFns } from "@/features/incoming-report/utils/report-sorting-fns"
 
 import {
   Empty,
@@ -179,26 +171,19 @@ type ColumnClassEntry = {
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
-  data: TData[]
+  table: TanStackTable<TData>
   isLoading?: boolean
-  getRowId?: (row: TData) => string
-  /** Table row/cell padding — defaults to `lg` for easier reading on reports */
-  density?: DensityState
-  onDensityChange?: (density: DensityState) => void
 }
 
 export function DataTable<TData, TValue>({
   columns,
-  data,
+  table,
   isLoading = false,
-  getRowId,
-  density: densityProp = "lg",
-  onDensityChange,
 }: DataTableProps<TData, TValue>) {
-  const [sorting, setSorting] = useState<SortingState>([])
   const [isHeaderScrolled, setIsHeaderScrolled] = useState(false)
   const [isFooterElevated, setIsFooterElevated] = useState(false)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
+  const density = table.getState().density
 
   const handleTableScroll = useCallback(() => {
     const el = scrollContainerRef.current
@@ -209,24 +194,10 @@ export function DataTable<TData, TValue>({
     setIsFooterElevated(!atBottom)
   }, [])
 
-  const table = useReactTable({
-    _features: [DensityFeature],
-    data,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getRowId,
-    sortingFns: reportSortingFns,
-    enableSortingRemoval: true,
-    state: { density: densityProp, sorting },
-    onDensityChange: (updater) => {
-      onDensityChange?.(functionalUpdate(updater, densityProp))
-    },
-    onSortingChange: setSorting,
-  })
-
-  const columnCount = columns.length
-  const hasDataRows = !isLoading && table.getRowModel().rows.length > 0
+  const rows = table.getRowModel().rows
+  const rowCount = rows.length
+  const columnCount = table.getAllLeafColumns().length
+  const hasDataRows = !isLoading && rowCount > 0
 
   const columnClassMap = useMemo(() => {
     const map = new Map<string, ColumnClassEntry>()
@@ -239,7 +210,7 @@ export function DataTable<TData, TValue>({
       map.set(columnId, {
         head: getHeadClassName(
           align,
-          densityProp,
+          density,
           isHeaderScrolled,
           meta,
         ),
@@ -248,27 +219,27 @@ export function DataTable<TData, TValue>({
             columnId,
             align,
             isEmpty,
-            densityProp,
+            density,
             meta,
           ),
         span: getValueSpanClassName(columnId, align, false, meta),
-        footer: getFooterClassName(align, densityProp, meta),
+        footer: getFooterClassName(align, density, meta),
       })
     })
 
     return map
-  }, [densityProp, isHeaderScrolled])
+  }, [columns, density, isHeaderScrolled])
 
   useEffect(() => {
     handleTableScroll()
-  }, [data, isLoading, handleTableScroll])
+  }, [rowCount, isLoading, handleTableScroll])
 
   return (
     <div className="flex min-w-0 flex-col overflow-hidden rounded-xl border border-border bg-card text-card-foreground shadow-sm">
       <div
         ref={scrollContainerRef}
         onScroll={handleTableScroll}
-        className="max-h-[min(70vh,42rem)] overflow-auto [&_[data-slot=table-container]]:overflow-visible"
+        className="max-h-[min(70vh,42rem)] overflow-auto **:data-[slot=table-container]:overflow-visible"
       >
         <Table className={TABLE_GRID_CLASS}>
           <TableHeader
@@ -347,8 +318,8 @@ export function DataTable<TData, TValue>({
                   })}
                 </TableRow>
               ))
-            ) : table.getRowModel().rows.length ? (
-              table.getRowModel().rows.map((row) => (
+            ) : rowCount ? (
+              rows.map((row) => (
                 <TableRow key={row.id} className="border-0 even:bg-muted/20">
                   {row.getVisibleCells().map((cell) => {
                     const columnId = cell.column.id

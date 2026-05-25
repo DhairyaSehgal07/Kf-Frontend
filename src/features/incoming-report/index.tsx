@@ -1,11 +1,31 @@
 import { useState } from "react"
 import { format } from "date-fns"
+import {
+  type ColumnFiltersState,
+  functionalUpdate,
+  getCoreRowModel,
+  getFacetedRowModel,
+  getFacetedUniqueValues,
+  getFilteredRowModel,
+  getSortedRowModel,
+  type SortingState,
+  useReactTable,
+} from "@tanstack/react-table"
 
 import { columns } from "./components/columns"
 import { DataTable } from "./components/data-table"
 import { ReportToolbar } from "./components/report-toolbar"
 import { useIncomingGatePassReport } from "./api/use-incoming-gate-pass-report"
-import type { IncomingGatePassReportParams } from "./api/types"
+import type {
+  IncomingGatePassReportParams,
+  IncomingGatePassReportRow,
+} from "./api/types"
+import { selectedValuesFilterFn } from "./utils/report-filter-fns"
+import { reportSortingFns } from "./utils/report-sorting-fns"
+import {
+  DensityFeature,
+  type DensityState,
+} from "@/lib/tanstack-table/density-feature"
 
 function toReportDateParam(date: Date | undefined): string | undefined {
   return date ? format(date, "yyyy-MM-dd") : undefined
@@ -17,11 +37,46 @@ const IncomingReportPage = () => {
   const [appliedParams, setAppliedParams] =
     useState<IncomingGatePassReportParams>({})
   const [searchQuery, setSearchQuery] = useState("")
+  const [sorting, setSorting] = useState<SortingState>([])
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
+  const [density, setDensity] = useState<DensityState>("lg")
 
   const { data, error, isLoading } = useIncomingGatePassReport(appliedParams)
 
   const reportRows = data?.incomingGatePasses ?? []
-  const rowCount = reportRows.length
+  // TanStack Table returns stable APIs that React Compiler cannot memoize safely.
+  // eslint-disable-next-line react-hooks/incompatible-library
+  const table = useReactTable<IncomingGatePassReportRow>({
+    _features: [DensityFeature],
+    data: reportRows,
+    columns,
+    defaultColumn: {
+      filterFn: selectedValuesFilterFn,
+    },
+    filterFns: {
+      selectedValues: selectedValuesFilterFn,
+    },
+    getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getFacetedRowModel: getFacetedRowModel(),
+    getFacetedUniqueValues: getFacetedUniqueValues(),
+    getSortedRowModel: getSortedRowModel(),
+    getRowId: (row) =>
+      `${row.gatePassNo}-${row.date}-${row.manualGatePassNumber}`,
+    sortingFns: reportSortingFns,
+    enableSortingRemoval: true,
+    state: {
+      density,
+      sorting,
+      columnFilters,
+    },
+    onDensityChange: (updater) => {
+      setDensity((previous) => functionalUpdate(updater, previous))
+    },
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+  })
+  const rowCount = table.getFilteredRowModel().rows.length
 
   const handleApply = () => {
     const next: IncomingGatePassReportParams = {}
@@ -62,6 +117,7 @@ const IncomingReportPage = () => {
         </div>
 
         <ReportToolbar
+          table={table}
           fromDate={fromDate}
           toDate={toDate}
           onFromDateChange={setFromDate}
@@ -82,11 +138,8 @@ const IncomingReportPage = () => {
 
       <DataTable
         columns={columns}
-        data={reportRows}
+        table={table}
         isLoading={isLoading}
-        getRowId={(row) =>
-          `${row.gatePassNo}-${row.date}-${row.manualGatePassNumber}`
-        }
       />
     </div>
   )
