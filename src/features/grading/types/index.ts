@@ -18,4 +18,6 @@ export type GradingSelectIncomingGatePasses = Pick<
   | "truckNumber"
   | "bagsReceived"
   | "status"
->
+> & {
+  weightSlip?: GatePassData["weightSlip"]
+}

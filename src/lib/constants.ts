@@ -69,3 +69,6 @@ export const INCOMING_STAGES = [
 ] as const
 
 export const INCOMING_GATE_PASS_STATUSES = ["Graded", "Ungraded"] as const
+
+export const JUTE_BAG_WEIGHT = 0.7
+export const LENO_BAG_WEIGHT= 0.06

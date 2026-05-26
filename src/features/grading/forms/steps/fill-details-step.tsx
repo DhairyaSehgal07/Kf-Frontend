@@ -35,6 +35,7 @@ import {
 } from "@/features/grading/schemas/grading-fill-details-schema"
 import { BAG_TYPES } from "@/lib/constants"
 import { Plus, Trash2 } from "lucide-react"
+import type { GradingSelectIncomingGatePasses } from "@/features/grading/types"
 
 function isFieldInvalid(meta: { isTouched: boolean; isValid: boolean }) {
   return meta.isTouched && !meta.isValid
@@ -54,16 +55,19 @@ const numericInputProps = {
 
 type FillDetailsStepProps = {
   form: GradingFormApi
+  linkedGatePasses?: GradingSelectIncomingGatePasses[]
 }
 
 type SelectedGatePassesSummaryProps = {
   farmerStorageLinkId: string
   selectedIncomingGatePassIds: string[]
+  linkedGatePasses?: GradingSelectIncomingGatePasses[]
 }
 
 function SelectedGatePassesSummary({
   farmerStorageLinkId,
   selectedIncomingGatePassIds,
+  linkedGatePasses = [],
 }: SelectedGatePassesSummaryProps) {
   const { data: gatePassResult } =
     useIncomingGatePassesByFarmer(farmerStorageLinkId)
@@ -72,9 +76,13 @@ function SelectedGatePassesSummary({
     () =>
       resolveSelectedIncomingGatePasses(
         selectedIncomingGatePassIds,
-        gatePassResult?.incomingGatePasses ?? [],
+        [...(gatePassResult?.incomingGatePasses ?? []), ...linkedGatePasses],
       ),
-    [gatePassResult?.incomingGatePasses, selectedIncomingGatePassIds],
+    [
+      gatePassResult?.incomingGatePasses,
+      linkedGatePasses,
+      selectedIncomingGatePassIds,
+    ],
   )
 
   return (
@@ -85,7 +93,10 @@ function SelectedGatePassesSummary({
   )
 }
 
-export function FillDetailsStep({ form }: FillDetailsStepProps) {
+export function FillDetailsStep({
+  form,
+  linkedGatePasses,
+}: FillDetailsStepProps) {
   return (
     <FieldGroup className="@container/field-group gap-10">
       <FieldSet>
@@ -183,6 +194,7 @@ export function FillDetailsStep({ form }: FillDetailsStepProps) {
             <SelectedGatePassesSummary
               farmerStorageLinkId={farmerStorageLinkId}
               selectedIncomingGatePassIds={selectedIncomingGatePassIds}
+              linkedGatePasses={linkedGatePasses}
             />
           )}
         />

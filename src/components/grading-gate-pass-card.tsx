@@ -21,14 +21,17 @@ import {
   Printer,
   Scale,
   Sprout,
+  TriangleAlert,
   Truck,
   User,
   type LucideIcon,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Skeleton } from "@/components/ui/skeleton"
+import { JUTE_BAG_WEIGHT, LENO_BAG_WEIGHT, type BagType } from "@/lib/constants"
 import type {
   GradingGatePass,
+  GradingGatePassIncomingRef,
   GradingGatePassFarmerStorageLink,
   GradingOrderDetail,
 } from "@/features/grading/api/types"
@@ -73,7 +76,7 @@ function formatDateTime(value: string) {
 function formatKg(value: number) {
   return new Intl.NumberFormat("en-IN", {
     minimumFractionDigits: 0,
-    maximumFractionDigits: 3,
+    maximumFractionDigits: 2,
   }).format(value)
 }
 
@@ -86,6 +89,31 @@ export function gradingTotalWeightKg(orderDetails: readonly GradingOrderDetail[]
     (sum, row) => sum + row.quantity * row.weightPerBagKg,
     0,
   )
+}
+
+function getBagWeightKg(bagType: BagType) {
+  return bagType === "LENO" ? LENO_BAG_WEIGHT : JUTE_BAG_WEIGHT
+}
+
+function incomingNetProductKg(incoming: GradingGatePassIncomingRef) {
+  const netKg = incoming.grossWeightKg - incoming.tareWeightKg
+  return netKg - incoming.bagsReceived * JUTE_BAG_WEIGHT
+}
+
+function gradingRowBagWeightKg(row: GradingOrderDetail) {
+  return row.quantity * getBagWeightKg(row.bagType)
+}
+
+function gradingRowNetProductKg(row: GradingOrderDetail) {
+  return row.quantity * (row.weightPerBagKg - getBagWeightKg(row.bagType))
+}
+
+function gradingTotalBagWeightKg(orderDetails: readonly GradingOrderDetail[]) {
+  return orderDetails.reduce((sum, row) => sum + gradingRowBagWeightKg(row), 0)
+}
+
+function gradingTotalNetProductKg(orderDetails: readonly GradingOrderDetail[]) {
+  return orderDetails.reduce((sum, row) => sum + gradingRowNetProductKg(row), 0)
 }
 
 function isPopulatedFarmerStorageLink(
@@ -113,7 +141,28 @@ export function GradingGatePassCard({
     : undefined
   const farmer = farmerStorageLink?.farmerId
   const totalBags = gradingTotalBags(gatePass.orderDetails)
-  const totalWeightKg = gradingTotalWeightKg(gatePass.orderDetails)
+  const totalWeightKg = gradingTotalNetProductKg(gatePass.orderDetails)
+  const totalGradingBagWeightKg = gradingTotalBagWeightKg(gatePass.orderDetails)
+  const incomingGrossKg = gatePass.incomingGatePassIds.reduce(
+    (sum, incoming) => sum + incoming.grossWeightKg,
+    0,
+  )
+  const incomingTareKg = gatePass.incomingGatePassIds.reduce(
+    (sum, incoming) => sum + incoming.tareWeightKg,
+    0,
+  )
+  const incomingWeighbridgeNetKg = incomingGrossKg - incomingTareKg
+  const incomingNetKg = gatePass.incomingGatePassIds.reduce(
+    (sum, incoming) => sum + incomingNetProductKg(incoming),
+    0,
+  )
+  const incomingBags = gatePass.incomingGatePassIds.reduce(
+    (sum, incoming) => sum + incoming.bagsReceived,
+    0,
+  )
+  const gradingWastageKg = incomingNetKg - totalWeightKg
+  const gradingWastagePercent =
+    incomingNetKg > 0 ? (gradingWastageKg / incomingNetKg) * 100 : 0
   const incomingCount = gatePass.incomingGatePassIds.length
 
   const handleEditClick = () => {
@@ -190,15 +239,15 @@ export function GradingGatePassCard({
         {isExpanded && (
           <div className="mt-6 animate-in fade-in slide-in-from-top-4 duration-300">
             <Separator className="mb-6" />
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <div className="grid grid-cols-1 gap-6">
               <div className="space-y-6">
                 <div>
                   <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
                     <Truck className="h-4 w-4 text-primary" />
-                    Incoming gate passes
+                    Source: Incoming Gate Passes
                   </h4>
-                  <div className="overflow-hidden rounded-xl border border-border/50">
-                    <table className="w-full caption-bottom text-sm">
+                  <div className="overflow-x-auto rounded-xl border border-border/50">
+                    <table className="w-full min-w-[820px] caption-bottom text-sm">
                       <thead className="border-b border-border/50 bg-muted/50">
                         <tr>
                           <th className="h-9 px-3 text-left text-xs font-medium text-muted-foreground">
@@ -208,7 +257,19 @@ export function GradingGatePassCard({
                             Bags
                           </th>
                           <th className="h-9 px-3 text-right text-xs font-medium text-muted-foreground">
-                            Net kg
+                            Gross (kg)
+                          </th>
+                          <th className="h-9 px-3 text-right text-xs font-medium text-muted-foreground">
+                            Tare (kg)
+                          </th>
+                          <th className="h-9 px-3 text-right text-xs font-medium text-muted-foreground">
+                            Net (kg)
+                          </th>
+                          <th className="h-9 px-3 text-right text-xs font-medium text-muted-foreground">
+                            Bardana (kg)
+                          </th>
+                          <th className="h-9 px-3 text-right text-xs font-medium text-muted-foreground">
+                            Net Product
                           </th>
                         </tr>
                       </thead>
@@ -216,6 +277,10 @@ export function GradingGatePassCard({
                         {gatePass.incomingGatePassIds.map((incoming) => {
                           const netKg =
                             incoming.grossWeightKg - incoming.tareWeightKg
+                          const bardanaKg =
+                            incoming.bagsReceived * JUTE_BAG_WEIGHT
+                          const netProductKg = incomingNetProductKg(incoming)
+
                           return (
                             <tr
                               key={incoming.gatePassNo}
@@ -233,27 +298,48 @@ export function GradingGatePassCard({
                                 {incoming.bagsReceived.toLocaleString("en-IN")}
                               </td>
                               <td className="px-3 py-2.5 text-right text-sm tabular-nums">
+                                {formatKg(incoming.grossWeightKg)}
+                              </td>
+                              <td className="px-3 py-2.5 text-right text-sm tabular-nums">
+                                {formatKg(incoming.tareWeightKg)}
+                              </td>
+                              <td className="px-3 py-2.5 text-right text-sm font-medium tabular-nums">
                                 {formatKg(netKg)}
+                              </td>
+                              <td className="px-3 py-2.5 text-right text-sm tabular-nums">
+                                {formatKg(bardanaKg)}
+                              </td>
+                              <td className="px-3 py-2.5 text-right text-sm font-medium tabular-nums">
+                                {formatKg(netProductKg)}
                               </td>
                             </tr>
                           )
                         })}
                       </tbody>
+                      <tfoot className="border-t border-border/60 bg-primary/5">
+                        <tr className="font-semibold text-primary">
+                          <td className="px-3 py-2.5 text-sm">Totals</td>
+                          <td className="px-3 py-2.5 text-right text-sm tabular-nums">
+                            {incomingBags.toLocaleString("en-IN")}
+                          </td>
+                          <td className="px-3 py-2.5 text-right text-sm tabular-nums">
+                            {formatKg(incomingGrossKg)}
+                          </td>
+                          <td className="px-3 py-2.5 text-right text-sm tabular-nums">
+                            {formatKg(incomingTareKg)}
+                          </td>
+                          <td className="px-3 py-2.5 text-right text-sm tabular-nums">
+                            {formatKg(incomingWeighbridgeNetKg)}
+                          </td>
+                          <td className="px-3 py-2.5 text-right text-sm tabular-nums">
+                            {formatKg(incomingBags * JUTE_BAG_WEIGHT)}
+                          </td>
+                          <td className="px-3 py-2.5 text-right text-sm tabular-nums">
+                            {formatKg(incomingNetKg)}
+                          </td>
+                        </tr>
+                      </tfoot>
                     </table>
-                  </div>
-                </div>
-
-                <div>
-                  <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
-                    <FileText className="h-4 w-4 text-primary" />
-                    Remarks
-                  </h4>
-                  <div className="rounded-xl border border-border/50 bg-muted/20 p-4">
-                    <p className="text-sm italic text-muted-foreground">
-                      {gatePass.remarks
-                        ? `"${gatePass.remarks}"`
-                        : "No remarks provided."}
-                    </p>
                   </div>
                 </div>
               </div>
@@ -262,55 +348,170 @@ export function GradingGatePassCard({
                 <div>
                   <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
                     <Package className="h-4 w-4 text-primary" />
-                    Graded quantities
+                    Graded Output Details
                   </h4>
-                  <div className="overflow-hidden rounded-xl border border-border/50">
-                    <table className="w-full caption-bottom text-sm">
+                  <div className="overflow-x-auto rounded-xl border border-border/50">
+                    <table className="w-full min-w-[860px] caption-bottom text-sm">
                       <thead className="border-b border-border/50 bg-muted/50">
                         <tr>
                           <th className="h-9 px-3 text-left text-xs font-medium text-muted-foreground">
                             Size
                           </th>
+                          <th className="h-9 px-3 text-left text-xs font-medium text-muted-foreground">
+                            Bag type
+                          </th>
                           <th className="h-9 px-3 text-right text-xs font-medium text-muted-foreground">
                             Qty
                           </th>
-                          <th className="h-9 px-3 text-left text-xs font-medium text-muted-foreground">
-                            Type
+                          <th className="h-9 px-3 text-right text-xs font-medium text-muted-foreground">
+                            Wt/bag (kg)
                           </th>
                           <th className="h-9 px-3 text-right text-xs font-medium text-muted-foreground">
-                            kg/bag
+                            Bag wt (kg)
+                          </th>
+                          <th className="h-9 px-3 text-right text-xs font-medium text-muted-foreground">
+                            Deduction (kg)
+                          </th>
+                          <th className="h-9 px-3 text-right text-xs font-medium text-muted-foreground">
+                            Net (kg)
+                          </th>
+                          <th className="h-9 px-3 text-right text-xs font-medium text-muted-foreground">
+                            Weight %
                           </th>
                         </tr>
                       </thead>
                       <tbody>
-                        {gatePass.orderDetails.map((row, index) => (
-                          <tr
-                            key={`${row.size}-${index}`}
-                            className="border-b border-border/40 last:border-0"
-                          >
-                            <td className="px-3 py-2.5 font-medium">{row.size}</td>
-                            <td className="px-3 py-2.5 text-right tabular-nums">
-                              {row.quantity.toLocaleString("en-IN")}
-                            </td>
-                            <td className="px-3 py-2.5 text-muted-foreground">
-                              {row.bagType}
-                            </td>
-                            <td className="px-3 py-2.5 text-right tabular-nums">
-                              {formatKg(row.weightPerBagKg)}
-                            </td>
-                          </tr>
-                        ))}
+                        {gatePass.orderDetails.map((row, index) => {
+                          const bagWeightKg = getBagWeightKg(row.bagType)
+                          const rowBagWeightKg = gradingRowBagWeightKg(row)
+                          const rowNetProductKg = gradingRowNetProductKg(row)
+                          const rowWeightPercent =
+                            totalWeightKg > 0
+                              ? (rowNetProductKg / totalWeightKg) * 100
+                              : 0
+
+                          return (
+                            <tr
+                              key={`${row.size}-${index}`}
+                              className="border-b border-border/40 last:border-0"
+                            >
+                              <td className="px-3 py-2.5 font-medium">
+                                {row.size}
+                              </td>
+                              <td className="px-3 py-2.5 text-muted-foreground">
+                                {row.bagType}
+                              </td>
+                              <td className="px-3 py-2.5 text-right tabular-nums">
+                                {row.quantity.toLocaleString("en-IN")}
+                              </td>
+                              <td className="px-3 py-2.5 text-right tabular-nums">
+                                {formatKg(row.weightPerBagKg)}
+                              </td>
+                              <td className="px-3 py-2.5 text-right tabular-nums">
+                                {formatKg(bagWeightKg)}
+                              </td>
+                              <td className="px-3 py-2.5 text-right tabular-nums">
+                                {formatKg(rowBagWeightKg)}
+                              </td>
+                              <td className="px-3 py-2.5 text-right font-medium tabular-nums">
+                                {formatKg(rowNetProductKg)}
+                              </td>
+                              <td className="px-3 py-2.5 text-right font-medium tabular-nums text-primary">
+                                {formatKg(rowWeightPercent)}%
+                              </td>
+                            </tr>
+                          )
+                        })}
                       </tbody>
+                      <tfoot className="border-t border-border/60 bg-primary/5">
+                        <tr className="font-semibold text-primary">
+                          <td className="px-3 py-2.5 text-sm">Totals</td>
+                          <td />
+                          <td className="px-3 py-2.5 text-right text-sm tabular-nums">
+                            {totalBags.toLocaleString("en-IN")}
+                          </td>
+                          <td />
+                          <td />
+                          <td className="px-3 py-2.5 text-right text-sm tabular-nums">
+                            {formatKg(totalGradingBagWeightKg)}
+                          </td>
+                          <td className="px-3 py-2.5 text-right text-sm tabular-nums">
+                            {formatKg(totalWeightKg)}
+                          </td>
+                          <td className="px-3 py-2.5 text-right text-sm tabular-nums">
+                            {formatKg(
+                              incomingNetKg > 0
+                                ? (totalWeightKg / incomingNetKg) * 100
+                                : 0,
+                            )}
+                            %
+                          </td>
+                        </tr>
+                      </tfoot>
                     </table>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-6 rounded-xl border border-border/50 bg-muted/20 p-4">
-                  <InfoBlock
-                    label="Created by"
-                    value={gatePass.createdBy.name}
-                    icon={ClipboardList}
-                  />
+                <div>
+                  <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
+                    <Scale className="h-4 w-4 text-primary" />
+                    Performance metrics
+                  </h4>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="rounded-xl border border-primary/20 bg-primary/5 p-4">
+                      <InfoBlock
+                        label="Total graded weight"
+                        value={`${formatKg(totalWeightKg)} kg`}
+                        icon={Scale}
+                        valueClassName="tabular-nums text-primary"
+                      />
+                    </div>
+                    <div className="rounded-xl border border-border/50 bg-muted/20 p-4">
+                      <InfoBlock
+                        label="Grading wastage"
+                        value={`${formatKg(gradingWastageKg)} kg`}
+                        icon={TriangleAlert}
+                        valueClassName={cn(
+                          "tabular-nums",
+                          gradingWastageKg > 0 && "text-destructive",
+                          gradingWastageKg <= 0 && "text-primary",
+                        )}
+                      />
+                      <p className="mt-2 text-xs text-muted-foreground">
+                        {formatKg(gradingWastagePercent)}% of incoming net
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid gap-4 lg:grid-cols-2">
+                  <div>
+                    <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
+                      <FileText className="h-4 w-4 text-primary" />
+                      Remarks
+                    </h4>
+                    <div className="rounded-xl border border-border/50 bg-muted/20 p-4">
+                      <p className="text-sm italic text-muted-foreground">
+                        {gatePass.remarks
+                          ? `"${gatePass.remarks}"`
+                          : "No remarks provided."}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
+                      <ClipboardList className="h-4 w-4 text-primary" />
+                      System details
+                    </h4>
+                    <div className="rounded-xl border border-border/50 bg-muted/20 p-4">
+                      <InfoBlock
+                        label="Created by"
+                        value={gatePass.createdBy.name}
+                        icon={ClipboardList}
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

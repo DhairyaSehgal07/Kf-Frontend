@@ -13,6 +13,7 @@ export const STORAGE_GATE_PASS_AUDIT_FIELD_LABELS: Record<
   farmerStorageLinkId: "Farmer",
   variety: "Variety",
   storageCategory: "Storage category",
+  stage: "Stage",
   bagSizes: "Bag sizes",
   remarks: "Remarks",
 }

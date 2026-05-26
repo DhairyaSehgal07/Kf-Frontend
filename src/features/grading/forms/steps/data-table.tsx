@@ -160,116 +160,118 @@ export function DataTable<TData, TValue>({
         </div>
       </div>
 
-      <Table>
-        <TableHeader className="sticky top-0 z-10 bg-muted/50 [&_tr]:border-b [&_tr]:hover:bg-transparent">
-          {table.getHeaderGroups().map((headerGroup) => (
-            <TableRow key={headerGroup.id}>
-              {headerGroup.headers.map((header) => {
-                const align =
-                  (
-                    header.column.columnDef.meta as
-                      | { align?: "left" | "right" }
-                      | undefined
-                  )?.align ?? "left"
-
-                return (
-                  <TableHead
-                    key={header.id}
-                    className={cn(
-                      "h-10 px-3 text-muted-foreground",
-                      header.column.id === "select" && "w-12 px-2",
-                      align === "right" && "text-right"
-                    )}
-                    style={
-                      header.column.getSize() !== 150
-                        ? { width: header.column.getSize() }
-                        : undefined
-                    }
-                  >
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
-                  </TableHead>
-                )
-              })}
-            </TableRow>
-          ))}
-        </TableHeader>
-        <TableBody>
-          {isLoading ? (
-            Array.from({ length: 5 }).map((_, index) => (
-              <TableRow key={`skeleton-${index}`}>
-                {columns.map((col, colIndex) => (
-                  <TableCell
-                    key={col.id ?? `col-${colIndex}`}
-                    className="py-2.5"
-                  >
-                    <Skeleton className="h-5 w-full max-w-32" />
-                  </TableCell>
-                ))}
-              </TableRow>
-            ))
-          ) : rows.length ? (
-            rows.map((row) => (
-              <TableRow
-                key={row.id}
-                data-state={row.getIsSelected() && "selected"}
-                className="even:bg-muted/20"
-              >
-                {row.getVisibleCells().map((cell) => {
+      <div className="overflow-x-auto">
+        <Table className="min-w-[760px]">
+          <TableHeader className="sticky top-0 z-10 bg-muted/50 [&_tr]:border-b [&_tr]:hover:bg-transparent">
+            {table.getHeaderGroups().map((headerGroup) => (
+              <TableRow key={headerGroup.id}>
+                {headerGroup.headers.map((header) => {
                   const align =
                     (
-                      cell.column.columnDef.meta as
+                      header.column.columnDef.meta as
                         | { align?: "left" | "right" }
                         | undefined
                     )?.align ?? "left"
 
                   return (
-                    <TableCell
-                      key={cell.id}
+                    <TableHead
+                      key={header.id}
                       className={cn(
-                        "py-2.5",
-                        cell.column.id === "select" && "w-12 px-2",
+                        "h-10 px-3 text-muted-foreground",
+                        header.column.id === "select" && "w-12 px-2",
                         align === "right" && "text-right"
                       )}
+                      style={
+                        header.column.getSize() !== 150
+                          ? { width: header.column.getSize() }
+                          : undefined
+                      }
                     >
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </TableCell>
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
+                    </TableHead>
                   )
                 })}
               </TableRow>
-            ))
-          ) : (
-            <TableRow className="hover:bg-transparent">
-              <TableCell colSpan={columns.length} className="p-0">
-                <Empty className="rounded-none border-0 border-dashed bg-muted/10 py-12">
-                  <EmptyHeader>
-                    <EmptyMedia variant="icon">
-                      <ClipboardList />
-                    </EmptyMedia>
-                    <EmptyTitle>
-                      {hasActiveFilter
-                        ? "No matching gate passes"
-                        : "No gate passes to show"}
-                    </EmptyTitle>
-                    <EmptyDescription>
-                      {hasActiveFilter
-                        ? "Try a different manual number or clear the search."
-                        : "Choose a farmer and variety above, or check back when new passes arrive."}
-                    </EmptyDescription>
-                  </EmptyHeader>
-                </Empty>
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
+            ))}
+          </TableHeader>
+          <TableBody>
+            {isLoading ? (
+              Array.from({ length: 5 }).map((_, index) => (
+                <TableRow key={`skeleton-${index}`}>
+                  {columns.map((col, colIndex) => (
+                    <TableCell
+                      key={col.id ?? `col-${colIndex}`}
+                      className="py-2.5"
+                    >
+                      <Skeleton className="h-5 w-full max-w-32" />
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : rows.length ? (
+              rows.map((row) => (
+                <TableRow
+                  key={row.id}
+                  data-state={row.getIsSelected() && "selected"}
+                  className="even:bg-muted/20"
+                >
+                  {row.getVisibleCells().map((cell) => {
+                    const align =
+                      (
+                        cell.column.columnDef.meta as
+                          | { align?: "left" | "right" }
+                          | undefined
+                      )?.align ?? "left"
+
+                    return (
+                      <TableCell
+                        key={cell.id}
+                        className={cn(
+                          "py-2.5",
+                          cell.column.id === "select" && "w-12 px-2",
+                          align === "right" && "text-right"
+                        )}
+                      >
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </TableCell>
+                    )
+                  })}
+                </TableRow>
+              ))
+            ) : (
+              <TableRow className="hover:bg-transparent">
+                <TableCell colSpan={columns.length} className="p-0">
+                  <Empty className="rounded-none border-0 border-dashed bg-muted/10 py-12">
+                    <EmptyHeader>
+                      <EmptyMedia variant="icon">
+                        <ClipboardList />
+                      </EmptyMedia>
+                      <EmptyTitle>
+                        {hasActiveFilter
+                          ? "No matching gate passes"
+                          : "No gate passes to show"}
+                      </EmptyTitle>
+                      <EmptyDescription>
+                        {hasActiveFilter
+                          ? "Try a different manual number or clear the search."
+                          : "Choose a farmer and variety above, or check back when new passes arrive."}
+                      </EmptyDescription>
+                    </EmptyHeader>
+                  </Empty>
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
 
       {!isLoading && (
         <DataTablePagination

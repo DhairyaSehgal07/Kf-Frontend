@@ -47,7 +47,7 @@ import {
   type ComboboxOption,
 } from '@/components/searchable-option-combobox';
 import { storageFormSchema } from '@/features/storage/schemas/storage-form-schema';
-import { STORAGE_CATEGORIES } from '@/lib/constants';
+import { INCOMING_STAGES, STORAGE_CATEGORIES } from '@/lib/constants';
 
 const VARIETY_ITEMS = ['Himalini', 'K. Pukhraj', 'K. Jyoti'].map((value) => ({
   id: value,
@@ -55,6 +55,11 @@ const VARIETY_ITEMS = ['Himalini', 'K. Pukhraj', 'K. Jyoti'].map((value) => ({
 }));
 
 const CATEGORY_ITEMS = STORAGE_CATEGORIES.map((value) => ({
+  id: value,
+  label: value,
+}));
+
+const STAGE_ITEMS = INCOMING_STAGES.map((value) => ({
   id: value,
   label: value,
 }));
@@ -185,6 +190,10 @@ function EditStorageFormFields({ gatePass }: EditStorageFormFieldsProps) {
     () => ensureOptionInList(CATEGORY_ITEMS, gatePass.storageCategory),
     [gatePass.storageCategory],
   );
+  const stageOptions = useMemo(
+    () => ensureOptionInList(STAGE_ITEMS, gatePass.stage),
+    [gatePass.stage],
+  );
 
   const [farmerSearch, setFarmerSearch] = useState(() => farmerSearchLabelFromGatePass(gatePass));
   const [farmerComboboxOpen, setFarmerComboboxOpen] = useState(false);
@@ -192,6 +201,8 @@ function EditStorageFormFields({ gatePass }: EditStorageFormFieldsProps) {
   const [varietyComboboxOpen, setVarietyComboboxOpen] = useState(false);
   const [categorySearch, setCategorySearch] = useState(() => gatePass.storageCategory);
   const [categoryComboboxOpen, setCategoryComboboxOpen] = useState(false);
+  const [stageSearch, setStageSearch] = useState(() => gatePass.stage ?? '');
+  const [stageComboboxOpen, setStageComboboxOpen] = useState(false);
   const [reviewOpen, setReviewOpen] = useState(false);
   const [addFarmerOpen, setAddFarmerOpen] = useState(false);
 
@@ -206,6 +217,10 @@ function EditStorageFormFields({ gatePass }: EditStorageFormFieldsProps) {
   const sortedCategories = useMemo(
     () => filterAndSortOptions(categorySearch, categoryOptions),
     [categorySearch, categoryOptions],
+  );
+  const sortedStages = useMemo(
+    () => filterAndSortOptions(stageSearch, stageOptions),
+    [stageSearch, stageOptions],
   );
 
   const form = useCreateStorageForm({
@@ -248,6 +263,8 @@ function EditStorageFormFields({ gatePass }: EditStorageFormFieldsProps) {
     setVarietyComboboxOpen(false);
     setCategorySearch(gatePass.storageCategory);
     setCategoryComboboxOpen(false);
+    setStageSearch(gatePass.stage ?? '');
+    setStageComboboxOpen(false);
   };
 
   const handleFarmerCreated = (link: FarmerStorageLink) => {
@@ -464,6 +481,37 @@ function EditStorageFormFields({ gatePass }: EditStorageFormFieldsProps) {
                           open={categoryComboboxOpen}
                           setOpen={setCategoryComboboxOpen}
                         />
+                        {isInvalid && <FieldError errors={field.state.meta.errors} />}
+                      </Field>
+                    );
+                  }}
+                </form.Field>
+
+                <form.Field name="stage">
+                  {(field) => {
+                    const isInvalid = isFieldInvalid(field.state.meta);
+                    return (
+                      <Field data-invalid={isInvalid}>
+                        <FieldLabel htmlFor="edit-storage-stage">Stage</FieldLabel>
+                        <SearchableOptionCombobox
+                          id="edit-storage-stage"
+                          name={field.name}
+                          value={field.state.value}
+                          onValueChange={field.handleChange}
+                          onBlur={field.handleBlur}
+                          isInvalid={isInvalid}
+                          placeholder="Search stages..."
+                          emptyMessage="No stages found."
+                          options={stageOptions}
+                          sortedOptions={sortedStages}
+                          search={stageSearch}
+                          setSearch={setStageSearch}
+                          open={stageComboboxOpen}
+                          setOpen={setStageComboboxOpen}
+                        />
+                        <FieldDescription>
+                          Optional grading stage for this storage stock.
+                        </FieldDescription>
                         {isInvalid && <FieldError errors={field.state.meta.errors} />}
                       </Field>
                     );

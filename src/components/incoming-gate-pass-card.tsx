@@ -27,13 +27,12 @@ import {
 import { cn } from "@/lib/utils"
 import { Skeleton } from "@/components/ui/skeleton"
 import type { IncomingGatePass } from "@/features/incoming/api/types"
+import { JUTE_BAG_WEIGHT } from "@/lib/constants"
 
 const STATUS_LABELS = {
   NOT_GRADED: "Ungraded",
   GRADED: "Graded",
 } as const
-
-const JUTE_BAG_WEIGHT_KG = 1
 
 export type GatePassData = IncomingGatePass
 
@@ -102,7 +101,7 @@ export function GatePassCard({
   const gross = gatePass.weightSlip?.grossWeightKg ?? 0
   const tare = gatePass.weightSlip?.tareWeightKg ?? 0
   const netKg = gross - tare
-  const bardanaKg = gatePass.bagsReceived * JUTE_BAG_WEIGHT_KG
+  const bardanaKg = gatePass.bagsReceived * JUTE_BAG_WEIGHT
   const netProductKg = netKg - bardanaKg
   const isCancelledGatePass = gatePass.bagsReceived === 0
 
@@ -162,7 +161,7 @@ export function GatePassCard({
         <div className="flex flex-wrap items-center justify-end gap-2">
           <Badge
             variant="outline"
-            className="max-w-[9rem] truncate bg-background text-[11px]"
+            className="max-w-36 truncate bg-background text-[11px]"
             title={gatePass.category}
           >
             {gatePass.category}
@@ -275,7 +274,7 @@ export function GatePassCard({
                       {/* Bardana Deduction */}
                       <div className="flex items-center justify-between pt-1">
                         <span className="text-muted-foreground">
-                          Bardana <span className="text-xs opacity-70">({gatePass.bagsReceived} bags × {JUTE_BAG_WEIGHT_KG}kg)</span>
+                          Bardana <span className="text-xs opacity-70">({gatePass.bagsReceived} bags × {JUTE_BAG_WEIGHT}kg)</span>
                         </span>
                         <span className="font-medium text-red-500/90">- {bardanaKg.toLocaleString("en-IN")} kg</span>
                       </div>
@@ -354,7 +353,7 @@ export function GatePassCardSkeleton() {
           <Skeleton className="h-6 w-20 rounded-full" />
           <Skeleton className="h-6 w-10 rounded-full" />
           <Skeleton className="h-6 w-16 rounded-full" />
-          <Skeleton className="h-6 w-[4.5rem] rounded-full" />
+          <Skeleton className="h-6 w-18 rounded-full" />
         </div>
       </CardHeader>
       <CardContent className="pt-5">

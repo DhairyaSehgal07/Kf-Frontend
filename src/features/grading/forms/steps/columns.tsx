@@ -6,6 +6,10 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { cn } from "@/lib/utils"
 import { GradingIncomingGatePassActionCell } from "./grading-incoming-gate-pass-action-cell"
 import { DataTableColumnHeader } from "./data-table-column-header"
+import {
+  formatIncomingWeightKg,
+  incomingNetWeightKg,
+} from "@/features/grading/utils/incoming-net-weight"
 
 const STATUS_LABELS: Record<string, string> = {
   NOT_GRADED: "Not graded",
@@ -148,6 +152,32 @@ const baseColumns: ColumnDef<GradingSelectIncomingGatePasses>[] = [
         {formatCount(row.getValue<number>("bagsReceived"))}
       </span>
     ),
+    meta: { align: "right" },
+  },
+  {
+    id: "incomingNetWeightKg",
+    accessorFn: (row) => incomingNetWeightKg(row) ?? Number.NEGATIVE_INFINITY,
+    header: ({ column }) => (
+      <div className="flex justify-end">
+        <DataTableColumnHeader column={column} title="Incoming net wt" />
+      </div>
+    ),
+    cell: ({ row }) => {
+      const netWeightKg = incomingNetWeightKg(row.original)
+
+      if (netWeightKg == null) {
+        return <span className="text-sm text-muted-foreground">—</span>
+      }
+
+      return (
+        <span className="tabular-nums text-sm font-medium text-foreground">
+          {formatIncomingWeightKg(netWeightKg)}
+          <span className="ml-1 text-xs font-normal text-muted-foreground">
+            kg
+          </span>
+        </span>
+      )
+    },
     meta: { align: "right" },
   },
   {

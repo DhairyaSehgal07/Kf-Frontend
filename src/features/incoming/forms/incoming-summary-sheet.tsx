@@ -22,6 +22,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet"
+import { JUTE_BAG_WEIGHT } from "@/lib/constants"
 import { cn } from "@/lib/utils"
 
 export type IncomingSummaryValues = {
@@ -142,12 +143,16 @@ function WeightCard({
   slipNumber,
   grossWeightKg,
   tareWeightKg,
+  bagsReceived,
 }: {
   slipNumber: string
   grossWeightKg: number
   tareWeightKg: number
+  bagsReceived: number
 }) {
   const netWeightKg = grossWeightKg - tareWeightKg
+  const bardanaKg = bagsReceived * JUTE_BAG_WEIGHT
+  const netProductKg = netWeightKg - bardanaKg
 
   return (
     <Card>
@@ -175,6 +180,23 @@ function WeightCard({
         <span className="text-sm font-semibold text-foreground">Net weight</span>
         <span className="text-base font-bold tabular-nums text-primary">
           {formatKg(netWeightKg)}
+        </span>
+      </div>
+      <div className="flex items-center justify-between py-2.5">
+        <span className="text-xs text-muted-foreground">
+          Bardana ({bagsReceived.toLocaleString("en-IN")} bags ×{" "}
+          {JUTE_BAG_WEIGHT}kg)
+        </span>
+        <span className="text-sm font-medium tabular-nums text-destructive">
+          −&thinsp;{bardanaKg.toLocaleString("en-IN")} kg
+        </span>
+      </div>
+      <div className="flex items-center justify-between py-3">
+        <span className="text-sm font-semibold text-foreground">
+          Final weight
+        </span>
+        <span className="text-base font-bold tabular-nums text-primary">
+          {formatKg(netProductKg)}
         </span>
       </div>
     </Card>
@@ -255,6 +277,7 @@ function IncomingReviewSummary({
           slipNumber={values.weightSlip.slipNumber}
           grossWeightKg={values.weightSlip.grossWeightKg}
           tareWeightKg={values.weightSlip.tareWeightKg}
+          bagsReceived={values.bagsReceived}
         />
       </div>
 

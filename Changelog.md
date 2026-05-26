@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.3] - 2026-05-26
+
+Grading and incoming reviews now separate bardana from product weight, while storage gate passes carry stage information through create, edit, display, and audit flows.
+
+### Added
+
+- **Incoming net weight helper** — Shared grading utility resolves incoming gross/tare values and formats product net weight after bardana deduction.
+- **Grading weight review** — Grading cards, summary sheets, and selected incoming tables show gross, tare, bardana, product net weight, graded output weight, and wastage totals.
+- **Storage stage field** — Create/edit storage flows, API payloads, gate pass display, summary sheets, form defaults, validation, and audit formatting now include optional stage.
+
+### Changed
+
+- **Grading selection table** — Incoming gate pass selection supports net-weight display and refined linked-gate-pass resolution for edit flows.
+- **Incoming review** — Incoming summary sheets and cards now show bardana and net product weight separately from weighbridge net weight.
+
 ## [0.3.2] - 2026-05-26
 
 Storage report views now support saved table settings, richer filters, grouping, sorting, and paginated review for large report runs.
@@ -417,6 +432,7 @@ First application scaffold for the Kapur frontend (`kf-frontend`).
 
 - Default Vite starter styles (`App.css`) and demo application UI from the initial template.
 
+[0.3.3]: https://github.com/compare/v0.3.2...v0.3.3
 [0.3.2]: https://github.com/compare/v0.3.1...v0.3.2
 [0.3.1]: https://github.com/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/compare/v0.2.9...v0.3.0

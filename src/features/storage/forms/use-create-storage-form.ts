@@ -26,6 +26,7 @@ export function useCreateStorageForm(options: UseCreateStorageFormOptions = {}) 
       createdBy: userId,
       variety: '',
       category: '',
+      stage: '',
       date: todayIso,
       quantities: createDefaultStorageQuantities(),
       remarks: '',

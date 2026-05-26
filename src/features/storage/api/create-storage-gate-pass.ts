@@ -61,6 +61,11 @@ export function toCreateStorageGatePassBody({
     body.manualGatePassNumber = form.manualGatePassNumber
   }
 
+  const stage = form.stage.trim()
+  if (stage) {
+    body.stage = stage
+  }
+
   const remarks = form.remarks.trim()
   if (remarks) {
     body.remarks = remarks

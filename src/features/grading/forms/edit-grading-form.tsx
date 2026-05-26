@@ -318,7 +318,9 @@ function EditGradingFormContent({
               gradingGatePassId={gatePass._id}
             />
           )}
-          {currentStep === 1 && <FillDetailsStep form={form} />}
+          {currentStep === 1 && (
+            <FillDetailsStep form={form} linkedGatePasses={linkedGatePasses} />
+          )}
         </CardContent>
 
         <CardFooter className="flex justify-between border-t bg-muted/30 py-6">
@@ -381,6 +383,7 @@ function EditGradingFormContent({
               onOpenChange={setReviewOpen}
               values={parsed.success ? parsed.data : null}
               farmerOptions={farmerOptions}
+              linkedGatePasses={linkedGatePasses}
               onBack={() => setReviewOpen(false)}
               onSubmit={handleConfirmSubmit}
               canSubmit={canSubmit}

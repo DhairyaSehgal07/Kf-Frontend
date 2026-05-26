@@ -49,7 +49,7 @@ import {
   voucherNumberKeys,
 } from "@/hooks/use-get-voucher-number"
 import { queryClient } from "@/lib/queryClient"
-import { STORAGE_CATEGORIES } from "@/lib/constants"
+import { INCOMING_STAGES, STORAGE_CATEGORIES } from "@/lib/constants"
 
 const VARIETY_ITEMS = ["Himalini", "K. Pukhraj", "K. Jyoti"].map((value) => ({
   id: value,
@@ -57,6 +57,11 @@ const VARIETY_ITEMS = ["Himalini", "K. Pukhraj", "K. Jyoti"].map((value) => ({
 }))
 
 const CATEGORY_ITEMS = STORAGE_CATEGORIES.map((value) => ({
+  id: value,
+  label: value,
+}))
+
+const STAGE_ITEMS = INCOMING_STAGES.map((value) => ({
   id: value,
   label: value,
 }))
@@ -102,6 +107,8 @@ const CreateStorageForm = () => {
   const [varietyComboboxOpen, setVarietyComboboxOpen] = useState(false)
   const [categorySearch, setCategorySearch] = useState("")
   const [categoryComboboxOpen, setCategoryComboboxOpen] = useState(false)
+  const [stageSearch, setStageSearch] = useState("")
+  const [stageComboboxOpen, setStageComboboxOpen] = useState(false)
   const [reviewOpen, setReviewOpen] = useState(false)
   const [addFarmerOpen, setAddFarmerOpen] = useState(false)
 
@@ -116,6 +123,10 @@ const CreateStorageForm = () => {
   const sortedCategories = useMemo(
     () => filterAndSortOptions(categorySearch, CATEGORY_ITEMS),
     [categorySearch]
+  )
+  const sortedStages = useMemo(
+    () => filterAndSortOptions(stageSearch, STAGE_ITEMS),
+    [stageSearch]
   )
 
   const form = useCreateStorageForm({
@@ -178,6 +189,8 @@ const CreateStorageForm = () => {
     setVarietyComboboxOpen(false)
     setCategorySearch("")
     setCategoryComboboxOpen(false)
+    setStageSearch("")
+    setStageComboboxOpen(false)
   }
 
   const handleOpenReview = () => {
@@ -418,6 +431,41 @@ const CreateStorageForm = () => {
                           open={categoryComboboxOpen}
                           setOpen={setCategoryComboboxOpen}
                         />
+                        {isInvalid && (
+                          <FieldError errors={field.state.meta.errors} />
+                        )}
+                      </Field>
+                    )
+                  }}
+                </form.Field>
+
+                <form.Field name="stage">
+                  {(field) => {
+                    const isInvalid = isFieldInvalid(field.state.meta)
+                    return (
+                      <Field data-invalid={isInvalid}>
+                        <FieldLabel htmlFor="create-storage-stage">
+                          Stage
+                        </FieldLabel>
+                        <SearchableOptionCombobox
+                          id="create-storage-stage"
+                          name={field.name}
+                          value={field.state.value}
+                          onValueChange={field.handleChange}
+                          onBlur={field.handleBlur}
+                          isInvalid={isInvalid}
+                          placeholder="Search stages..."
+                          emptyMessage="No stages found."
+                          options={STAGE_ITEMS}
+                          sortedOptions={sortedStages}
+                          search={stageSearch}
+                          setSearch={setStageSearch}
+                          open={stageComboboxOpen}
+                          setOpen={setStageComboboxOpen}
+                        />
+                        <FieldDescription>
+                          Optional grading stage for this storage stock.
+                        </FieldDescription>
                         {isInvalid && (
                           <FieldError errors={field.state.meta.errors} />
                         )}

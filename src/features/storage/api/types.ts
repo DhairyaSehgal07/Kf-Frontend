@@ -43,6 +43,7 @@ export type StorageGatePass = {
   date: string
   variety: string
   storageCategory: string
+  stage?: string
   bagSizes: StorageGatePassBagSize[]
   remarks?: string
   farmerStorageLinkId: StorageGatePassFarmerStorageLink
@@ -108,6 +109,7 @@ export type CreateStorageGatePassBody = {
   date: string
   variety: string
   storageCategory: string
+  stage?: string
   bagSizes: StorageGatePassBagSize[]
   manualGatePassNumber?: number
   remarks?: string
@@ -132,6 +134,7 @@ export type UpdateStorageGatePassBody = {
   farmerStorageLinkId: string
   variety: string
   storageCategory: string
+  stage?: string
   bagSizes: StorageGatePassBagSize[]
   remarks?: string
 }
@@ -160,6 +163,7 @@ export type StorageGatePassAuditState = Partial<{
   farmerStorageLinkId: StorageGatePassFarmerStorageLink | string
   variety: string
   storageCategory: string
+  stage: string
   bagSizes: StorageGatePassBagSize[]
   remarks: string
 }>

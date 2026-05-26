@@ -98,6 +98,11 @@ export function gradingIncomingRefsToSelectRows(
           variety,
           truckNumber: ref.truckNumber ?? "—",
           bagsReceived: ref.bagsReceived,
+          weightSlip: {
+            slipNumber: "",
+            grossWeightKg: ref.grossWeightKg,
+            tareWeightKg: ref.tareWeightKg,
+          },
           status: toGatePassStatus(ref.status),
         },
       ]
@@ -119,6 +124,7 @@ export function gradingIncomingRefsToSelectRows(
           variety: cached.variety,
           truckNumber: cached.truckNumber,
           bagsReceived: cached.bagsReceived,
+          weightSlip: cached.weightSlip,
           status: cached.status,
         },
       ]
@@ -133,6 +139,11 @@ export function gradingIncomingRefsToSelectRows(
         variety,
         truckNumber: ref.truckNumber ?? "—",
         bagsReceived: ref.bagsReceived,
+        weightSlip: {
+          slipNumber: "",
+          grossWeightKg: ref.grossWeightKg,
+          tareWeightKg: ref.tareWeightKg,
+        },
         status: toGatePassStatus(ref.status),
       },
     ]

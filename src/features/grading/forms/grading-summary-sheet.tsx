@@ -9,6 +9,7 @@ import {
   Package2,
   Scale,
   Sprout,
+  TriangleAlert,
   Truck,
   type LucideIcon,
 } from "lucide-react"
@@ -23,10 +24,15 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet"
 import { resolveSelectedIncomingGatePasses } from "@/features/grading/utils/resolve-selected-incoming-gate-passes"
+import {
+  formatIncomingWeightKg,
+  incomingNetWeightKg,
+} from "@/features/grading/utils/incoming-net-weight"
 import type { GradingFormValues } from "@/features/grading/schemas/grading-form-schema"
 import { gradingTotalWeightKg } from "@/features/grading/schemas/grading-fill-details-schema"
 import type { GradingSelectIncomingGatePasses } from "@/features/grading/types"
 import { useIncomingGatePassesByFarmer } from "@/features/incoming/api/use-incoming-gate-passes-by-farmer"
+import { JUTE_BAG_WEIGHT, LENO_BAG_WEIGHT } from "@/lib/constants"
 import { cn } from "@/lib/utils"
 
 export type GradingSummaryValues = GradingFormValues
@@ -38,6 +44,7 @@ type GradingSummarySheetProps = {
   onOpenChange: (open: boolean) => void
   values: GradingSummaryValues | null
   farmerOptions: readonly FarmerOption[]
+  linkedGatePasses?: GradingSelectIncomingGatePasses[]
   onBack: () => void
   onSubmit: () => void
   canSubmit: boolean
@@ -155,6 +162,48 @@ function activeQuantityRows(quantities: GradingSummaryValues["quantities"]) {
   return quantities.filter((row) => (row.qty ?? 0) > 0)
 }
 
+function getBagWeightKg(bagType: string) {
+  return bagType === "LENO" ? LENO_BAG_WEIGHT : JUTE_BAG_WEIGHT
+}
+
+function gradingRowBagWeightKg(
+  row: GradingSummaryValues["quantities"][number],
+) {
+  return (row.qty ?? 0) * getBagWeightKg(row.bagType)
+}
+
+function gradingRowNetProductKg(
+  row: GradingSummaryValues["quantities"][number],
+) {
+  return (row.qty ?? 0) * (row.weight ?? 0) - gradingRowBagWeightKg(row)
+}
+
+function gradingTotalBagWeightKg(
+  rows: readonly GradingSummaryValues["quantities"][number][],
+) {
+  return rows.reduce((sum, row) => sum + gradingRowBagWeightKg(row), 0)
+}
+
+function gradingTotalNetProductKg(
+  rows: readonly GradingSummaryValues["quantities"][number][],
+) {
+  return rows.reduce((sum, row) => sum + gradingRowNetProductKg(row), 0)
+}
+
+function incomingTotalNetWeightKg(
+  gatePasses: readonly GradingSelectIncomingGatePasses[],
+) {
+  const weights = gatePasses.map(incomingNetWeightKg)
+
+  return {
+    hasWeight: weights.some((weight) => weight != null),
+    totalWeightKg: weights.reduce<number>(
+      (sum, weight) => sum + (weight ?? 0),
+      0
+    ),
+  }
+}
+
 function IncomingGatePassesTable({
   gatePasses,
 }: {
@@ -164,6 +213,8 @@ function IncomingGatePassesTable({
     (sum, gatePass) => sum + gatePass.bagsReceived,
     0
   )
+  const { hasWeight: hasNetWeight, totalWeightKg: totalNetWeightKg } =
+    incomingTotalNetWeightKg(gatePasses)
 
   if (gatePasses.length === 0) {
     return (
@@ -177,8 +228,8 @@ function IncomingGatePassesTable({
 
   return (
     <div className="space-y-3">
-      <div className="overflow-hidden rounded-xl border border-border/50">
-        <table className="w-full caption-bottom text-sm">
+      <div className="overflow-x-auto rounded-xl border border-border/50">
+        <table className="w-full min-w-[460px] caption-bottom text-sm">
           <thead className="border-b border-border/50 bg-muted/50">
             <tr>
               <th className="h-9 px-3 text-left text-xs font-medium text-muted-foreground">
@@ -190,25 +241,44 @@ function IncomingGatePassesTable({
               <th className="h-9 px-3 text-right text-xs font-medium text-muted-foreground">
                 Bags
               </th>
+              <th className="h-9 px-3 text-right text-xs font-medium text-muted-foreground">
+                Incoming net wt
+              </th>
             </tr>
           </thead>
           <tbody>
-            {gatePasses.map((gatePass) => (
-              <tr
-                key={gatePass._id}
-                className="border-b border-border/40 last:border-0"
-              >
-                <td className="px-3 py-2.5 tabular-nums font-medium">
-                  {gatePass.manualGatePassNumber}
-                </td>
-                <td className="px-3 py-2.5 text-foreground">
-                  {formatGatePassDate(gatePass.date)}
-                </td>
-                <td className="px-3 py-2.5 text-right tabular-nums font-medium">
-                  {gatePass.bagsReceived.toLocaleString("en-IN")}
-                </td>
-              </tr>
-            ))}
+            {gatePasses.map((gatePass) => {
+              const netWeightKg = incomingNetWeightKg(gatePass)
+
+              return (
+                <tr
+                  key={gatePass._id}
+                  className="border-b border-border/40 last:border-0"
+                >
+                  <td className="px-3 py-2.5 tabular-nums font-medium">
+                    {gatePass.manualGatePassNumber}
+                  </td>
+                  <td className="px-3 py-2.5 text-foreground">
+                    {formatGatePassDate(gatePass.date)}
+                  </td>
+                  <td className="px-3 py-2.5 text-right tabular-nums font-medium">
+                    {gatePass.bagsReceived.toLocaleString("en-IN")}
+                  </td>
+                  <td className="px-3 py-2.5 text-right tabular-nums font-medium">
+                    {netWeightKg == null ? (
+                      "—"
+                    ) : (
+                      <>
+                        {formatIncomingWeightKg(netWeightKg)}
+                        <span className="ml-1 text-xs font-normal text-muted-foreground">
+                          kg
+                        </span>
+                      </>
+                    )}
+                  </td>
+                </tr>
+              )
+            })}
           </tbody>
         </table>
       </div>
@@ -216,6 +286,22 @@ function IncomingGatePassesTable({
         <DetailRow
           label="Total incoming bags"
           value={totalBags.toLocaleString("en-IN")}
+          valueClassName="font-semibold tabular-nums"
+        />
+        <DetailRow
+          label="Incoming net weight"
+          value={
+            hasNetWeight ? (
+              <>
+                {formatIncomingWeightKg(totalNetWeightKg)}
+                <span className="ml-1 text-xs font-normal text-muted-foreground">
+                  kg
+                </span>
+              </>
+            ) : (
+              "—"
+            )
+          }
           valueClassName="font-semibold tabular-nums"
         />
       </SummaryCard>
@@ -226,13 +312,17 @@ function IncomingGatePassesTable({
 function GradingReviewSummary({
   values,
   farmerOptions,
+  linkedGatePasses = [],
 }: {
   values: GradingSummaryValues
   farmerOptions: readonly FarmerOption[]
+  linkedGatePasses?: readonly GradingSelectIncomingGatePasses[]
 }) {
   const rows = activeQuantityRows(values.quantities)
   const totalBags = rows.reduce((sum, row) => sum + (row.qty ?? 0), 0)
   const totalWeightKg = gradingTotalWeightKg(rows)
+  const totalGradingBardanaWeightKg = gradingTotalBagWeightKg(rows)
+  const totalGradedNetWeightKg = gradingTotalNetProductKg(rows)
   const { data: gatePassResult } = useIncomingGatePassesByFarmer(
     values.farmerStorageLinkId,
   )
@@ -240,10 +330,23 @@ function GradingReviewSummary({
     () =>
       resolveSelectedIncomingGatePasses(
         values.selectedIncomingGatePassIds,
-        gatePassResult?.incomingGatePasses ?? [],
+        [...(gatePassResult?.incomingGatePasses ?? []), ...linkedGatePasses],
       ),
-    [gatePassResult?.incomingGatePasses, values.selectedIncomingGatePassIds],
+    [
+      gatePassResult?.incomingGatePasses,
+      linkedGatePasses,
+      values.selectedIncomingGatePassIds,
+    ],
   )
+  const {
+    hasWeight: hasIncomingNetWeight,
+    totalWeightKg: incomingNetWeightKgTotal,
+  } = incomingTotalNetWeightKg(selectedIncomingGatePasses)
+  const gradingWastageKg = incomingNetWeightKgTotal - totalGradedNetWeightKg
+  const gradingWastagePercent =
+    incomingNetWeightKgTotal > 0
+      ? (gradingWastageKg / incomingNetWeightKgTotal) * 100
+      : 0
 
   return (
     <div className="space-y-7">
@@ -389,8 +492,75 @@ function GradingReviewSummary({
             }
             valueClassName="font-semibold tabular-nums"
           />
+          <DetailRow
+            label="Bardana weight"
+            value={
+              <>
+                − {formatKg(totalGradingBardanaWeightKg)}
+                <span className="ml-1 text-xs font-normal text-muted-foreground">
+                  kg
+                </span>
+              </>
+            }
+            valueClassName="font-semibold tabular-nums text-destructive"
+          />
+          <DetailRow
+            label="Net grading weight"
+            value={
+              <>
+                {formatKg(totalGradedNetWeightKg)}
+                <span className="ml-1 text-xs font-normal text-muted-foreground">
+                  kg
+                </span>
+              </>
+            }
+            valueClassName="font-semibold tabular-nums text-primary"
+          />
         </SummaryCard>
       </div>
+
+      {hasIncomingNetWeight ? (
+        <div className="space-y-2">
+          <SectionLabel icon={Scale}>Performance metrics</SectionLabel>
+          <SummaryCard>
+            <DetailRow
+              label="Total graded weight"
+              value={
+                <>
+                  {formatKg(totalGradedNetWeightKg)}
+                  <span className="ml-1 text-xs font-normal text-muted-foreground">
+                    kg
+                  </span>
+                </>
+              }
+              icon={Scale}
+              valueClassName="font-semibold tabular-nums text-primary"
+            />
+            <DetailRow
+              label="Grading wastage"
+              value={
+                <>
+                  {formatKg(gradingWastageKg)}
+                  <span className="ml-1 text-xs font-normal text-muted-foreground">
+                    kg
+                  </span>
+                </>
+              }
+              icon={TriangleAlert}
+              valueClassName={cn(
+                "font-semibold tabular-nums",
+                gradingWastageKg > 0 && "text-destructive",
+                gradingWastageKg <= 0 && "text-primary"
+              )}
+            />
+            <DetailRow
+              label="Wastage"
+              value={`${formatKg(gradingWastagePercent)}% of incoming net`}
+              valueClassName="font-semibold tabular-nums"
+            />
+          </SummaryCard>
+        </div>
+      ) : null}
 
       {values.remarks.trim() ? (
         <div className="space-y-2">
@@ -411,6 +581,7 @@ export function GradingSummarySheet({
   onOpenChange,
   values,
   farmerOptions,
+  linkedGatePasses,
   onBack,
   onSubmit,
   canSubmit,
@@ -443,6 +614,7 @@ export function GradingSummarySheet({
             <GradingReviewSummary
               values={values}
               farmerOptions={farmerOptions}
+              linkedGatePasses={linkedGatePasses}
             />
           ) : (
             <div className="flex min-h-48 flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border/50 bg-muted/20 px-6 text-center">

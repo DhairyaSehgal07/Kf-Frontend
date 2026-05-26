@@ -95,6 +95,7 @@ export function StorageGatePassCard({
   const farmerStorageLink = gatePass.farmerStorageLinkId
   const totalBags = storageTotalBags(gatePass.bagSizes)
   const createdBy = gatePass.createdBy?.name ?? "—"
+  const stage = gatePass.stage?.trim()
 
   const handleEditClick = () => {
     if (!canUpdate) return
@@ -146,6 +147,15 @@ export function StorageGatePassCard({
           >
             {gatePass.variety}
           </Badge>
+          {stage ? (
+            <Badge
+              variant="outline"
+              className="bg-background text-xs"
+              title={stage}
+            >
+              {stage}
+            </Badge>
+          ) : null}
           <Badge
             variant="outline"
             className="bg-background text-xs tabular-nums"
