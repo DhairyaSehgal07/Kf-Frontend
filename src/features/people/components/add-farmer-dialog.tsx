@@ -247,7 +247,7 @@ function AddFarmerDialogContent({
         >
           <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
             <FieldGroup className="gap-8">
-              <FieldGroup className="gap-5">
+              <FieldGroup className="gap-4">
                   <form.Field name="accountNumber">
                     {(field) => {
                       const isInvalid = shouldShowFieldErrors(
@@ -458,7 +458,7 @@ function AddFarmerDialogContent({
                   available yet.
                 </FieldDescription>
 
-                <FieldGroup className="mt-5 gap-5">
+                <FieldGroup className="mt-5 gap-4">
                   <form.Field name="aadharCardNumber">
                     {(field) => {
                       const isInvalid = shouldShowFieldErrors(

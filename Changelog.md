@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.5] - 2026-05-27
+
+People now includes API-backed dispatch ledger management with create and list workflows.
+
+### Added
+
+- **Dispatch ledger API** — Fetch and create helpers, React Query hooks, query keys, and typed response shapes for `/dispatch-ledger`.
+- **Add dispatch ledger dialog** — TanStack Form + Zod dialog for name, address, and optional Indian mobile number with success/error toasts.
+- **Dispatch ledger cards** — Dispatch ledger tab loads live records with search, newest/oldest sorting, refresh, loading, error, and empty states.
+
+### Changed
+
+- **People forms** — Farmer and dispatch ledger dialog field spacing is tighter for quicker data entry.
+
 ## [0.3.4] - 2026-05-26
 
 Additional tools now include API-backed chamber temperature monitoring with preset comparisons, trend review, and create/edit workflows.
@@ -447,6 +461,7 @@ First application scaffold for the Kapur frontend (`kf-frontend`).
 
 - Default Vite starter styles (`App.css`) and demo application UI from the initial template.
 
+[0.3.5]: https://github.com/compare/v0.3.4...v0.3.5
 [0.3.4]: https://github.com/compare/v0.3.3...v0.3.4
 [0.3.3]: https://github.com/compare/v0.3.2...v0.3.3
 [0.3.2]: https://github.com/compare/v0.3.1...v0.3.2
