@@ -1,17 +1,16 @@
+import { useQuery } from "@tanstack/react-query"
 import {
-  ArrowDownRight,
-  ArrowUpRight,
+  AlertCircle,
   Inbox,
-  Minus,
   Boxes,
   Package,
-  Scale,
+  RefreshCw,
   Sprout,
   Truck,
   type LucideIcon,
 } from "lucide-react"
 
-import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import {
   Card,
   CardAction,
@@ -19,82 +18,119 @@ import {
   CardDescription,
   CardHeader,
 } from "@/components/ui/card"
+import { Skeleton } from "@/components/ui/skeleton"
+import apiClient, { getApiErrorMessage } from "@/lib/api-client"
 import { cn } from "@/lib/utils"
 
-type TrendDirection = "up" | "down" | "neutral"
+type AnalyticsOverview = {
+  totalIncomingBags: number
+  totalIncomingWeight: number
+  totalUngradedBags: number
+  totalUngradedWeight: number
+  totalGradingBags: number
+  totalGradingWeight: number
+  totalBagsStored: number
+  totalBagsDispatched: number
+  totalOutgoingBags: number
+}
+
+type AnalyticsOverviewResponse = {
+  success: boolean
+  data: AnalyticsOverview
+  message?: string
+}
 
 type SummaryMetric = {
   label: string
   value: string
+  supportingValue?: string
   description: string
   icon: LucideIcon
-  trend: {
-    label: string
-    direction: TrendDirection
+}
+
+const analyticsOverviewKey = ["analytics", "overview"] as const
+
+const bagFormatter = new Intl.NumberFormat("en-IN", {
+  maximumFractionDigits: 0,
+})
+
+const weightFormatter = new Intl.NumberFormat("en-IN", {
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 2,
+})
+
+async function getAnalyticsOverview(): Promise<AnalyticsOverview> {
+  try {
+    const { data } =
+      await apiClient.get<AnalyticsOverviewResponse>("/analytics/overview")
+
+    if (!data.success) {
+      throw new Error(data.message ?? "Failed to load analytics overview")
+    }
+
+    return data.data
+  } catch (error) {
+    throw new Error(
+      getApiErrorMessage(error, "Failed to load analytics overview"),
+      { cause: error },
+    )
   }
 }
 
-// Placeholder values until analytics API is connected
-const SUMMARY_METRICS: SummaryMetric[] = [
-  {
-    label: "Gate passes",
-    value: "0",
-    description: "Incoming entries in selected range",
-    icon: Sprout,
-    trend: { label: "No prior period", direction: "neutral" },
-  },
-  {
-    label: "Net weight",
-    value: "0 kg",
-    description: "Total net product weight",
-    icon: Scale,
-    trend: { label: "No prior period", direction: "neutral" },
-  },
-  {
-    label: "Graded lots",
-    value: "0",
-    description: "Lots through grading",
-    icon: Inbox,
-    trend: { label: "No prior period", direction: "neutral" },
-  },
-  {
-    label: "In storage",
-    value: "0",
-    description: "Lots currently stored",
-    icon: Package,
-    trend: { label: "No prior period", direction: "neutral" },
-  },
-  {
-    label: "Dispatched",
-    value: "0",
-    description: "Pre & post storage dispatch",
-    icon: Truck,
-    trend: { label: "No prior period", direction: "neutral" },
-  },
-  {
-    label: "Bags received",
-    value: "0",
-    description: "Total bags across gate passes",
-    icon: Boxes,
-    trend: { label: "No prior period", direction: "neutral" },
-  },
-]
-
-const trendIcon: Record<TrendDirection, LucideIcon> = {
-  up: ArrowUpRight,
-  down: ArrowDownRight,
-  neutral: Minus,
+function formatBags(value: number) {
+  return bagFormatter.format(value)
 }
 
-const trendBadgeClass: Record<TrendDirection, string> = {
-  up: "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
-  down: "border-destructive/30 bg-destructive/10 text-destructive",
-  neutral: "bg-muted/50 text-muted-foreground",
+function formatWeight(value: number) {
+  return `${weightFormatter.format(value)} kg`
+}
+
+function buildSummaryMetrics(data: AnalyticsOverview): SummaryMetric[] {
+  return [
+    {
+      label: "Bags received",
+      value: formatBags(data.totalIncomingBags),
+      supportingValue: `${formatWeight(data.totalIncomingWeight)} (excl bardana)`,
+      description: "Total bags received at inward gate pass",
+      icon: Sprout,
+    },
+    {
+      label: "Ungraded bags",
+      value: formatBags(data.totalUngradedBags),
+      supportingValue: formatWeight(data.totalUngradedWeight),
+      description: "Bags still pending grading",
+      icon: Inbox,
+    },
+    {
+      label: "Grading bags",
+      value: formatBags(data.totalGradingBags),
+      supportingValue: formatWeight(data.totalGradingWeight),
+      description: "Bags processed through grading",
+      icon: Boxes,
+    },
+    {
+      label: "Bags stored",
+      value: formatBags(data.totalBagsStored),
+      description: "Total bags moved into storage",
+      icon: Package,
+    },
+    {
+      label: "Bags dispatched",
+      value: formatBags(data.totalBagsDispatched),
+      description: "Total bags dispatched from storage",
+      icon: Truck,
+    },
+    {
+      label: "Outgoing bags",
+      value: formatBags(data.totalOutgoingBags),
+      description: "Total outward dispatch bags",
+      icon: Truck,
+    },
+  ]
 }
 
 function SummaryCard({ metric }: { metric: SummaryMetric }) {
   const Icon = metric.icon
-  const TrendIcon = trendIcon[metric.trend.direction]
 
   return (
     <Card size="sm" className={cn("card-hover gap-0")}>
@@ -118,30 +154,124 @@ function SummaryCard({ metric }: { metric: SummaryMetric }) {
       </CardHeader>
 
       <CardContent className="flex flex-col gap-2.5">
-        <p className="text-2xl font-semibold tracking-tight tabular-nums">
-          {metric.value}
-        </p>
+        <div className="flex flex-col gap-1">
+          <p className="text-2xl font-semibold tracking-tight tabular-nums">
+            {metric.value}
+          </p>
+
+          {metric.supportingValue ? (
+            <p className="text-sm font-medium tabular-nums text-foreground/80">
+              {metric.supportingValue}
+            </p>
+          ) : null}
+        </div>
 
         <p className="text-xs leading-relaxed text-muted-foreground">
           {metric.description}
         </p>
+      </CardContent>
+    </Card>
+  )
+}
 
-        <Badge
+function SummaryCardSkeleton() {
+  return (
+    <Card size="sm" className="gap-0">
+      <CardHeader className="pb-2">
+        <CardDescription>
+          <Skeleton className="h-4 w-28" />
+        </CardDescription>
+        <CardAction>
+          <Skeleton className="size-9 rounded-xl" />
+        </CardAction>
+      </CardHeader>
+
+      <CardContent className="flex flex-col gap-2.5">
+        <Skeleton className="h-8 w-36" />
+        <Skeleton className="h-4 w-44" />
+        <Skeleton className="h-4 w-40" />
+      </CardContent>
+    </Card>
+  )
+}
+
+function OverviewError({
+  message,
+  onRetry,
+  isRetrying,
+}: {
+  message: string
+  onRetry: () => void
+  isRetrying: boolean
+}) {
+  return (
+    <Card className="border-destructive/30 bg-destructive/5">
+      <CardHeader>
+        <CardDescription className="flex items-center gap-2 text-destructive">
+          <AlertCircle className="size-4 shrink-0" aria-hidden />
+          Analytics overview could not be loaded
+        </CardDescription>
+      </CardHeader>
+
+      <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-sm text-foreground">{message}</p>
+        <Button
+          type="button"
           variant="outline"
-          className={cn("w-fit gap-1 font-normal", trendBadgeClass[metric.trend.direction])}
+          size="sm"
+          onClick={onRetry}
+          disabled={isRetrying}
+          className="w-full sm:w-auto"
         >
-          <TrendIcon className="size-3 shrink-0" aria-hidden />
-          {metric.trend.label}
-        </Badge>
+          <RefreshCw
+            className={cn("mr-2 size-4", isRetrying && "animate-spin")}
+            aria-hidden
+          />
+          Retry
+        </Button>
       </CardContent>
     </Card>
   )
 }
 
 const Overview = () => {
+  const {
+    data,
+    error,
+    isError,
+    isLoading,
+    isFetching,
+    refetch,
+  } = useQuery({
+    queryKey: analyticsOverviewKey,
+    queryFn: getAnalyticsOverview,
+  })
+
+  if (isLoading) {
+    return (
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        {Array.from({ length: 6 }, (_, index) => (
+          <SummaryCardSkeleton key={index} />
+        ))}
+      </div>
+    )
+  }
+
+  if (isError && !data) {
+    return (
+      <OverviewError
+        message={error.message}
+        onRetry={() => void refetch()}
+        isRetrying={isFetching}
+      />
+    )
+  }
+
+  const summaryMetrics = data ? buildSummaryMetrics(data) : []
+
   return (
     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-      {SUMMARY_METRICS.map((metric) => (
+      {summaryMetrics.map((metric) => (
         <SummaryCard key={metric.label} metric={metric} />
       ))}
     </div>

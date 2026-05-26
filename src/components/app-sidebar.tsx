@@ -35,15 +35,36 @@ type NavItem = {
   name: string;
   icon: LucideIcon;
   to?: string;
+  activePaths?: string[];
   disabled?: boolean;
 };
 
 // Updated navigation items
 const coreNavItems: NavItem[] = [
-  { name: 'Daybook', icon: BookOpen, to: '/daybook' },
-  { name: 'People', icon: Users, to: '/people' },
-  { name: 'Analytics', icon: BarChart3, to: '/analytics' },
-  { name: 'Additional', icon: Layers, to: '/additional' },
+  {
+    name: 'Daybook',
+    icon: BookOpen,
+    to: '/daybook',
+    activePaths: ['/daybook', '/incoming', '/grading', '/storage', '/transfer'],
+  },
+  {
+    name: 'People',
+    icon: Users,
+    to: '/people',
+    activePaths: ['/people'],
+  },
+  {
+    name: 'Analytics',
+    icon: BarChart3,
+    to: '/analytics',
+    activePaths: ['/analytics'],
+  },
+  {
+    name: 'Additional',
+    icon: Layers,
+    to: '/additional',
+    activePaths: ['/additional'],
+  },
 ];
 
 const reportNavItems = [
@@ -56,6 +77,12 @@ const reportNavItems = [
 
 function isReportPath(pathname: string) {
   return reportNavItems.some((item) => pathname === item.to);
+}
+
+function isPathActive(pathname: string, activePaths: string[]) {
+  return activePaths.some(
+    (path) => pathname === path || pathname.startsWith(`${path}/`),
+  );
 }
 
 function NavReports({ pathname }: { pathname: string }) {
@@ -117,13 +144,16 @@ function NavMain() {
         <SidebarMenu>
           {coreNavItems.map((item) => {
             const Icon = item.icon;
+            const itemActivePaths = item.activePaths ?? (item.to ? [item.to] : []);
+            const isActive =
+              !isReportPath(pathname) && isPathActive(pathname, itemActivePaths);
 
             return (
               <SidebarMenuItem key={item.name}>
                 {item.to && !item.disabled ? (
                   <SidebarMenuButton
                     asChild
-                    isActive={pathname === item.to}
+                    isActive={isActive}
                     tooltip={item.name}
                   >
                     <Link to={item.to}>

@@ -1,4 +1,4 @@
-import { useMutation } from "@tanstack/react-query"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
 import apiClient, { getApiErrorMessage } from "@/lib/api-client"
 import { router } from "@/router"
 import { useAuthStore } from "../store/use-auth-store"
@@ -20,6 +20,7 @@ async function logoutRequest(): Promise<LogoutResponse> {
 
 export function useLogout() {
   const clearAuth = useAuthStore((s) => s.clearAuth)
+  const queryClient = useQueryClient()
 
   return useMutation({
     mutationKey: ["auth", "logout"],
@@ -28,6 +29,7 @@ export function useLogout() {
     meta: { suppressGlobalError: true },
     onSuccess: () => {
       clearAuth()
+      queryClient.clear()
       void router.navigate({ to: "/", replace: true })
     },
   })
