@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.4] - 2026-05-26
+
+Additional tools now include API-backed chamber temperature monitoring with preset comparisons, trend review, and create/edit workflows.
+
+### Added
+
+- **Temperature API** — Fetch, create, and update helpers, React Query hooks, query keys, and typed payloads for `/temperature`.
+- **Temperature page** — `/additional/temperature` shows chamber presets, latest average, API refresh status, date/search filters, loading/error/empty states, and an editable records table.
+- **Temperature trend chart** — Responsive multi-chamber line chart for reviewing movement across filtered records.
+- **Temperature reading dialog** — Add and update chamber readings by date, time, and per-chamber value with mutation toasts.
+
+### Changed
+
+- **Additional page** — `/additional` is now a tool hub with a temperature card, nested route files, and a topbar title for the temperature route.
+
 ## [0.3.3] - 2026-05-26
 
 Grading and incoming reviews now separate bardana from product weight, while storage gate passes carry stage information through create, edit, display, and audit flows.
@@ -432,6 +447,7 @@ First application scaffold for the Kapur frontend (`kf-frontend`).
 
 - Default Vite starter styles (`App.css`) and demo application UI from the initial template.
 
+[0.3.4]: https://github.com/compare/v0.3.3...v0.3.4
 [0.3.3]: https://github.com/compare/v0.3.2...v0.3.3
 [0.3.2]: https://github.com/compare/v0.3.1...v0.3.2
 [0.3.1]: https://github.com/compare/v0.3.0...v0.3.1

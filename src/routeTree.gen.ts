@@ -14,11 +14,11 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedPeopleRouteImport } from './routes/_authenticated/people'
 import { Route as AuthenticatedDaybookRouteImport } from './routes/_authenticated/daybook'
 import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
-import { Route as AuthenticatedAdditionalRouteImport } from './routes/_authenticated/additional'
 import { Route as AuthenticatedTransferIndexRouteImport } from './routes/_authenticated/transfer.index'
 import { Route as AuthenticatedStorageIndexRouteImport } from './routes/_authenticated/storage.index'
 import { Route as AuthenticatedIncomingIndexRouteImport } from './routes/_authenticated/incoming.index'
 import { Route as AuthenticatedGradingIndexRouteImport } from './routes/_authenticated/grading.index'
+import { Route as AuthenticatedAdditionalIndexRouteImport } from './routes/_authenticated/additional.index'
 import { Route as AuthenticatedStorageReportRouteImport } from './routes/_authenticated/storage.report'
 import { Route as AuthenticatedStorageEditHistoryRouteImport } from './routes/_authenticated/storage.edit-history'
 import { Route as AuthenticatedStorageIdRouteImport } from './routes/_authenticated/storage.$id'
@@ -30,6 +30,7 @@ import { Route as AuthenticatedGradingEditHistoryRouteImport } from './routes/_a
 import { Route as AuthenticatedGradingIdRouteImport } from './routes/_authenticated/grading.$id'
 import { Route as AuthenticatedDispatchPreStorageReportRouteImport } from './routes/_authenticated/dispatch-pre-storage.report'
 import { Route as AuthenticatedDispatchPostStorageReportRouteImport } from './routes/_authenticated/dispatch-post-storage.report'
+import { Route as AuthenticatedAdditionalTemperatureRouteImport } from './routes/_authenticated/additional.temperature'
 
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
   id: '/_authenticated',
@@ -55,11 +56,6 @@ const AuthenticatedAnalyticsRoute = AuthenticatedAnalyticsRouteImport.update({
   path: '/analytics',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
-const AuthenticatedAdditionalRoute = AuthenticatedAdditionalRouteImport.update({
-  id: '/additional',
-  path: '/additional',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
 const AuthenticatedTransferIndexRoute =
   AuthenticatedTransferIndexRouteImport.update({
     id: '/transfer/',
@@ -82,6 +78,12 @@ const AuthenticatedGradingIndexRoute =
   AuthenticatedGradingIndexRouteImport.update({
     id: '/grading/',
     path: '/grading/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedAdditionalIndexRoute =
+  AuthenticatedAdditionalIndexRouteImport.update({
+    id: '/additional/',
+    path: '/additional/',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedStorageReportRoute =
@@ -147,13 +149,19 @@ const AuthenticatedDispatchPostStorageReportRoute =
     path: '/dispatch-post-storage/report',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedAdditionalTemperatureRoute =
+  AuthenticatedAdditionalTemperatureRouteImport.update({
+    id: '/additional/temperature',
+    path: '/additional/temperature',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/additional': typeof AuthenticatedAdditionalRoute
   '/analytics': typeof AuthenticatedAnalyticsRoute
   '/daybook': typeof AuthenticatedDaybookRoute
   '/people': typeof AuthenticatedPeopleRoute
+  '/additional/temperature': typeof AuthenticatedAdditionalTemperatureRoute
   '/dispatch-post-storage/report': typeof AuthenticatedDispatchPostStorageReportRoute
   '/dispatch-pre-storage/report': typeof AuthenticatedDispatchPreStorageReportRoute
   '/grading/$id': typeof AuthenticatedGradingIdRoute
@@ -165,6 +173,7 @@ export interface FileRoutesByFullPath {
   '/storage/$id': typeof AuthenticatedStorageIdRoute
   '/storage/edit-history': typeof AuthenticatedStorageEditHistoryRoute
   '/storage/report': typeof AuthenticatedStorageReportRoute
+  '/additional/': typeof AuthenticatedAdditionalIndexRoute
   '/grading/': typeof AuthenticatedGradingIndexRoute
   '/incoming/': typeof AuthenticatedIncomingIndexRoute
   '/storage/': typeof AuthenticatedStorageIndexRoute
@@ -172,10 +181,10 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/additional': typeof AuthenticatedAdditionalRoute
   '/analytics': typeof AuthenticatedAnalyticsRoute
   '/daybook': typeof AuthenticatedDaybookRoute
   '/people': typeof AuthenticatedPeopleRoute
+  '/additional/temperature': typeof AuthenticatedAdditionalTemperatureRoute
   '/dispatch-post-storage/report': typeof AuthenticatedDispatchPostStorageReportRoute
   '/dispatch-pre-storage/report': typeof AuthenticatedDispatchPreStorageReportRoute
   '/grading/$id': typeof AuthenticatedGradingIdRoute
@@ -187,6 +196,7 @@ export interface FileRoutesByTo {
   '/storage/$id': typeof AuthenticatedStorageIdRoute
   '/storage/edit-history': typeof AuthenticatedStorageEditHistoryRoute
   '/storage/report': typeof AuthenticatedStorageReportRoute
+  '/additional': typeof AuthenticatedAdditionalIndexRoute
   '/grading': typeof AuthenticatedGradingIndexRoute
   '/incoming': typeof AuthenticatedIncomingIndexRoute
   '/storage': typeof AuthenticatedStorageIndexRoute
@@ -196,10 +206,10 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
-  '/_authenticated/additional': typeof AuthenticatedAdditionalRoute
   '/_authenticated/analytics': typeof AuthenticatedAnalyticsRoute
   '/_authenticated/daybook': typeof AuthenticatedDaybookRoute
   '/_authenticated/people': typeof AuthenticatedPeopleRoute
+  '/_authenticated/additional/temperature': typeof AuthenticatedAdditionalTemperatureRoute
   '/_authenticated/dispatch-post-storage/report': typeof AuthenticatedDispatchPostStorageReportRoute
   '/_authenticated/dispatch-pre-storage/report': typeof AuthenticatedDispatchPreStorageReportRoute
   '/_authenticated/grading/$id': typeof AuthenticatedGradingIdRoute
@@ -211,6 +221,7 @@ export interface FileRoutesById {
   '/_authenticated/storage/$id': typeof AuthenticatedStorageIdRoute
   '/_authenticated/storage/edit-history': typeof AuthenticatedStorageEditHistoryRoute
   '/_authenticated/storage/report': typeof AuthenticatedStorageReportRoute
+  '/_authenticated/additional/': typeof AuthenticatedAdditionalIndexRoute
   '/_authenticated/grading/': typeof AuthenticatedGradingIndexRoute
   '/_authenticated/incoming/': typeof AuthenticatedIncomingIndexRoute
   '/_authenticated/storage/': typeof AuthenticatedStorageIndexRoute
@@ -220,10 +231,10 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/additional'
     | '/analytics'
     | '/daybook'
     | '/people'
+    | '/additional/temperature'
     | '/dispatch-post-storage/report'
     | '/dispatch-pre-storage/report'
     | '/grading/$id'
@@ -235,6 +246,7 @@ export interface FileRouteTypes {
     | '/storage/$id'
     | '/storage/edit-history'
     | '/storage/report'
+    | '/additional/'
     | '/grading/'
     | '/incoming/'
     | '/storage/'
@@ -242,10 +254,10 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/additional'
     | '/analytics'
     | '/daybook'
     | '/people'
+    | '/additional/temperature'
     | '/dispatch-post-storage/report'
     | '/dispatch-pre-storage/report'
     | '/grading/$id'
@@ -257,6 +269,7 @@ export interface FileRouteTypes {
     | '/storage/$id'
     | '/storage/edit-history'
     | '/storage/report'
+    | '/additional'
     | '/grading'
     | '/incoming'
     | '/storage'
@@ -265,10 +278,10 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_authenticated'
-    | '/_authenticated/additional'
     | '/_authenticated/analytics'
     | '/_authenticated/daybook'
     | '/_authenticated/people'
+    | '/_authenticated/additional/temperature'
     | '/_authenticated/dispatch-post-storage/report'
     | '/_authenticated/dispatch-pre-storage/report'
     | '/_authenticated/grading/$id'
@@ -280,6 +293,7 @@ export interface FileRouteTypes {
     | '/_authenticated/storage/$id'
     | '/_authenticated/storage/edit-history'
     | '/_authenticated/storage/report'
+    | '/_authenticated/additional/'
     | '/_authenticated/grading/'
     | '/_authenticated/incoming/'
     | '/_authenticated/storage/'
@@ -328,13 +342,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAnalyticsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/additional': {
-      id: '/_authenticated/additional'
-      path: '/additional'
-      fullPath: '/additional'
-      preLoaderRoute: typeof AuthenticatedAdditionalRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
     '/_authenticated/transfer/': {
       id: '/_authenticated/transfer/'
       path: '/transfer'
@@ -361,6 +368,13 @@ declare module '@tanstack/react-router' {
       path: '/grading'
       fullPath: '/grading/'
       preLoaderRoute: typeof AuthenticatedGradingIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/additional/': {
+      id: '/_authenticated/additional/'
+      path: '/additional'
+      fullPath: '/additional/'
+      preLoaderRoute: typeof AuthenticatedAdditionalIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/storage/report': {
@@ -440,14 +454,21 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDispatchPostStorageReportRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/additional/temperature': {
+      id: '/_authenticated/additional/temperature'
+      path: '/additional/temperature'
+      fullPath: '/additional/temperature'
+      preLoaderRoute: typeof AuthenticatedAdditionalTemperatureRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
   }
 }
 
 interface AuthenticatedRouteChildren {
-  AuthenticatedAdditionalRoute: typeof AuthenticatedAdditionalRoute
   AuthenticatedAnalyticsRoute: typeof AuthenticatedAnalyticsRoute
   AuthenticatedDaybookRoute: typeof AuthenticatedDaybookRoute
   AuthenticatedPeopleRoute: typeof AuthenticatedPeopleRoute
+  AuthenticatedAdditionalTemperatureRoute: typeof AuthenticatedAdditionalTemperatureRoute
   AuthenticatedDispatchPostStorageReportRoute: typeof AuthenticatedDispatchPostStorageReportRoute
   AuthenticatedDispatchPreStorageReportRoute: typeof AuthenticatedDispatchPreStorageReportRoute
   AuthenticatedGradingIdRoute: typeof AuthenticatedGradingIdRoute
@@ -459,6 +480,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedStorageIdRoute: typeof AuthenticatedStorageIdRoute
   AuthenticatedStorageEditHistoryRoute: typeof AuthenticatedStorageEditHistoryRoute
   AuthenticatedStorageReportRoute: typeof AuthenticatedStorageReportRoute
+  AuthenticatedAdditionalIndexRoute: typeof AuthenticatedAdditionalIndexRoute
   AuthenticatedGradingIndexRoute: typeof AuthenticatedGradingIndexRoute
   AuthenticatedIncomingIndexRoute: typeof AuthenticatedIncomingIndexRoute
   AuthenticatedStorageIndexRoute: typeof AuthenticatedStorageIndexRoute
@@ -466,10 +488,11 @@ interface AuthenticatedRouteChildren {
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
-  AuthenticatedAdditionalRoute: AuthenticatedAdditionalRoute,
   AuthenticatedAnalyticsRoute: AuthenticatedAnalyticsRoute,
   AuthenticatedDaybookRoute: AuthenticatedDaybookRoute,
   AuthenticatedPeopleRoute: AuthenticatedPeopleRoute,
+  AuthenticatedAdditionalTemperatureRoute:
+    AuthenticatedAdditionalTemperatureRoute,
   AuthenticatedDispatchPostStorageReportRoute:
     AuthenticatedDispatchPostStorageReportRoute,
   AuthenticatedDispatchPreStorageReportRoute:
@@ -483,6 +506,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedStorageIdRoute: AuthenticatedStorageIdRoute,
   AuthenticatedStorageEditHistoryRoute: AuthenticatedStorageEditHistoryRoute,
   AuthenticatedStorageReportRoute: AuthenticatedStorageReportRoute,
+  AuthenticatedAdditionalIndexRoute: AuthenticatedAdditionalIndexRoute,
   AuthenticatedGradingIndexRoute: AuthenticatedGradingIndexRoute,
   AuthenticatedIncomingIndexRoute: AuthenticatedIncomingIndexRoute,
   AuthenticatedStorageIndexRoute: AuthenticatedStorageIndexRoute,
