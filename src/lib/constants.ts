@@ -72,3 +72,12 @@ export const INCOMING_GATE_PASS_STATUSES = ["Graded", "Ungraded"] as const
 
 export const JUTE_BAG_WEIGHT = 0.7
 export const LENO_BAG_WEIGHT= 0.06
+
+export const DISPATCH_PRE_STORAGE_CATEGORIES = [
+  "Local Sale",
+  "Contract Farming",
+  "Sowing",
+  "Fazalpur",
+  "Consumption/Donation",
+  "Transfer to other store",
+] as const

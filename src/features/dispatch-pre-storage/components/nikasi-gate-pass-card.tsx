@@ -1,5 +1,17 @@
 import { useState } from "react"
-import { useNavigate } from "@tanstack/react-router"
+import {
+  Building2,
+  ChevronDown,
+  ChevronUp,
+  FileText,
+  Package,
+  Printer,
+  Scale,
+  Truck,
+  User,
+  type LucideIcon,
+} from "lucide-react"
+
 import {
   Card,
   CardContent,
@@ -11,25 +23,21 @@ import {
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import {
-  ChevronDown,
-  ChevronUp,
-  FileText,
-  MapPin,
-  Package,
-  Pencil,
-  Printer,
-  Sprout,
-  User,
-  Warehouse,
-  type LucideIcon,
-} from "lucide-react"
-import { cn } from "@/lib/utils"
 import { Skeleton } from "@/components/ui/skeleton"
+import { cn } from "@/lib/utils"
 import type {
-  StorageGatePass,
-  StorageGatePassBagSize,
-} from "@/features/storage/api/types"
+  NikasiGatePass,
+  NikasiGatePassBagSizeItem,
+} from "@/features/dispatch-pre-storage/api/types"
+
+/** Scoped accent for nikasi gate passes (elegant red, distinct from storage primary) */
+const nikasiAccent = {
+  dot: "bg-rose-700 dark:bg-rose-500",
+  emphasis: "text-rose-800 dark:text-rose-400",
+  icon: "text-rose-700 dark:text-rose-400",
+  booked:
+    "border-rose-200 bg-rose-50 text-rose-900 dark:border-rose-900/60 dark:bg-rose-950/50 dark:text-rose-300",
+} as const
 
 interface InfoBlockProps {
   label: string
@@ -68,53 +76,44 @@ function formatDateTime(value: string) {
   }).format(date)
 }
 
-function storageTotalBags(
-  bagSizes: readonly StorageGatePassBagSize[],
-): number {
-  return bagSizes.reduce((sum, row) => sum + row.currentQuantity, 0)
+function formatWeight(value: number) {
+  return new Intl.NumberFormat("en-IN", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 3,
+  }).format(value)
 }
 
-function formatLocation(slot: StorageGatePassBagSize) {
-  const parts = [slot.chamber, slot.floor, slot.row].filter(Boolean)
-  return parts.length > 0 ? parts.join(" / ") : "—"
+function nikasiTotalBags(bagSize: readonly NikasiGatePassBagSizeItem[]): number {
+  return bagSize.reduce((sum, row) => sum + row.quantityIssued, 0)
 }
 
-interface StorageGatePassCardProps {
-  data: StorageGatePass
-  canUpdate?: boolean
+interface NikasiGatePassCardProps {
+  data: NikasiGatePass
 }
 
-export function StorageGatePassCard({
-  data: gatePass,
-  canUpdate = true,
-}: StorageGatePassCardProps) {
-  const navigate = useNavigate()
+export function NikasiGatePassCard({ data: gatePass }: NikasiGatePassCardProps) {
   const [isExpanded, setIsExpanded] = useState(false)
 
   const farmer = gatePass.farmerStorageLinkId.farmerId
   const farmerStorageLink = gatePass.farmerStorageLinkId
-  const totalBags = storageTotalBags(gatePass.bagSizes)
+  const dispatchParty = gatePass.dispatchLedgerId
+  const totalBags = nikasiTotalBags(gatePass.bagSize)
   const createdBy = gatePass.createdBy?.name ?? "—"
-  const stage = gatePass.stage?.trim()
-
-  const handleEditClick = () => {
-    if (!canUpdate) return
-
-    navigate({
-      to: "/storage/$id",
-      params: { id: gatePass._id },
-    })
-  }
 
   return (
-    <Card className="card-hover overflow-hidden border-border/60">
+    <Card className="card-hover overflow-hidden border-border/60 border-l-2 border-l-rose-700 dark:border-l-rose-500">
       <CardHeader className="flex flex-col gap-4 border-b border-border/40 bg-muted/10 pb-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-1.5">
           <div className="flex flex-wrap items-center gap-3">
             <CardTitle className="flex items-center gap-2 text-lg">
-              <span className="h-2 w-2 rounded-full bg-primary" />
-              SGP{" "}
-              <span className="font-mono tabular-nums text-primary">
+              <span className={cn("h-2 w-2 rounded-full", nikasiAccent.dot)} />
+              NGP{" "}
+              <span
+                className={cn(
+                  "font-mono tabular-nums",
+                  nikasiAccent.emphasis,
+                )}
+              >
                 #{gatePass.gatePassNo}
               </span>
             </CardTitle>
@@ -136,31 +135,32 @@ export function StorageGatePassCard({
           <Badge
             variant="outline"
             className="max-w-36 truncate bg-background text-xs"
-            title={gatePass.storageCategory}
+            title={gatePass.category}
           >
-            {gatePass.storageCategory}
+            {gatePass.category}
           </Badge>
           <Badge
             variant="outline"
-            className="bg-background text-xs"
-            title={gatePass.variety}
+            className={cn(
+              "text-xs",
+              gatePass.isBooked
+                ? nikasiAccent.booked
+                : "bg-background text-muted-foreground",
+            )}
           >
-            {gatePass.variety}
+            {gatePass.isBooked ? "Booked" : "Not booked"}
           </Badge>
-          {stage ? (
-            <Badge
-              variant="outline"
-              className="bg-background text-xs"
-              title={stage}
-            >
-              {stage}
-            </Badge>
-          ) : null}
           <Badge
             variant="outline"
             className="bg-background text-xs tabular-nums"
           >
             {totalBags.toLocaleString("en-IN")} Bags
+          </Badge>
+          <Badge
+            variant="outline"
+            className="bg-background text-xs tabular-nums"
+          >
+            {formatWeight(gatePass.netWeight)} kg
           </Badge>
         </div>
       </CardHeader>
@@ -173,12 +173,15 @@ export function StorageGatePassCard({
             value={farmerStorageLink.accountNumber ?? "—"}
             valueClassName="tabular-nums"
           />
-          <InfoBlock label="Variety" value={gatePass.variety} icon={Sprout} />
           <InfoBlock
-            label="Bag lines"
-            value={gatePass.bagSizes.length}
-            icon={Package}
-            valueClassName="tabular-nums"
+            label="Dispatch party"
+            value={dispatchParty.name ?? "—"}
+            icon={Building2}
+          />
+          <InfoBlock
+            label="Truck"
+            value={gatePass.truckNumber || "—"}
+            icon={Truck}
           />
         </div>
 
@@ -189,7 +192,7 @@ export function StorageGatePassCard({
               <div className="space-y-6">
                 <div>
                   <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
-                    <User className="h-4 w-4 text-primary" />
+                    <User className={cn("h-4 w-4", nikasiAccent.icon)} />
                     Farmer information
                   </h4>
                   <div className="grid grid-cols-2 gap-4 rounded-xl border border-border/50 bg-muted/20 p-4">
@@ -204,12 +207,46 @@ export function StorageGatePassCard({
                         value={farmer.address ?? "—"}
                       />
                     </div>
+                    <InfoBlock
+                      label="Account"
+                      value={farmerStorageLink.accountNumber ?? "—"}
+                      valueClassName="tabular-nums"
+                    />
+                    <InfoBlock
+                      label="Linked by"
+                      value={
+                        farmerStorageLink.linkedById?.name ?? "—"
+                      }
+                    />
                   </div>
                 </div>
 
                 <div>
                   <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
-                    <FileText className="h-4 w-4 text-primary" />
+                    <Building2 className={cn("h-4 w-4", nikasiAccent.icon)} />
+                    Dispatch party
+                  </h4>
+                  <div className="grid grid-cols-2 gap-4 rounded-xl border border-border/50 bg-muted/20 p-4">
+                    <InfoBlock
+                      label="Name"
+                      value={dispatchParty.name ?? "—"}
+                    />
+                    <InfoBlock
+                      label="Mobile"
+                      value={dispatchParty.mobileNumber ?? "—"}
+                    />
+                    <div className="col-span-2">
+                      <InfoBlock
+                        label="Address"
+                        value={dispatchParty.address ?? "—"}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
+                    <FileText className={cn("h-4 w-4", nikasiAccent.icon)} />
                     Remarks
                   </h4>
                   <div className="rounded-xl border border-border/50 bg-muted/20 p-4">
@@ -225,8 +262,40 @@ export function StorageGatePassCard({
               <div className="space-y-6">
                 <div>
                   <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
-                    <Warehouse className="h-4 w-4 text-primary" />
-                    Bag quantities & location
+                    <Truck className={cn("h-4 w-4", nikasiAccent.icon)} />
+                    Movement & billing
+                  </h4>
+                  <div className="grid grid-cols-2 gap-4 rounded-xl border border-border/50 bg-muted/20 p-4">
+                    <InfoBlock label="From" value={gatePass.from || "—"} />
+                    <InfoBlock label="To" value={gatePass.to || "—"} />
+                    <InfoBlock
+                      label="Bill no."
+                      value={gatePass.billNumber ?? "—"}
+                      valueClassName="tabular-nums"
+                    />
+                    <InfoBlock
+                      label="Bitli no."
+                      value={gatePass.bitliNumber ?? "—"}
+                      valueClassName="tabular-nums"
+                    />
+                    <InfoBlock
+                      label="Net weight"
+                      value={`${formatWeight(gatePass.netWeight)} kg`}
+                      icon={Scale}
+                      valueClassName="tabular-nums"
+                    />
+                    <InfoBlock
+                      label="Avg / bag"
+                      value={`${formatWeight(gatePass.averageWeightPerBag)} kg`}
+                      valueClassName="tabular-nums"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
+                    <Package className={cn("h-4 w-4", nikasiAccent.icon)} />
+                    Bag lines
                   </h4>
                   <div className="overflow-x-auto rounded-xl border border-border/50">
                     <table className="w-full caption-bottom text-sm">
@@ -236,36 +305,27 @@ export function StorageGatePassCard({
                             Size
                           </th>
                           <th className="h-10 px-3 text-left text-xs font-medium text-muted-foreground">
-                            Type
+                            Variety
                           </th>
                           <th className="h-10 px-3 text-right text-xs font-medium text-muted-foreground">
-                            Qty
-                          </th>
-                          <th className="h-10 px-3 text-left text-xs font-medium text-muted-foreground">
-                            Location
+                            Qty issued
                           </th>
                         </tr>
                       </thead>
                       <tbody>
-                        {gatePass.bagSizes.map((slot, index) => (
+                        {gatePass.bagSize.map((slot, index) => (
                           <tr
-                            key={`${slot.size}-${slot.bagType}-${index}`}
+                            key={`${slot.size}-${slot.variety}-${index}`}
                             className="border-b border-border/40 last:border-0"
                           >
                             <td className="px-3 py-2.5 font-medium text-foreground">
                               {slot.size}
                             </td>
                             <td className="px-3 py-2.5 text-muted-foreground">
-                              {slot.bagType}
+                              {slot.variety}
                             </td>
-                            <td className="px-3 py-2.5 text-right tabular-nums font-medium text-foreground">
-                              {slot.currentQuantity.toLocaleString("en-IN")}
-                            </td>
-                            <td className="px-3 py-2.5 text-muted-foreground">
-                              <span className="inline-flex items-center gap-1">
-                                <MapPin className="h-3.5 w-3.5 shrink-0" />
-                                {formatLocation(slot)}
-                              </span>
+                            <td className="px-3 py-2.5 text-right font-medium text-foreground tabular-nums">
+                              {slot.quantityIssued.toLocaleString("en-IN")}
                             </td>
                           </tr>
                         ))}
@@ -303,29 +363,16 @@ export function StorageGatePassCard({
           )}
         </Button>
 
-        <div className="flex items-center gap-2">
-          {canUpdate && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleEditClick}
-              className="h-8 bg-background"
-            >
-              <Pencil className="mr-2 h-3.5 w-3.5" />
-              Edit
-            </Button>
-          )}
-          <Button variant="secondary" size="sm" className="h-8">
-            <Printer className="mr-2 h-3.5 w-3.5" />
-            Print
-          </Button>
-        </div>
+        <Button variant="secondary" size="sm" className="h-8">
+          <Printer className="mr-2 h-3.5 w-3.5" />
+          Print
+        </Button>
       </CardFooter>
     </Card>
   )
 }
 
-export function StorageGatePassCardSkeleton() {
+export function NikasiGatePassCardSkeleton() {
   return (
     <Card className="overflow-hidden border-border/60">
       <CardHeader className="flex flex-col gap-4 border-b border-border/40 bg-muted/10 pb-4 sm:flex-row sm:items-start sm:justify-between">
@@ -354,10 +401,7 @@ export function StorageGatePassCardSkeleton() {
       </CardContent>
       <CardFooter className="flex items-center justify-between border-t border-border/40 bg-muted/10 px-4 py-3">
         <Skeleton className="h-8 w-32" />
-        <div className="flex gap-2">
-          <Skeleton className="h-8 w-16 rounded-md" />
-          <Skeleton className="h-8 w-16 rounded-md" />
-        </div>
+        <Skeleton className="h-8 w-16 rounded-md" />
       </CardFooter>
     </Card>
   )

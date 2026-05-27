@@ -1,5 +1,6 @@
 import { useMemo, useState, type WheelEvent } from "react"
 import { Plus, Trash2, UserPlus } from "lucide-react"
+import { toast } from "sonner"
 
 import {
   Card,
@@ -22,51 +23,65 @@ import {
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { DatePickerInput } from "@/components/date-picker"
+import {
+  BagSizeSelectField,
+  FixedBagSizeLabel,
+} from "@/components/bag-quantity-size-field"
 import {
   SearchableOptionCombobox,
   filterAndSortOptions,
   type ComboboxOption,
 } from "@/components/searchable-option-combobox"
+import { BAG_SIZES, DISPATCH_PRE_STORAGE_CATEGORIES } from "@/lib/constants"
+import { useFarmerLinkOptions } from "@/features/people/api/use-farmer-link-options"
+import { useDispatchLedgers } from "@/features/people/api/use-dispatch-ledgers"
+import {
+  farmerLinkOptionsToComboboxOptions,
+  getFarmerLinkLabel,
+} from "@/features/people/utils/farmer-link-combobox"
+import {
+  useGetReceiptVoucherNumber,
+  voucherNumberKeys,
+} from "@/hooks/use-get-voucher-number"
+import { queryClient } from "@/lib/queryClient"
+import { useCreateNikasiGatePass } from "@/features/dispatch-pre-storage/api/use-create-nikasi-gate-pass"
+import type { CreateNikasiGatePassBody } from "@/features/dispatch-pre-storage/api/types"
+import {
+  DispatchPreStorageSummarySheet,
+  type DispatchPreStorageSummaryValues,
+} from "@/features/dispatch-pre-storage/forms/dispatch-pre-storage-summary-sheet"
 
-const FARMER_ITEMS: ComboboxOption[] = [
-  {
-    id: "farmer-storage-link-a001",
-    label: "Alice Sharma (Storage #1001)",
-    name: "Alice Sharma",
-    accountNumber: 1001,
-  },
-  {
-    id: "farmer-storage-link-a002",
-    label: "Bob Singh (Storage #1002)",
-    name: "Bob Singh",
-    accountNumber: 1002,
-  },
-  {
-    id: "farmer-storage-link-a003",
-    label: "Carol Kaur (Storage #1003)",
-    name: "Carol Kaur",
-    accountNumber: 1003,
-  },
-]
+type BagSizeValue = (typeof BAG_SIZES)[number] | ""
 
-const DISPATCH_LEDGER_ITEMS: ComboboxOption[] = [
-  {
-    id: "dispatch-ledger-001",
-    label: "Market Yard Dispatch (Ledger #D-1001)",
-  },
-  {
-    id: "dispatch-ledger-002",
-    label: "Mandi Sales Dispatch (Ledger #D-1002)",
-  },
-  {
-    id: "dispatch-ledger-003",
-    label: "Wholesale Buyer Dispatch (Ledger #D-1003)",
-  },
-]
+const CATEGORY_ITEMS: ComboboxOption[] = DISPATCH_PRE_STORAGE_CATEGORIES.map(
+  (value) => ({ id: value, label: value })
+)
+
+const VARIETY_ITEMS: ComboboxOption[] = [
+  "Himalini",
+  "K. Pukhraj",
+  "K. Jyoti",
+].map((value) => ({
+  id: value,
+  label: value,
+}))
+
+function normalizeVariety(value: string): string {
+  const selected = VARIETY_ITEMS.find((item) => item.id === value)
+  return (selected?.label ?? value).trim()
+}
 
 type DispatchPreStorageBagSizeRow = {
-  size: string
+  size: BagSizeValue
+  isExtra: boolean
   variety: string
   quantityIssued: string
 }
@@ -78,60 +93,231 @@ const numericInputProps = {
 }
 
 function createDefaultBagSizeRows(): DispatchPreStorageBagSizeRow[] {
-  return [
-    {
-      size: "",
-      variety: "",
-      quantityIssued: "",
-    },
-  ]
+  return BAG_SIZES.map((size) => ({
+    size,
+    isExtra: false,
+    variety: "",
+    quantityIssued: "",
+  }))
 }
 
 function createEmptyBagSizeRow(): DispatchPreStorageBagSizeRow {
-  return {
-    size: "",
-    variety: "",
-    quantityIssued: "",
-  }
+  return { size: "", isExtra: true, variety: "", quantityIssued: "" }
 }
 
 function formatOptionalNumber(value: string) {
   if (value === "") return "0"
-
   const parsed = Number(value)
-
   return Number.isNaN(parsed) ? "0" : parsed.toLocaleString("en-IN")
 }
 
+function parseOptionalNumber(value: string): number {
+  if (value === "") return 0
+  const parsed = Number(value)
+  return Number.isNaN(parsed) ? 0 : parsed
+}
+
+function parseOptionalPositiveInt(value: string): number | undefined {
+  if (value.trim() === "") return undefined
+  const parsed = parseInt(value, 10)
+  return Number.isNaN(parsed) ? undefined : parsed
+}
+
+function roundToDecimals(value: number, decimals: number): number {
+  const factor = 10 ** decimals
+  return Math.round(value * factor) / factor
+}
+
+function calculateAverageWeightPerBagKg(
+  netWeightKg: number,
+  totalBags: number,
+): number {
+  if (totalBags <= 0 || netWeightKg <= 0) return 0
+  return roundToDecimals(netWeightKg / totalBags, 2)
+}
+
+function formatWeightKg(value: number, maximumFractionDigits = 2): string {
+  return `${value.toLocaleString("en-IN", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits,
+  })} kg`
+}
+
+function buildSummaryValues(input: {
+  gatePassNo: string
+  manualGatePassNumber: string
+  date: Date | undefined
+  isBooked: boolean
+  farmerStorageLinkId: string
+  dispatchLedgerId: string
+  category: string
+  billNumber: string
+  biltiNo: string
+  from: string
+  to: string
+  truckNumber: string
+  bagSize: DispatchPreStorageBagSizeRow[]
+  netWeight: string
+  remarks: string
+}): DispatchPreStorageSummaryValues | null {
+  if (!input.date) return null
+
+  const netWeightKg = parseOptionalNumber(input.netWeight)
+  const totalBags = input.bagSize.reduce(
+    (sum, row) => sum + parseOptionalNumber(row.quantityIssued),
+    0,
+  )
+
+  return {
+    gatePassNo: input.gatePassNo.trim(),
+    manualGatePassNumber: input.manualGatePassNumber.trim() || undefined,
+    date: input.date.toISOString(),
+    isBooked: input.isBooked,
+    farmerStorageLinkId: input.farmerStorageLinkId,
+    dispatchLedgerId: input.dispatchLedgerId,
+    category: input.category,
+    billNumber: input.billNumber,
+    biltiNo: input.biltiNo,
+    from: input.from,
+    to: input.to,
+    truckNumber: input.truckNumber,
+    bagSize: input.bagSize.map((row) => ({
+      size: row.size.trim(),
+      variety: normalizeVariety(row.variety),
+      quantityIssued: parseOptionalNumber(row.quantityIssued),
+    })),
+    netWeight: netWeightKg,
+    averageWeightPerBag: calculateAverageWeightPerBagKg(
+      netWeightKg,
+      totalBags,
+    ),
+    remarks: input.remarks,
+  }
+}
+
+function buildApiBody(
+  values: DispatchPreStorageSummaryValues,
+  gatePassNo: number,
+): CreateNikasiGatePassBody {
+  const activeBags = values.bagSize.filter(
+    (row) => row.quantityIssued > 0 && row.size.trim() !== "",
+  )
+
+  if (activeBags.length === 0) {
+    throw new Error("Enter at least one bag line with quantity.")
+  }
+
+  const bagSizePayload = activeBags.map((row) => ({
+    size: row.size,
+    variety: normalizeVariety(row.variety),
+    quantityIssued: row.quantityIssued,
+  }))
+
+  if (bagSizePayload.some((row) => row.variety === "")) {
+    throw new Error("Select variety for each issued bag line.")
+  }
+
+  const body: CreateNikasiGatePassBody = {
+    farmerStorageLinkId: values.farmerStorageLinkId,
+    dispatchLedgerId: values.dispatchLedgerId,
+    gatePassNo,
+    category: values.category,
+    isBooked: values.isBooked,
+    date: values.date,
+    from: values.from,
+    to: values.to,
+    truckNumber: values.truckNumber,
+    bagSize: bagSizePayload,
+    netWeight: values.netWeight,
+    averageWeightPerBag: values.averageWeightPerBag,
+  }
+
+  const billNumber = parseOptionalPositiveInt(values.billNumber)
+  if (billNumber != null) body.billNumber = billNumber
+
+  const bitliNumber = parseOptionalPositiveInt(values.biltiNo)
+  if (bitliNumber != null) body.bitliNumber = bitliNumber
+
+  const manualGatePassNumber = parseOptionalPositiveInt(
+    values.manualGatePassNumber ?? "",
+  )
+  if (manualGatePassNumber != null)
+    body.manualGatePassNumber = manualGatePassNumber
+
+  const remarks = values.remarks.trim()
+  if (remarks) body.remarks = remarks
+
+  body.idempotencyKey = crypto.randomUUID()
+
+  return body
+}
+
 const CreateDispatchPreStorageForm = () => {
-  const [gatePassNo, setGatePassNo] = useState("1")
+  const { data: farmerLinkOptions = [], isLoading: isLoadingFarmers } =
+    useFarmerLinkOptions()
+  const { data: dispatchLedgersData } = useDispatchLedgers()
+  const {
+    data: nextVoucherNumber,
+    isLoading: isLoadingVoucherNumber,
+    isError: isVoucherNumberError,
+  } = useGetReceiptVoucherNumber("nikasi-gate-pass")
+  const { mutateAsync: createNikasiGatePass, isPending: isSubmitting } =
+    useCreateNikasiGatePass()
+
+  const isGatePassNumberReady =
+    !isLoadingVoucherNumber &&
+    !isVoucherNumberError &&
+    nextVoucherNumber != null
+
+  const farmerOptions = useMemo<ComboboxOption[]>(
+    () => farmerLinkOptionsToComboboxOptions(farmerLinkOptions),
+    [farmerLinkOptions],
+  )
+
+  const dispatchLedgerOptions = useMemo<ComboboxOption[]>(
+    () =>
+      (dispatchLedgersData ?? []).map((ledger) => ({
+        id: ledger._id,
+        label: ledger.name,
+      })),
+    [dispatchLedgersData],
+  )
+
   const [manualGatePassNumber, setManualGatePassNumber] = useState("")
   const [date, setDate] = useState<Date | undefined>(new Date())
   const [isBooked, setIsBooked] = useState(false)
   const [farmerStorageLinkId, setFarmerStorageLinkId] = useState("")
   const [dispatchLedgerId, setDispatchLedgerId] = useState("")
+  const [category, setCategory] = useState("")
+  const [billNumber, setBillNumber] = useState("")
+  const [biltiNo, setBiltiNo] = useState("")
   const [from, setFrom] = useState("")
   const [to, setTo] = useState("")
   const [truckNumber, setTruckNumber] = useState("")
   const [bagSize, setBagSize] = useState(createDefaultBagSizeRows)
   const [netWeight, setNetWeight] = useState("")
-  const [averageWeightPerBag, setAverageWeightPerBag] = useState("")
   const [remarks, setRemarks] = useState("")
-  const [idempotencyKey, setIdempotencyKey] = useState("")
 
   const [farmerSearch, setFarmerSearch] = useState("")
   const [farmerComboboxOpen, setFarmerComboboxOpen] = useState(false)
   const [dispatchLedgerSearch, setDispatchLedgerSearch] = useState("")
   const [dispatchLedgerComboboxOpen, setDispatchLedgerComboboxOpen] =
     useState(false)
+  const [categorySearch, setCategorySearch] = useState("")
+  const [categoryComboboxOpen, setCategoryComboboxOpen] = useState(false)
+  const [reviewOpen, setReviewOpen] = useState(false)
 
   const sortedFarmers = useMemo(
-    () => filterAndSortOptions(farmerSearch, FARMER_ITEMS),
-    [farmerSearch]
+    () => filterAndSortOptions(farmerSearch, farmerOptions),
+    [farmerSearch, farmerOptions],
   )
   const sortedDispatchLedgers = useMemo(
-    () => filterAndSortOptions(dispatchLedgerSearch, DISPATCH_LEDGER_ITEMS),
-    [dispatchLedgerSearch]
+    () => filterAndSortOptions(dispatchLedgerSearch, dispatchLedgerOptions),
+    [dispatchLedgerSearch, dispatchLedgerOptions],
+  )
+  const sortedCategories = useMemo(
+    () => filterAndSortOptions(categorySearch, CATEGORY_ITEMS),
+    [categorySearch],
   )
 
   const totalQuantityIssued = useMemo(
@@ -140,549 +326,749 @@ const CreateDispatchPreStorageForm = () => {
         const parsed = Number(row.quantityIssued)
         return sum + (Number.isNaN(parsed) ? 0 : parsed)
       }, 0),
-    [bagSize]
+    [bagSize],
   )
+
+  const netWeightKg = useMemo(
+    () => parseOptionalNumber(netWeight),
+    [netWeight],
+  )
+
+  const averageWeightPerBagKg = useMemo(
+    () => calculateAverageWeightPerBagKg(netWeightKg, totalQuantityIssued),
+    [netWeightKg, totalQuantityIssued],
+  )
+
+  const displayGatePassNo = isLoadingVoucherNumber
+    ? "…"
+    : isVoucherNumberError
+      ? "—"
+      : (nextVoucherNumber ?? "—")
+
+  const summaryValues = useMemo(
+    () =>
+      buildSummaryValues({
+        gatePassNo: String(nextVoucherNumber ?? ""),
+        manualGatePassNumber,
+        date,
+        isBooked,
+        farmerStorageLinkId,
+        dispatchLedgerId,
+        category,
+        billNumber,
+        biltiNo,
+        from,
+        to,
+        truckNumber,
+        bagSize,
+        netWeight,
+        remarks,
+      }),
+    [
+      nextVoucherNumber,
+      manualGatePassNumber,
+      date,
+      isBooked,
+      farmerStorageLinkId,
+      dispatchLedgerId,
+      category,
+      billNumber,
+      biltiNo,
+      from,
+      to,
+      truckNumber,
+      bagSize,
+      netWeight,
+      remarks,
+    ],
+  )
+
+  const farmerLabel = useMemo(
+    () => getFarmerLinkLabel(farmerStorageLinkId, farmerLinkOptions),
+    [farmerStorageLinkId, farmerLinkOptions],
+  )
+
+  const dispatchLedgerLabel = useMemo(
+    () =>
+      dispatchLedgerOptions.find((o) => o.id === dispatchLedgerId)?.label ??
+      "—",
+    [dispatchLedgerId, dispatchLedgerOptions],
+  )
+
+  const canSubmit = Boolean(
+    summaryValues &&
+      summaryValues.gatePassNo &&
+      summaryValues.farmerStorageLinkId &&
+      summaryValues.dispatchLedgerId &&
+      summaryValues.category &&
+      summaryValues.bagSize.some((row) => row.quantityIssued > 0) &&
+      isGatePassNumberReady,
+  )
+
+  const handleOpenReview = () => {
+    if (!summaryValues) {
+      toast.error("Pick a date before reviewing.", { position: "bottom-right" })
+      return
+    }
+    if (!isGatePassNumberReady) {
+      toast.error(
+        isLoadingVoucherNumber
+          ? "Loading gate pass number, please wait…"
+          : "Gate pass number unavailable. Refresh and try again.",
+        { position: "bottom-right" },
+      )
+      return
+    }
+    setReviewOpen(true)
+  }
+
+  const handleConfirmSubmit = async () => {
+    if (!canSubmit || !summaryValues) return
+
+    const gatePassNo = queryClient.getQueryData<number>(
+      voucherNumberKeys.detail("nikasi-gate-pass"),
+    )
+
+    if (gatePassNo == null) {
+      toast.error("Gate pass number is unavailable. Refresh and try again.", {
+        position: "bottom-right",
+      })
+      return
+    }
+
+    let body: CreateNikasiGatePassBody
+    try {
+      body = buildApiBody(summaryValues, gatePassNo)
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Invalid form data.",
+        { position: "bottom-right" },
+      )
+      return
+    }
+
+    try {
+      const { message } = await createNikasiGatePass(body)
+      toast.success(message ?? "Nikasi gate pass created.", {
+        position: "bottom-right",
+      })
+      setReviewOpen(false)
+      resetForm()
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to create nikasi gate pass.",
+        { position: "bottom-right" },
+      )
+    }
+  }
 
   const resetComboboxState = () => {
     setFarmerSearch("")
     setFarmerComboboxOpen(false)
     setDispatchLedgerSearch("")
     setDispatchLedgerComboboxOpen(false)
+    setCategorySearch("")
+    setCategoryComboboxOpen(false)
   }
 
   const resetForm = () => {
-    setGatePassNo("1")
     setManualGatePassNumber("")
     setDate(new Date())
     setIsBooked(false)
     setFarmerStorageLinkId("")
     setDispatchLedgerId("")
+    setCategory("")
+    setBillNumber("")
+    setBiltiNo("")
     setFrom("")
     setTo("")
     setTruckNumber("")
     setBagSize(createDefaultBagSizeRows())
     setNetWeight("")
-    setAverageWeightPerBag("")
     setRemarks("")
-    setIdempotencyKey("")
     resetComboboxState()
   }
 
   const updateBagSizeRow = (
     index: number,
-    patch: Partial<DispatchPreStorageBagSizeRow>
+    patch: Partial<DispatchPreStorageBagSizeRow>,
   ) => {
     setBagSize((current) =>
       current.map((row, rowIndex) =>
-        rowIndex === index ? { ...row, ...patch } : row
-      )
+        rowIndex === index ? { ...row, ...patch } : row,
+      ),
     )
   }
 
   return (
-    <Card className="mx-auto w-full max-w-4xl shadow-sm">
-      <CardHeader className="border-b bg-muted/30 pb-6">
-        <CardTitle className="font-heading text-xl font-semibold tracking-tight sm:text-2xl">
-          Dispatch (Pre-Storage) Gate Pass{" "}
-          <span className="font-mono tabular-nums text-primary sm:text-2xl">
-            #{gatePassNo || "—"}
-          </span>
-        </CardTitle>
-        <CardDescription className="text-base">
-          UI-only form for creating a nikasi gate pass before storage booking.
-        </CardDescription>
-      </CardHeader>
+    <>
+      <Card className="mx-auto w-full max-w-4xl shadow-sm">
+        <CardHeader className="border-b bg-muted/30 pb-6">
+          <CardTitle className="font-heading text-xl font-semibold tracking-tight sm:text-2xl">
+            Dispatch (Pre-Storage) Gate Pass{" "}
+            <span className="font-mono tabular-nums text-primary sm:text-2xl">
+              #{displayGatePassNo}
+            </span>
+          </CardTitle>
+          <CardDescription className="text-base">
+            Create a nikasi gate pass before storage booking.
+          </CardDescription>
+        </CardHeader>
 
-      <form
-        id="create-dispatch-pre-storage-form"
-        noValidate
-        onSubmit={(e) => e.preventDefault()}
-      >
-        <CardContent className="pt-8 pb-8">
-          <FieldGroup className="@container/field-group gap-10">
-            <FieldSet>
-              <FieldLegend className="font-heading text-base font-semibold">
-                Gate Pass Details
-              </FieldLegend>
-              <FieldDescription>
-                Gate pass number, manual reference, date, booking flag, and
-                request key.
-              </FieldDescription>
-              <FieldGroup className="mt-5 grid grid-cols-1 gap-6 @md/field-group:grid-cols-2">
-                <Field>
-                  <FieldLabel htmlFor="dispatch-pre-storage-gate-pass-no">
-                    Gate Pass No.
-                  </FieldLabel>
-                  <Input
-                    {...numericInputProps}
-                    id="dispatch-pre-storage-gate-pass-no"
-                    name="gatePassNo"
-                    value={gatePassNo}
-                    onChange={(e) => setGatePassNo(e.target.value)}
-                    inputMode="numeric"
-                    placeholder="e.g. 1"
-                    className="tabular-nums"
-                  />
-                </Field>
-
-                <Field>
-                  <FieldLabel htmlFor="dispatch-pre-storage-manual-gate-pass">
-                    Manual Gate Pass No.
-                  </FieldLabel>
-                  <Input
-                    {...numericInputProps}
-                    id="dispatch-pre-storage-manual-gate-pass"
-                    name="manualGatePassNumber"
-                    value={manualGatePassNumber}
-                    onChange={(e) => setManualGatePassNumber(e.target.value)}
-                    inputMode="numeric"
-                    placeholder="e.g. 101"
-                    className="tabular-nums"
-                  />
-                </Field>
-
-                <DatePickerInput
-                  id="dispatch-pre-storage-date"
-                  label="Date"
-                  value={date}
-                  onChange={setDate}
-                  placeholder="Pick a date"
-                />
-
-                <Field>
-                  <FieldLabel htmlFor="dispatch-pre-storage-idempotency-key">
-                    Idempotency Key
-                  </FieldLabel>
-                  <Input
-                    id="dispatch-pre-storage-idempotency-key"
-                    name="idempotencyKey"
-                    value={idempotencyKey}
-                    onChange={(e) => setIdempotencyKey(e.target.value)}
-                    placeholder="e.g. nikasi-gp-1"
-                    autoComplete="off"
-                    className="font-mono"
-                  />
-                  <FieldDescription>
-                    Unique client key used to avoid duplicate gate-pass
-                    creation.
-                  </FieldDescription>
-                </Field>
-
-                <Field className="@md/field-group:col-span-2">
-                  <label
-                    htmlFor="dispatch-pre-storage-is-booked"
-                    className="flex min-h-11 cursor-pointer items-start gap-3 rounded-lg border border-border bg-muted/20 p-4 transition-colors hover:bg-muted/30"
-                  >
-                    <Checkbox
-                      id="dispatch-pre-storage-is-booked"
-                      name="isBooked"
-                      checked={isBooked}
-                      onCheckedChange={(value) => setIsBooked(value === true)}
-                      className="mt-0.5"
+        <form
+          id="create-dispatch-pre-storage-form"
+          noValidate
+          onSubmit={(e) => e.preventDefault()}
+        >
+          <CardContent className="pb-8 pt-8">
+            <FieldGroup className="@container/field-group gap-10">
+              <FieldSet>
+                <FieldLegend className="font-heading text-base font-semibold">
+                  Gate Pass Details
+                </FieldLegend>
+                <FieldDescription>
+                  Manual reference, date, booking flag, and category.
+                </FieldDescription>
+                <FieldGroup className="mt-5 grid grid-cols-1 gap-6 @md/field-group:grid-cols-2">
+                  <Field>
+                    <FieldLabel htmlFor="dispatch-pre-storage-manual-gate-pass">
+                      Manual Gate Pass No.
+                    </FieldLabel>
+                    <Input
+                      {...numericInputProps}
+                      id="dispatch-pre-storage-manual-gate-pass"
+                      name="manualGatePassNumber"
+                      value={manualGatePassNumber}
+                      onChange={(e) => setManualGatePassNumber(e.target.value)}
+                      inputMode="numeric"
+                      placeholder="e.g. 101"
+                      className="tabular-nums"
                     />
-                    <span className="flex min-w-0 flex-col gap-1">
-                      <span className="text-sm font-medium text-foreground">
-                        Mark this dispatch as booked
-                      </span>
-                      <span className="text-sm text-muted-foreground">
-                        Maps to the payload value{" "}
-                        <span className="font-mono">isBooked</span>.
-                      </span>
-                    </span>
-                  </label>
-                </Field>
-              </FieldGroup>
-            </FieldSet>
+                  </Field>
 
-            <FieldSeparator />
+                  <DatePickerInput
+                    id="dispatch-pre-storage-date"
+                    label="Date"
+                    value={date}
+                    onChange={setDate}
+                    placeholder="Pick a date"
+                  />
 
-            <FieldSet>
-              <FieldLegend className="font-heading text-base font-semibold">
-                Account Links
-              </FieldLegend>
-              <FieldDescription>
-                Select the farmer storage link and the dispatch ledger this pass
-                belongs to.
-              </FieldDescription>
-              <FieldGroup className="mt-5 grid grid-cols-1 gap-6 @md/field-group:grid-cols-2">
-                <Field>
-                  <FieldLabel htmlFor="dispatch-pre-storage-farmer">
-                    Farmer Storage Link
-                  </FieldLabel>
-                  <div className="flex gap-2">
-                    <div className="min-w-0 flex-1">
-                      <SearchableOptionCombobox
-                        id="dispatch-pre-storage-farmer"
-                        name="farmerStorageLinkId"
-                        value={farmerStorageLinkId}
-                        onValueChange={setFarmerStorageLinkId}
-                        onBlur={() => {}}
-                        isInvalid={false}
-                        placeholder="Search farmer storage links..."
-                        emptyMessage="No farmer links found."
-                        options={FARMER_ITEMS}
-                        sortedOptions={sortedFarmers}
-                        search={farmerSearch}
-                        setSearch={setFarmerSearch}
-                        open={farmerComboboxOpen}
-                        setOpen={setFarmerComboboxOpen}
+                  <Field>
+                    <FieldLabel htmlFor="dispatch-pre-storage-category">
+                      Category
+                    </FieldLabel>
+                    <SearchableOptionCombobox
+                      id="dispatch-pre-storage-category"
+                      name="category"
+                      value={category}
+                      onValueChange={setCategory}
+                      onBlur={() => {}}
+                      isInvalid={false}
+                      placeholder="Search categories..."
+                      emptyMessage="No categories found."
+                      options={CATEGORY_ITEMS}
+                      sortedOptions={sortedCategories}
+                      search={categorySearch}
+                      setSearch={setCategorySearch}
+                      open={categoryComboboxOpen}
+                      setOpen={setCategoryComboboxOpen}
+                    />
+                  </Field>
+
+                  <Field className="@md/field-group:col-span-2">
+                    <label
+                      htmlFor="dispatch-pre-storage-is-booked"
+                      className="flex min-h-11 cursor-pointer items-start gap-3 rounded-lg border border-border bg-muted/20 p-4 transition-colors hover:bg-muted/30"
+                    >
+                      <Checkbox
+                        id="dispatch-pre-storage-is-booked"
+                        name="isBooked"
+                        checked={isBooked}
+                        onCheckedChange={(value) =>
+                          setIsBooked(value === true)
+                        }
+                        className="mt-0.5"
                       />
+                      <span className="flex min-w-0 flex-col gap-1">
+                        <span className="text-sm font-medium text-foreground">
+                          Mark this dispatch as booked
+                        </span>
+                        <span className="text-sm text-muted-foreground">
+                          Maps to the payload field{" "}
+                          <span className="font-mono">isBooked</span>.
+                        </span>
+                      </span>
+                    </label>
+                  </Field>
+                </FieldGroup>
+              </FieldSet>
+
+              <FieldSeparator />
+
+              <FieldSet>
+                <FieldLegend className="font-heading text-base font-semibold">
+                  Account Links
+                </FieldLegend>
+                <FieldDescription>
+                  Select the farmer storage link and the dispatch ledger this
+                  pass belongs to.
+                </FieldDescription>
+                <FieldGroup className="mt-5 grid grid-cols-1 gap-6 @md/field-group:grid-cols-2">
+                  <Field>
+                    <FieldLabel htmlFor="dispatch-pre-storage-farmer">
+                      Farmer Storage Link
+                    </FieldLabel>
+                    <div className="flex gap-2">
+                      <div className="min-w-0 flex-1">
+                        <SearchableOptionCombobox
+                          id="dispatch-pre-storage-farmer"
+                          name="farmerStorageLinkId"
+                          value={farmerStorageLinkId}
+                          onValueChange={setFarmerStorageLinkId}
+                          onBlur={() => {}}
+                          isInvalid={false}
+                          placeholder={
+                            isLoadingFarmers
+                              ? "Loading farmers…"
+                              : "Search farmer storage links..."
+                          }
+                          emptyMessage="No farmer links found."
+                          options={farmerOptions}
+                          sortedOptions={sortedFarmers}
+                          search={farmerSearch}
+                          setSearch={setFarmerSearch}
+                          open={farmerComboboxOpen}
+                          setOpen={setFarmerComboboxOpen}
+                        />
+                      </div>
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        className="h-auto min-h-9 shrink-0 gap-1.5 px-3"
+                        aria-label="Add farmer"
+                      >
+                        <UserPlus className="size-4 shrink-0" />
+                        <span className="hidden sm:inline">Add</span>
+                      </Button>
                     </div>
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      className="h-auto min-h-9 shrink-0 gap-1.5 px-3"
-                      aria-label="Add farmer"
-                    >
-                      <UserPlus className="size-4 shrink-0" />
-                      <span className="hidden sm:inline">Add</span>
-                    </Button>
-                  </div>
-                </Field>
+                  </Field>
 
-                <Field>
-                  <FieldLabel htmlFor="dispatch-pre-storage-dispatch-ledger">
-                    Dispatch Ledger
-                  </FieldLabel>
-                  <div className="flex gap-2">
-                    <div className="min-w-0 flex-1">
-                      <SearchableOptionCombobox
-                        id="dispatch-pre-storage-dispatch-ledger"
-                        name="dispatchLedgerId"
-                        value={dispatchLedgerId}
-                        onValueChange={setDispatchLedgerId}
-                        onBlur={() => {}}
-                        isInvalid={false}
-                        placeholder="Search dispatch ledgers..."
-                        emptyMessage="No dispatch ledgers found."
-                        options={DISPATCH_LEDGER_ITEMS}
-                        sortedOptions={sortedDispatchLedgers}
-                        search={dispatchLedgerSearch}
-                        setSearch={setDispatchLedgerSearch}
-                        open={dispatchLedgerComboboxOpen}
-                        setOpen={setDispatchLedgerComboboxOpen}
-                      />
+                  <Field>
+                    <FieldLabel htmlFor="dispatch-pre-storage-dispatch-ledger">
+                      Dispatch Ledger
+                    </FieldLabel>
+                    <div className="flex gap-2">
+                      <div className="min-w-0 flex-1">
+                        <SearchableOptionCombobox
+                          id="dispatch-pre-storage-dispatch-ledger"
+                          name="dispatchLedgerId"
+                          value={dispatchLedgerId}
+                          onValueChange={setDispatchLedgerId}
+                          onBlur={() => {}}
+                          isInvalid={false}
+                          placeholder="Search dispatch ledgers..."
+                          emptyMessage="No dispatch ledgers found."
+                          options={dispatchLedgerOptions}
+                          sortedOptions={sortedDispatchLedgers}
+                          search={dispatchLedgerSearch}
+                          setSearch={setDispatchLedgerSearch}
+                          open={dispatchLedgerComboboxOpen}
+                          setOpen={setDispatchLedgerComboboxOpen}
+                        />
+                      </div>
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        className="h-auto min-h-9 shrink-0 gap-1.5 px-3"
+                        aria-label="Add dispatch ledger"
+                      >
+                        <UserPlus className="size-4 shrink-0" />
+                        <span className="hidden sm:inline">Add</span>
+                      </Button>
                     </div>
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      className="h-auto min-h-9 shrink-0 gap-1.5 px-3"
-                      aria-label="Add dispatch ledger"
-                    >
-                      <UserPlus className="size-4 shrink-0" />
-                      <span className="hidden sm:inline">Add</span>
-                    </Button>
+                  </Field>
+                </FieldGroup>
+              </FieldSet>
+
+              <FieldSeparator />
+
+              <FieldSet>
+                <FieldLegend className="font-heading text-base font-semibold">
+                  Route &amp; Vehicle
+                </FieldLegend>
+                <FieldDescription>
+                  Source, destination, vehicle, bill number, and bilti for the
+                  dispatch.
+                </FieldDescription>
+                <FieldGroup className="mt-5 grid grid-cols-1 gap-6 @md/field-group:grid-cols-3">
+                  <Field>
+                    <FieldLabel htmlFor="dispatch-pre-storage-from">
+                      From
+                    </FieldLabel>
+                    <Input
+                      id="dispatch-pre-storage-from"
+                      name="from"
+                      value={from}
+                      onChange={(e) => setFrom(e.target.value)}
+                      placeholder="e.g. Cold Storage A"
+                      autoComplete="off"
+                    />
+                  </Field>
+
+                  <Field>
+                    <FieldLabel htmlFor="dispatch-pre-storage-to">
+                      To
+                    </FieldLabel>
+                    <Input
+                      id="dispatch-pre-storage-to"
+                      name="to"
+                      value={to}
+                      onChange={(e) => setTo(e.target.value)}
+                      placeholder="e.g. Market Yard"
+                      autoComplete="off"
+                    />
+                  </Field>
+
+                  <Field>
+                    <FieldLabel htmlFor="dispatch-pre-storage-truck-number">
+                      Truck Number
+                    </FieldLabel>
+                    <Input
+                      id="dispatch-pre-storage-truck-number"
+                      name="truckNumber"
+                      value={truckNumber}
+                      onChange={(e) =>
+                        setTruckNumber(e.target.value.toUpperCase())
+                      }
+                      placeholder="e.g. PB10AB1234"
+                      autoComplete="off"
+                      className="uppercase"
+                    />
+                  </Field>
+
+                  <Field>
+                    <FieldLabel htmlFor="dispatch-pre-storage-bill-number">
+                      Bill Number
+                    </FieldLabel>
+                    <Input
+                      {...numericInputProps}
+                      id="dispatch-pre-storage-bill-number"
+                      name="billNumber"
+                      value={billNumber}
+                      onChange={(e) => setBillNumber(e.target.value)}
+                      inputMode="numeric"
+                      placeholder="e.g. 1001"
+                      className="tabular-nums"
+                    />
+                  </Field>
+
+                  <Field>
+                    <FieldLabel htmlFor="dispatch-pre-storage-bilti-no">
+                      Bilti No.
+                    </FieldLabel>
+                    <Input
+                      {...numericInputProps}
+                      id="dispatch-pre-storage-bilti-no"
+                      name="biltiNo"
+                      value={biltiNo}
+                      onChange={(e) => setBiltiNo(e.target.value)}
+                      inputMode="numeric"
+                      placeholder="e.g. 42"
+                      className="tabular-nums"
+                    />
+                  </Field>
+                </FieldGroup>
+              </FieldSet>
+
+              <FieldSeparator />
+
+              <FieldSet>
+                <FieldLegend className="font-heading text-base font-semibold">
+                  Bag Lines
+                </FieldLegend>
+                <FieldDescription>
+                  Enter variety and quantity issued for each bag size. Use Add
+                  more for an extra size line. Rows with zero quantity are
+                  ignored on submit.
+                </FieldDescription>
+
+                <div className="mt-5 rounded-lg border border-border">
+                  <div className="hidden border-b border-border bg-muted/50 px-3 py-2.5 lg:grid lg:grid-cols-12 lg:gap-2">
+                    <div className="col-span-3 text-sm font-medium text-muted-foreground">
+                      Size
+                    </div>
+                    <div className="col-span-4 text-sm font-medium text-muted-foreground">
+                      Variety
+                    </div>
+                    <div className="col-span-3 text-right text-sm font-medium text-muted-foreground">
+                      Quantity Issued
+                    </div>
+                    <div className="col-span-2" aria-hidden />
                   </div>
-                </Field>
-              </FieldGroup>
-            </FieldSet>
 
-            <FieldSeparator />
+                  <div className="divide-y divide-border">
+                    {bagSize.map((row, index) => (
+                      <div
+                        key={index}
+                        className="grid grid-cols-1 gap-3 px-3 py-3 lg:grid-cols-12 lg:items-start lg:gap-2 lg:py-2.5"
+                      >
+                        <div className="lg:col-span-3">
+                          {row.isExtra ? (
+                            <BagSizeSelectField
+                              id={`dispatch-pre-storage-bag-size-${index}-size`}
+                              name={`bagSize.${index}.size`}
+                              value={row.size}
+                              rowIndex={index}
+                              labelClassName="lg:sr-only"
+                              isInvalid={false}
+                              onBlur={() => {}}
+                              onValueChange={(value) =>
+                                updateBagSizeRow(index, { size: value })
+                              }
+                            />
+                          ) : (
+                            <FixedBagSizeLabel
+                              size={row.size}
+                              rowIndex={index}
+                            />
+                          )}
+                        </div>
 
-            <FieldSet>
-              <FieldLegend className="font-heading text-base font-semibold">
-                Route & Vehicle
-              </FieldLegend>
-              <FieldDescription>
-                Source, destination, and truck number for the dispatch.
-              </FieldDescription>
-              <FieldGroup className="mt-5 grid grid-cols-1 gap-6 @md/field-group:grid-cols-3">
-                <Field>
-                  <FieldLabel htmlFor="dispatch-pre-storage-from">
-                    From
-                  </FieldLabel>
-                  <Input
-                    id="dispatch-pre-storage-from"
-                    name="from"
-                    value={from}
-                    onChange={(e) => setFrom(e.target.value)}
-                    placeholder="e.g. Cold Storage A"
-                    autoComplete="off"
-                  />
-                </Field>
+                        <div className="lg:col-span-4">
+                          <Field>
+                            <FieldLabel
+                              htmlFor={`dispatch-pre-storage-bag-size-${index}-variety`}
+                              className="lg:sr-only"
+                            >
+                              Variety (row {index + 1})
+                            </FieldLabel>
+                            <Select
+                              value={row.variety || undefined}
+                              onValueChange={(value) =>
+                                updateBagSizeRow(index, { variety: value })
+                              }
+                            >
+                              <SelectTrigger
+                                id={`dispatch-pre-storage-bag-size-${index}-variety`}
+                                className="w-full"
+                              >
+                                <SelectValue placeholder="Select variety" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {VARIETY_ITEMS.map((item) => (
+                                  <SelectItem key={item.id} value={item.id}>
+                                    {item.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </Field>
+                        </div>
 
-                <Field>
-                  <FieldLabel htmlFor="dispatch-pre-storage-to">To</FieldLabel>
-                  <Input
-                    id="dispatch-pre-storage-to"
-                    name="to"
-                    value={to}
-                    onChange={(e) => setTo(e.target.value)}
-                    placeholder="e.g. Market Yard"
-                    autoComplete="off"
-                  />
-                </Field>
+                        <div className="lg:col-span-3">
+                          <Field>
+                            <FieldLabel
+                              htmlFor={`dispatch-pre-storage-bag-size-${index}-quantity-issued`}
+                              className="lg:sr-only"
+                            >
+                              Quantity Issued (row {index + 1})
+                            </FieldLabel>
+                            <Input
+                              {...numericInputProps}
+                              id={`dispatch-pre-storage-bag-size-${index}-quantity-issued`}
+                              name={`bagSize.${index}.quantityIssued`}
+                              inputMode="numeric"
+                              value={row.quantityIssued}
+                              onChange={(e) =>
+                                updateBagSizeRow(index, {
+                                  quantityIssued: e.target.value,
+                                })
+                              }
+                              placeholder="e.g. 100"
+                              className="text-right tabular-nums"
+                            />
+                          </Field>
+                        </div>
 
-                <Field>
-                  <FieldLabel htmlFor="dispatch-pre-storage-truck-number">
-                    Truck Number
-                  </FieldLabel>
-                  <Input
-                    id="dispatch-pre-storage-truck-number"
-                    name="truckNumber"
-                    value={truckNumber}
-                    onChange={(e) =>
-                      setTruckNumber(e.target.value.toUpperCase())
-                    }
-                    placeholder="e.g. PB10AB1234"
-                    autoComplete="off"
-                    className="uppercase"
-                  />
-                </Field>
-              </FieldGroup>
-            </FieldSet>
-
-            <FieldSeparator />
-
-            <FieldSet>
-              <FieldLegend className="font-heading text-base font-semibold">
-                Bag Size
-              </FieldLegend>
-              <FieldDescription>
-                Enter each issued line with bag size, variety, and quantity
-                issued.
-              </FieldDescription>
-
-              <div className="mt-5 rounded-lg border border-border">
-                <div className="hidden border-b border-border bg-muted/50 px-3 py-2.5 lg:grid lg:grid-cols-12 lg:gap-2">
-                  <div className="col-span-3 text-sm font-medium text-muted-foreground">
-                    Size
-                  </div>
-                  <div className="col-span-4 text-sm font-medium text-muted-foreground">
-                    Variety
-                  </div>
-                  <div className="col-span-3 text-right text-sm font-medium text-muted-foreground">
-                    Quantity Issued
-                  </div>
-                  <div className="col-span-2" aria-hidden />
-                </div>
-
-                <div className="divide-y divide-border">
-                  {bagSize.map((row, index) => (
-                    <div
-                      key={index}
-                      className="grid grid-cols-1 gap-3 px-3 py-3 lg:grid-cols-12 lg:items-start lg:gap-2 lg:py-2.5"
-                    >
-                      <div className="lg:col-span-3">
-                        <Field>
-                          <FieldLabel
-                            htmlFor={`dispatch-pre-storage-bag-size-${index}-size`}
-                            className="lg:sr-only"
-                          >
-                            Size (row {index + 1})
-                          </FieldLabel>
-                          <Input
-                            id={`dispatch-pre-storage-bag-size-${index}-size`}
-                            name={`bagSize.${index}.size`}
-                            value={row.size}
-                            onChange={(e) =>
-                              updateBagSizeRow(index, {
-                                size: e.target.value,
-                              })
-                            }
-                            placeholder="e.g. 50kg"
-                            autoComplete="off"
-                          />
-                        </Field>
-                      </div>
-
-                      <div className="lg:col-span-4">
-                        <Field>
-                          <FieldLabel
-                            htmlFor={`dispatch-pre-storage-bag-size-${index}-variety`}
-                            className="lg:sr-only"
-                          >
-                            Variety (row {index + 1})
-                          </FieldLabel>
-                          <Input
-                            id={`dispatch-pre-storage-bag-size-${index}-variety`}
-                            name={`bagSize.${index}.variety`}
-                            value={row.variety}
-                            onChange={(e) =>
-                              updateBagSizeRow(index, {
-                                variety: e.target.value,
-                              })
-                            }
-                            placeholder="e.g. Potato"
-                            autoComplete="off"
-                          />
-                        </Field>
-                      </div>
-
-                      <div className="lg:col-span-3">
-                        <Field>
-                          <FieldLabel
-                            htmlFor={`dispatch-pre-storage-bag-size-${index}-quantity-issued`}
-                            className="lg:sr-only"
-                          >
-                            Quantity Issued (row {index + 1})
-                          </FieldLabel>
-                          <Input
-                            {...numericInputProps}
-                            id={`dispatch-pre-storage-bag-size-${index}-quantity-issued`}
-                            name={`bagSize.${index}.quantityIssued`}
-                            inputMode="numeric"
-                            value={row.quantityIssued}
-                            onChange={(e) =>
-                              updateBagSizeRow(index, {
-                                quantityIssued: e.target.value,
-                              })
-                            }
-                            placeholder="e.g. 100"
-                            className="text-right tabular-nums"
-                          />
-                        </Field>
-                      </div>
-
-                      <div className="flex justify-end lg:col-span-2">
-                        {bagSize.length > 1 ? (
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="icon"
-                            className="size-11 shrink-0 lg:size-10"
-                            aria-label={`Remove bag size row ${index + 1}`}
-                            onClick={() =>
-                              setBagSize((current) =>
-                                current.filter(
-                                  (_, rowIndex) => rowIndex !== index
+                        <div className="flex justify-end lg:col-span-2">
+                          {row.isExtra ? (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="icon"
+                              className="size-11 shrink-0 lg:size-10"
+                              aria-label={`Remove bag size row ${index + 1}`}
+                              onClick={() =>
+                                setBagSize((current) =>
+                                  current.filter(
+                                    (_, rowIndex) => rowIndex !== index,
+                                  ),
                                 )
-                              )
-                            }
-                          >
-                            <Trash2 className="size-4" aria-hidden />
-                          </Button>
-                        ) : null}
+                              }
+                            >
+                              <Trash2 className="size-4" aria-hidden />
+                            </Button>
+                          ) : null}
+                        </div>
                       </div>
+                    ))}
+                  </div>
+
+                  <div className="flex flex-wrap gap-3 border-t border-border px-3 py-3">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="h-11"
+                      onClick={() =>
+                        setBagSize((current) => [
+                          ...current,
+                          createEmptyBagSizeRow(),
+                        ])
+                      }
+                    >
+                      <Plus className="mr-2 size-4" aria-hidden />
+                      Add more
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="h-11"
+                      onClick={() => setBagSize(createDefaultBagSizeRows())}
+                    >
+                      Clear quantities
+                    </Button>
+                  </div>
+                </div>
+              </FieldSet>
+
+              <FieldSeparator />
+
+              <FieldSet>
+                <FieldLegend className="font-heading text-base font-semibold">
+                  Weight &amp; Remarks
+                </FieldLegend>
+                <FieldDescription>
+                  Net weight and remarks. Average weight per bag is calculated
+                  from net weight divided by total bags issued.
+                </FieldDescription>
+                <FieldGroup className="mt-5 grid grid-cols-1 gap-6 @md/field-group:grid-cols-2">
+                  <Field>
+                    <FieldLabel htmlFor="dispatch-pre-storage-net-weight">
+                      Net Weight
+                    </FieldLabel>
+                    <Input
+                      {...numericInputProps}
+                      id="dispatch-pre-storage-net-weight"
+                      name="netWeight"
+                      value={netWeight}
+                      onChange={(e) => setNetWeight(e.target.value)}
+                      inputMode="decimal"
+                      placeholder="e.g. 5000"
+                      className="tabular-nums"
+                    />
+                    <FieldDescription>Enter weight in kg.</FieldDescription>
+                  </Field>
+
+                  <Field>
+                    <FieldLabel htmlFor="dispatch-pre-storage-average-weight">
+                      Average Weight Per Bag
+                    </FieldLabel>
+                    <Input
+                      id="dispatch-pre-storage-average-weight"
+                      name="averageWeightPerBag"
+                      value={
+                        totalQuantityIssued > 0 && netWeightKg > 0
+                          ? averageWeightPerBagKg.toLocaleString("en-IN", {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            })
+                          : ""
+                      }
+                      readOnly
+                      tabIndex={-1}
+                      placeholder="—"
+                      className="tabular-nums bg-muted/30"
+                    />
+                    <FieldDescription>
+                      Net weight ÷ quantity issued (2 decimal places).
+                    </FieldDescription>
+                  </Field>
+
+                  <Field className="@md/field-group:col-span-2">
+                    <FieldLabel htmlFor="dispatch-pre-storage-remarks">
+                      Remarks
+                    </FieldLabel>
+                    <Textarea
+                      id="dispatch-pre-storage-remarks"
+                      name="remarks"
+                      value={remarks}
+                      onChange={(e) => setRemarks(e.target.value)}
+                      placeholder="e.g. First nikasi gate pass"
+                      className="min-h-[120px] resize-y"
+                    />
+                  </Field>
+                </FieldGroup>
+
+                <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
+                  <div className="rounded-lg border border-border bg-muted/30 px-4 py-3">
+                    <div className="text-sm font-medium text-muted-foreground">
+                      Quantity issued
                     </div>
-                  ))}
-                </div>
-
-                <div className="flex flex-wrap gap-3 border-t border-border px-3 py-3">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="h-11"
-                    onClick={() =>
-                      setBagSize((current) => [
-                        ...current,
-                        createEmptyBagSizeRow(),
-                      ])
-                    }
-                  >
-                    <Plus className="mr-2 size-4" aria-hidden />
-                    Add bag line
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="h-11"
-                    onClick={() => setBagSize(createDefaultBagSizeRows())}
-                  >
-                    Clear bag lines
-                  </Button>
-                </div>
-              </div>
-            </FieldSet>
-
-            <FieldSeparator />
-
-            <FieldSet>
-              <FieldLegend className="font-heading text-base font-semibold">
-                Weight & Remarks
-              </FieldLegend>
-              <FieldDescription>
-                Net weight, average bag weight, and any notes for the nikasi
-                gate pass.
-              </FieldDescription>
-              <FieldGroup className="mt-5 grid grid-cols-1 gap-6 @md/field-group:grid-cols-2">
-                <Field>
-                  <FieldLabel htmlFor="dispatch-pre-storage-net-weight">
-                    Net Weight
-                  </FieldLabel>
-                  <Input
-                    {...numericInputProps}
-                    id="dispatch-pre-storage-net-weight"
-                    name="netWeight"
-                    value={netWeight}
-                    onChange={(e) => setNetWeight(e.target.value)}
-                    inputMode="decimal"
-                    placeholder="e.g. 5000"
-                    className="tabular-nums"
-                  />
-                  <FieldDescription>Enter weight in kg.</FieldDescription>
-                </Field>
-
-                <Field>
-                  <FieldLabel htmlFor="dispatch-pre-storage-average-weight">
-                    Average Weight Per Bag
-                  </FieldLabel>
-                  <Input
-                    {...numericInputProps}
-                    id="dispatch-pre-storage-average-weight"
-                    name="averageWeightPerBag"
-                    value={averageWeightPerBag}
-                    onChange={(e) => setAverageWeightPerBag(e.target.value)}
-                    inputMode="decimal"
-                    placeholder="e.g. 50"
-                    className="tabular-nums"
-                  />
-                  <FieldDescription>Enter average weight in kg.</FieldDescription>
-                </Field>
-
-                <Field className="@md/field-group:col-span-2">
-                  <FieldLabel htmlFor="dispatch-pre-storage-remarks">
-                    Remarks
-                  </FieldLabel>
-                  <Textarea
-                    id="dispatch-pre-storage-remarks"
-                    name="remarks"
-                    value={remarks}
-                    onChange={(e) => setRemarks(e.target.value)}
-                    placeholder="e.g. First nikasi gate pass"
-                    className="min-h-[120px] resize-y"
-                  />
-                </Field>
-              </FieldGroup>
-
-              <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
-                <div className="rounded-lg border border-border bg-muted/30 px-4 py-3">
-                  <div className="text-sm font-medium text-muted-foreground">
-                    Quantity issued
+                    <div className="mt-1 font-heading text-xl font-semibold tabular-nums text-foreground">
+                      {totalQuantityIssued.toLocaleString("en-IN")}
+                    </div>
                   </div>
-                  <div className="mt-1 font-heading text-xl font-semibold tabular-nums text-foreground">
-                    {totalQuantityIssued.toLocaleString("en-IN")}
+                  <div className="rounded-lg border border-border bg-muted/30 px-4 py-3">
+                    <div className="text-sm font-medium text-muted-foreground">
+                      Net weight
+                    </div>
+                    <div className="mt-1 font-heading text-xl font-semibold tabular-nums text-foreground">
+                      {formatOptionalNumber(netWeight)} kg
+                    </div>
+                  </div>
+                  <div className="rounded-lg border border-border bg-muted/30 px-4 py-3">
+                    <div className="text-sm font-medium text-muted-foreground">
+                      Avg. per bag
+                    </div>
+                    <div className="mt-1 font-heading text-xl font-semibold tabular-nums text-foreground">
+                      {formatWeightKg(averageWeightPerBagKg)}
+                    </div>
                   </div>
                 </div>
-                <div className="rounded-lg border border-border bg-muted/30 px-4 py-3">
-                  <div className="text-sm font-medium text-muted-foreground">
-                    Net weight
-                  </div>
-                  <div className="mt-1 font-heading text-xl font-semibold tabular-nums text-foreground">
-                    {formatOptionalNumber(netWeight)} kg
-                  </div>
-                </div>
-                <div className="rounded-lg border border-border bg-muted/30 px-4 py-3">
-                  <div className="text-sm font-medium text-muted-foreground">
-                    Avg. per bag
-                  </div>
-                  <div className="mt-1 font-heading text-xl font-semibold tabular-nums text-foreground">
-                    {formatOptionalNumber(averageWeightPerBag)} kg
-                  </div>
-                </div>
-              </div>
-            </FieldSet>
-          </FieldGroup>
-        </CardContent>
+              </FieldSet>
+            </FieldGroup>
+          </CardContent>
 
-        <CardFooter className="justify-end gap-3 border-t bg-muted/30 py-6">
-          <Button variant="outline" type="button" onClick={resetForm}>
-            Reset Form
-          </Button>
-          <Button type="button">Review</Button>
-        </CardFooter>
-      </form>
-    </Card>
+          <CardFooter className="justify-end gap-3 border-t bg-muted/30 py-6">
+            <Button variant="outline" type="button" onClick={resetForm}>
+              Reset Form
+            </Button>
+            <Button
+              type="button"
+              onClick={handleOpenReview}
+              disabled={isLoadingVoucherNumber}
+            >
+              {isLoadingVoucherNumber ? "Loading…" : "Review"}
+            </Button>
+          </CardFooter>
+        </form>
+      </Card>
+
+      <DispatchPreStorageSummarySheet
+        open={reviewOpen}
+        onOpenChange={setReviewOpen}
+        values={summaryValues}
+        farmerLabel={farmerLabel}
+        dispatchLedgerLabel={dispatchLedgerLabel}
+        onBack={() => setReviewOpen(false)}
+        onSubmit={handleConfirmSubmit}
+        canSubmit={canSubmit}
+        isSubmitting={isSubmitting}
+      />
+    </>
   )
 }
 

@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.6] - 2026-05-27
+
+Dispatch pre-storage now includes API-backed Nikasi gate pass creation and list workflows, with updated cards and summary review support.
+
+### Added
+
+- **Nikasi gate pass API** — Create/list helpers, typed request-response shapes, React Query hooks, and dispatch pre-storage query integration.
+- **Nikasi gate pass card** — A dedicated card UI for Nikasi entries with details optimized for dispatch pre-storage review.
+- **Dispatch pre-storage summary sheet** — Review sheet support for dispatch pre-storage create flow before final submission.
+- **Dispatch ledger parties panel** — People tab panel for dispatch-ledger party selection in dispatch workflows.
+
+### Changed
+
+- **Dispatch pre-storage tab** — Loads and renders Nikasi gate passes using the new API-backed flow.
+- **Dispatch pre-storage form** — Updated create form flow to align with Nikasi creation and summary review behavior.
+- **Shared constants and storage card** — Minor supporting updates for list/display consistency across related gate pass views.
+
 ## [0.3.5] - 2026-05-27
 
 People now includes API-backed dispatch ledger management with create and list workflows.
@@ -461,6 +478,7 @@ First application scaffold for the Kapur frontend (`kf-frontend`).
 
 - Default Vite starter styles (`App.css`) and demo application UI from the initial template.
 
+[0.3.6]: https://github.com/compare/v0.3.5...v0.3.6
 [0.3.5]: https://github.com/compare/v0.3.4...v0.3.5
 [0.3.4]: https://github.com/compare/v0.3.3...v0.3.4
 [0.3.3]: https://github.com/compare/v0.3.2...v0.3.3
