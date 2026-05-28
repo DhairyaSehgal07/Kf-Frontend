@@ -1,5 +1,7 @@
 import { useState } from "react"
+import { useQueryClient } from "@tanstack/react-query"
 import { getRouteApi } from "@tanstack/react-router"
+import { format } from "date-fns"
 import {
   ArrowLeftRight,
   BarChart3,
@@ -35,20 +37,32 @@ import {
 
 import { preserveScroll } from "@/lib/preserve-scroll"
 
+import AnalyticsGradingTab from "./components/analytics-grading-tab"
+import AnalyticsIncomingTab from "./components/analytics-incoming-tab"
 import Overview from "./components/overview"
 import type { AnalyticsTab } from "./search"
+import type { AnalyticsDateParams } from "./types"
+
+function toAnalyticsDateParam(date: Date | undefined): string | undefined {
+  return date ? format(date, "yyyy-MM-dd") : undefined
+}
 
 const analyticsRouteApi = getRouteApi("/_authenticated/analytics")
 
-const TAB_PLACEHOLDER: Record<AnalyticsTab, string> = {
-  incoming: "Show Incoming Analytics here",
-  grading: "Show Grading Analytics here",
+const TAB_PLACEHOLDER: Record<
+  Exclude<AnalyticsTab, "incoming" | "grading">,
+  string
+> = {
   storage: "Show Storage Analytics here",
   "dispatch-pre-storage": "Show Dispatch (pre-storage) Analytics here",
   "dispatch-post-storage": "Show Dispatch (post-storage) Analytics here",
 }
 
-function AnalyticsTabPlaceholder({ tab }: { tab: AnalyticsTab }) {
+function AnalyticsTabPlaceholder({
+  tab,
+}: {
+  tab: Exclude<AnalyticsTab, "incoming" | "grading">
+}) {
   return (
     <Card className="card-hover">
       <CardHeader>
@@ -65,9 +79,12 @@ function AnalyticsTabPlaceholder({ tab }: { tab: AnalyticsTab }) {
 const AnalyticsPage = () => {
   const { tab } = analyticsRouteApi.useSearch()
   const navigate = analyticsRouteApi.useNavigate()
+  const queryClient = useQueryClient()
 
   const [fromDate, setFromDate] = useState<Date | undefined>()
   const [toDate, setToDate] = useState<Date | undefined>()
+  const [appliedDateRange, setAppliedDateRange] =
+    useState<AnalyticsDateParams>({})
 
   const handleTabChange = (value: string) => {
     navigate({
@@ -77,12 +94,22 @@ const AnalyticsPage = () => {
   }
 
   const handleApply = () => {
-    // TODO: load analytics for the selected date range
+    const next: AnalyticsDateParams = {}
+    const dateFrom = toAnalyticsDateParam(fromDate)
+    const dateTo = toAnalyticsDateParam(toDate)
+    if (dateFrom) next.dateFrom = dateFrom
+    if (dateTo) next.dateTo = dateTo
+    setAppliedDateRange(next)
   }
 
   const handleReset = () => {
     setFromDate(undefined)
     setToDate(undefined)
+    setAppliedDateRange({})
+  }
+
+  const handleRefresh = () => {
+    void queryClient.invalidateQueries({ queryKey: ["analytics"] })
   }
 
   return (
@@ -99,7 +126,7 @@ const AnalyticsPage = () => {
         </ItemContent>
 
         <ItemActions>
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" onClick={handleRefresh}>
             <RefreshCw className="mr-2 h-4 w-4" />
             Refresh
           </Button>
@@ -142,7 +169,10 @@ const AnalyticsPage = () => {
       </div>
 
       <section>
-        <Overview />
+        <Overview
+          dateFrom={appliedDateRange.dateFrom}
+          dateTo={appliedDateRange.dateTo}
+        />
       </section>
 
       <Tabs value={tab} onValueChange={handleTabChange} className="w-full gap-4">
@@ -174,11 +204,17 @@ const AnalyticsPage = () => {
         </TabsList>
 
         <TabsContent value="incoming" className="min-w-0">
-          <AnalyticsTabPlaceholder tab="incoming" />
+          <AnalyticsIncomingTab
+            dateFrom={appliedDateRange.dateFrom}
+            dateTo={appliedDateRange.dateTo}
+          />
         </TabsContent>
 
         <TabsContent value="grading" className="min-w-0">
-          <AnalyticsTabPlaceholder tab="grading" />
+          <AnalyticsGradingTab
+            dateFrom={appliedDateRange.dateFrom}
+            dateTo={appliedDateRange.dateTo}
+          />
         </TabsContent>
 
         <TabsContent value="storage" className="min-w-0">

@@ -1,3 +1,4 @@
+import { useMemo } from "react"
 import { useQuery } from "@tanstack/react-query"
 import {
   AlertCircle,
@@ -22,6 +23,8 @@ import { Skeleton } from "@/components/ui/skeleton"
 import apiClient, { getApiErrorMessage } from "@/lib/api-client"
 import { cn } from "@/lib/utils"
 
+import type { AnalyticsDateParams } from "../types"
+
 type AnalyticsOverview = {
   totalIncomingBags: number
   totalIncomingWeight: number
@@ -40,6 +43,10 @@ type AnalyticsOverviewResponse = {
   message?: string
 }
 
+export type AnalyticsOverviewParams = AnalyticsDateParams
+
+type OverviewProps = AnalyticsDateParams
+
 type SummaryMetric = {
   label: string
   value: string
@@ -48,7 +55,9 @@ type SummaryMetric = {
   icon: LucideIcon
 }
 
-const analyticsOverviewKey = ["analytics", "overview"] as const
+function analyticsOverviewQueryKey(params: AnalyticsOverviewParams) {
+  return ["analytics", "overview", params.dateFrom ?? null, params.dateTo ?? null] as const
+}
 
 const bagFormatter = new Intl.NumberFormat("en-IN", {
   maximumFractionDigits: 0,
@@ -59,10 +68,18 @@ const weightFormatter = new Intl.NumberFormat("en-IN", {
   maximumFractionDigits: 2,
 })
 
-async function getAnalyticsOverview(): Promise<AnalyticsOverview> {
+async function getAnalyticsOverview(
+  params: AnalyticsOverviewParams = {},
+): Promise<AnalyticsOverview> {
+  const query: Record<string, string> = {}
+  if (params.dateFrom) query.dateFrom = params.dateFrom
+  if (params.dateTo) query.dateTo = params.dateTo
+
   try {
-    const { data } =
-      await apiClient.get<AnalyticsOverviewResponse>("/analytics/overview")
+    const { data } = await apiClient.get<AnalyticsOverviewResponse>(
+      "/analytics/overview",
+      { params: query },
+    )
 
     if (!data.success) {
       throw new Error(data.message ?? "Failed to load analytics overview")
@@ -234,7 +251,12 @@ function OverviewError({
   )
 }
 
-const Overview = () => {
+const Overview = ({ dateFrom, dateTo }: OverviewProps) => {
+  const params = useMemo(
+    () => ({ dateFrom, dateTo }),
+    [dateFrom, dateTo],
+  )
+
   const {
     data,
     error,
@@ -243,8 +265,8 @@ const Overview = () => {
     isFetching,
     refetch,
   } = useQuery({
-    queryKey: analyticsOverviewKey,
-    queryFn: getAnalyticsOverview,
+    queryKey: analyticsOverviewQueryKey(params),
+    queryFn: () => getAnalyticsOverview(params),
   })
 
   if (isLoading) {
