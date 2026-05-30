@@ -34,22 +34,43 @@ export default defineConfig({
             {
               name: 'react-vendor',
               test: /[\\/]node_modules[\\/](react|react-dom|scheduler)[\\/]/,
-              priority: 30,
+              priority: 40,
+            },
+            {
+              name: 'chart-vendor',
+              test: /[\\/]node_modules[\\/]recharts[\\/]/,
+              priority: 35,
+            },
+            {
+              name: 'zod-vendor',
+              test: /[\\/]node_modules[\\/]zod[\\/]/,
+              priority: 35,
             },
             {
               name: 'tanstack-vendor',
               test: /[\\/]node_modules[\\/]@tanstack[\\/]/,
-              priority: 20,
+              priority: 30,
             },
             {
               name: 'ui-vendor',
-              test: /[\\/]node_modules[\\/](@radix-ui|radix-ui|lucide-react)[\\/]/,
-              priority: 10,
+              test: /[\\/]node_modules[\\/](@radix-ui|radix-ui|lucide-react|@base-ui)[\\/]/,
+              priority: 25,
+            },
+            {
+              name: 'date-vendor',
+              test: /[\\/]node_modules[\\/]date-fns[\\/]/,
+              priority: 20,
+            },
+            {
+              name: 'dnd-vendor',
+              test: /[\\/]node_modules[\\/]@dnd-kit[\\/]/,
+              priority: 20,
             },
             {
               name: 'vendor',
               test: /[\\/]node_modules[\\/]/,
               priority: 0,
+              maxSize: 400_000,
             },
           ],
         },
