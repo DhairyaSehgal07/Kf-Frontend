@@ -101,7 +101,7 @@ export function NikasiGatePassCard({ data: gatePass }: NikasiGatePassCardProps) 
   const createdBy = gatePass.createdBy?.name ?? "—"
 
   return (
-    <Card className="card-hover overflow-hidden border-border/60 border-l-2 border-l-rose-700 dark:border-l-rose-500">
+    <Card className="card-hover overflow-hidden border-border/60">
       <CardHeader className="flex flex-col gap-4 border-b border-border/40 bg-muted/10 pb-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-1.5">
           <div className="flex flex-wrap items-center gap-3">

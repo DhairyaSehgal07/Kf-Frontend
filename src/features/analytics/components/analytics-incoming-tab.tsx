@@ -11,7 +11,8 @@ import {
 } from "../api/get-variety-distribution"
 import type { AnalyticsDateParams } from "../types"
 
-import { AnalyticsJsonSection } from "./analytics-json-section"
+import { AnalyticsIncomingTrendChart } from "./analytics-incoming-trend-chart"
+import { AnalyticsIncomingVarietyChart } from "./analytics-incoming-variety-chart"
 
 type AnalyticsIncomingTabProps = AnalyticsDateParams
 
@@ -33,19 +34,8 @@ const AnalyticsIncomingTab = ({ dateFrom, dateTo }: AnalyticsIncomingTabProps) =
 
   return (
     <div className="flex flex-col gap-4">
-      <AnalyticsJsonSection
-        title="Variety distribution"
-        description="Incoming analytics by variety for the applied date range"
-        errorTitle="Variety distribution could not be loaded"
-        query={varietyDistributionQuery}
-      />
-
-      <AnalyticsJsonSection
-        title="Daily / monthly trend"
-        description="Incoming daily and monthly trend for the applied date range"
-        errorTitle="Daily / monthly trend could not be loaded"
-        query={dailyMonthlyTrendQuery}
-      />
+      <AnalyticsIncomingVarietyChart query={varietyDistributionQuery} />
+      <AnalyticsIncomingTrendChart query={dailyMonthlyTrendQuery} />
     </div>
   )
 }

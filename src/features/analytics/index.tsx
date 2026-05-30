@@ -39,6 +39,7 @@ import { preserveScroll } from "@/lib/preserve-scroll"
 
 import AnalyticsGradingTab from "./components/analytics-grading-tab"
 import AnalyticsIncomingTab from "./components/analytics-incoming-tab"
+import AnalyticsStorageTab from "./components/analytics-storage-tab"
 import Overview from "./components/overview"
 import type { AnalyticsTab } from "./search"
 import type { AnalyticsDateParams } from "./types"
@@ -50,10 +51,9 @@ function toAnalyticsDateParam(date: Date | undefined): string | undefined {
 const analyticsRouteApi = getRouteApi("/_authenticated/analytics")
 
 const TAB_PLACEHOLDER: Record<
-  Exclude<AnalyticsTab, "incoming" | "grading">,
+  Exclude<AnalyticsTab, "incoming" | "grading" | "storage">,
   string
 > = {
-  storage: "Show Storage Analytics here",
   "dispatch-pre-storage": "Show Dispatch (pre-storage) Analytics here",
   "dispatch-post-storage": "Show Dispatch (post-storage) Analytics here",
 }
@@ -61,7 +61,7 @@ const TAB_PLACEHOLDER: Record<
 function AnalyticsTabPlaceholder({
   tab,
 }: {
-  tab: Exclude<AnalyticsTab, "incoming" | "grading">
+  tab: Exclude<AnalyticsTab, "incoming" | "grading" | "storage">
 }) {
   return (
     <Card className="card-hover">
@@ -218,7 +218,10 @@ const AnalyticsPage = () => {
         </TabsContent>
 
         <TabsContent value="storage" className="min-w-0">
-          <AnalyticsTabPlaceholder tab="storage" />
+          <AnalyticsStorageTab
+            dateFrom={appliedDateRange.dateFrom}
+            dateTo={appliedDateRange.dateTo}
+          />
         </TabsContent>
 
         <TabsContent value="dispatch-pre-storage" className="min-w-0">

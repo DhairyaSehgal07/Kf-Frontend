@@ -2,9 +2,18 @@ import apiClient, { getApiErrorMessage } from "@/lib/api-client"
 
 import type { AnalyticsDateParams } from "../types"
 
+export type VarietyDistributionChartItem = {
+  name: string
+  value: number
+}
+
+export type VarietyDistributionData = {
+  chartData: VarietyDistributionChartItem[]
+}
+
 type VarietyDistributionResponse = {
   success: boolean
-  data: unknown
+  data: VarietyDistributionData
   message?: string
 }
 
@@ -19,7 +28,7 @@ export function varietyDistributionQueryKey(params: AnalyticsDateParams) {
 
 export async function getVarietyDistribution(
   params: AnalyticsDateParams = {},
-): Promise<unknown> {
+): Promise<VarietyDistributionData> {
   const query: Record<string, string> = {}
   if (params.dateFrom) query.dateFrom = params.dateFrom
   if (params.dateTo) query.dateTo = params.dateTo

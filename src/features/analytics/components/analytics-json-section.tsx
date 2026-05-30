@@ -72,11 +72,13 @@ export function AnalyticsJsonSection({
   description,
   errorTitle,
   query,
+  data: displayData,
 }: {
   title: string
   description: string
   errorTitle: string
   query: UseQueryResult<unknown, Error>
+  data?: unknown
 }) {
   const { data, error, isError, isLoading, isFetching, refetch } = query
 
@@ -106,7 +108,7 @@ export function AnalyticsJsonSection({
 
       <CardContent>
         <pre className="max-h-[min(70vh,32rem)] overflow-auto rounded-lg border border-border bg-muted/30 p-4 font-mono text-sm leading-relaxed whitespace-pre-wrap wrap-break-word text-foreground">
-          {JSON.stringify(data, null, 2)}
+          {JSON.stringify(displayData ?? data, null, 2)}
         </pre>
       </CardContent>
     </Card>

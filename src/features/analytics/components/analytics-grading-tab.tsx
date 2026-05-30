@@ -11,7 +11,8 @@ import {
 } from "../api/get-size-distribution"
 import type { AnalyticsDateParams } from "../types"
 
-import { AnalyticsJsonSection } from "./analytics-json-section"
+import { AnalyticsGradingAreaWiseChart } from "./analytics-grading-area-wise-chart"
+import { AnalyticsGradingSizeChart } from "./analytics-grading-size-chart"
 
 type AnalyticsGradingTabProps = AnalyticsDateParams
 
@@ -33,19 +34,8 @@ const AnalyticsGradingTab = ({ dateFrom, dateTo }: AnalyticsGradingTabProps) => 
 
   return (
     <div className="flex flex-col gap-4">
-      <AnalyticsJsonSection
-        title="Size distribution"
-        description="Grading analytics by size for the applied date range"
-        errorTitle="Size distribution could not be loaded"
-        query={sizeDistributionQuery}
-      />
-
-      <AnalyticsJsonSection
-        title="Area-wise size distribution"
-        description="Grading analytics by area and size for the applied date range"
-        errorTitle="Area-wise size distribution could not be loaded"
-        query={areaWiseSizeDistributionQuery}
-      />
+      <AnalyticsGradingSizeChart query={sizeDistributionQuery} />
+      <AnalyticsGradingAreaWiseChart query={areaWiseSizeDistributionQuery} />
     </div>
   )
 }
