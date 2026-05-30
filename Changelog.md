@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.7] - 2026-05-30
+
+Analytics now loads live incoming, grading, and storage data with date filters, Recharts visualizations, a variety-by-size stock summary table, and a chamber/floor/row location dashboard.
+
+### Added
+
+- **Analytics date filters** — Shared from/to date params on the overview with apply/reset actions and query-key integration across tabs.
+- **Incoming analytics API** — Variety distribution and daily/monthly trend fetch helpers with React Query keys and typed response shapes.
+- **Grading analytics API** — Size distribution and area-wise size distribution fetch helpers with normalized response types.
+- **Storage analytics API** — Storage summary and storage location-wise fetch helpers for variety/size totals and chamber/floor/row inventory.
+- **Incoming analytics charts** — Variety distribution and daily/monthly trend Recharts views with loading, error, and empty states.
+- **Grading analytics charts** — Size distribution and area-wise size distribution Recharts views with shared chart palette and size ordering.
+- **Storage summary table** — Variety-by-size matrix with current, initial, and outgoing quantity tabs, column totals, and retry on error.
+- **Storage location dashboard** — Cold storage inventory cards, chamber/floor/row cards, variety legend, search and variety filters, location and variety-summary tabs, and quantity mode switching.
+- **Chart UI** — shadcn `Chart` primitives with theme chart tokens; `recharts` dependency for analytics visualizations.
+
+### Changed
+
+- **Analytics overview** — Tabs for incoming, grading, storage, and dispatch pre-storage now load API-backed content instead of placeholder metrics.
+- **Analytics storage tab** — Replaces raw JSON review with the stock summary table and location-wise dashboard.
+- **Analytics JSON section** — Shared loading/error/retry wrapper retained for dispatch pre-storage and interim grading/incoming sections where charts are not yet the sole view.
+
 ## [0.3.6] - 2026-05-27
 
 Dispatch pre-storage now includes API-backed Nikasi gate pass creation and list workflows, with updated cards and summary review support.
@@ -478,6 +500,7 @@ First application scaffold for the Kapur frontend (`kf-frontend`).
 
 - Default Vite starter styles (`App.css`) and demo application UI from the initial template.
 
+[0.3.7]: https://github.com/compare/v0.3.6...v0.3.7
 [0.3.6]: https://github.com/compare/v0.3.5...v0.3.6
 [0.3.5]: https://github.com/compare/v0.3.4...v0.3.5
 [0.3.4]: https://github.com/compare/v0.3.3...v0.3.4
