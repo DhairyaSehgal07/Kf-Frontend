@@ -32,6 +32,7 @@ import { Route as AuthenticatedGradingIdRouteImport } from './routes/_authentica
 import { Route as AuthenticatedDispatchPreStorageReportRouteImport } from './routes/_authenticated/dispatch-pre-storage.report'
 import { Route as AuthenticatedDispatchPostStorageReportRouteImport } from './routes/_authenticated/dispatch-post-storage.report'
 import { Route as AuthenticatedAdditionalTemperatureRouteImport } from './routes/_authenticated/additional.temperature'
+import { Route as AuthenticatedStorageChamberBreakdownChamberRouteImport } from './routes/_authenticated/storage.chamber-breakdown.$chamber'
 
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
   id: '/_authenticated',
@@ -162,6 +163,12 @@ const AuthenticatedAdditionalTemperatureRoute =
     path: '/additional/temperature',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedStorageChamberBreakdownChamberRoute =
+  AuthenticatedStorageChamberBreakdownChamberRouteImport.update({
+    id: '/storage/chamber-breakdown/$chamber',
+    path: '/storage/chamber-breakdown/$chamber',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -186,6 +193,7 @@ export interface FileRoutesByFullPath {
   '/incoming/': typeof AuthenticatedIncomingIndexRoute
   '/storage/': typeof AuthenticatedStorageIndexRoute
   '/transfer/': typeof AuthenticatedTransferIndexRoute
+  '/storage/chamber-breakdown/$chamber': typeof AuthenticatedStorageChamberBreakdownChamberRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -210,6 +218,7 @@ export interface FileRoutesByTo {
   '/incoming': typeof AuthenticatedIncomingIndexRoute
   '/storage': typeof AuthenticatedStorageIndexRoute
   '/transfer': typeof AuthenticatedTransferIndexRoute
+  '/storage/chamber-breakdown/$chamber': typeof AuthenticatedStorageChamberBreakdownChamberRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -236,6 +245,7 @@ export interface FileRoutesById {
   '/_authenticated/incoming/': typeof AuthenticatedIncomingIndexRoute
   '/_authenticated/storage/': typeof AuthenticatedStorageIndexRoute
   '/_authenticated/transfer/': typeof AuthenticatedTransferIndexRoute
+  '/_authenticated/storage/chamber-breakdown/$chamber': typeof AuthenticatedStorageChamberBreakdownChamberRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -262,6 +272,7 @@ export interface FileRouteTypes {
     | '/incoming/'
     | '/storage/'
     | '/transfer/'
+    | '/storage/chamber-breakdown/$chamber'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -286,6 +297,7 @@ export interface FileRouteTypes {
     | '/incoming'
     | '/storage'
     | '/transfer'
+    | '/storage/chamber-breakdown/$chamber'
   id:
     | '__root__'
     | '/'
@@ -311,6 +323,7 @@ export interface FileRouteTypes {
     | '/_authenticated/incoming/'
     | '/_authenticated/storage/'
     | '/_authenticated/transfer/'
+    | '/_authenticated/storage/chamber-breakdown/$chamber'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -481,6 +494,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdditionalTemperatureRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/storage/chamber-breakdown/$chamber': {
+      id: '/_authenticated/storage/chamber-breakdown/$chamber'
+      path: '/storage/chamber-breakdown/$chamber'
+      fullPath: '/storage/chamber-breakdown/$chamber'
+      preLoaderRoute: typeof AuthenticatedStorageChamberBreakdownChamberRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
   }
 }
 
@@ -506,6 +526,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedIncomingIndexRoute: typeof AuthenticatedIncomingIndexRoute
   AuthenticatedStorageIndexRoute: typeof AuthenticatedStorageIndexRoute
   AuthenticatedTransferIndexRoute: typeof AuthenticatedTransferIndexRoute
+  AuthenticatedStorageChamberBreakdownChamberRoute: typeof AuthenticatedStorageChamberBreakdownChamberRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
@@ -534,6 +555,8 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedIncomingIndexRoute: AuthenticatedIncomingIndexRoute,
   AuthenticatedStorageIndexRoute: AuthenticatedStorageIndexRoute,
   AuthenticatedTransferIndexRoute: AuthenticatedTransferIndexRoute,
+  AuthenticatedStorageChamberBreakdownChamberRoute:
+    AuthenticatedStorageChamberBreakdownChamberRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(

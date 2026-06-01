@@ -184,6 +184,12 @@ export function AppTopbar() {
                 <p className="text-xs text-muted-foreground tabular-nums">
                   {user?.mobileNumber}
                 </p>
+                <p
+                  className="truncate text-xs text-muted-foreground"
+                  title={user?.coldStorageId.name}
+                >
+                  {user?.coldStorageId.name}
+                </p>
                 <Badge variant="secondary" className="w-fit mt-1">
                   {user?.role}
                 </Badge>

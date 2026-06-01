@@ -1,10 +1,8 @@
 import { useMemo } from "react"
 import { useQuery } from "@tanstack/react-query"
 
-import {
-  getStorageLocationWise,
-  storageLocationWiseQueryKey,
-} from "../api/get-storage-location-wise"
+import { useStorageGatePassReport } from "@/features/storage-report/api/use-storage-gate-pass-report"
+
 import {
   getStorageSummary,
   storageSummaryQueryKey,
@@ -12,7 +10,7 @@ import {
 import type { AnalyticsDateParams } from "../types"
 
 import { AnalyticsStorageSummaryTable } from "./analytics-storage-summary-table"
-import { AnalyticsStorageLocationDashboard } from "./storage-location/analytics-storage-location-dashboard"
+import { LocationWiseStorageAnalyticsCard } from "./location-wise-storage-analytics"
 
 type AnalyticsStorageTabProps = AnalyticsDateParams
 
@@ -30,15 +28,12 @@ const AnalyticsStorageTab = ({
     queryFn: () => getStorageSummary(params),
   })
 
-  const storageLocationWiseQuery = useQuery({
-    queryKey: storageLocationWiseQueryKey(params),
-    queryFn: () => getStorageLocationWise(params),
-  })
+  const gatePassReportQuery = useStorageGatePassReport(params)
 
   return (
     <div className="flex flex-col gap-4">
       <AnalyticsStorageSummaryTable query={storageSummaryQuery} />
-      <AnalyticsStorageLocationDashboard query={storageLocationWiseQuery} />
+      <LocationWiseStorageAnalyticsCard query={gatePassReportQuery} />
     </div>
   )
 }

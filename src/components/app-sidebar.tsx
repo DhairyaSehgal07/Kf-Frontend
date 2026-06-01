@@ -3,7 +3,6 @@ import type { LucideIcon } from 'lucide-react';
 import {
   BarChart3,
   BookOpen,
-  Building2,
   ChevronRight,
   FileBarChart,
   Layers,
@@ -178,10 +177,7 @@ function NavMain() {
 }
 
 export function AppSidebar() {
-  const coldStorageName = useAuthStore(
-    (s) => s.user?.coldStorageId.name ?? 'Cold Storage',
-  );
-  const userRole = useAuthStore((s) => s.user?.role);
+  const coldStorageName = useAuthStore((s) => s.user?.coldStorageId.name);
 
   return (
     <Sidebar collapsible="icon" variant="inset">
@@ -190,19 +186,28 @@ export function AppSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
               <Link to="/daybook" search={{ tab: "incoming" }}>
-                <div className="flex aspect-square size-8 shrink-0 items-center justify-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground">
-                  <Building2 className="size-4" />
-                </div>
-                <div className="grid min-w-0 flex-1 text-left text-sm leading-tight">
-                  <span
-                    className="truncate font-semibold text-sidebar-foreground"
-                    title={coldStorageName}
-                  >
-                    {coldStorageName}
+                <img
+                  src="/favicon.svg"
+                  alt="Coldop"
+                  className="size-8 shrink-0 rounded-md"
+                />
+                <div className="grid min-w-0 flex-1 text-left leading-tight">
+                  <span className="truncate font-heading text-sm tracking-tight">
+                    <span className="font-semibold text-sidebar-foreground">
+                      Coldop
+                    </span>
+                    <span className="ml-1 text-xs font-normal text-muted-foreground">
+                      1.0.0
+                    </span>
                   </span>
-                  <span className="truncate text-xs text-muted-foreground">
-                    {userRole ?? 'Operations'}
-                  </span>
+                  {coldStorageName ? (
+                    <span
+                      className="truncate text-xs text-muted-foreground"
+                      title={coldStorageName}
+                    >
+                      {coldStorageName}
+                    </span>
+                  ) : null}
                 </div>
               </Link>
             </SidebarMenuButton>
