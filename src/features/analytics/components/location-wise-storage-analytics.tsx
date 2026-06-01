@@ -2,9 +2,7 @@ import { useMemo, type ReactNode } from "react"
 import type { UseQueryResult } from "@tanstack/react-query"
 import {
   AlertCircle,
-  ChevronDown,
   ChevronRight,
-  ChevronUp,
   Layers,
   MapPin,
   Package,
@@ -18,7 +16,6 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -87,35 +84,36 @@ const levelStyles: Record<
   }
 > = {
   chamber: {
-    list: "",
-    item: "w-full",
+    list: "flex flex-col gap-3",
+    item: "overflow-hidden rounded-2xl border border-border/80 bg-card shadow-sm ring-1 ring-foreground/5",
     trigger:
-      "rounded-none border-0 bg-muted/40 px-4 py-4 hover:bg-muted/60 data-[state=open]:bg-muted/50",
-    content: "border-t border-border bg-background px-4 py-4",
+      "px-4 py-4 hover:bg-muted/30 data-[state=open]:bg-muted/20 sm:px-5",
+    content:
+      "border-t border-border/60 bg-muted/10 px-3 py-4 sm:px-4",
     iconWrap: "bg-primary/10 text-primary",
     layout: "stacked",
   },
   floor: {
-    list: "flex flex-col gap-2",
-    item: "rounded-lg border border-border bg-muted/25",
-    trigger: "px-3 py-3.5 hover:bg-muted/40 sm:px-4",
-    content: "border-t border-border/80 bg-background px-3 pb-3 sm:px-4",
-    iconWrap: "bg-background text-foreground ring-1 ring-border",
+    list: "flex flex-col gap-2 border-l-2 border-primary/15 pl-3 sm:pl-4",
+    item: "overflow-hidden rounded-xl border border-border/70 bg-background",
+    trigger: "px-3 py-3.5 hover:bg-muted/30 sm:px-4",
+    content: "border-t border-border/60 bg-muted/15 px-3 pb-3 pt-0 sm:px-4",
+    iconWrap: "bg-muted/80 text-foreground",
     layout: "inline",
   },
   row: {
-    list: "flex flex-col gap-2",
-    item: "rounded-md border border-border/70 bg-background",
-    trigger: "px-3 py-3 hover:bg-muted/30",
-    content: "border-t border-border/60 bg-muted/15 px-3 pb-3",
-    iconWrap: "bg-muted text-foreground",
+    list: "flex flex-col gap-2 border-l border-border pl-3",
+    item: "overflow-hidden rounded-lg border border-border/60 bg-background",
+    trigger: "px-3 py-3 hover:bg-muted/25",
+    content: "border-t border-border/50 bg-muted/10 px-3 pb-3",
+    iconWrap: "bg-muted text-muted-foreground",
     layout: "stacked",
   },
   variety: {
     list: "flex flex-col gap-2",
-    item: "rounded-md border border-border/60 bg-background shadow-sm",
-    trigger: "px-3 py-3 hover:bg-muted/25",
-    content: "border-t border-border bg-background p-3",
+    item: "overflow-hidden rounded-lg border border-border/50 bg-background",
+    trigger: "px-3 py-3 hover:bg-muted/20",
+    content: "border-t border-border/50 bg-background p-3",
     iconWrap: "bg-primary/10 text-primary",
     layout: "stacked",
   },
@@ -167,14 +165,10 @@ function LocationCollapsibleSection({
           varietyColorMap={varietyColorMap}
           layout={styles.layout}
         />
-        <div className="flex shrink-0 flex-col items-end gap-1 pt-0.5">
+        <div className="flex shrink-0 items-start gap-3 pt-0.5">
           <LocationSectionTotal current={current} />
-          <ChevronDown
-            className="size-4 text-muted-foreground group-data-[state=open]:hidden"
-            aria-hidden
-          />
-          <ChevronUp
-            className="hidden size-4 text-muted-foreground group-data-[state=open]:block"
+          <ChevronRight
+            className="mt-1 size-4 shrink-0 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-90"
             aria-hidden
           />
         </div>
@@ -188,20 +182,20 @@ function LocationCollapsibleSection({
 
 function FarmerEntriesTable({ entries }: { entries: LocationWiseFarmerEntry[] }) {
   return (
-    <div className="relative w-full overflow-x-auto rounded-md border border-border bg-background">
+    <div className="relative w-full overflow-x-auto rounded-lg border border-border bg-background">
       <Table>
         <TableHeader>
-          <TableRow className="border-b border-border bg-muted hover:bg-muted">
-            <TableHead className="h-11 px-3 text-sm font-medium text-foreground">
+          <TableRow className="border-b border-border bg-muted/50 hover:bg-muted/50">
+            <TableHead className="h-10 px-3 font-medium text-muted-foreground">
               Farmer
             </TableHead>
-            <TableHead className="h-11 px-3 text-right text-sm font-medium text-foreground">
+            <TableHead className="h-10 px-3 text-right font-medium text-muted-foreground">
               Account no.
             </TableHead>
-            <TableHead className="h-11 px-3 text-sm font-medium text-foreground">
+            <TableHead className="h-10 px-3 font-medium text-muted-foreground">
               Bag size &amp; type
             </TableHead>
-            <TableHead className="h-11 px-3 text-right text-sm font-medium text-foreground">
+            <TableHead className="h-10 px-3 text-right font-medium text-muted-foreground">
               Current / initial
             </TableHead>
           </TableRow>
@@ -210,9 +204,9 @@ function FarmerEntriesTable({ entries }: { entries: LocationWiseFarmerEntry[] })
           {entries.map((entry, index) => (
             <TableRow
               key={`${entry.gatePassId}-${entry.bagSize}-${entry.bagType}-${index}`}
-              className="even:bg-muted/20"
+              className="border-b border-border transition-colors even:bg-muted/25 hover:bg-muted/40"
             >
-              <TableCell className="px-3 py-3">
+              <TableCell className="px-3 py-2.5">
                 <span
                   className="block max-w-56 truncate text-sm font-medium text-foreground sm:max-w-xs"
                   title={entry.farmerName}
@@ -223,14 +217,14 @@ function FarmerEntriesTable({ entries }: { entries: LocationWiseFarmerEntry[] })
                   Gate pass #{entry.gatePassNo}
                 </span>
               </TableCell>
-              <TableCell className="px-3 py-3 text-right text-sm tabular-nums text-foreground">
+              <TableCell className="px-3 py-2.5 text-right text-sm tabular-nums text-foreground">
                 {entry.farmerAccountNumber}
               </TableCell>
-              <TableCell className="px-3 py-3 text-sm text-foreground">
+              <TableCell className="px-3 py-2.5 text-sm text-foreground">
                 <span className="font-medium">{entry.bagSize}</span>
                 <span className="text-muted-foreground"> · {entry.bagType}</span>
               </TableCell>
-              <TableCell className="px-3 py-3 text-right text-sm font-medium tabular-nums text-foreground">
+              <TableCell className="px-3 py-2.5 text-right text-sm font-medium tabular-nums text-foreground">
                 {formatQuantityPair(entry.currentQuantity, entry.initialQuantity)}
               </TableCell>
             </TableRow>
@@ -345,34 +339,6 @@ function FloorList({
   )
 }
 
-function ChamberSection({
-  chamberNode,
-  varietyColorMap,
-}: {
-  chamberNode: LocationWiseChamberNode
-  varietyColorMap: Map<string, string>
-}) {
-  return (
-    <section className="rounded-xl border border-border bg-card shadow-sm">
-      <LocationCollapsibleSection
-        level="chamber"
-        icon={MapPin}
-        title={`Chamber ${chamberNode.chamber}`}
-        statsParts={[
-          `${chamberNode.floors.length} floor${chamberNode.floors.length === 1 ? "" : "s"}`,
-          `${chamberNode.varietyCount} variet${chamberNode.varietyCount === 1 ? "y" : "ies"}`,
-        ]}
-        varietySummary={chamberNode.varietySummary}
-        varietyColorMap={varietyColorMap}
-        current={chamberNode.totalCurrentQuantity}
-        includeBagsInStatsLine
-      >
-        <FloorList floors={chamberNode.floors} varietyColorMap={varietyColorMap} />
-      </LocationCollapsibleSection>
-    </section>
-  )
-}
-
 function ChamberList({
   chambers,
   varietyColorMap,
@@ -382,25 +348,46 @@ function ChamberList({
 }) {
   if (chambers.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-muted/20 px-4 py-12 text-center">
-        <MapPin className="size-8 text-muted-foreground" aria-hidden />
-        <p className="text-sm font-medium text-foreground">No location data</p>
-        <p className="max-w-sm text-sm text-muted-foreground">
-          Gate passes in this date range do not have chamber, floor, or row
-          assignments yet.
-        </p>
+      <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-border bg-muted/20 px-6 py-14 text-center">
+        <div
+          className="flex size-12 items-center justify-center rounded-full bg-muted"
+          aria-hidden
+        >
+          <MapPin className="size-6 text-muted-foreground" />
+        </div>
+        <div className="space-y-1">
+          <p className="text-sm font-medium text-foreground">No location data</p>
+          <p className="max-w-sm text-sm leading-relaxed text-muted-foreground">
+            Gate passes in this date range do not have chamber, floor, or row
+            assignments yet.
+          </p>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className={levelStyles.chamber.list}>
       {chambers.map((chamberNode) => (
-        <ChamberSection
+        <LocationCollapsibleSection
           key={`chamber-${chamberNode.chamber}`}
-          chamberNode={chamberNode}
+          level="chamber"
+          icon={MapPin}
+          title={`Chamber ${chamberNode.chamber}`}
+          statsParts={[
+            `${chamberNode.floors.length} floor${chamberNode.floors.length === 1 ? "" : "s"}`,
+            `${chamberNode.varietyCount} variet${chamberNode.varietyCount === 1 ? "y" : "ies"}`,
+          ]}
+          varietySummary={chamberNode.varietySummary}
           varietyColorMap={varietyColorMap}
-        />
+          current={chamberNode.totalCurrentQuantity}
+          includeBagsInStatsLine
+        >
+          <FloorList
+            floors={chamberNode.floors}
+            varietyColorMap={varietyColorMap}
+          />
+        </LocationCollapsibleSection>
       ))}
     </div>
   )
@@ -408,15 +395,21 @@ function ChamberList({
 
 function LocationWiseStorageSkeleton() {
   return (
-    <Card>
-      <CardHeader>
-        <Skeleton className="h-5 w-56" />
-        <Skeleton className="h-4 w-72" />
+    <Card className="min-w-0">
+      <CardHeader className="gap-4">
+        <div className="space-y-2">
+          <Skeleton className="h-6 w-52" />
+          <Skeleton className="h-4 w-full max-w-md" />
+        </div>
+        <div className="flex gap-6">
+          <Skeleton className="h-4 w-24" />
+          <Skeleton className="h-4 w-28" />
+        </div>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <Skeleton className="h-24 w-full rounded-xl" />
-        <Skeleton className="h-24 w-full rounded-xl" />
-        <Skeleton className="h-24 w-full rounded-xl" />
+      <CardContent className="space-y-3">
+        <Skeleton className="h-18 w-full rounded-2xl" />
+        <Skeleton className="h-18 w-full rounded-2xl" />
+        <Skeleton className="h-18 w-full rounded-2xl" />
       </CardContent>
     </Card>
   )
@@ -471,31 +464,35 @@ export function LocationWiseStorageAnalytics({
   }, [tree])
 
   return (
-    <Card>
-      <CardHeader className="border-b border-border/60 pb-4">
-        <CardTitle className="font-heading text-base font-semibold sm:text-lg">
-          Location-wise storage
-        </CardTitle>
-        <CardDescription className="text-sm leading-relaxed">
-          Expand a chamber to drill down by floor, row, and variety. Each level
-          shows a variety-wise bag summary.
-        </CardDescription>
-        <div className="flex flex-wrap gap-2 pt-1">
-          <Badge variant="secondary" className="h-7 gap-1.5 px-2.5 text-sm font-normal">
-            <MapPin className="size-3.5" aria-hidden />
-            <span className="tabular-nums font-medium">{tree.chambers.length}</span>
-            chambers
-          </Badge>
-          <Badge className="h-7 gap-1.5 px-2.5 text-sm font-normal">
-            <ChevronRight className="size-3.5" aria-hidden />
-            <span className="tabular-nums font-semibold">
-              {formatBags(tree.totalCurrentQuantity)}
-            </span>
-            bags in storage
-          </Badge>
+    <Card className="min-w-0">
+      <CardHeader className="gap-4">
+        <div className="space-y-1">
+          <CardTitle className="font-heading flex items-center gap-2 text-base font-semibold sm:text-lg">
+            <MapPin className="size-5 shrink-0 text-primary" aria-hidden />
+            Location-wise storage
+          </CardTitle>
+          <CardDescription className="leading-relaxed">
+            Expand a chamber to drill down by floor, row, and variety. Each level
+            shows a variety-wise bag summary.
+          </CardDescription>
         </div>
+        <dl className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
+          <div className="flex items-baseline gap-2">
+            <dt className="text-muted-foreground">Chambers</dt>
+            <dd className="font-medium tabular-nums text-foreground">
+              {tree.chambers.length}
+            </dd>
+          </div>
+          <div className="hidden h-4 w-px bg-border sm:block" aria-hidden />
+          <div className="flex items-baseline gap-2">
+            <dt className="text-muted-foreground">Bags in storage</dt>
+            <dd className="font-medium tabular-nums text-foreground">
+              {formatBags(tree.totalCurrentQuantity)}
+            </dd>
+          </div>
+        </dl>
       </CardHeader>
-      <CardContent className="pt-6">
+      <CardContent>
         <ChamberList chambers={tree.chambers} varietyColorMap={varietyColorMap} />
       </CardContent>
     </Card>

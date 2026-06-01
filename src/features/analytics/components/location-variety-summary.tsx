@@ -38,7 +38,7 @@ export function VarietySummaryBadges({
         <li key={item.variety}>
           <Badge
             variant="outline"
-            className="h-auto max-w-full gap-1.5 rounded-md px-2 py-1 text-sm font-normal whitespace-normal"
+            className="h-auto max-w-full gap-1.5 rounded-full border-border/80 bg-background/80 px-2.5 py-1 text-sm font-normal whitespace-normal shadow-none"
           >
             <span
               className="size-2 shrink-0 rounded-full"
@@ -188,8 +188,13 @@ export function LocationSectionTotal({
   className?: string
 }) {
   return (
-    <div className={cn("shrink-0 text-right tabular-nums", className)}>
-      <p className="text-base font-semibold text-foreground">
+    <div
+      className={cn(
+        "shrink-0 rounded-lg bg-muted/50 px-2.5 py-1 text-right tabular-nums",
+        className,
+      )}
+    >
+      <p className="text-sm font-semibold text-foreground sm:text-base">
         {formatBags(current)}
       </p>
       <p className="text-xs text-muted-foreground">bags</p>
