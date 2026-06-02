@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.8] - 2026-06-02
+
+Incoming report now supports polished export flows with Excel download and printable HTML preview, plus supporting formatter and toolbar updates.
+
+### Added
+
+- **Incoming report export helpers** — New utilities to format export cell values, generate themed Excel files, and build printable HTML previews for incoming report rows.
+- **Shared export utilities** — Blob download helper and report export theme utilities for consistent file naming and presentation.
+
+### Changed
+
+- **Incoming report toolbar** — Added export actions and improved report controls for download/preview workflows.
+- **Incoming report formatting** — Updated formatter behavior to align table values with export output.
+- **Incoming gate pass card** — Supporting UI updates to keep report-linked data presentation consistent.
+
 ## [0.3.7] - 2026-05-30
 
 Analytics now loads live incoming, grading, and storage data with date filters, Recharts visualizations, a variety-by-size stock summary table, and a chamber/floor/row location dashboard.
@@ -500,6 +515,7 @@ First application scaffold for the Kapur frontend (`kf-frontend`).
 
 - Default Vite starter styles (`App.css`) and demo application UI from the initial template.
 
+[0.3.8]: https://github.com/compare/v0.3.7...v0.3.8
 [0.3.7]: https://github.com/compare/v0.3.6...v0.3.7
 [0.3.6]: https://github.com/compare/v0.3.5...v0.3.6
 [0.3.5]: https://github.com/compare/v0.3.4...v0.3.5

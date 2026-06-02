@@ -24,6 +24,7 @@ import {
   Weight,
   type LucideIcon,
 } from "lucide-react"
+import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import { Skeleton } from "@/components/ui/skeleton"
 import type { IncomingGatePass } from "@/features/incoming/api/types"
@@ -107,6 +108,15 @@ export function GatePassCard({
 
   const handleEditClick = () => {
     if (!canUpdate) return
+
+    if (gatePass.status === "GRADED") {
+      toast.error("Cannot edit graded gate pass", {
+        description:
+          "This entry is linked to a grading gate pass. Open the grading gate pass and unlink this incoming gate pass before making changes.",
+        position: "bottom-right",
+      })
+      return
+    }
 
     if (onEdit) {
       onEdit(gatePass)

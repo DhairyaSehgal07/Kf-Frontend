@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { format } from "date-fns"
+import { toast } from "sonner"
 import {
   type ColumnDef,
   type ColumnFiltersState,
@@ -48,6 +49,13 @@ import {
   getIncomingReportColumnIds,
   getStoredIncomingReportColumnState,
 } from "./utils/report-column-preferences"
+import { exportIncomingReportToExcel } from "./utils/export-incoming-report-excel"
+import {
+  INCOMING_REPORT_DOWNLOAD_EXCEL_DONE_MESSAGE,
+  INCOMING_REPORT_DOWNLOAD_EXCEL_MESSAGE,
+  openIncomingReportPreview,
+} from "./utils/preview-incoming-report-html"
+import { useAuthStore } from "@/features/auth/store/use-auth-store"
 
 function toReportDateParam(date: Date | undefined): string | undefined {
   return date ? format(date, "yyyy-MM-dd") : undefined
@@ -86,7 +94,10 @@ const IncomingReportPage = () => {
     manualGatePassSearch: "",
   })
   const [density, setDensity] = useState<DensityState>("lg")
+  const [isExporting, setIsExporting] = useState(false)
+  const previewWindowRef = useRef<Window | null>(null)
 
+  const coldStorageName = useAuthStore((s) => s.user?.coldStorageId.name)
   const { data, error, isLoading } = useIncomingGatePassReport(appliedParams)
 
   const reportRows = useMemo(
@@ -188,6 +199,95 @@ const IncomingReportPage = () => {
     }))
   }
 
+  const notifyPreviewDownloadComplete = useCallback(() => {
+    const previewWindow = previewWindowRef.current
+    if (!previewWindow || previewWindow.closed) return
+
+    previewWindow.postMessage(
+      { type: INCOMING_REPORT_DOWNLOAD_EXCEL_DONE_MESSAGE },
+      window.location.origin,
+    )
+  }, [])
+
+  const handleExportExcel = useCallback(async () => {
+    if (rowCount === 0) {
+      toast.error("No rows to export. Adjust filters or load report data.", {
+        position: "bottom-right",
+      })
+      return
+    }
+
+    setIsExporting(true)
+
+    try {
+      await exportIncomingReportToExcel({
+        table,
+        coldStorageName: coldStorageName ?? "Cold Storage",
+        reportTitle: "Incoming Gate Passes",
+        fromDate,
+        toDate,
+      })
+      toast.success("Report exported to Excel", {
+        position: "bottom-right",
+      })
+    } catch (exportError) {
+      toast.error(
+        exportError instanceof Error
+          ? exportError.message
+          : "Failed to export report to Excel",
+        { position: "bottom-right" },
+      )
+    } finally {
+      setIsExporting(false)
+      notifyPreviewDownloadComplete()
+    }
+  }, [
+    coldStorageName,
+    fromDate,
+    notifyPreviewDownloadComplete,
+    rowCount,
+    table,
+    toDate,
+  ])
+
+  useEffect(() => {
+    const onMessage = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return
+      if (event.data?.type !== INCOMING_REPORT_DOWNLOAD_EXCEL_MESSAGE) return
+
+      void handleExportExcel()
+    }
+
+    window.addEventListener("message", onMessage)
+    return () => window.removeEventListener("message", onMessage)
+  }, [handleExportExcel])
+
+  const handlePreview = useCallback(() => {
+    if (rowCount === 0) {
+      toast.error("No rows to preview. Adjust filters or load report data.", {
+        position: "bottom-right",
+      })
+      return
+    }
+
+    try {
+      previewWindowRef.current = openIncomingReportPreview({
+        table,
+        coldStorageName: coldStorageName ?? "Cold Storage",
+        reportTitle: "Incoming Gate Passes",
+        fromDate,
+        toDate,
+      })
+    } catch (previewError) {
+      toast.error(
+        previewError instanceof Error
+          ? previewError.message
+          : "Failed to open report preview",
+        { position: "bottom-right" },
+      )
+    }
+  }, [coldStorageName, fromDate, rowCount, table, toDate])
+
   return (
     <div className="flex w-full min-w-0 flex-col gap-4">
       <div className="overflow-hidden rounded-xl border border-border bg-card text-card-foreground shadow-sm">
@@ -222,6 +322,9 @@ const IncomingReportPage = () => {
           searchQuery={searchQuery}
           onSearchChange={handleSearchChange}
           isLoading={isLoading}
+          isExporting={isExporting}
+          onPreview={handlePreview}
+          onExportExcel={handleExportExcel}
         />
       </div>
 

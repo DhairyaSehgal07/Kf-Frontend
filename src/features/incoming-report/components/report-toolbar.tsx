@@ -1,4 +1,11 @@
-import { ArrowRight, FileSpreadsheet, RefreshCw, Search } from "lucide-react"
+import {
+  ArrowRight,
+  Eye,
+  FileSpreadsheet,
+  Loader2,
+  RefreshCw,
+  Search,
+} from "lucide-react"
 import type { Table } from "@tanstack/react-table"
 
 import { DatePickerInput } from "@/components/date-picker"
@@ -19,6 +26,9 @@ export interface ReportToolbarProps {
   searchQuery: string
   onSearchChange: (value: string) => void
   isLoading?: boolean
+  isExporting?: boolean
+  onPreview?: () => void
+  onExportExcel?: () => void
   className?: string
 }
 
@@ -33,6 +43,9 @@ export function ReportToolbar({
   searchQuery,
   onSearchChange,
   isLoading = false,
+  isExporting = false,
+  onPreview,
+  onExportExcel,
   className,
 }: ReportToolbarProps) {
   return (
@@ -116,11 +129,30 @@ export function ReportToolbar({
           <ViewFiltersSheet table={table} />
           <Button
             type="button"
+            variant="outline"
+            className="min-w-0 gap-1.5 lg:flex-none"
+            aria-label="Preview report"
+            onClick={onPreview}
+            disabled={isLoading}
+          >
+            <Eye className="size-4 shrink-0" aria-hidden />
+            <span className="truncate">Preview</span>
+          </Button>
+          <Button
+            type="button"
             className="min-w-0 flex-1 gap-1.5 lg:flex-none"
             aria-label="Export to Excel"
+            onClick={onExportExcel}
+            disabled={isLoading || isExporting}
           >
-            <FileSpreadsheet className="size-4 shrink-0" aria-hidden />
-            <span className="truncate">Excel</span>
+            {isExporting ? (
+              <Loader2 className="size-4 shrink-0 animate-spin" aria-hidden />
+            ) : (
+              <FileSpreadsheet className="size-4 shrink-0" aria-hidden />
+            )}
+            <span className="truncate">
+              {isExporting ? "Exporting…" : "Excel"}
+            </span>
           </Button>
 
           <Button
