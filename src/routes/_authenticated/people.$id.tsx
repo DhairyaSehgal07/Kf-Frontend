@@ -1,6 +1,9 @@
-import { createFileRoute } from '@tanstack/react-router'
-import FarmerProfileScreen from '@/features/people/[id]'
+import { createFileRoute } from "@tanstack/react-router"
 
-export const Route = createFileRoute('/_authenticated/people/$id')({
-  component: FarmerProfileScreen,
+import FarmerProfilePage from "@/features/people/farmer-profile"
+import { farmerProfileSearchSchema } from "@/features/people/farmer-profile/search"
+
+export const Route = createFileRoute("/_authenticated/people/$id")({
+  validateSearch: farmerProfileSearchSchema,
+  component: FarmerProfilePage,
 })

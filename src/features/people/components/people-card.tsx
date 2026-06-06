@@ -26,6 +26,12 @@ export function PeopleCard({ link }: PeopleCardProps) {
     <Link
       to="/people/$id"
       params={{ id: link._id }}
+      search={{
+        name: farmer.name,
+        mobileNumber: farmer.mobileNumber,
+        accountNumber: link.accountNumber,
+        address: farmer.address,
+      }}
       className="block min-w-0 rounded-4xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
     >
       <Card size="sm" className={cn("card-hover gap-0")}>

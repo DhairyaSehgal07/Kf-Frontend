@@ -75,10 +75,16 @@ export type IncomingGatePassFarmer = {
   address: string
 }
 
+export type IncomingGatePassLinkedBy = {
+  _id?: string
+  name: string
+}
+
 export type IncomingGatePassFarmerStorageLink = {
   _id?: string
-  accountNumber: number
+  accountNumber?: number
   farmerId: IncomingGatePassFarmer
+  linkedById?: IncomingGatePassLinkedBy
 }
 
 export type IncomingGatePassWeightSlip = {
@@ -97,7 +103,7 @@ export type IncomingGatePass = {
   truckNumber: string
   bagsReceived: number
   status: GatePassStatus
-  stage: string
+  stage?: string
   remarks?: string
   farmerStorageLinkId: IncomingGatePassFarmerStorageLink
   createdBy: {

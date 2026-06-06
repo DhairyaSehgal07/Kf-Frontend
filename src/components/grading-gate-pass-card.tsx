@@ -95,8 +95,17 @@ function getBagWeightKg(bagType: BagType) {
   return bagType === "LENO" ? LENO_BAG_WEIGHT : JUTE_BAG_WEIGHT
 }
 
+function getIncomingRefWeights(incoming: GradingGatePassIncomingRef) {
+  return {
+    grossWeightKg:
+      incoming.grossWeightKg ?? incoming.weightSlip?.grossWeightKg ?? 0,
+    tareWeightKg: incoming.tareWeightKg ?? incoming.weightSlip?.tareWeightKg ?? 0,
+  }
+}
+
 function incomingNetProductKg(incoming: GradingGatePassIncomingRef) {
-  const netKg = incoming.grossWeightKg - incoming.tareWeightKg
+  const { grossWeightKg, tareWeightKg } = getIncomingRefWeights(incoming)
+  const netKg = grossWeightKg - tareWeightKg
   return netKg - incoming.bagsReceived * JUTE_BAG_WEIGHT
 }
 
@@ -143,14 +152,14 @@ export function GradingGatePassCard({
   const totalBags = gradingTotalBags(gatePass.orderDetails)
   const totalWeightKg = gradingTotalNetProductKg(gatePass.orderDetails)
   const totalGradingBagWeightKg = gradingTotalBagWeightKg(gatePass.orderDetails)
-  const incomingGrossKg = gatePass.incomingGatePassIds.reduce(
-    (sum, incoming) => sum + incoming.grossWeightKg,
-    0,
-  )
-  const incomingTareKg = gatePass.incomingGatePassIds.reduce(
-    (sum, incoming) => sum + incoming.tareWeightKg,
-    0,
-  )
+  const incomingGrossKg = gatePass.incomingGatePassIds.reduce((sum, incoming) => {
+    const { grossWeightKg } = getIncomingRefWeights(incoming)
+    return sum + grossWeightKg
+  }, 0)
+  const incomingTareKg = gatePass.incomingGatePassIds.reduce((sum, incoming) => {
+    const { tareWeightKg } = getIncomingRefWeights(incoming)
+    return sum + tareWeightKg
+  }, 0)
   const incomingWeighbridgeNetKg = incomingGrossKg - incomingTareKg
   const incomingNetKg = gatePass.incomingGatePassIds.reduce(
     (sum, incoming) => sum + incomingNetProductKg(incoming),
@@ -275,8 +284,9 @@ export function GradingGatePassCard({
                       </thead>
                       <tbody>
                         {gatePass.incomingGatePassIds.map((incoming) => {
-                          const netKg =
-                            incoming.grossWeightKg - incoming.tareWeightKg
+                          const { grossWeightKg, tareWeightKg } =
+                            getIncomingRefWeights(incoming)
+                          const netKg = grossWeightKg - tareWeightKg
                           const bardanaKg =
                             incoming.bagsReceived * JUTE_BAG_WEIGHT
                           const netProductKg = incomingNetProductKg(incoming)
@@ -298,10 +308,10 @@ export function GradingGatePassCard({
                                 {incoming.bagsReceived.toLocaleString("en-IN")}
                               </td>
                               <td className="px-3 py-2.5 text-right text-sm tabular-nums">
-                                {formatKg(incoming.grossWeightKg)}
+                                {formatKg(grossWeightKg)}
                               </td>
                               <td className="px-3 py-2.5 text-right text-sm tabular-nums">
-                                {formatKg(incoming.tareWeightKg)}
+                                {formatKg(tareWeightKg)}
                               </td>
                               <td className="px-3 py-2.5 text-right text-sm font-medium tabular-nums">
                                 {formatKg(netKg)}

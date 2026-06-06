@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.9] - 2026-06-06
+
+People now includes a farmer profile page with API-backed gate pass history, summary stats, and tabbed review across incoming, grading, storage, and dispatch pre-storage.
+
+### Added
+
+- **Farmer profile page** — `/people/$id` shows farmer details, bag-count summary cards, and tabbed gate pass lists with loading, error, empty, and refresh states.
+- **Farmer storage link gate passes API** — Fetch helper, React Query hook, query keys, typed response shapes, and normalization for `/farmer-storage-link/:id/gate-passes`.
+- **Farmer profile search params** — People cards pass name, mobile, account number, and address into the profile route for instant header display.
+
+### Changed
+
+- **Grading gate pass card** — Resolves incoming gross/tare weights from nested weight slips when top-level values are absent.
+- **Gate pass types** — Grading incoming refs, incoming farmer storage links, and storage gate passes accept optional fields aligned with API payloads (weight slip refs, linked-by metadata, generation, stage).
+
 ## [0.3.8] - 2026-06-02
 
 Incoming report now supports polished export flows with Excel download and printable HTML preview, plus supporting formatter and toolbar updates.
@@ -515,6 +530,7 @@ First application scaffold for the Kapur frontend (`kf-frontend`).
 
 - Default Vite starter styles (`App.css`) and demo application UI from the initial template.
 
+[0.3.9]: https://github.com/compare/v0.3.8...v0.3.9
 [0.3.8]: https://github.com/compare/v0.3.7...v0.3.8
 [0.3.7]: https://github.com/compare/v0.3.6...v0.3.7
 [0.3.6]: https://github.com/compare/v0.3.5...v0.3.6

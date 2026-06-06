@@ -49,13 +49,20 @@ export type UpdateGradingGatePassResponse = {
   message?: string
 }
 
+export type GradingGatePassIncomingRefWeightSlip = {
+  slipNumber?: string
+  grossWeightKg: number
+  tareWeightKg: number
+}
+
 export type GradingGatePassIncomingRef = {
   _id?: string
   gatePassNo: number
-  manualGatePassNumber?: number
+  manualGatePassNumber?: number | null
   bagsReceived: number
-  grossWeightKg: number
-  tareWeightKg: number
+  grossWeightKg?: number
+  tareWeightKg?: number
+  weightSlip?: GradingGatePassIncomingRefWeightSlip
   date?: string
   truckNumber?: string
   status?: string
@@ -68,7 +75,7 @@ export type GradingGatePassFarmer = {
 
 export type GradingGatePassFarmerStorageLink = {
   _id?: string
-  accountNumber: number
+  accountNumber?: number
   farmerId: GradingGatePassFarmer
 }
 
