@@ -58,18 +58,18 @@ type FarmerProfileGatePassesProps = {
   query: UseQueryResult<FarmerStorageLinkGatePassesResult, Error>
 }
 
-type GatePassTabConfig<T> = {
+type GatePassTabConfig = {
   value: FarmerProfileGatePassTab
   label: string
   icon: LucideIcon
   emptyTitle: string
   emptyDescription: string
-  getItems: (data?: FarmerStorageLinkGatePassesResult) => T[]
+  getItems: (data?: FarmerStorageLinkGatePassesResult) => unknown[]
   skeleton: ReactNode
-  renderItem: (item: T) => ReactNode
+  renderItem: (item: unknown) => ReactNode
 }
 
-const GATE_PASS_TABS = [
+const GATE_PASS_TABS: readonly GatePassTabConfig[] = [
   {
     value: "incoming",
     label: "Incoming",
@@ -78,8 +78,8 @@ const GATE_PASS_TABS = [
     emptyDescription: "Incoming gate passes for this farmer will appear here.",
     getItems: (data) => data?.incoming ?? [],
     skeleton: <GatePassCardSkeleton />,
-    renderItem: (gatePass: IncomingGatePass) => (
-      <GatePassCard data={gatePass} canUpdate={false} />
+    renderItem: (item) => (
+      <GatePassCard data={item as IncomingGatePass} canUpdate={false} />
     ),
   },
   {
@@ -90,8 +90,8 @@ const GATE_PASS_TABS = [
     emptyDescription: "Grading gate passes for this farmer will appear here.",
     getItems: (data) => data?.grading ?? [],
     skeleton: <GradingGatePassCardSkeleton />,
-    renderItem: (gatePass: GradingGatePass) => (
-      <GradingGatePassCard data={gatePass} canUpdate={false} />
+    renderItem: (item) => (
+      <GradingGatePassCard data={item as GradingGatePass} canUpdate={false} />
     ),
   },
   {
@@ -102,8 +102,8 @@ const GATE_PASS_TABS = [
     emptyDescription: "Storage gate passes for this farmer will appear here.",
     getItems: (data) => data?.storage ?? [],
     skeleton: <StorageGatePassCardSkeleton />,
-    renderItem: (gatePass: StorageGatePass) => (
-      <StorageGatePassCard data={gatePass} canUpdate={false} />
+    renderItem: (item) => (
+      <StorageGatePassCard data={item as StorageGatePass} canUpdate={false} />
     ),
   },
   {
@@ -114,8 +114,8 @@ const GATE_PASS_TABS = [
     emptyDescription: "Nikasi gate passes for this farmer will appear here.",
     getItems: (data) => data?.nikasi ?? [],
     skeleton: <NikasiGatePassCardSkeleton />,
-    renderItem: (gatePass: NikasiGatePass) => (
-      <NikasiGatePassCard data={gatePass} />
+    renderItem: (item) => (
+      <NikasiGatePassCard data={item as NikasiGatePass} />
     ),
   },
   {
@@ -129,7 +129,7 @@ const GATE_PASS_TABS = [
     skeleton: <GatePassCardSkeleton />,
     renderItem: () => null,
   },
-] as const satisfies readonly GatePassTabConfig<unknown>[]
+]
 
 export function FarmerProfileGatePasses({ query }: FarmerProfileGatePassesProps) {
   const { tab } = farmerProfileRouteApi.useSearch()

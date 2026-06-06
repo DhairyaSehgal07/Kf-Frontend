@@ -26,6 +26,14 @@ function toGatePassStatus(status: string | undefined): GatePassStatus {
   return status === "NOT_GRADED" ? "NOT_GRADED" : "GRADED"
 }
 
+function weightSlipFromIncomingRef(ref: GradingGatePassIncomingRef) {
+  return {
+    slipNumber: ref.weightSlip?.slipNumber ?? "",
+    grossWeightKg: ref.grossWeightKg ?? ref.weightSlip?.grossWeightKg ?? 0,
+    tareWeightKg: ref.tareWeightKg ?? ref.weightSlip?.tareWeightKg ?? 0,
+  }
+}
+
 export function orderDetailsToQuantities(
   orderDetails: readonly GradingOrderDetail[],
 ): GradingQuantityRow[] {
@@ -98,11 +106,7 @@ export function gradingIncomingRefsToSelectRows(
           variety,
           truckNumber: ref.truckNumber ?? "—",
           bagsReceived: ref.bagsReceived,
-          weightSlip: {
-            slipNumber: "",
-            grossWeightKg: ref.grossWeightKg,
-            tareWeightKg: ref.tareWeightKg,
-          },
+          weightSlip: weightSlipFromIncomingRef(ref),
           status: toGatePassStatus(ref.status),
         },
       ]
@@ -124,7 +128,11 @@ export function gradingIncomingRefsToSelectRows(
           variety: cached.variety,
           truckNumber: cached.truckNumber,
           bagsReceived: cached.bagsReceived,
-          weightSlip: cached.weightSlip,
+          weightSlip: cached.weightSlip ?? {
+            slipNumber: "",
+            grossWeightKg: 0,
+            tareWeightKg: 0,
+          },
           status: cached.status,
         },
       ]
@@ -139,11 +147,7 @@ export function gradingIncomingRefsToSelectRows(
         variety,
         truckNumber: ref.truckNumber ?? "—",
         bagsReceived: ref.bagsReceived,
-        weightSlip: {
-          slipNumber: "",
-          grossWeightKg: ref.grossWeightKg,
-          tareWeightKg: ref.tareWeightKg,
-        },
+        weightSlip: weightSlipFromIncomingRef(ref),
         status: toGatePassStatus(ref.status),
       },
     ]

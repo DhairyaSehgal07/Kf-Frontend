@@ -23,7 +23,7 @@ export function incomingGatePassToFormValues(
     createdBy: gatePass.createdBy._id ?? userId,
     variety: gatePass.variety,
     category: gatePass.category as IncomingFormValues["category"],
-    stage: gatePass.stage,
+    stage: gatePass.stage ?? "",
     date: toIsoDateTime(gatePass.date),
     bagsReceived: gatePass.bagsReceived,
     weightSlip: gatePass.weightSlip ?? {

@@ -107,9 +107,9 @@ function EditGradingFormFields({ gatePass }: EditGradingFormFieldsProps) {
 
     return {
       id,
-      label: `${name} (Account #${link.accountNumber})`,
+      label: `${name} (Account #${link.accountNumber ?? "—"})`,
       name,
-      accountNumber: link.accountNumber,
+      accountNumber: link.accountNumber ?? 0,
     }
   }, [gatePass.farmerStorageLinkId])
 

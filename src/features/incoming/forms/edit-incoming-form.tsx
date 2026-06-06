@@ -199,7 +199,7 @@ function EditIncomingFormFields({ gatePass }: EditIncomingFormFieldsProps) {
   const [varietyComboboxOpen, setVarietyComboboxOpen] = useState(false)
   const [categorySearch, setCategorySearch] = useState(() => gatePass.category)
   const [categoryComboboxOpen, setCategoryComboboxOpen] = useState(false)
-  const [stageSearch, setStageSearch] = useState(() => gatePass.stage)
+  const [stageSearch, setStageSearch] = useState(() => gatePass.stage ?? "")
   const [stageComboboxOpen, setStageComboboxOpen] = useState(false)
   const [reviewOpen, setReviewOpen] = useState(false)
 
@@ -282,7 +282,7 @@ function EditIncomingFormFields({ gatePass }: EditIncomingFormFieldsProps) {
     setVarietyComboboxOpen(false)
     setCategorySearch(gatePass.category)
     setCategoryComboboxOpen(false)
-    setStageSearch(gatePass.stage)
+    setStageSearch(gatePass.stage ?? "")
     setStageComboboxOpen(false)
   }
 
