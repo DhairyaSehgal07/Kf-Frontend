@@ -1,6 +1,7 @@
-import { useCallback, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import type { Table as TanStackTable } from "@tanstack/react-table"
 import { Loader2 } from "lucide-react"
+import { toast } from "sonner"
 
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -16,6 +17,13 @@ import {
 } from "./components/columns"
 import { DataTable } from "./components/data-table"
 import { ReportToolbar } from "./components/report-toolbar"
+import { exportStorageReportToExcel } from "./utils/export-storage-report-excel"
+import {
+  STORAGE_REPORT_DOWNLOAD_EXCEL_DONE_MESSAGE,
+  STORAGE_REPORT_DOWNLOAD_EXCEL_MESSAGE,
+  openStorageReportPreview,
+} from "./utils/preview-storage-report-html"
+import { useAuthStore } from "@/features/auth/store/use-auth-store"
 
 const DEFAULT_REPORT_PARAMS = {} satisfies StorageGatePassReportParams
 
@@ -33,7 +41,10 @@ const StorageReportPage = () => {
     useState<StorageQuantityMode>("current")
   const [appliedParams, setAppliedParams] =
     useState<StorageGatePassReportParams>(DEFAULT_REPORT_PARAMS)
+  const [isExporting, setIsExporting] = useState(false)
+  const previewWindowRef = useRef<Window | null>(null)
 
+  const coldStorageName = useAuthStore((s) => s.user?.coldStorageId.name)
   const { data, error, isFetching, isLoading, refetch } =
     useStorageGatePassReport(appliedParams)
 
@@ -58,6 +69,112 @@ const StorageReportPage = () => {
     },
     [],
   )
+
+  const filteredRowCount =
+    reportTable?.getFilteredRowModel().rows.length ?? displayedRows.length
+
+  const notifyPreviewDownloadComplete = useCallback(() => {
+    const previewWindow = previewWindowRef.current
+    if (!previewWindow || previewWindow.closed) return
+
+    previewWindow.postMessage(
+      { type: STORAGE_REPORT_DOWNLOAD_EXCEL_DONE_MESSAGE },
+      window.location.origin,
+    )
+  }, [])
+
+  const handleExportExcel = useCallback(async () => {
+    if (!reportTable) return
+
+    if (filteredRowCount === 0) {
+      toast.error("No rows to export. Adjust filters or load report data.", {
+        position: "bottom-right",
+      })
+      return
+    }
+
+    setIsExporting(true)
+
+    try {
+      await exportStorageReportToExcel({
+        table: reportTable,
+        coldStorageName: coldStorageName ?? "Cold Storage",
+        quantityMode,
+        reportTitle: "Storage Report",
+        dateFrom,
+        dateTo,
+      })
+      toast.success("Report exported to Excel", {
+        position: "bottom-right",
+      })
+    } catch (exportError) {
+      toast.error(
+        exportError instanceof Error
+          ? exportError.message
+          : "Failed to export report to Excel",
+        { position: "bottom-right" },
+      )
+    } finally {
+      setIsExporting(false)
+      notifyPreviewDownloadComplete()
+    }
+  }, [
+    coldStorageName,
+    dateFrom,
+    dateTo,
+    filteredRowCount,
+    notifyPreviewDownloadComplete,
+    quantityMode,
+    reportTable,
+  ])
+
+  useEffect(() => {
+    const onMessage = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return
+      if (event.data?.type !== STORAGE_REPORT_DOWNLOAD_EXCEL_MESSAGE) return
+
+      void handleExportExcel()
+    }
+
+    window.addEventListener("message", onMessage)
+    return () => window.removeEventListener("message", onMessage)
+  }, [handleExportExcel])
+
+  const handlePreview = useCallback(() => {
+    if (!reportTable) return
+
+    if (filteredRowCount === 0) {
+      toast.error("No rows to preview. Adjust filters or load report data.", {
+        position: "bottom-right",
+      })
+      return
+    }
+
+    try {
+      previewWindowRef.current = openStorageReportPreview({
+        table: reportTable,
+        coldStorageName: coldStorageName ?? "Cold Storage",
+        quantityMode,
+        reportTitle: "Storage Report",
+        dateFrom,
+        dateTo,
+      })
+    } catch (previewError) {
+      toast.error(
+        previewError instanceof Error
+          ? previewError.message
+          : "Failed to open report preview",
+        { position: "bottom-right" },
+      )
+    }
+  }, [
+    coldStorageName,
+    dateFrom,
+    dateTo,
+    filteredRowCount,
+    quantityMode,
+    reportTable,
+  ])
 
   const handleApply = () => {
     const next: StorageGatePassReportParams = {}
@@ -122,6 +239,9 @@ const StorageReportPage = () => {
           onSearchChange={setSearchQuery}
           isLoading={isLoading}
           isRefreshing={isFetching}
+          isExporting={isExporting}
+          onPreview={handlePreview}
+          onExportExcel={handleExportExcel}
         />
       </div>
 

@@ -1,5 +1,5 @@
 import type { Table } from "@tanstack/react-table"
-import { RefreshCw, Search } from "lucide-react"
+import { Eye, FileSpreadsheet, Loader2, RefreshCw, Search } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -21,6 +21,9 @@ export interface ReportToolbarProps {
   onSearchChange: (value: string) => void
   isLoading?: boolean
   isRefreshing?: boolean
+  isExporting?: boolean
+  onPreview?: () => void
+  onExportExcel?: () => void
   className?: string
 }
 
@@ -37,6 +40,9 @@ export function ReportToolbar({
   onSearchChange,
   isLoading = false,
   isRefreshing = false,
+  isExporting = false,
+  onPreview,
+  onExportExcel,
   className,
 }: ReportToolbarProps) {
   return (
@@ -114,6 +120,35 @@ export function ReportToolbar({
 
         <div className="flex shrink-0 items-center gap-2">
           {table ? <ViewFiltersSheet table={table} /> : null}
+
+          <Button
+            type="button"
+            variant="outline"
+            className="min-w-0 gap-1.5 lg:flex-none"
+            aria-label="Preview storage report"
+            onClick={onPreview}
+            disabled={isLoading || !table}
+          >
+            <Eye className="size-4 shrink-0" aria-hidden />
+            <span className="truncate">Preview</span>
+          </Button>
+
+          <Button
+            type="button"
+            className="min-w-0 gap-1.5 lg:flex-none"
+            aria-label="Export storage report to Excel"
+            onClick={onExportExcel}
+            disabled={isLoading || isExporting || !table}
+          >
+            {isExporting ? (
+              <Loader2 className="size-4 shrink-0 animate-spin" aria-hidden />
+            ) : (
+              <FileSpreadsheet className="size-4 shrink-0" aria-hidden />
+            )}
+            <span className="truncate">
+              {isExporting ? "Exporting…" : "Excel"}
+            </span>
+          </Button>
 
           <Button
             type="button"
