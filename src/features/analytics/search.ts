@@ -4,8 +4,8 @@ export const ANALYTICS_TAB_VALUES = [
   "incoming",
   "grading",
   "storage",
-  "dispatch-pre-storage",
-  "dispatch-post-storage",
+  "dispatch",
+  "booking",
 ] as const
 
 export const analyticsTabSchema = z.enum(ANALYTICS_TAB_VALUES)

@@ -17,8 +17,8 @@ import {
 import { preserveScroll } from "@/lib/preserve-scroll"
 
 import type { DaybookTab } from "./search"
-import DaybookDispatchPostStorageTab from "./components/dispatch-post-storage-tab"
-import DaybookDispatchPreStorageTab from "./components/dispatch-pre-storage-tab"
+import DaybookBookingTab from "./components/booking-tab"
+import DaybookDispatchTab from "./components/dispatch-tab"
 import DaybookGradingTab from "./components/grading-tab"
 import DaybookIncomingTab from "./components/incoming-tab"
 import DaybookStorageTab from "./components/storage-tab"
@@ -58,14 +58,14 @@ const DaybookPage = () => {
             <span className="hidden sm:block">Storage</span>
           </TabsTrigger>
 
-          <TabsTrigger value="dispatch-pre-storage">
+          <TabsTrigger value="dispatch">
             <PackageCheck className="h-5 w-5 sm:hidden" />
-            <span className="hidden sm:block">Dispatch (pre-storage)</span>
+            <span className="hidden sm:block">Dispatch</span>
           </TabsTrigger>
 
-          <TabsTrigger value="dispatch-post-storage">
+          <TabsTrigger value="booking">
             <ArrowLeftRight className="h-5 w-5 sm:hidden" />
-            <span className="hidden sm:block">Dispatch (post-storage)</span>
+            <span className="hidden sm:block">Booking</span>
           </TabsTrigger>
 
         </TabsList>
@@ -83,12 +83,12 @@ const DaybookPage = () => {
           <DaybookStorageTab />
         </TabsContent>
 
-        <TabsContent value="dispatch-pre-storage" className="min-w-0">
-          <DaybookDispatchPreStorageTab />
+        <TabsContent value="dispatch" className="min-w-0">
+          <DaybookDispatchTab />
         </TabsContent>
 
-        <TabsContent value="dispatch-post-storage" className="min-w-0">
-          <DaybookDispatchPostStorageTab />
+        <TabsContent value="booking" className="min-w-0">
+          <DaybookBookingTab />
         </TabsContent>
 
       </Tabs>

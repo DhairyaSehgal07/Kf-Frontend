@@ -70,8 +70,8 @@ const reportNavItems = [
   { name: 'Incoming', to: '/incoming/report' },
   { name: 'Grading', to: '/grading/report' },
   { name: 'Storage', to: '/storage/report' },
-  { name: 'Dispatch pre-storage', to: '/dispatch-pre-storage/report' },
-  { name: 'Dispatch post-storage', to: '/dispatch-post-storage/report' },
+  { name: 'Dispatch', to: '/dispatch-pre-storage/report' },
+  { name: 'Booking', to: '/dispatch-post-storage/report' },
 ] as const;
 
 function isReportPath(pathname: string) {

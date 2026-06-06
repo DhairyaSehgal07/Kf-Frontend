@@ -75,7 +75,7 @@ function parseGatePassSearchNumber(value: string): number | undefined {
   return parsed > 0 ? parsed : undefined
 }
 
-function DispatchPreStorageTabSkeleton() {
+function DispatchTabSkeleton() {
   return (
     <div className="flex w-full flex-col gap-4">
       <Item variant="outline" size="sm">
@@ -132,7 +132,7 @@ function DispatchPreStorageTabSkeleton() {
   )
 }
 
-const DaybookDispatchPreStorageTab = () => {
+const DaybookDispatchTab = () => {
   const navigate = useNavigate()
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState<PageSize>(DEFAULT_PAGE_SIZE)
@@ -197,8 +197,8 @@ const DaybookDispatchPreStorageTab = () => {
   const emptyTitle = hasInvalidSearchInput
     ? "Invalid gate pass number"
     : isSearchMode
-      ? "No dispatch (pre-storage) gate pass found"
-      : "No dispatch (pre-storage) gate passes found"
+      ? "No dispatch gate pass found"
+      : "No dispatch gate passes found"
   const emptyDescription = hasInvalidSearchInput
     ? "Enter a valid numeric gate pass number to search."
     : isSearchMode
@@ -237,7 +237,7 @@ const DaybookDispatchPreStorageTab = () => {
   }
 
   if (showListLoading) {
-    return <DispatchPreStorageTabSkeleton />
+    return <DispatchTabSkeleton />
   }
 
   return (
@@ -251,7 +251,7 @@ const DaybookDispatchPreStorageTab = () => {
 
         <ItemContent>
           <ItemTitle>
-            {totalCount} dispatch (pre-storage) gate passes
+            {totalCount} dispatch gate passes
           </ItemTitle>
         </ItemContent>
 
@@ -301,7 +301,7 @@ const DaybookDispatchPreStorageTab = () => {
             <Button variant="secondary" className="min-w-0 px-2.5 sm:px-3">
               <span className="truncate sm:hidden">Edit History</span>
               <span className="hidden sm:inline">
-                Dispatch (pre-storage) Edit History
+                Dispatch Edit History
               </span>
             </Button>
 
@@ -328,7 +328,7 @@ const DaybookDispatchPreStorageTab = () => {
             </EmptyMedia>
 
             <EmptyTitle>
-              Could not load dispatch (pre-storage) gate passes
+              Could not load dispatch gate passes
             </EmptyTitle>
 
             <EmptyDescription>
@@ -444,4 +444,4 @@ const DaybookDispatchPreStorageTab = () => {
   )
 }
 
-export default DaybookDispatchPreStorageTab
+export default DaybookDispatchTab

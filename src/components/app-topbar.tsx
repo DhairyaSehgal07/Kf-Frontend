@@ -38,8 +38,8 @@ const routeTitles: Record<string, string> = {
   '/incoming/report': 'Incoming report',
   '/grading/report': 'Grading report',
   '/storage/report': 'Storage report',
-  '/dispatch-pre-storage/report': 'Dispatch pre-storage report',
-  '/dispatch-post-storage/report': 'Dispatch post-storage report',
+  '/dispatch-pre-storage/report': 'Dispatch report',
+  '/dispatch-post-storage/report': 'Booking report',
 };
 
 function getInitials(name?: string) {

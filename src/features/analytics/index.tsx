@@ -54,8 +54,8 @@ const TAB_PLACEHOLDER: Record<
   Exclude<AnalyticsTab, "incoming" | "grading" | "storage">,
   string
 > = {
-  "dispatch-pre-storage": "Show Dispatch (pre-storage) Analytics here",
-  "dispatch-post-storage": "Show Dispatch (post-storage) Analytics here",
+  dispatch: "Show Dispatch Analytics here",
+  booking: "Show Booking Analytics here",
 }
 
 function AnalyticsTabPlaceholder({
@@ -192,14 +192,14 @@ const AnalyticsPage = () => {
             <span className="hidden sm:block">Storage</span>
           </TabsTrigger>
 
-          <TabsTrigger value="dispatch-pre-storage">
+          <TabsTrigger value="dispatch">
             <PackageCheck className="h-5 w-5 sm:hidden" />
-            <span className="hidden sm:block">Dispatch (pre-storage)</span>
+            <span className="hidden sm:block">Dispatch</span>
           </TabsTrigger>
 
-          <TabsTrigger value="dispatch-post-storage">
+          <TabsTrigger value="booking">
             <ArrowLeftRight className="h-5 w-5 sm:hidden" />
-            <span className="hidden sm:block">Dispatch (post-storage)</span>
+            <span className="hidden sm:block">Booking</span>
           </TabsTrigger>
         </TabsList>
 
@@ -224,12 +224,12 @@ const AnalyticsPage = () => {
           />
         </TabsContent>
 
-        <TabsContent value="dispatch-pre-storage" className="min-w-0">
-          <AnalyticsTabPlaceholder tab="dispatch-pre-storage" />
+        <TabsContent value="dispatch" className="min-w-0">
+          <AnalyticsTabPlaceholder tab="dispatch" />
         </TabsContent>
 
-        <TabsContent value="dispatch-post-storage" className="min-w-0">
-          <AnalyticsTabPlaceholder tab="dispatch-post-storage" />
+        <TabsContent value="booking" className="min-w-0">
+          <AnalyticsTabPlaceholder tab="booking" />
         </TabsContent>
       </Tabs>
     </div>

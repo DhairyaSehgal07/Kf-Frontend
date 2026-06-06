@@ -40,7 +40,7 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty"
 
-const DaybookDispatchPostStorageTab = () => {
+const DaybookBookingTab = () => {
   const gatePassCount = 0
 
   const itemsPerPage = 10
@@ -65,7 +65,7 @@ const DaybookDispatchPostStorageTab = () => {
 
         <ItemContent>
           <ItemTitle>
-            {gatePassCount} dispatch (post-storage) gate passes
+            {gatePassCount} booking gate passes
           </ItemTitle>
         </ItemContent>
 
@@ -104,12 +104,12 @@ const DaybookDispatchPostStorageTab = () => {
           <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-row sm:shrink-0">
             <Button variant="secondary" className="min-w-0 px-2.5 sm:px-3">
               <span className="truncate sm:hidden">Edit History</span>
-              <span className="hidden sm:inline">Dispatch (post-storage) Edit History</span>
+              <span className="hidden sm:inline">Booking Edit History</span>
             </Button>
 
             <Button className="min-w-0 px-2.5 sm:px-3">
               <ArrowUpFromLine className="h-4 w-4 shrink-0 sm:mr-2" />
-              <span className="truncate">Add Dispatch</span>
+              <span className="truncate">Add Booking</span>
             </Button>
           </div>
         </div>
@@ -121,10 +121,10 @@ const DaybookDispatchPostStorageTab = () => {
             <ArrowLeftRight />
           </EmptyMedia>
 
-          <EmptyTitle>Dispatch (post-storage) list coming soon</EmptyTitle>
+          <EmptyTitle>Booking list coming soon</EmptyTitle>
 
           <EmptyDescription>
-            Gate pass cards and dispatch post-storage details will appear here once this tab
+            Gate pass cards and booking details will appear here once this tab
             is connected to the API.
           </EmptyDescription>
         </EmptyHeader>
@@ -181,4 +181,4 @@ const DaybookDispatchPostStorageTab = () => {
   )
 }
 
-export default DaybookDispatchPostStorageTab
+export default DaybookBookingTab

@@ -4,8 +4,8 @@ export const FARMER_PROFILE_GATE_PASS_TAB_VALUES = [
   "incoming",
   "grading",
   "storage",
-  "dispatch-pre-storage",
-  "dispatch-post-storage",
+  "dispatch",
+  "booking",
 ] as const
 
 export const farmerProfileGatePassTabSchema = z.enum(
