@@ -49,7 +49,6 @@ import {
   getIncomingReportColumnIds,
   getStoredIncomingReportColumnState,
 } from "./utils/report-column-preferences"
-import { exportIncomingReportToExcel } from "./utils/export-incoming-report-excel"
 import {
   INCOMING_REPORT_DOWNLOAD_EXCEL_DONE_MESSAGE,
   INCOMING_REPORT_DOWNLOAD_EXCEL_MESSAGE,
@@ -220,6 +219,9 @@ const IncomingReportPage = () => {
     setIsExporting(true)
 
     try {
+      const { exportIncomingReportToExcel } = await import(
+        "./utils/export-incoming-report-excel"
+      )
       await exportIncomingReportToExcel({
         table,
         coldStorageName: coldStorageName ?? "Cold Storage",

@@ -27,6 +27,8 @@ export default defineConfig({
     babel({ presets: [reactCompilerPreset()] }),
   ],
   build: {
+    // exceljs ships as one ~930 KB module; it is lazy-loaded on report export only.
+    chunkSizeWarningLimit: 1000,
     rolldownOptions: {
       output: {
         codeSplitting: {
@@ -39,6 +41,11 @@ export default defineConfig({
             {
               name: 'chart-vendor',
               test: /[\\/]node_modules[\\/]recharts[\\/]/,
+              priority: 35,
+            },
+            {
+              name: 'excel-vendor',
+              test: /[\\/]node_modules[\\/]exceljs[\\/]/,
               priority: 35,
             },
             {

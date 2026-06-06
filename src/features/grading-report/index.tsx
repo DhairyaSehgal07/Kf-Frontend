@@ -19,7 +19,6 @@ import {
   getIncomingGatePassObjects,
   parseReportNumber,
 } from './utils/report-formatters';
-import { exportGradingReportToExcel } from './utils/export-grading-report-excel';
 import {
   GRADING_REPORT_DOWNLOAD_EXCEL_DONE_MESSAGE,
   GRADING_REPORT_DOWNLOAD_EXCEL_MESSAGE,
@@ -148,6 +147,9 @@ const GradingReportPage = () => {
     setIsExporting(true);
 
     try {
+      const { exportGradingReportToExcel } = await import(
+        './utils/export-grading-report-excel'
+      );
       await exportGradingReportToExcel({
         table: reportTable,
         coldStorageName: coldStorageName ?? 'Cold Storage',

@@ -17,7 +17,6 @@ import {
 } from "./components/columns"
 import { DataTable } from "./components/data-table"
 import { ReportToolbar } from "./components/report-toolbar"
-import { exportStorageReportToExcel } from "./utils/export-storage-report-excel"
 import {
   STORAGE_REPORT_DOWNLOAD_EXCEL_DONE_MESSAGE,
   STORAGE_REPORT_DOWNLOAD_EXCEL_MESSAGE,
@@ -96,6 +95,9 @@ const StorageReportPage = () => {
     setIsExporting(true)
 
     try {
+      const { exportStorageReportToExcel } = await import(
+        "./utils/export-storage-report-excel"
+      )
       await exportStorageReportToExcel({
         table: reportTable,
         coldStorageName: coldStorageName ?? "Cold Storage",
