@@ -229,7 +229,7 @@ export function getExportCellForLine(
   line: GradingExportLine,
   column: Column<GradingGatePassReportRow, unknown>,
 ): ExportCellValue {
-  const { row, incomingIndex, incomingCount } = line;
+  const { row, incomingIndex } = line;
   const columnId = column.id;
   const meta = column.columnDef.meta;
 
