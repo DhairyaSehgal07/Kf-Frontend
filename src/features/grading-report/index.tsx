@@ -1,6 +1,7 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Table as TanStackTable } from '@tanstack/react-table';
 import { format } from 'date-fns';
+import { toast } from 'sonner';
 
 import { Badge } from '@/components/ui/badge';
 import {
@@ -18,6 +19,13 @@ import {
   getIncomingGatePassObjects,
   parseReportNumber,
 } from './utils/report-formatters';
+import { exportGradingReportToExcel } from './utils/export-grading-report-excel';
+import {
+  GRADING_REPORT_DOWNLOAD_EXCEL_DONE_MESSAGE,
+  GRADING_REPORT_DOWNLOAD_EXCEL_MESSAGE,
+  openGradingReportPreview,
+} from './utils/preview-grading-report-html';
+import { useAuthStore } from '@/features/auth/store/use-auth-store';
 
 function toReportDateParam(date: Date | undefined): string | undefined {
   return date ? format(date, 'yyyy-MM-dd') : undefined;
@@ -44,7 +52,10 @@ const GradingReportPage = () => {
   const [appliedParams, setAppliedParams] = useState<GradingGatePassReportParams>(
     DEFAULT_GRADING_REPORT_PARAMS,
   );
+  const [isExporting, setIsExporting] = useState(false);
+  const previewWindowRef = useRef<Window | null>(null);
 
+  const coldStorageName = useAuthStore((s) => s.user?.coldStorageId.name);
   const { data, error, isFetching, isLoading, refetch } = useGradingGatePassReport(appliedParams);
 
   const displayedResponse = useMemo(() => {
@@ -111,6 +122,102 @@ const GradingReportPage = () => {
   const handleTableReady = useCallback((table: TanStackTable<GradingGatePassReportRow>) => {
     setReportTable((current) => (current === table ? current : table));
   }, []);
+
+  const filteredRowCount = reportTable?.getFilteredRowModel().rows.length ?? rowCount;
+
+  const notifyPreviewDownloadComplete = useCallback(() => {
+    const previewWindow = previewWindowRef.current;
+    if (!previewWindow || previewWindow.closed) return;
+
+    previewWindow.postMessage(
+      { type: GRADING_REPORT_DOWNLOAD_EXCEL_DONE_MESSAGE },
+      window.location.origin,
+    );
+  }, []);
+
+  const handleExportExcel = useCallback(async () => {
+    if (!reportTable) return;
+
+    if (filteredRowCount === 0) {
+      toast.error('No rows to export. Adjust filters or load report data.', {
+        position: 'bottom-right',
+      });
+      return;
+    }
+
+    setIsExporting(true);
+
+    try {
+      await exportGradingReportToExcel({
+        table: reportTable,
+        coldStorageName: coldStorageName ?? 'Cold Storage',
+        reportTitle: 'Grading Report',
+        fromDate,
+        toDate,
+      });
+      toast.success('Report exported to Excel', {
+        position: 'bottom-right',
+      });
+    } catch (exportError) {
+      toast.error(
+        exportError instanceof Error
+          ? exportError.message
+          : 'Failed to export report to Excel',
+        { position: 'bottom-right' },
+      );
+    } finally {
+      setIsExporting(false);
+      notifyPreviewDownloadComplete();
+    }
+  }, [
+    coldStorageName,
+    filteredRowCount,
+    fromDate,
+    notifyPreviewDownloadComplete,
+    reportTable,
+    toDate,
+  ]);
+
+  useEffect(() => {
+    const onMessage = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return;
+      if (event.data?.type !== GRADING_REPORT_DOWNLOAD_EXCEL_MESSAGE) return;
+
+      void handleExportExcel();
+    };
+
+    window.addEventListener('message', onMessage);
+    return () => window.removeEventListener('message', onMessage);
+  }, [handleExportExcel]);
+
+  const handlePreview = useCallback(() => {
+    if (!reportTable) return;
+
+    if (filteredRowCount === 0) {
+      toast.error('No rows to preview. Adjust filters or load report data.', {
+        position: 'bottom-right',
+      });
+      return;
+    }
+
+    try {
+      previewWindowRef.current = openGradingReportPreview({
+        table: reportTable,
+        coldStorageName: coldStorageName ?? 'Cold Storage',
+        reportTitle: 'Grading Report',
+        fromDate,
+        toDate,
+      });
+    } catch (previewError) {
+      toast.error(
+        previewError instanceof Error
+          ? previewError.message
+          : 'Failed to open report preview',
+        { position: 'bottom-right' },
+      );
+    }
+  }, [coldStorageName, filteredRowCount, fromDate, reportTable, toDate]);
+
   const handleApply = () => {
     const next: GradingGatePassReportParams = {};
     const dateFrom = toReportDateParam(fromDate);
@@ -176,6 +283,9 @@ const GradingReportPage = () => {
           onSearchChange={setSearchQuery}
           isLoading={isLoading}
           isRefreshing={isFetching}
+          isExporting={isExporting}
+          onPreview={handlePreview}
+          onExportExcel={handleExportExcel}
         />
       </div>
 
