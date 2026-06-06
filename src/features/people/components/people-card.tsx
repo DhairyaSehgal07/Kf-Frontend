@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router"
 import { MapPin, Phone, User } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
@@ -22,48 +23,57 @@ export function PeopleCard({ link }: PeopleCardProps) {
   const farmer = link.farmerId
 
   return (
-    <Card size="sm" className={cn("card-hover gap-0")}>
-      <CardHeader className="pb-2">
-        <CardTitle className="truncate" title={farmer.name}>
-          {farmer.name}
-        </CardTitle>
-        <CardDescription className="tabular-nums transition-colors duration-200 group-hover/card:text-foreground/80">
-          Account #{link.accountNumber}
-        </CardDescription>
-        <CardAction>
-          <PeopleAvatarIcon />
-        </CardAction>
-      </CardHeader>
+    <Link
+      to="/people/$id"
+      params={{ id: link._id }}
+      className="block min-w-0 rounded-4xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
+    >
+      <Card size="sm" className={cn("card-hover gap-0")}>
+        <CardHeader className="pb-2">
+          <CardTitle className="truncate" title={farmer.name}>
+            {farmer.name}
+          </CardTitle>
+          <CardDescription className="tabular-nums transition-colors duration-200 group-hover/card:text-foreground/80">
+            Account #{link.accountNumber}
+          </CardDescription>
+          <CardAction>
+            <PeopleAvatarIcon />
+          </CardAction>
+        </CardHeader>
 
-      <CardContent className="flex flex-col gap-2.5">
-        <p className="flex items-center gap-2 text-sm text-foreground">
-          <Phone className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
-          <span className="tabular-nums">{farmer.mobileNumber}</span>
-        </p>
+        <CardContent className="flex flex-col gap-2.5">
+          <p className="flex items-center gap-2 text-sm text-foreground">
+            <Phone
+              className="size-3.5 shrink-0 text-muted-foreground"
+              aria-hidden
+            />
+            <span className="tabular-nums">{farmer.mobileNumber}</span>
+          </p>
 
-        <p className="flex items-start gap-2 text-xs leading-relaxed text-muted-foreground">
-          <MapPin
-            className="mt-0.5 size-3.5 shrink-0 text-muted-foreground"
-            aria-hidden
-          />
-          <span className="line-clamp-2" title={farmer.address}>
-            {farmer.address}
-          </span>
-        </p>
+          <p className="flex items-start gap-2 text-xs leading-relaxed text-muted-foreground">
+            <MapPin
+              className="mt-0.5 size-3.5 shrink-0 text-muted-foreground"
+              aria-hidden
+            />
+            <span className="line-clamp-2" title={farmer.address}>
+              {farmer.address}
+            </span>
+          </p>
 
-        <Badge
-          variant="outline"
-          className={cn(
-            "w-fit font-normal",
-            link.isActive
-              ? "border-primary/30 bg-primary/10 text-primary"
-              : "bg-muted/50 text-muted-foreground",
-          )}
-        >
-          {link.isActive ? "Active" : "Inactive"}
-        </Badge>
-      </CardContent>
-    </Card>
+          <Badge
+            variant="outline"
+            className={cn(
+              "w-fit font-normal",
+              link.isActive
+                ? "border-primary/30 bg-primary/10 text-primary"
+                : "bg-muted/50 text-muted-foreground",
+            )}
+          >
+            {link.isActive ? "Active" : "Inactive"}
+          </Badge>
+        </CardContent>
+      </Card>
+    </Link>
   )
 }
 

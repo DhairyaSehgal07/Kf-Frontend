@@ -14,7 +14,7 @@ import type { PeopleTab } from "./search"
 import DispatchLedgerTab from "./components/dispatch-ledger-tab"
 import PeopleTabContent from "./components/people-tab"
 
-const peopleRouteApi = getRouteApi("/_authenticated/people")
+const peopleRouteApi = getRouteApi("/_authenticated/people/")
 
 const PeoplePage = () => {
   const { tab } = peopleRouteApi.useSearch()

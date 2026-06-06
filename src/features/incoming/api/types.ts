@@ -157,6 +157,9 @@ export type IncomingGatePassAuditEditor = {
   mobileNumber?: string
 }
 
+/** Audit snapshots only include weight-slip fields that were part of the edit. */
+export type IncomingGatePassAuditWeightSlip = Partial<IncomingGatePassWeightSlip>
+
 export type IncomingGatePassAuditState = Partial<{
   manualGatePassNumber: number | null
   truckNumber: string
@@ -166,7 +169,7 @@ export type IncomingGatePassAuditState = Partial<{
   category: string
   stage: string
   bagsReceived: number
-  weightSlip: IncomingGatePassWeightSlip
+  weightSlip: IncomingGatePassAuditWeightSlip
   remarks: string
 }>
 

@@ -1,7 +1,7 @@
 import type {
   IncomingGatePassAuditState,
+  IncomingGatePassAuditWeightSlip,
   IncomingGatePassFarmerStorageLink,
-  IncomingGatePassWeightSlip,
 } from "@/features/incoming/api/types"
 
 export const INCOMING_GATE_PASS_AUDIT_FIELD_LABELS: Record<
@@ -44,10 +44,34 @@ function formatFarmerStorageLink(
     : name
 }
 
-function formatWeightSlip(value: IncomingGatePassWeightSlip) {
-  const netKg = value.grossWeightKg - value.tareWeightKg
+function formatWeightSlip(value: IncomingGatePassAuditWeightSlip) {
+  const parts: string[] = []
 
-  return `${value.slipNumber} · gross ${formatNumber(value.grossWeightKg)} kg · tare ${formatNumber(value.tareWeightKg)} kg · net ${formatNumber(netKg)} kg`
+  if (value.slipNumber != null && value.slipNumber !== "") {
+    parts.push(value.slipNumber)
+  }
+
+  if (typeof value.grossWeightKg === "number" && !Number.isNaN(value.grossWeightKg)) {
+    parts.push(`gross ${formatNumber(value.grossWeightKg)} kg`)
+  }
+
+  if (typeof value.tareWeightKg === "number" && !Number.isNaN(value.tareWeightKg)) {
+    parts.push(`tare ${formatNumber(value.tareWeightKg)} kg`)
+  }
+
+  const hasGross =
+    typeof value.grossWeightKg === "number" && !Number.isNaN(value.grossWeightKg)
+  const hasTare =
+    typeof value.tareWeightKg === "number" && !Number.isNaN(value.tareWeightKg)
+
+  if (hasGross && hasTare) {
+    const netKg = value.grossWeightKg! - value.tareWeightKg!
+    if (!Number.isNaN(netKg)) {
+      parts.push(`net ${formatNumber(netKg)} kg`)
+    }
+  }
+
+  return parts.length > 0 ? parts.join(" · ") : "—"
 }
 
 function formatNumber(value: number) {
@@ -75,7 +99,7 @@ export function formatAuditFieldValue(
         : String(value)
     case "weightSlip":
       return typeof value === "object" && value != null
-        ? formatWeightSlip(value as IncomingGatePassWeightSlip)
+        ? formatWeightSlip(value as IncomingGatePassAuditWeightSlip)
         : String(value)
     default:
       return String(value)
