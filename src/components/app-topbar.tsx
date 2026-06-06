@@ -40,6 +40,7 @@ const routeTitles: Record<string, string> = {
   '/storage/report': 'Storage report',
   '/dispatch-pre-storage/report': 'Dispatch report',
   '/dispatch-post-storage/report': 'Booking report',
+  '/booking': 'Booking',
 };
 
 function getInitials(name?: string) {

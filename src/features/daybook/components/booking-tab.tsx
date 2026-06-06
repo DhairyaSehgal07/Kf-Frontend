@@ -39,9 +39,16 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty"
+import { useNavigate } from "@tanstack/react-router"
 
 const DaybookBookingTab = () => {
+  const navigate = useNavigate();
   const gatePassCount = 0
+
+
+  const handleAddBooking = () => {
+    navigate({ to: "/booking" })
+  }
 
   const itemsPerPage = 10
   const currentPage = 1
@@ -107,7 +114,7 @@ const DaybookBookingTab = () => {
               <span className="hidden sm:inline">Booking Edit History</span>
             </Button>
 
-            <Button className="min-w-0 px-2.5 sm:px-3">
+            <Button className="min-w-0 px-2.5 sm:px-3" onClick={handleAddBooking}>
               <ArrowUpFromLine className="h-4 w-4 shrink-0 sm:mr-2" />
               <span className="truncate">Add Booking</span>
             </Button>

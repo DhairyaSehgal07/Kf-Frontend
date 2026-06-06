@@ -19,6 +19,7 @@ import { Route as AuthenticatedPeopleIndexRouteImport } from './routes/_authenti
 import { Route as AuthenticatedIncomingIndexRouteImport } from './routes/_authenticated/incoming.index'
 import { Route as AuthenticatedGradingIndexRouteImport } from './routes/_authenticated/grading.index'
 import { Route as AuthenticatedDispatchPreStorageIndexRouteImport } from './routes/_authenticated/dispatch-pre-storage.index'
+import { Route as AuthenticatedBookingIndexRouteImport } from './routes/_authenticated/booking.index'
 import { Route as AuthenticatedAdditionalIndexRouteImport } from './routes/_authenticated/additional.index'
 import { Route as AuthenticatedStorageReportRouteImport } from './routes/_authenticated/storage.report'
 import { Route as AuthenticatedStorageEditHistoryRouteImport } from './routes/_authenticated/storage.edit-history'
@@ -88,6 +89,12 @@ const AuthenticatedDispatchPreStorageIndexRoute =
   AuthenticatedDispatchPreStorageIndexRouteImport.update({
     id: '/dispatch-pre-storage/',
     path: '/dispatch-pre-storage/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedBookingIndexRoute =
+  AuthenticatedBookingIndexRouteImport.update({
+    id: '/booking/',
+    path: '/booking/',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedAdditionalIndexRoute =
@@ -195,6 +202,7 @@ export interface FileRoutesByFullPath {
   '/storage/edit-history': typeof AuthenticatedStorageEditHistoryRoute
   '/storage/report': typeof AuthenticatedStorageReportRoute
   '/additional/': typeof AuthenticatedAdditionalIndexRoute
+  '/booking/': typeof AuthenticatedBookingIndexRoute
   '/dispatch-pre-storage/': typeof AuthenticatedDispatchPreStorageIndexRoute
   '/grading/': typeof AuthenticatedGradingIndexRoute
   '/incoming/': typeof AuthenticatedIncomingIndexRoute
@@ -221,6 +229,7 @@ export interface FileRoutesByTo {
   '/storage/edit-history': typeof AuthenticatedStorageEditHistoryRoute
   '/storage/report': typeof AuthenticatedStorageReportRoute
   '/additional': typeof AuthenticatedAdditionalIndexRoute
+  '/booking': typeof AuthenticatedBookingIndexRoute
   '/dispatch-pre-storage': typeof AuthenticatedDispatchPreStorageIndexRoute
   '/grading': typeof AuthenticatedGradingIndexRoute
   '/incoming': typeof AuthenticatedIncomingIndexRoute
@@ -249,6 +258,7 @@ export interface FileRoutesById {
   '/_authenticated/storage/edit-history': typeof AuthenticatedStorageEditHistoryRoute
   '/_authenticated/storage/report': typeof AuthenticatedStorageReportRoute
   '/_authenticated/additional/': typeof AuthenticatedAdditionalIndexRoute
+  '/_authenticated/booking/': typeof AuthenticatedBookingIndexRoute
   '/_authenticated/dispatch-pre-storage/': typeof AuthenticatedDispatchPreStorageIndexRoute
   '/_authenticated/grading/': typeof AuthenticatedGradingIndexRoute
   '/_authenticated/incoming/': typeof AuthenticatedIncomingIndexRoute
@@ -277,6 +287,7 @@ export interface FileRouteTypes {
     | '/storage/edit-history'
     | '/storage/report'
     | '/additional/'
+    | '/booking/'
     | '/dispatch-pre-storage/'
     | '/grading/'
     | '/incoming/'
@@ -303,6 +314,7 @@ export interface FileRouteTypes {
     | '/storage/edit-history'
     | '/storage/report'
     | '/additional'
+    | '/booking'
     | '/dispatch-pre-storage'
     | '/grading'
     | '/incoming'
@@ -330,6 +342,7 @@ export interface FileRouteTypes {
     | '/_authenticated/storage/edit-history'
     | '/_authenticated/storage/report'
     | '/_authenticated/additional/'
+    | '/_authenticated/booking/'
     | '/_authenticated/dispatch-pre-storage/'
     | '/_authenticated/grading/'
     | '/_authenticated/incoming/'
@@ -414,6 +427,13 @@ declare module '@tanstack/react-router' {
       path: '/dispatch-pre-storage'
       fullPath: '/dispatch-pre-storage/'
       preLoaderRoute: typeof AuthenticatedDispatchPreStorageIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/booking/': {
+      id: '/_authenticated/booking/'
+      path: '/booking'
+      fullPath: '/booking/'
+      preLoaderRoute: typeof AuthenticatedBookingIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/additional/': {
@@ -541,6 +561,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedStorageEditHistoryRoute: typeof AuthenticatedStorageEditHistoryRoute
   AuthenticatedStorageReportRoute: typeof AuthenticatedStorageReportRoute
   AuthenticatedAdditionalIndexRoute: typeof AuthenticatedAdditionalIndexRoute
+  AuthenticatedBookingIndexRoute: typeof AuthenticatedBookingIndexRoute
   AuthenticatedDispatchPreStorageIndexRoute: typeof AuthenticatedDispatchPreStorageIndexRoute
   AuthenticatedGradingIndexRoute: typeof AuthenticatedGradingIndexRoute
   AuthenticatedIncomingIndexRoute: typeof AuthenticatedIncomingIndexRoute
@@ -570,6 +591,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedStorageEditHistoryRoute: AuthenticatedStorageEditHistoryRoute,
   AuthenticatedStorageReportRoute: AuthenticatedStorageReportRoute,
   AuthenticatedAdditionalIndexRoute: AuthenticatedAdditionalIndexRoute,
+  AuthenticatedBookingIndexRoute: AuthenticatedBookingIndexRoute,
   AuthenticatedDispatchPreStorageIndexRoute:
     AuthenticatedDispatchPreStorageIndexRoute,
   AuthenticatedGradingIndexRoute: AuthenticatedGradingIndexRoute,
