@@ -91,6 +91,8 @@ export function getGradingReportFooterContent(
       return renderTotalValue(sumIncomingGatePassNumericColumn(rows, 'bagsReceived'), 'integer');
     case 'incomingGatePassNetWeightKg':
       return renderTotalValue(sumIncomingGatePassNumericColumn(rows, 'netWeightKg'), 'weight');
+    case 'totalBags':
+      return renderTotalValue(sumReportNumericColumn(rows, 'totalBags'), 'integer');
     case 'incomingNetWeightKg':
       return renderTotalValue(sumReportNumericColumn(rows, 'incomingNetWeightKg'), 'weight');
     case 'netWeightKg':

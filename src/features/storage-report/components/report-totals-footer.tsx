@@ -50,6 +50,17 @@ export function getStorageReportFooterContent(
   rows: readonly Row<StorageGatePass>[],
   quantityMode: StorageQuantityMode,
 ) {
+  if (columnId === "totalBags") {
+    const total = rows.reduce(
+      (sum, row) =>
+        sum +
+        (typeof row.original.totalBags === "number" ? row.original.totalBags : 0),
+      0,
+    )
+
+    return renderTotalValue(total)
+  }
+
   if (!columnId.startsWith("size-")) {
     return null
   }

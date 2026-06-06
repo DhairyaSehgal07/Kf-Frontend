@@ -412,6 +412,21 @@ const baseColumns: ColumnDef<GradingGatePassReportRow>[] = [
   },
 ];
 
+const totalBagsColumn: ColumnDef<GradingGatePassReportRow> = {
+  accessorKey: 'totalBags',
+  header: reportColumnHeader('Total', 'bags'),
+  cell: integerCell,
+  meta: {
+    align: 'right',
+    numeric: true,
+    groupStart: true,
+    filterLabel: 'Total bags',
+    filterValueFormatter: formatIntegerFilterValue,
+  },
+  ...aggregateSum,
+  ...sortNumeric,
+};
+
 const summaryColumns: ColumnDef<GradingGatePassReportRow>[] = [
   {
     accessorKey: 'incomingNetWeightKg',
@@ -539,7 +554,7 @@ export function getGradingReportColumns(
     },
   }));
 
-  return [...baseColumns, ...sizeColumns, ...summaryColumns, remarksColumn];
+  return [...baseColumns, totalBagsColumn, ...sizeColumns, ...summaryColumns, remarksColumn];
 }
 
 export const columns: ColumnDef<GradingGatePassReportRow>[] = [

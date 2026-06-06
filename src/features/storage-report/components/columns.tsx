@@ -160,6 +160,33 @@ const baseColumns: ColumnDef<StorageGatePass>[] = [
   },
 ]
 
+const totalBagsColumn: ColumnDef<StorageGatePass> = {
+  accessorKey: "totalBags",
+  header: () => (
+    <span className="flex min-w-0 flex-col gap-0.5">
+      <span className="truncate text-sm leading-tight font-medium">Total</span>
+      <span className="text-xs font-normal opacity-70">bags</span>
+    </span>
+  ),
+  meta: {
+    align: "right",
+    filterLabel: "Total bags",
+    groupStart: true,
+    numeric: true,
+  },
+  ...sortNumeric,
+  ...aggregateSum,
+  cell: ({ getValue }) => {
+    const value = getValue<number | undefined>()
+
+    return value == null ? (
+      "-"
+    ) : (
+      <span className="font-medium tabular-nums">{formatQuantity(value)}</span>
+    )
+  },
+}
+
 const trailingColumns: ColumnDef<StorageGatePass>[] = [
   {
     id: "createdBy",
@@ -226,7 +253,7 @@ export function getStorageReportColumns(
     },
   }))
 
-  return [...baseColumns, ...sizeColumns, ...trailingColumns]
+  return [...baseColumns, totalBagsColumn, ...sizeColumns, ...trailingColumns]
 }
 
 export const columns: ColumnDef<StorageGatePass>[] = getStorageReportColumns([])

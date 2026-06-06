@@ -45,6 +45,7 @@ export type StorageGatePass = {
   storageCategory: string
   stage?: string
   bagSizes: StorageGatePassBagSize[]
+  totalBags?: number
   remarks?: string
   farmerStorageLinkId: StorageGatePassFarmerStorageLink
   createdBy?: StorageGatePassCreatedBy

@@ -42,6 +42,7 @@ const ADVANCED_NUMERIC_COLUMN_IDS = new Set<StorageReportColumnId>([
   "accountNumber",
   "gatePassNo",
   "manualGatePassNumber",
+  "totalBags",
 ])
 
 export function isAdvancedNumericColumn(

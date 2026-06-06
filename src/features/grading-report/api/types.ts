@@ -58,6 +58,7 @@ export type GradingGatePassReportRow = {
   date: string;
   variety: string;
   orderDetails: GradingGatePassReportOrderDetail[];
+  totalBags: number;
   incomingNetWeightKg: number | string;
   netWeightKg: number | string;
   wastageKg: number | string;

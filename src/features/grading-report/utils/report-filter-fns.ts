@@ -44,6 +44,7 @@ export type AdvancedReportGlobalFilter = {
 const ADVANCED_NUMERIC_COLUMN_IDS = new Set<GradingReportColumnId>([
   'incomingBagsReceived',
   'incomingGatePassNetWeightKg',
+  'totalBags',
   'incomingNetWeightKg',
   'netWeightKg',
   'wastageKg',
