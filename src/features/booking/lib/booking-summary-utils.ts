@@ -1,8 +1,39 @@
+import type { SummaryVariety } from "@/features/booking/api/summary-types"
 import type {
   BookingSummaryTableData,
   BookingVarietySummary,
 } from "@/features/booking/types/booking-summary"
 import { orderBagSizeNames } from "@/features/booking/lib/order-bag-size-names"
+
+export type BookingQuantityMode = "current" | "initial"
+
+type QuantityFields = {
+  initialQuantity: number
+  currentQuantity: number
+}
+
+function getQuantity(item: QuantityFields, mode: BookingQuantityMode): number {
+  return mode === "current" ? item.currentQuantity : item.initialQuantity
+}
+
+export function mapApiSummaryToVarietySummary(
+  data: SummaryVariety[],
+  mode: BookingQuantityMode,
+): BookingVarietySummary[] {
+  return data.map((variety) => {
+    const sizes = variety.sizes.map((size) => ({
+      size: size.size,
+      quantity: getQuantity(size, mode),
+    }))
+    const quantity = getQuantity(variety, mode)
+
+    return {
+      variety: variety.variety,
+      quantity,
+      sizes,
+    }
+  })
+}
 
 const bagFormatter = new Intl.NumberFormat("en-IN", {
   maximumFractionDigits: 0,

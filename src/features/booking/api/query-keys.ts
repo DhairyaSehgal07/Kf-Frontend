@@ -9,4 +9,6 @@ export const bookingKeys = {
   search: (number: number) => [...bookingKeys.searches(), number] as const,
   create: () => [...bookingKeys.all, "create"] as const,
   update: (id: string) => [...bookingKeys.all, "update", id] as const,
+  summary: () => [...bookingKeys.all, "summary"] as const,
+  storageSummary: () => [...bookingKeys.all, "storage-summary"] as const,
 }

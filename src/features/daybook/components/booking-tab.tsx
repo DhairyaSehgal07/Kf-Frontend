@@ -49,6 +49,8 @@ import {
   BookingGatePassCardSkeleton,
 } from "@/components/booking-gate-pass-card"
 import { BookingSummary } from "@/features/booking/components/booking-summary"
+import { useBookingStorageSummary } from "@/features/booking/api/use-booking-storage-summary"
+import { useBookingSummary } from "@/features/booking/api/use-booking-summary"
 import { useBookings } from "@/features/booking/api/use-bookings"
 import { useSearchBooking } from "@/features/booking/api/use-search-booking"
 import type { BookingListParams } from "@/features/booking/api/types"
@@ -165,6 +167,8 @@ const DaybookBookingTab = () => {
   const searchQuery = useSearchBooking(searchNumber ?? 0, {
     enabled: isSearchMode,
   })
+  const bookingSummaryQuery = useBookingSummary()
+  const bookingStorageSummaryQuery = useBookingStorageSummary()
 
   const activeQuery = isSearchMode ? searchQuery : listQuery
   const {
@@ -232,6 +236,12 @@ const DaybookBookingTab = () => {
     setPage(1)
   }
 
+  const handleRefresh = () => {
+    void refetch()
+    void bookingSummaryQuery.refetch()
+    void bookingStorageSummaryQuery.refetch()
+  }
+
   if (showListLoading) {
     return <BookingTabSkeleton />
   }
@@ -253,7 +263,7 @@ const DaybookBookingTab = () => {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => void refetch()}
+            onClick={handleRefresh}
             disabled={isFetching}
           >
             {isFetching ? (
@@ -308,7 +318,10 @@ const DaybookBookingTab = () => {
         </div>
       </div>
 
-      <BookingSummary />
+      <BookingSummary
+        bookingQuery={bookingSummaryQuery}
+        storageQuery={bookingStorageSummaryQuery}
+      />
 
       {showSearchLoading ? (
         <div className="space-y-6">

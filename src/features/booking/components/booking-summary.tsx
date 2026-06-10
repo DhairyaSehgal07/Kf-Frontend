@@ -1,6 +1,8 @@
-import { useMemo } from "react"
-import { ChevronRight, Package } from "lucide-react"
+import { useMemo, useState } from "react"
+import type { UseQueryResult } from "@tanstack/react-query"
+import { AlertCircle, ChevronRight, Package, RefreshCw } from "lucide-react"
 
+import { Button } from "@/components/ui/button"
 import {
   Collapsible,
   CollapsibleContent,
@@ -13,19 +15,24 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import { Skeleton } from "@/components/ui/skeleton"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { BookingSummaryTable } from "@/features/booking/components/booking-summary-table"
-import {
-  PLACEHOLDER_BOOKED_SUMMARY,
-  PLACEHOLDER_TOTAL_SUMMARY,
-} from "@/features/booking/lib/booking-summary-placeholder"
+import type { SummaryVariety } from "@/features/booking/api/summary-types"
 import {
   buildBookingSummaryTable,
   computeNetAvailable,
   formatBookingBagCount,
+  mapApiSummaryToVarietySummary,
+  sumBookingGrandTotal,
+  type BookingQuantityMode,
 } from "@/features/booking/lib/booking-summary-utils"
 import { cn } from "@/lib/utils"
 
-// Future: totalQuery, bookedQuery: UseQueryResult<BookingVarietySummary[], Error>
+type BookingSummaryProps = {
+  bookingQuery: UseQueryResult<SummaryVariety[], Error>
+  storageQuery: UseQueryResult<SummaryVariety[], Error>
+}
 
 type BookingSummaryCollapsibleSectionProps = {
   title: string
@@ -75,22 +82,145 @@ function BookingSummaryCollapsibleSection({
   )
 }
 
-export function BookingSummary() {
+function BookingSummarySkeleton() {
+  return (
+    <div className="flex min-w-0 flex-col gap-4">
+      <Card className="min-w-0">
+        <CardHeader className="gap-4">
+          <Skeleton className="h-5 w-48" />
+          <Skeleton className="h-4 w-80" />
+          <Skeleton className="h-10 w-full max-w-md" />
+        </CardHeader>
+        <CardContent>
+          <Skeleton className="h-48 w-full rounded-lg" />
+        </CardContent>
+      </Card>
+      <Skeleton className="h-14 w-full rounded-lg" />
+      <Skeleton className="h-14 w-full rounded-lg" />
+    </div>
+  )
+}
+
+export function BookingSummary({
+  bookingQuery,
+  storageQuery,
+}: BookingSummaryProps) {
+  const [quantityMode, setQuantityMode] =
+    useState<BookingQuantityMode>("current")
+
+  const {
+    data: bookingData,
+    error: bookingError,
+    isError: isBookingError,
+    isLoading: isBookingLoading,
+    isFetching: isBookingFetching,
+    refetch: refetchBooking,
+  } = bookingQuery
+
+  const {
+    data: storageData,
+    error: storageError,
+    isError: isStorageError,
+    isLoading: isStorageLoading,
+    isFetching: isStorageFetching,
+    refetch: refetchStorage,
+  } = storageQuery
+
+  const isLoading =
+    (isBookingLoading && bookingData === undefined) ||
+    (isStorageLoading && storageData === undefined)
+  const isError =
+    (isBookingError && bookingData === undefined) ||
+    (isStorageError && storageData === undefined)
+  const isFetching = isBookingFetching || isStorageFetching
+
+  const mappedStorage = useMemo(
+    () => mapApiSummaryToVarietySummary(storageData ?? [], quantityMode),
+    [storageData, quantityMode],
+  )
+  const mappedBooked = useMemo(
+    () => mapApiSummaryToVarietySummary(bookingData ?? [], quantityMode),
+    [bookingData, quantityMode],
+  )
+
+  const modeTotals = useMemo(
+    () => ({
+      current: {
+        storage: sumBookingGrandTotal(
+          mapApiSummaryToVarietySummary(storageData ?? [], "current"),
+        ),
+        booked: sumBookingGrandTotal(
+          mapApiSummaryToVarietySummary(bookingData ?? [], "current"),
+        ),
+      },
+      initial: {
+        storage: sumBookingGrandTotal(
+          mapApiSummaryToVarietySummary(storageData ?? [], "initial"),
+        ),
+        booked: sumBookingGrandTotal(
+          mapApiSummaryToVarietySummary(bookingData ?? [], "initial"),
+        ),
+      },
+    }),
+    [storageData, bookingData],
+  )
+
   const totalTable = useMemo(
-    () => buildBookingSummaryTable(PLACEHOLDER_TOTAL_SUMMARY),
-    [],
+    () => buildBookingSummaryTable(mappedStorage),
+    [mappedStorage],
   )
   const bookedTable = useMemo(
-    () => buildBookingSummaryTable(PLACEHOLDER_BOOKED_SUMMARY),
-    [],
+    () => buildBookingSummaryTable(mappedBooked),
+    [mappedBooked],
   )
   const netTable = useMemo(() => {
-    const netData = computeNetAvailable(
-      PLACEHOLDER_TOTAL_SUMMARY,
-      PLACEHOLDER_BOOKED_SUMMARY,
-    )
+    const netData = computeNetAvailable(mappedStorage, mappedBooked)
     return buildBookingSummaryTable(netData)
-  }, [])
+  }, [mappedStorage, mappedBooked])
+
+  const handleRetry = () => {
+    void refetchBooking()
+    void refetchStorage()
+  }
+
+  if (isLoading) {
+    return <BookingSummarySkeleton />
+  }
+
+  if (isError) {
+    const errorMessage =
+      bookingError?.message ??
+      storageError?.message ??
+      "Something went wrong while fetching booking summary data."
+
+    return (
+      <Card className="border-destructive/30 bg-destructive/5">
+        <CardHeader>
+          <CardDescription className="flex items-center gap-2 text-destructive">
+            <AlertCircle className="size-4 shrink-0" aria-hidden />
+            Booking summary could not be loaded
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-foreground">{errorMessage}</p>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handleRetry}
+            disabled={isFetching}
+            className="w-full sm:w-auto"
+          >
+            <RefreshCw
+              className={cn("mr-2 size-4", isFetching && "animate-spin")}
+              aria-hidden
+            />
+            Retry
+          </Button>
+        </CardContent>
+      </Card>
+    )
+  }
 
   return (
     <div className="flex min-w-0 flex-col gap-4">
@@ -116,12 +246,43 @@ export function BookingSummary() {
               </p>
             </div>
           </div>
+
+          <Tabs
+            value={quantityMode}
+            onValueChange={(value) =>
+              setQuantityMode(value as BookingQuantityMode)
+            }
+          >
+            <TabsList
+              aria-label="Booking quantity view"
+              className="h-auto w-full flex-wrap justify-start gap-1 bg-transparent p-0"
+            >
+              <TabsTrigger
+                value="current"
+                className="rounded-none border-b-2 border-transparent px-3 py-2 data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:shadow-none"
+              >
+                Current{" "}
+                <span className="tabular-nums">
+                  ({formatBookingBagCount(modeTotals.current.storage - modeTotals.current.booked)})
+                </span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="initial"
+                className="rounded-none border-b-2 border-transparent px-3 py-2 data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:shadow-none"
+              >
+                Initial{" "}
+                <span className="tabular-nums">
+                  ({formatBookingBagCount(modeTotals.initial.storage - modeTotals.initial.booked)})
+                </span>
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
         </CardHeader>
 
         <CardContent>
           <BookingSummaryTable
             table={netTable}
-            emptyMessage="No net availability data for the selected period."
+            emptyMessage="No net availability data available."
           />
         </CardContent>
       </Card>
@@ -133,7 +294,7 @@ export function BookingSummary() {
       >
         <BookingSummaryTable
           table={totalTable}
-          emptyMessage="No total stock data for the selected period."
+          emptyMessage="No total stock data available."
         />
       </BookingSummaryCollapsibleSection>
 
@@ -144,7 +305,7 @@ export function BookingSummary() {
       >
         <BookingSummaryTable
           table={bookedTable}
-          emptyMessage="No booked quantity data for the selected period."
+          emptyMessage="No booked quantity data available."
         />
       </BookingSummaryCollapsibleSection>
     </div>
