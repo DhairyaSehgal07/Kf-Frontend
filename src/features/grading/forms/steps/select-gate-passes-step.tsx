@@ -25,6 +25,7 @@ import { useFarmerLinkOptions } from "@/features/people/api/use-farmer-link-opti
 import { farmerLinkOptionsToComboboxOptions } from "@/features/people/utils/farmer-link-combobox"
 import { getGradingGatePassColumns } from "./columns"
 import type { GradingSelectIncomingGatePasses } from "../../types"
+import { POTATO_VARIETY_OPTIONS } from "@/lib/constants"
 import { DataTable } from "./data-table"
 
 function isFieldInvalid(meta: { isTouched: boolean; isValid: boolean }) {
@@ -403,26 +404,19 @@ function SelectGatePassesStepContent({
   }, [gatePassResult?.incomingGatePasses])
 
   const varietyOptions = useMemo<ComboboxOption[]>(() => {
-    const uniqueVarieties = [
-      ...new Set(
-        gatePasses
-          .map((gatePass) => gatePass.variety.trim())
-          .filter((value) => value.length > 0),
-      ),
-    ]
-
     const currentVariety = variety.trim()
     if (
       currentVariety.length > 0 &&
-      !uniqueVarieties.includes(currentVariety)
+      !POTATO_VARIETY_OPTIONS.some((option) => option.id === currentVariety)
     ) {
-      uniqueVarieties.push(currentVariety)
+      return [
+        ...POTATO_VARIETY_OPTIONS,
+        { id: currentVariety, label: currentVariety },
+      ]
     }
 
-    return uniqueVarieties
-      .sort((a, b) => a.localeCompare(b, "en-IN"))
-      .map((value) => ({ id: value, label: value }))
-  }, [gatePasses, variety])
+    return POTATO_VARIETY_OPTIONS
+  }, [variety])
 
   const showGatePassLoading =
     farmerStorageLinkId.trim().length > 0 &&

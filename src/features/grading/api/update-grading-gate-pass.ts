@@ -21,10 +21,7 @@ export function toUpdateGradingGatePassBody(
     body.manualGatePassNumber = form.manualGatePassNumber
   }
 
-  const remarks = form.remarks.trim()
-  if (remarks) {
-    body.remarks = remarks
-  }
+  body.remarks = form.remarks.trim()
 
   return body
 }

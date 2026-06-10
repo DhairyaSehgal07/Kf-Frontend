@@ -1,37 +1,53 @@
 import { useForm } from "@tanstack/react-form"
-import { toast } from "sonner"
 
 import {
   bookingFormSchema,
   createDefaultBookingQuantities,
   type BookingFormValues,
 } from "@/features/booking/schemas/booking-form-schema"
+import {
+  defaultSubmitMeta,
+  type BookingSubmitMeta,
+} from "@/features/booking/types"
 
-export type CreateBookingFormApi = ReturnType<typeof useCreateBookingForm>["form"]
+export type CreateBookingFormApi = ReturnType<
+  typeof useCreateBookingForm
+>["form"]
 
-export function useCreateBookingForm() {
+type UseCreateBookingFormOptions = {
+  defaultValues?: BookingFormValues
+  onOpenReview?: () => void
+  onCreate?: (values: BookingFormValues) => Promise<void>
+}
+
+export function useCreateBookingForm(
+  options: UseCreateBookingFormOptions = {},
+) {
+  const todayIso = new Date().toISOString()
+
   const form = useForm({
-    defaultValues: {
+    defaultValues: options.defaultValues ?? {
+      manualGatePassNumber: undefined as number | undefined,
       dispatchLedgerId: "",
+      date: todayIso,
       variety: "",
-      storeName: "",
       quantities: createDefaultBookingQuantities(),
       remarks: "",
-    } satisfies BookingFormValues,
+    },
     validators: {
       onBlur: bookingFormSchema,
       onSubmit: bookingFormSchema,
     },
-    onSubmit: async ({ value }) => {
+    onSubmitMeta: defaultSubmitMeta,
+    onSubmit: async ({ value, meta }) => {
       const parsed = bookingFormSchema.parse(value)
 
-      toast.success("Booking details captured.", {
-        position: "bottom-right",
-        description:
-          "API integration for booking gate passes will be connected next.",
-      })
+      if ((meta as BookingSubmitMeta).submitAction === "review") {
+        options.onOpenReview?.()
+        return
+      }
 
-      return parsed
+      await options.onCreate?.(parsed)
     },
   })
 

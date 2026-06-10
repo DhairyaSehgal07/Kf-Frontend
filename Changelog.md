@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2026-06-11
+
+Booking gate passes are now API-backed end to end: create and edit flows with review sheets, a live daybook tab with search and pagination, and shared potato variety options across gate pass forms.
+
+### Added
+
+- **Booking gate pass API** — Create, list, search, update, by-ID lookup, cache lookup, query keys, typed request/response shapes, and React Query hooks for `/booking-gate-pass/`.
+- **Booking gate pass card** — `BookingGatePassCard` and skeleton with expandable bag-size details, dispatch ledger info, and edit navigation.
+- **Create booking form** — Submits through the API with live voucher numbers, date and manual gate pass fields, review sheet before submit, and dispatch ledger combobox with inline add-ledger dialog.
+- **Edit booking form** — `/booking/$id` loads an existing gate pass, pre-fills the shared booking form, supports review before submit, and updates with success/error toasts.
+- **Booking summary sheet & table** — Review UI for create/edit flows with bag-size totals and dispatch ledger labels.
+- **Daybook booking tab** — Loads booking gate passes from the API with sort, configurable page size, pagination, debounced gate-pass-number search, refresh, loading/error/empty states, and a collapsible booking summary panel (placeholder totals until summary API is connected).
+- **Potato variety constants** — Shared `POTATO_VARIETIES` and `POTATO_VARIETY_OPTIONS` in `constants.ts` for consistent variety pickers across the app.
+
+### Changed
+
+- **Voucher number hook** — Supports `booking-gate-pass` receipt numbers for create booking.
+- **Gate pass variety pickers** — Incoming, grading, storage, dispatch pre-storage, and booking forms use the shared potato variety list instead of local hardcoded options.
+- **Grading select step** — Variety combobox uses shared options while still allowing legacy values from existing records.
+- **Gate pass update payloads** — Incoming, grading, and storage update mappers always send trimmed remarks (including empty) so cleared remarks persist on save.
+
 ## [0.3.9] - 2026-06-06
 
 People now includes a farmer profile page with API-backed gate pass history, summary stats, and tabbed review across incoming, grading, storage, and dispatch pre-storage.
@@ -530,6 +551,7 @@ First application scaffold for the Kapur frontend (`kf-frontend`).
 
 - Default Vite starter styles (`App.css`) and demo application UI from the initial template.
 
+[0.4.0]: https://github.com/compare/v0.3.9...v0.4.0
 [0.3.9]: https://github.com/compare/v0.3.8...v0.3.9
 [0.3.8]: https://github.com/compare/v0.3.7...v0.3.8
 [0.3.7]: https://github.com/compare/v0.3.6...v0.3.7

@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react"
-import { UserPlus } from "lucide-react"
+import { useParams } from "@tanstack/react-router"
+import { Loader2, UserPlus } from "lucide-react"
 import { toast } from "sonner"
 
 import {
@@ -29,23 +30,28 @@ import {
   filterAndSortOptions,
   type ComboboxOption,
 } from "@/components/searchable-option-combobox"
-import { useCreateBooking } from "@/features/booking/api/use-create-booking"
+import type { Booking } from "@/features/booking/api/types"
+import { useBookingById } from "@/features/booking/api/use-booking-by-id"
+import { useUpdateBooking } from "@/features/booking/api/use-update-booking"
 import { BookingQuantitiesSection } from "@/features/booking/forms/booking-quantities-section"
 import { BookingSummarySheet } from "@/features/booking/forms/booking-summary-sheet"
+import { bookingToFormValues } from "@/features/booking/forms/booking-to-form-values"
 import { useCreateBookingForm } from "@/features/booking/forms/use-create-booking-form"
-import {
-  bookingFormSchema,
-  createDefaultBookingQuantities,
-} from "@/features/booking/schemas/booking-form-schema"
+import { bookingFormSchema } from "@/features/booking/schemas/booking-form-schema"
 import { useDispatchLedgers } from "@/features/people/api/use-dispatch-ledgers"
 import { AddDispatchLedgerDialog } from "@/features/people/components/add-dispatch-ledger-dialog"
 import type { DispatchLedger } from "@/features/people/types"
-import {
-  useGetReceiptVoucherNumber,
-  voucherNumberKeys,
-} from "@/hooks/use-get-voucher-number"
 import { POTATO_VARIETY_OPTIONS } from "@/lib/constants"
-import { queryClient } from "@/lib/queryClient"
+
+type EditBookingFormContentProps = {
+  bookingId: string
+}
+
+export function EditBookingForm() {
+  const { id } = useParams({ from: "/_authenticated/booking/$id" })
+
+  return <EditBookingFormContent bookingId={id} />
+}
 
 function isFieldInvalid(meta: { isTouched: boolean; isValid: boolean }) {
   return meta.isTouched && !meta.isValid
@@ -57,94 +63,163 @@ function parseOptionalPositiveNumber(value: string): number | undefined {
   return Number.isNaN(parsed) ? undefined : parsed
 }
 
+function ensureOptionInList(
+  options: ComboboxOption[],
+  value: string | undefined,
+  label?: string,
+): ComboboxOption[] {
+  if (!value?.trim()) return options
+  if (options.some((option) => option.id === value)) return options
+  return [...options, { id: value, label: label ?? value }]
+}
+
+function ledgerSearchLabelFromBooking(booking: Booking): string {
+  return booking.dispatchLedgerId.name ?? ""
+}
+
 const numericInputProps = {
   type: "number" as const,
   min: 0,
   onWheel: (e: React.WheelEvent<HTMLInputElement>) => e.currentTarget.blur(),
 }
 
-const CreateBookingForm = () => {
-  const { data: dispatchLedgers = [] } = useDispatchLedgers()
+const EditBookingFormContent = ({ bookingId }: EditBookingFormContentProps) => {
   const {
-    data: nextVoucherNumber,
-    isLoading: isLoadingVoucherNumber,
-    isError: isVoucherNumberError,
-  } = useGetReceiptVoucherNumber("booking-gate-pass")
-  const { mutateAsync: createBooking } = useCreateBooking()
+    booking,
+    isLoading: isLoadingBooking,
+    isError: isBookingError,
+    error: bookingError,
+  } = useBookingById(bookingId)
 
-  const [ledgerSearch, setLedgerSearch] = useState("")
+  if (isLoadingBooking) {
+    return (
+      <Card className="mx-auto w-full max-w-4xl shadow-sm">
+        <CardContent className="flex min-h-64 items-center justify-center gap-2 py-12 text-sm text-muted-foreground">
+          <Loader2 className="size-4 animate-spin" />
+          Loading booking gate pass…
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (isBookingError) {
+    return (
+      <Card className="mx-auto w-full max-w-4xl shadow-sm">
+        <CardContent className="flex min-h-64 items-center justify-center py-12 text-center">
+          <p className="text-sm text-destructive">
+            {bookingError?.message ?? "Failed to load booking gate pass."}
+          </p>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (!booking) {
+    return (
+      <Card className="mx-auto w-full max-w-4xl shadow-sm">
+        <CardContent className="flex min-h-64 items-center justify-center py-12 text-center">
+          <p className="text-sm text-muted-foreground">
+            Booking gate pass not found.
+          </p>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  return <EditBookingFormFields key={booking._id} booking={booking} />
+}
+
+type EditBookingFormFieldsProps = {
+  booking: Booking
+}
+
+function EditBookingFormFields({ booking }: EditBookingFormFieldsProps) {
+  const { data: dispatchLedgers = [] } = useDispatchLedgers()
+  const { mutateAsync: updateBooking } = useUpdateBooking(booking._id)
+
+  const defaultValues = useMemo(
+    () => bookingToFormValues(booking),
+    [booking],
+  )
+
+  const dispatchLedgerOptions = useMemo<ComboboxOption[]>(() => {
+    const base = dispatchLedgers.map((ledger) => ({
+      id: ledger._id,
+      label: ledger.name,
+    }))
+    const ledger = booking.dispatchLedgerId
+    if (!ledger._id || base.some((option) => option.id === ledger._id)) {
+      return base
+    }
+    return [...base, { id: ledger._id, label: ledger.name }]
+  }, [dispatchLedgers, booking])
+
+  const varietyOptions = useMemo(
+    () => ensureOptionInList(POTATO_VARIETY_OPTIONS, booking.variety),
+    [booking.variety],
+  )
+
+  const [ledgerSearch, setLedgerSearch] = useState(() =>
+    ledgerSearchLabelFromBooking(booking),
+  )
   const [ledgerComboboxOpen, setLedgerComboboxOpen] = useState(false)
-  const [varietySearch, setVarietySearch] = useState("")
+  const [varietySearch, setVarietySearch] = useState(() => booking.variety)
   const [varietyComboboxOpen, setVarietyComboboxOpen] = useState(false)
   const [addLedgerOpen, setAddLedgerOpen] = useState(false)
   const [reviewOpen, setReviewOpen] = useState(false)
-
-  const resetComboboxState = () => {
-    setLedgerSearch("")
-    setLedgerComboboxOpen(false)
-    setVarietySearch("")
-    setVarietyComboboxOpen(false)
-  }
-
-  const { form } = useCreateBookingForm({
-    onOpenReview: () => setReviewOpen(true),
-    onCreate: async (parsed) => {
-      const gatePassNo = queryClient.getQueryData<number>(
-        voucherNumberKeys.detail("booking-gate-pass"),
-      )
-
-      if (gatePassNo == null) {
-        toast.error("Gate pass number is unavailable. Refresh and try again.", {
-          position: "bottom-right",
-        })
-        return
-      }
-
-      try {
-        const { message } = await createBooking({
-          form: parsed,
-          gatePassNo,
-        })
-
-        toast.success(message ?? "Booking gate pass created", {
-          position: "bottom-right",
-        })
-        setReviewOpen(false)
-        form.reset()
-        form.setFieldValue("quantities", createDefaultBookingQuantities())
-        resetComboboxState()
-      } catch (error) {
-        toast.error(
-          error instanceof Error
-            ? error.message
-            : "Failed to create booking gate pass",
-          { position: "bottom-right" },
-        )
-      }
-    },
-  })
-
-  const dispatchLedgerOptions = useMemo<ComboboxOption[]>(
-    () =>
-      dispatchLedgers.map((ledger) => ({
-        id: ledger._id,
-        label: ledger.name,
-      })),
-    [dispatchLedgers],
-  )
 
   const sortedLedgers = useMemo(
     () => filterAndSortOptions(ledgerSearch, dispatchLedgerOptions),
     [ledgerSearch, dispatchLedgerOptions],
   )
   const sortedVarieties = useMemo(
-    () => filterAndSortOptions(varietySearch, POTATO_VARIETY_OPTIONS),
-    [varietySearch],
+    () => filterAndSortOptions(varietySearch, varietyOptions),
+    [varietySearch, varietyOptions],
   )
 
-  const getDispatchLedgerLabel = (dispatchLedgerId: string) =>
-    dispatchLedgers.find((ledger) => ledger._id === dispatchLedgerId)?.name ??
-    ""
+  const resetComboboxState = () => {
+    setLedgerSearch(ledgerSearchLabelFromBooking(booking))
+    setLedgerComboboxOpen(false)
+    setVarietySearch(booking.variety)
+    setVarietyComboboxOpen(false)
+  }
+
+  const { form } = useCreateBookingForm({
+    defaultValues,
+    onOpenReview: () => setReviewOpen(true),
+    onCreate: async (parsed) => {
+      try {
+        const { message } = await updateBooking({
+          id: booking._id,
+          form: parsed,
+          originalBagSizes: booking.bagSizes,
+        })
+
+        toast.success(message ?? "Booking gate pass updated", {
+          position: "bottom-right",
+        })
+        setReviewOpen(false)
+      } catch (error) {
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "Failed to update booking gate pass",
+          { position: "bottom-right" },
+        )
+      }
+    },
+  })
+
+  const getDispatchLedgerLabel = (dispatchLedgerId: string) => {
+    const fromList = dispatchLedgers.find(
+      (ledger) => ledger._id === dispatchLedgerId,
+    )?.name
+    if (fromList) return fromList
+    if (booking.dispatchLedgerId._id === dispatchLedgerId) {
+      return ledgerSearchLabelFromBooking(booking)
+    }
+    return dispatchLedgerId
+  }
 
   const handleLedgerCreated = (ledger: DispatchLedger) => {
     form.setFieldValue("dispatchLedgerId", ledger._id)
@@ -154,7 +229,6 @@ const CreateBookingForm = () => {
 
   const handleReset = () => {
     form.reset()
-    form.setFieldValue("quantities", createDefaultBookingQuantities())
     resetComboboxState()
   }
 
@@ -166,34 +240,23 @@ const CreateBookingForm = () => {
     void form.handleSubmit({ submitAction: "submit" })
   }
 
-  const isGatePassNumberReady =
-    !isLoadingVoucherNumber &&
-    !isVoucherNumberError &&
-    nextVoucherNumber != null
-
-  const displayGatePassNo = isLoadingVoucherNumber
-    ? "…"
-    : isVoucherNumberError || nextVoucherNumber == null
-      ? "—"
-      : `#${nextVoucherNumber}`
-
   return (
     <Card className="mx-auto w-full max-w-4xl shadow-sm">
       <CardHeader className="border-b bg-muted/30 pb-6">
         <CardTitle className="font-heading text-xl font-semibold tracking-tight sm:text-2xl">
-          Booking Gate Pass{" "}
+          Edit Booking Gate Pass{" "}
           <span className="font-mono tabular-nums text-primary sm:text-2xl">
-            {displayGatePassNo}
+            #{booking.gatePassNo}
           </span>
         </CardTitle>
         <CardDescription className="text-base">
-          Record dispatch ledger, variety, and bag quantities for a new booking
+          Update dispatch ledger, variety, and bag quantities for this booking
           gate pass.
         </CardDescription>
       </CardHeader>
 
       <form
-        id="create-booking-form"
+        id="edit-booking-form"
         noValidate
         onSubmit={(e) => e.preventDefault()}
       >
@@ -276,13 +339,13 @@ const CreateBookingForm = () => {
                         data-invalid={isInvalid}
                         className="@md/field-group:col-span-2"
                       >
-                        <FieldLabel htmlFor="create-booking-ledger">
+                        <FieldLabel htmlFor="edit-booking-ledger">
                           Dispatch Ledger
                         </FieldLabel>
                         <div className="flex gap-2">
                           <div className="min-w-0 flex-1">
                             <SearchableOptionCombobox
-                              id="create-booking-ledger"
+                              id="edit-booking-ledger"
                               name={field.name}
                               value={field.state.value}
                               onValueChange={field.handleChange}
@@ -326,11 +389,11 @@ const CreateBookingForm = () => {
                     const isInvalid = isFieldInvalid(field.state.meta)
                     return (
                       <Field data-invalid={isInvalid}>
-                        <FieldLabel htmlFor="create-booking-variety">
+                        <FieldLabel htmlFor="edit-booking-variety">
                           Variety
                         </FieldLabel>
                         <SearchableOptionCombobox
-                          id="create-booking-variety"
+                          id="edit-booking-variety"
                           name={field.name}
                           value={field.state.value}
                           onValueChange={field.handleChange}
@@ -338,7 +401,7 @@ const CreateBookingForm = () => {
                           isInvalid={isInvalid}
                           placeholder="Search varieties..."
                           emptyMessage="No varieties found."
-                          options={POTATO_VARIETY_OPTIONS}
+                          options={varietyOptions}
                           sortedOptions={sortedVarieties}
                           search={varietySearch}
                           setSearch={setVarietySearch}
@@ -405,14 +468,10 @@ const CreateBookingForm = () => {
             children={(isSubmitting) => (
               <Button
                 type="button"
-                disabled={isSubmitting || !isGatePassNumberReady}
+                disabled={isSubmitting}
                 onClick={handleOpenReview}
               >
-                {isLoadingVoucherNumber
-                  ? "Loading pass no…"
-                  : isSubmitting
-                    ? "Validating…"
-                    : "Review"}
+                {isSubmitting ? "Validating…" : "Review"}
               </Button>
             )}
           />
@@ -438,7 +497,7 @@ const CreateBookingForm = () => {
                   ? getDispatchLedgerLabel(parsed.data.dispatchLedgerId)
                   : ""
               }
-              gatePassNo={nextVoucherNumber ?? null}
+              gatePassNo={booking.gatePassNo}
               onBack={() => setReviewOpen(false)}
               onSubmit={handleConfirmSubmit}
               canSubmit={canSubmit}
@@ -457,4 +516,4 @@ const CreateBookingForm = () => {
   )
 }
 
-export default CreateBookingForm
+export default EditBookingForm

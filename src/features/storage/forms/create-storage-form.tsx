@@ -49,12 +49,11 @@ import {
   voucherNumberKeys,
 } from "@/hooks/use-get-voucher-number"
 import { queryClient } from "@/lib/queryClient"
-import { INCOMING_STAGES, STORAGE_CATEGORIES } from "@/lib/constants"
-
-const VARIETY_ITEMS = ["Himalini", "K. Pukhraj", "K. Jyoti"].map((value) => ({
-  id: value,
-  label: value,
-}))
+import {
+  INCOMING_STAGES,
+  POTATO_VARIETY_OPTIONS,
+  STORAGE_CATEGORIES,
+} from "@/lib/constants"
 
 const CATEGORY_ITEMS = STORAGE_CATEGORIES.map((value) => ({
   id: value,
@@ -117,7 +116,7 @@ const CreateStorageForm = () => {
     [farmerSearch, farmerOptions]
   )
   const sortedVarieties = useMemo(
-    () => filterAndSortOptions(varietySearch, VARIETY_ITEMS),
+    () => filterAndSortOptions(varietySearch, POTATO_VARIETY_OPTIONS),
     [varietySearch]
   )
   const sortedCategories = useMemo(
@@ -392,7 +391,7 @@ const CreateStorageForm = () => {
                           isInvalid={isInvalid}
                           placeholder="Search varieties..."
                           emptyMessage="No varieties found."
-                          options={VARIETY_ITEMS}
+                          options={POTATO_VARIETY_OPTIONS}
                           sortedOptions={sortedVarieties}
                           search={varietySearch}
                           setSearch={setVarietySearch}

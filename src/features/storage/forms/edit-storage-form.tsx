@@ -47,12 +47,11 @@ import {
   type ComboboxOption,
 } from '@/components/searchable-option-combobox';
 import { storageFormSchema } from '@/features/storage/schemas/storage-form-schema';
-import { INCOMING_STAGES, STORAGE_CATEGORIES } from '@/lib/constants';
-
-const VARIETY_ITEMS = ['Himalini', 'K. Pukhraj', 'K. Jyoti'].map((value) => ({
-  id: value,
-  label: value,
-}));
+import {
+  INCOMING_STAGES,
+  POTATO_VARIETY_OPTIONS,
+  STORAGE_CATEGORIES,
+} from '@/lib/constants';
 
 const CATEGORY_ITEMS = STORAGE_CATEGORIES.map((value) => ({
   id: value,
@@ -183,7 +182,7 @@ function EditStorageFormFields({ gatePass }: EditStorageFormFieldsProps) {
   }, [farmerLinkOptions, gatePass]);
 
   const varietyOptions = useMemo(
-    () => ensureOptionInList(VARIETY_ITEMS, gatePass.variety),
+    () => ensureOptionInList(POTATO_VARIETY_OPTIONS, gatePass.variety),
     [gatePass.variety],
   );
   const categoryOptions = useMemo(

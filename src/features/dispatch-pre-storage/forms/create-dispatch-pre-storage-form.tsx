@@ -40,7 +40,11 @@ import {
   filterAndSortOptions,
   type ComboboxOption,
 } from "@/components/searchable-option-combobox"
-import { BAG_SIZES, DISPATCH_PRE_STORAGE_CATEGORIES } from "@/lib/constants"
+import {
+  BAG_SIZES,
+  DISPATCH_PRE_STORAGE_CATEGORIES,
+  POTATO_VARIETY_OPTIONS,
+} from "@/lib/constants"
 import { useFarmerLinkOptions } from "@/features/people/api/use-farmer-link-options"
 import { useDispatchLedgers } from "@/features/people/api/use-dispatch-ledgers"
 import {
@@ -65,17 +69,8 @@ const CATEGORY_ITEMS: ComboboxOption[] = DISPATCH_PRE_STORAGE_CATEGORIES.map(
   (value) => ({ id: value, label: value })
 )
 
-const VARIETY_ITEMS: ComboboxOption[] = [
-  "Himalini",
-  "K. Pukhraj",
-  "K. Jyoti",
-].map((value) => ({
-  id: value,
-  label: value,
-}))
-
 function normalizeVariety(value: string): string {
-  const selected = VARIETY_ITEMS.find((item) => item.id === value)
+  const selected = POTATO_VARIETY_OPTIONS.find((item) => item.id === value)
   return (selected?.label ?? value).trim()
 }
 
@@ -858,7 +853,7 @@ const CreateDispatchPreStorageForm = () => {
                                 <SelectValue placeholder="Select variety" />
                               </SelectTrigger>
                               <SelectContent>
-                                {VARIETY_ITEMS.map((item) => (
+                                {POTATO_VARIETY_OPTIONS.map((item) => (
                                   <SelectItem key={item.id} value={item.id}>
                                     {item.label}
                                   </SelectItem>

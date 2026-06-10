@@ -42,12 +42,11 @@ import {
 import { incomingFormSchema } from "@/features/incoming/schemas/incoming-form-schema"
 import { defaultSubmitMeta } from "@/features/incoming/types"
 import { incomingGatePassToFormValues } from "@/features/incoming/utils/incoming-gate-pass-to-form-values"
-import { INCOMING_CATEGORIES, INCOMING_STAGES } from "@/lib/constants"
-
-const VARIETY_ITEMS = ["Himalini", "K. Pukhraj", "K. Jyoti"].map((value) => ({
-  id: value,
-  label: value,
-}))
+import {
+  INCOMING_CATEGORIES,
+  INCOMING_STAGES,
+  POTATO_VARIETY_OPTIONS,
+} from "@/lib/constants"
 
 const CATEGORY_ITEMS = INCOMING_CATEGORIES.map((value) => ({
   id: value,
@@ -179,7 +178,7 @@ function EditIncomingFormFields({ gatePass }: EditIncomingFormFieldsProps) {
   }, [farmerLinkOptions, gatePass])
 
   const varietyOptions = useMemo(
-    () => ensureOptionInList(VARIETY_ITEMS, gatePass.variety),
+    () => ensureOptionInList(POTATO_VARIETY_OPTIONS, gatePass.variety),
     [gatePass.variety],
   )
   const categoryOptions = useMemo(

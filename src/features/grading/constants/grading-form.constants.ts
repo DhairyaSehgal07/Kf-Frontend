@@ -1,6 +1,1 @@
-export const GRADING_VARIETY_ITEMS = ["Himalini", "K. Pukhraj", "K. Jyoti"].map(
-  (value) => ({
-    id: value,
-    label: value,
-  })
-)
+export { POTATO_VARIETY_OPTIONS as GRADING_VARIETY_ITEMS } from "@/lib/constants"

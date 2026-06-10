@@ -45,7 +45,11 @@ import {
   weightSlipSchema,
 } from "@/features/incoming/schemas/incoming-form-schema"
 import { defaultSubmitMeta } from "@/features/incoming/types"
-import { INCOMING_CATEGORIES, INCOMING_STAGES } from "@/lib/constants"
+import {
+  INCOMING_CATEGORIES,
+  INCOMING_STAGES,
+  POTATO_VARIETY_OPTIONS,
+} from "@/lib/constants"
 import { useCreateIncomingGatePass } from "@/features/incoming/api/use-create-incoming-gate-pass"
 import {
   useGetReceiptVoucherNumber,
@@ -53,10 +57,6 @@ import {
 } from "@/hooks/use-get-voucher-number"
 import { queryClient } from "@/lib/queryClient"
 
-const VARIETY_ITEMS = ["Himalini", "K. Pukhraj", "K. Jyoti"].map((value) => ({
-  id: value,
-  label: value,
-}))
 
 const CATEGORY_ITEMS = INCOMING_CATEGORIES.map((value) => ({
   id: value,
@@ -138,7 +138,7 @@ const CreateIncomingForm = () => {
     [farmerSearch, farmerOptions]
   )
   const sortedVarieties = useMemo(
-    () => filterAndSortOptions(varietySearch, VARIETY_ITEMS),
+    () => filterAndSortOptions(varietySearch, POTATO_VARIETY_OPTIONS),
     [varietySearch]
   )
   const sortedCategories = useMemo(
@@ -471,7 +471,7 @@ const CreateIncomingForm = () => {
                           isInvalid={isInvalid}
                           placeholder="Search varieties..."
                           emptyMessage="No varieties found."
-                          options={VARIETY_ITEMS}
+                          options={POTATO_VARIETY_OPTIONS}
                           sortedOptions={sortedVarieties}
                           search={varietySearch}
                           setSearch={setVarietySearch}

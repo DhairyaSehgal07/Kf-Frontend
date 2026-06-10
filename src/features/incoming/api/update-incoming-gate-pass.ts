@@ -25,10 +25,7 @@ export function toUpdateIncomingGatePassBody(
     },
   }
 
-  const remarks = form.remarks.trim()
-  if (remarks) {
-    body.remarks = remarks
-  }
+  body.remarks = form.remarks.trim()
 
   return body
 }
