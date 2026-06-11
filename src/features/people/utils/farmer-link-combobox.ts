@@ -27,3 +27,7 @@ export function getFarmerLinkLabel(
 
   return match ? formatFarmerLinkLabel(match) : farmerStorageLinkId
 }
+
+export function formatTransferAccountLabel(option: FarmerLinkOption): string {
+  return `Account ${option.accountNumber} - ${option.name}`
+}

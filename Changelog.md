@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.1] - 2026-06-12
+
+Outgoing and transfer stock flows are now API-backed end to end, with a unified daybook feed for storage and outgoing gate passes, cancel support on outgoing cards, and a transfer stock report route.
+
+### Added
+
+- **Daybook API** — Unified `/daybook/` fetch helper, query keys, typed entry shapes (storage and outgoing), and React Query hook with list params for type, sort, page, and limit.
+- **Daybook outgoing gate pass card** — Expandable card with bag breakdown, route/vehicle details, cancel flow with confirmation dialog and remarks, and loading skeleton.
+- **Outgoing gate pass API** — Create and cancel helpers, typed request/response shapes, React Query mutation hooks, and cache invalidation for daybook and voucher numbers.
+- **Create outgoing form** — Submits through the API with live voucher numbers, optional manual gate pass number, from/to/truck fields, review sheet updates, and success/error toasts.
+- **Transfer stock API** — Create helper, typed body/response shapes, React Query mutation hook, and voucher-number cache invalidation on success.
+- **Create transfer stock form** — Submits through the API with three live voucher numbers (transfer, outgoing, destination storage), truck number field, review sheet vehicle section, and success/error toasts.
+- **Transfer stock report** — `/transfer/report` page with API-backed table, loading/error/empty states, and sidebar/topbar navigation entry.
+- **UI** — shadcn `AlertDialog` for destructive confirmations.
+
+### Changed
+
+- **Daybook storage tab** — Loads mixed storage and outgoing entries from the unified daybook API; URL-synced type filter (all/incoming/outgoing), sort, page size, and pagination; gate-pass search disabled pending API support.
+- **Daybook search params** — `type`, `sortBy`, `page`, and `limit` added to the daybook route search schema.
+- **Voucher number hook** — Supports `outgoing-gate-pass` and `transfer-stock-gate-pass` receipt numbers.
+- **Create storage gate pass** — Invalidates daybook list queries on successful create.
+- **Button secondary variant** — Hover uses a subtle foreground mix for clearer feedback in light and dark themes.
+
 ## [0.4.0] - 2026-06-11
 
 Booking gate passes are now API-backed end to end: create and edit flows with review sheets, a live daybook tab with search and pagination, and shared potato variety options across gate pass forms.
@@ -551,6 +574,7 @@ First application scaffold for the Kapur frontend (`kf-frontend`).
 
 - Default Vite starter styles (`App.css`) and demo application UI from the initial template.
 
+[0.4.1]: https://github.com/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/compare/v0.3.9...v0.4.0
 [0.3.9]: https://github.com/compare/v0.3.8...v0.3.9
 [0.3.8]: https://github.com/compare/v0.3.7...v0.3.8

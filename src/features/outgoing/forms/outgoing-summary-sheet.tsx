@@ -6,7 +6,9 @@ import {
   CheckCircle2,
   ClipboardCheck,
   FileText,
+  MapPin,
   Scale,
+  Truck,
   User2,
   Warehouse,
   type LucideIcon,
@@ -159,6 +161,27 @@ function OutgoingReviewSummary({
             label="Date"
             value={formatReviewDate(values.date)}
             icon={Calendar}
+          />
+          {values.manualGatePassNumber != null ? (
+            <DetailRow
+              label="Manual GP no."
+              value={values.manualGatePassNumber.toLocaleString("en-IN")}
+              valueClassName="font-mono tabular-nums"
+            />
+          ) : null}
+        </SummaryCard>
+      </div>
+
+      <div className="space-y-2">
+        <SectionLabel icon={Truck}>Route &amp; vehicle</SectionLabel>
+        <SummaryCard>
+          <DetailRow label="From" value={values.from} icon={MapPin} />
+          <DetailRow label="To" value={values.to} icon={MapPin} />
+          <DetailRow
+            label="Truck"
+            value={values.truckNumber}
+            icon={Truck}
+            valueClassName="font-mono uppercase"
           />
         </SummaryCard>
       </div>

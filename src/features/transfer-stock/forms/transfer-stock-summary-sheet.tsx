@@ -7,6 +7,7 @@ import {
   ClipboardCheck,
   FileText,
   Scale,
+  Truck,
   User2,
   Warehouse,
   type LucideIcon,
@@ -168,6 +169,18 @@ function TransferReviewSummary({
             label="Date"
             value={formatReviewDate(values.date)}
             icon={Calendar}
+          />
+        </SummaryCard>
+      </div>
+
+      <div className="space-y-2">
+        <SectionLabel icon={Truck}>Vehicle</SectionLabel>
+        <SummaryCard>
+          <DetailRow
+            label="Truck number"
+            value={values.truckNumber}
+            icon={Truck}
+            valueClassName="font-mono uppercase"
           />
         </SummaryCard>
       </div>

@@ -8,6 +8,7 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { useFarmerLinkOptions } from "@/features/people/api/use-farmer-link-options"
 import { farmerLinkOptionsToComboboxOptions } from "@/features/people/utils/farmer-link-combobox"
 import { TransferGatePassesSection } from "@/features/transfer-stock/forms/transfer-gate-passes-section"
@@ -107,10 +108,31 @@ const CreateTransferStock = () => {
     [toFarmerSearch, farmerOptions]
   )
 
-  const form = useCreateTransferStockForm({
+  function resetComboboxState() {
+    setFromFarmerSearch("")
+    setFromFarmerComboboxOpen(false)
+    setToFarmerSearch("")
+    setToFarmerComboboxOpen(false)
+  }
+
+  const {
+    form,
+    nextTransferGatePassNo,
+    isLoadingVoucherNumbers,
+    isVoucherNumbersError,
+    isGatePassNumbersReady,
+  } = useCreateTransferStockForm({
+    farmerLinkOptions,
     onOpenReview: () => setReviewOpen(true),
     onCloseReview: () => setReviewOpen(false),
+    onResetComboboxState: resetComboboxState,
   })
+
+  const displayGatePassNo = isLoadingVoucherNumbers
+    ? "…"
+    : isVoucherNumbersError
+      ? "—"
+      : (nextTransferGatePassNo ?? "—")
 
   const getFarmerLabel = (farmerStorageLinkId: string) =>
     farmerOptions.find((option) => option.id === farmerStorageLinkId)
@@ -124,21 +146,23 @@ const CreateTransferStock = () => {
     void form.handleSubmit({ submitAction: "submit" })
   }
 
-  const resetComboboxState = () => {
-    setFromFarmerSearch("")
-    setFromFarmerComboboxOpen(false)
-    setToFarmerSearch("")
-    setToFarmerComboboxOpen(false)
-  }
-
   return (
     <Card className="mx-auto w-full max-w-7xl shadow-sm">
       <CardHeader className="border-b bg-muted/30 pb-6">
         <CardTitle className="font-heading text-xl font-semibold tracking-tight sm:text-2xl">
-          Transfer Stock
+          Transfer Stock{" "}
+          <span className="font-mono text-xl tabular-nums text-primary sm:text-2xl">
+            #{displayGatePassNo}
+          </span>
         </CardTitle>
         <CardDescription className="text-base">
           Move stock between farmer storage accounts.
+          {isVoucherNumbersError ? (
+            <span className="mt-1 block text-destructive">
+              Gate pass numbers could not be loaded. Refresh the page and try
+              again.
+            </span>
+          ) : null}
         </CardDescription>
       </CardHeader>
 
@@ -310,6 +334,45 @@ const CreateTransferStock = () => {
 
             <FieldSet>
               <FieldLegend className="font-heading text-base font-semibold">
+                Vehicle
+              </FieldLegend>
+              <FieldDescription>
+                Truck used to move stock between accounts.
+              </FieldDescription>
+              <FieldGroup className="mt-5 grid grid-cols-1 gap-6 @md/field-group:max-w-sm">
+                <form.Field name="truckNumber">
+                  {(field) => {
+                    const isInvalid = isFieldInvalid(field.state.meta)
+                    return (
+                      <Field data-invalid={isInvalid}>
+                        <FieldLabel htmlFor={field.name}>
+                          Truck number
+                        </FieldLabel>
+                        <Input
+                          id={field.name}
+                          name={field.name}
+                          value={field.state.value}
+                          onBlur={field.handleBlur}
+                          onChange={(e) =>
+                            field.handleChange(e.target.value.toUpperCase())
+                          }
+                          placeholder="e.g. HR-12-AB-1234"
+                          autoComplete="off"
+                          aria-invalid={isInvalid}
+                          className="h-11 text-base uppercase"
+                        />
+                        {isInvalid && (
+                          <FieldError errors={field.state.meta.errors} />
+                        )}
+                      </Field>
+                    )
+                  }}
+                </form.Field>
+              </FieldGroup>
+            </FieldSet>
+
+            <FieldSet>
+              <FieldLegend className="font-heading text-base font-semibold">
                 Additional notes
               </FieldLegend>
               <FieldGroup className="mt-5">
@@ -359,7 +422,7 @@ const CreateTransferStock = () => {
             children={(isSubmitting) => (
               <Button
                 type="button"
-                disabled={isSubmitting}
+                disabled={isSubmitting || !isGatePassNumbersReady}
                 onClick={handleOpenReview}
               >
                 {isSubmitting ? "Validating…" : "Review"}
@@ -399,7 +462,7 @@ const CreateTransferStock = () => {
               }
               onBack={() => setReviewOpen(false)}
               onSubmit={handleConfirmSubmit}
-              canSubmit={canSubmit}
+              canSubmit={canSubmit && isGatePassNumbersReady}
               isSubmitting={isSubmitting}
             />
           )

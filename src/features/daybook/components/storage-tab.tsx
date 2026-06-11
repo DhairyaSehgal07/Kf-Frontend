@@ -1,10 +1,6 @@
-import {
-  useMemo,
-  useState,
-  type MouseEvent,
-} from "react"
+import { useMemo, type MouseEvent } from "react"
+import { getRouteApi } from "@tanstack/react-router"
 import { useNavigate } from "@tanstack/react-router"
-import { useDebounceValue } from "usehooks-ts"
 import {
   ArrowRightFromLine,
   ArrowRightLeft,
@@ -23,9 +19,7 @@ import {
   ItemMedia,
   ItemTitle,
 } from "@/components/ui/item"
-
 import { Input } from "@/components/ui/input"
-
 import {
   Select,
   SelectContent,
@@ -33,7 +27,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-
 import {
   Pagination,
   PaginationContent,
@@ -41,7 +34,6 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination"
-
 import {
   Empty,
   EmptyDescription,
@@ -54,30 +46,41 @@ import {
   StorageGatePassCardSkeleton,
 } from "@/components/storage-gate-pass-card"
 import { Skeleton } from "@/components/ui/skeleton"
+import { useDaybook } from "@/features/daybook/api/use-daybook"
+import type { DaybookQueryParams } from "@/features/daybook/api/types"
+import {
+  DaybookOutgoingGatePassCard,
+  DaybookOutgoingGatePassCardSkeleton,
+} from "@/features/daybook/components/daybook-outgoing-gate-pass-card"
+import { paginationRangeLabel } from "@/features/daybook/utils/daybook-display"
+import { daybookStorageEntryToGatePass } from "@/features/daybook/utils/daybook-storage-adapter"
+import {
+  isOutgoingEntry,
+  isStorageEntry,
+} from "@/features/daybook/utils/daybook-type-guards"
 import { nikasiAccent } from "@/features/dispatch-pre-storage/constants/nikasi-accent"
-import { useSearchStorageGatePass } from "@/features/storage/api/use-search-storage-gate-pass"
-import { useStorageGatePasses } from "@/features/storage/api/use-storage-gate-passes"
-import type { StorageGatePassListParams } from "@/features/storage/api/types"
+import type {
+  DaybookListType,
+  DaybookSortBy,
+} from "@/features/daybook/search"
+import { preserveScroll } from "@/lib/preserve-scroll"
 import { cn } from "@/lib/utils"
 
-const PAGE_SIZE_OPTIONS = [10, 25, 50, 100] as const
+const daybookRouteApi = getRouteApi("/_authenticated/daybook")
+
+const PAGE_SIZE_OPTIONS = [10, 20, 50] as const
 const DEFAULT_PAGE_SIZE = PAGE_SIZE_OPTIONS[0]
-const SEARCH_DEBOUNCE_MS = 500
 
 type PageSize = (typeof PAGE_SIZE_OPTIONS)[number]
 
 type SortFilter = "newest" | "oldest"
 
-function toSortOrder(sort: SortFilter): StorageGatePassListParams["sortOrder"] {
-  return sort === "newest" ? "desc" : "asc"
+function toSortBy(sort: SortFilter): DaybookSortBy {
+  return sort === "newest" ? "latest" : "oldest"
 }
 
-function parseGatePassSearchNumber(value: string): number | undefined {
-  const trimmed = value.trim()
-  if (!trimmed || !/^\d+$/.test(trimmed)) return undefined
-
-  const parsed = Number(trimmed)
-  return parsed > 0 ? parsed : undefined
+function fromSortBy(sortBy: DaybookSortBy): SortFilter {
+  return sortBy === "latest" ? "newest" : "oldest"
 }
 
 function StorageTabSkeleton() {
@@ -101,9 +104,13 @@ function StorageTabSkeleton() {
         <Skeleton className="h-11 w-full rounded-md" />
 
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
-          <Skeleton className="h-10 w-full rounded-md sm:w-[150px]" />
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <Skeleton className="h-10 w-full rounded-md sm:w-[150px]" />
+            <Skeleton className="h-10 w-full rounded-md sm:w-[150px]" />
+          </div>
 
           <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-row sm:shrink-0">
+            <Skeleton className="h-10 w-full rounded-md sm:w-36" />
             <Skeleton className="h-10 w-full rounded-md sm:w-36" />
             <Skeleton className="h-10 w-full rounded-md sm:w-36" />
             <Skeleton className="h-10 w-full rounded-md sm:w-36" />
@@ -112,9 +119,9 @@ function StorageTabSkeleton() {
       </div>
 
       <div className="space-y-6">
-        {Array.from({ length: 3 }).map((_, index) => (
-          <StorageGatePassCardSkeleton key={index} />
-        ))}
+        <StorageGatePassCardSkeleton />
+        <DaybookOutgoingGatePassCardSkeleton />
+        <StorageGatePassCardSkeleton />
       </div>
 
       <Item
@@ -140,86 +147,72 @@ function StorageTabSkeleton() {
 
 const DaybookStorageTab = () => {
   const navigate = useNavigate()
-  const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState<PageSize>(DEFAULT_PAGE_SIZE)
-  const [sortFilter, setSortFilter] = useState<SortFilter>("newest")
-  const [searchInput, setSearchInput] = useState("")
-  const [debouncedSearch, setDebouncedSearch] = useDebounceValue(
-    "",
-    SEARCH_DEBOUNCE_MS,
-  )
+  const routeNavigate = daybookRouteApi.useNavigate()
+  const search = daybookRouteApi.useSearch()
 
-  const searchNumber = useMemo(
-    () => parseGatePassSearchNumber(debouncedSearch),
-    [debouncedSearch],
-  )
-  const isSearchMode = searchNumber != null
-  const hasInvalidSearchInput =
-    debouncedSearch.trim().length > 0 && searchNumber == null
+  const type: DaybookListType = search.type ?? "all"
+  const sortBy: DaybookSortBy = search.sortBy ?? "latest"
+  const page = search.page ?? 1
+  const pageSize = (search.limit ?? DEFAULT_PAGE_SIZE) as PageSize
+  const sortFilter = fromSortBy(sortBy)
 
-  const listQueryParams = useMemo<StorageGatePassListParams>(
+  const queryParams = useMemo<DaybookQueryParams>(
     () => ({
+      type,
+      sortBy,
       page,
       limit: pageSize,
-      sortOrder: toSortOrder(sortFilter),
     }),
-    [page, pageSize, sortFilter],
+    [type, sortBy, page, pageSize],
   )
 
-  const listQuery = useStorageGatePasses(listQueryParams, {
-    enabled: !isSearchMode && !hasInvalidSearchInput,
-  })
-  const searchQuery = useSearchStorageGatePass(searchNumber ?? 0, {
-    enabled: isSearchMode,
-  })
+  const { data, isLoading, isError, error, isFetching, refetch } =
+    useDaybook(queryParams)
 
-  const activeQuery = isSearchMode ? searchQuery : listQuery
-  const {
-    data,
-    isLoading,
-    isError,
-    error,
-    isFetching,
-    refetch,
-  } = activeQuery
-
-  const storageGatePasses = hasInvalidSearchInput
-    ? []
-    : (data?.storageGatePasses ?? [])
-  const pagination = hasInvalidSearchInput ? undefined : data?.pagination
-  const totalCount = isSearchMode
-    ? storageGatePasses.length
-    : (pagination?.total ?? 0)
-  const currentPage = pagination?.page ?? page
+  const entries = data?.entries ?? []
+  const pagination = data?.pagination
+  const totalCount = pagination?.totalItems ?? 0
+  const currentPage = pagination?.currentPage ?? page
   const totalPages = Math.max(pagination?.totalPages ?? 1, 1)
+  const isOnFirstPage = pagination
+    ? !pagination.hasPreviousPage
+    : currentPage <= 1
+  const isOnLastPage = pagination
+    ? !pagination.hasNextPage
+    : currentPage >= totalPages
 
-  const isOnFirstPage = currentPage <= 1
-  const isOnLastPage = currentPage >= totalPages
-  const isSearching = isSearchMode
-  const showListLoading = !isSearchMode && isLoading
-  const showSearchLoading = isSearchMode && isFetching && !data
-
-  const emptyTitle = hasInvalidSearchInput
-    ? "Invalid gate pass number"
-    : isSearching
-      ? "No storage gate pass found"
-      : "No storage gate passes found"
-  const emptyDescription = hasInvalidSearchInput
-    ? "Enter a valid numeric gate pass number to search."
-    : isSearching
-      ? `No gate pass matches #${searchNumber}.`
-      : "There are no storage gate passes available."
+  const updateFilters = (
+    patch: Partial<{
+      type: DaybookListType
+      sortBy: DaybookSortBy
+      page: number
+      limit: PageSize
+    }>,
+  ) => {
+    routeNavigate({
+      search: (previous) => ({
+        ...previous,
+        tab: "storage",
+        ...patch,
+      }),
+      ...preserveScroll,
+    })
+  }
 
   const handlePrevPage = (event: MouseEvent<HTMLAnchorElement>) => {
     event.preventDefault()
     if (isOnFirstPage || isFetching) return
-    setPage((previous) => Math.max(previous - 1, 1))
+
+    const previousPage = pagination?.previousPage ?? Math.max(currentPage - 1, 1)
+    updateFilters({ page: previousPage })
   }
 
   const handleNextPage = (event: MouseEvent<HTMLAnchorElement>) => {
     event.preventDefault()
     if (isOnLastPage || isFetching) return
-    setPage((previous) => previous + 1)
+
+    const nextPage = pagination?.nextPage ?? currentPage + 1
+    updateFilters({ page: nextPage })
   }
 
   const handleAddStorage = () => {
@@ -227,10 +220,10 @@ const DaybookStorageTab = () => {
   }
 
   const handleAddOutgoing = () => {
-    navigate({to:"/outgoing"})
+    navigate({ to: "/outgoing" })
   }
 
-    const handleEditHistory= () => {
+  const handleEditHistory = () => {
     navigate({ to: "/storage/edit-history" })
   }
 
@@ -238,22 +231,22 @@ const DaybookStorageTab = () => {
     navigate({ to: "/transfer" })
   }
 
-  const handleSearchChange = (value: string) => {
-    setSearchInput(value)
-    setDebouncedSearch(value)
+  const handleTypeChange = (value: string) => {
+    updateFilters({ type: value as DaybookListType, page: 1 })
   }
 
   const handleSortChange = (value: string) => {
-    setSortFilter(value as SortFilter)
-    setPage(1)
+    updateFilters({ sortBy: toSortBy(value as SortFilter), page: 1 })
   }
 
   const handlePageSizeChange = (value: string) => {
-    setPageSize(Number(value) as PageSize)
-    setPage(1)
+    updateFilters({
+      limit: Number(value) as PageSize,
+      page: 1,
+    })
   }
 
-  if (showListLoading) {
+  if (isLoading) {
     return <StorageTabSkeleton />
   }
 
@@ -267,7 +260,9 @@ const DaybookStorageTab = () => {
         </ItemMedia>
 
         <ItemContent>
-          <ItemTitle>{totalCount} storage gate passes</ItemTitle>
+          <ItemTitle>
+            {totalCount.toLocaleString("en-IN")} gate passes
+          </ItemTitle>
         </ItemContent>
 
         <ItemActions>
@@ -292,25 +287,39 @@ const DaybookStorageTab = () => {
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
 
           <Input
-            placeholder="Enter Gate Pass Number"
+            placeholder="Search by gate pass number (coming soon)"
             className="w-full pl-10"
             inputMode="numeric"
-            value={searchInput}
-            onChange={(event) => handleSearchChange(event.target.value)}
+            disabled
+            aria-disabled
           />
         </div>
 
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
-          <Select value={sortFilter} onValueChange={handleSortChange}>
-            <SelectTrigger className="w-full min-w-0 sm:w-[150px]">
-              <SelectValue placeholder="Sort by" />
-            </SelectTrigger>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <Select value={type} onValueChange={handleTypeChange}>
+              <SelectTrigger className="w-full min-w-0 sm:w-[150px]">
+                <SelectValue placeholder="Type" />
+              </SelectTrigger>
 
-            <SelectContent>
-              <SelectItem value="newest">Newest First</SelectItem>
-              <SelectItem value="oldest">Oldest First</SelectItem>
-            </SelectContent>
-          </Select>
+              <SelectContent>
+                <SelectItem value="all">All passes</SelectItem>
+                <SelectItem value="incoming">Incoming</SelectItem>
+                <SelectItem value="outgoing">Outgoing</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={sortFilter} onValueChange={handleSortChange}>
+              <SelectTrigger className="w-full min-w-0 sm:w-[150px]">
+                <SelectValue placeholder="Sort by" />
+              </SelectTrigger>
+
+              <SelectContent>
+                <SelectItem value="newest">Newest first</SelectItem>
+                <SelectItem value="oldest">Oldest first</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
           <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-row sm:shrink-0">
             <Button
@@ -323,7 +332,11 @@ const DaybookStorageTab = () => {
               <span className="hidden sm:inline">Transfer Stock</span>
             </Button>
 
-           <Button variant="secondary" className="min-w-0 px-2.5 sm:px-3" onClick={handleEditHistory}>
+            <Button
+              variant="secondary"
+              className="min-w-0 px-2.5 sm:px-3"
+              onClick={handleEditHistory}
+            >
               <span className="truncate sm:hidden">Edit History</span>
               <span className="hidden sm:inline">Storage Edit History</span>
             </Button>
@@ -352,23 +365,19 @@ const DaybookStorageTab = () => {
         </div>
       </div>
 
-      {showSearchLoading ? (
-        <div className="space-y-6">
-          <StorageGatePassCardSkeleton />
-        </div>
-      ) : isError ? (
+      {isError ? (
         <Empty className="rounded-xl border bg-muted/10">
           <EmptyHeader>
             <EmptyMedia variant="icon">
               <Scale />
             </EmptyMedia>
 
-            <EmptyTitle>Could not load storage gate passes</EmptyTitle>
+            <EmptyTitle>Could not load daybook</EmptyTitle>
 
             <EmptyDescription>
               {error instanceof Error
                 ? error.message
-                : "Something went wrong while fetching storage gate passes."}
+                : "Something went wrong while fetching gate passes."}
             </EmptyDescription>
           </EmptyHeader>
 
@@ -386,11 +395,18 @@ const DaybookStorageTab = () => {
             Try again
           </Button>
         </Empty>
-      ) : storageGatePasses.length > 0 ? (
+      ) : entries.length > 0 ? (
         <div className="space-y-6">
-          {storageGatePasses.map((gatePass) => (
-            <StorageGatePassCard key={gatePass._id} data={gatePass} />
-          ))}
+          {entries.map((entry) =>
+            isStorageEntry(entry) ? (
+              <StorageGatePassCard
+                key={entry._id}
+                data={daybookStorageEntryToGatePass(entry)}
+              />
+            ) : isOutgoingEntry(entry) ? (
+              <DaybookOutgoingGatePassCard key={entry._id} data={entry} />
+            ) : null,
+          )}
         </div>
       ) : (
         <Empty className="rounded-xl border bg-muted/10">
@@ -399,20 +415,23 @@ const DaybookStorageTab = () => {
               <Scale />
             </EmptyMedia>
 
-            <EmptyTitle>{emptyTitle}</EmptyTitle>
+            <EmptyTitle>No gate passes yet</EmptyTitle>
 
-            <EmptyDescription>{emptyDescription}</EmptyDescription>
+            <EmptyDescription>
+              Storage receipts and outgoing deliveries will appear here once
+              recorded.
+            </EmptyDescription>
           </EmptyHeader>
         </Empty>
       )}
 
-      {!isSearchMode && !hasInvalidSearchInput ? (
-        <Item
-          variant="outline"
-          size="sm"
-          className="rounded-xl px-4 py-3 sm:px-5 sm:py-4"
-        >
-          <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <Item
+        variant="outline"
+        size="sm"
+        className="rounded-xl px-4 py-3 sm:px-5 sm:py-4"
+      >
+        <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Select
                 value={String(pageSize)}
@@ -435,45 +454,50 @@ const DaybookStorageTab = () => {
               </Select>
               <span>items per page</span>
             </div>
-
-            <Pagination className="mx-0 w-full sm:w-auto sm:justify-end">
-              <PaginationContent>
-                <PaginationItem>
-                  <PaginationPrevious
-                    href="#"
-                    onClick={handlePrevPage}
-                    aria-disabled={isOnFirstPage || isFetching}
-                    className={
-                      isOnFirstPage || isFetching
-                        ? "pointer-events-none opacity-50"
-                        : ""
-                    }
-                  />
-                </PaginationItem>
-
-                <PaginationItem>
-                  <span className="text-sm font-medium tabular-nums">
-                    {currentPage} / {totalPages}
-                  </span>
-                </PaginationItem>
-
-                <PaginationItem>
-                  <PaginationNext
-                    href="#"
-                    onClick={handleNextPage}
-                    aria-disabled={isOnLastPage || isFetching}
-                    className={
-                      isOnLastPage || isFetching
-                        ? "pointer-events-none opacity-50"
-                        : ""
-                    }
-                  />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
+            {pagination ? (
+              <span className="text-sm text-muted-foreground">
+                {paginationRangeLabel(pagination)}
+              </span>
+            ) : null}
           </div>
-        </Item>
-      ) : null}
+
+          <Pagination className="mx-0 w-full sm:w-auto sm:justify-end">
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  href="#"
+                  onClick={handlePrevPage}
+                  aria-disabled={isOnFirstPage || isFetching}
+                  className={
+                    isOnFirstPage || isFetching
+                      ? "pointer-events-none opacity-50"
+                      : ""
+                  }
+                />
+              </PaginationItem>
+
+              <PaginationItem>
+                <span className="text-sm font-medium tabular-nums">
+                  {currentPage} / {totalPages}
+                </span>
+              </PaginationItem>
+
+              <PaginationItem>
+                <PaginationNext
+                  href="#"
+                  onClick={handleNextPage}
+                  aria-disabled={isOnLastPage || isFetching}
+                  className={
+                    isOnLastPage || isFetching
+                      ? "pointer-events-none opacity-50"
+                      : ""
+                  }
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
+      </Item>
     </div>
   )
 }

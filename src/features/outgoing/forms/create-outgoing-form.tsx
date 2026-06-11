@@ -8,6 +8,7 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { useFarmerLinkOptions } from "@/features/people/api/use-farmer-link-options"
 import { farmerLinkOptionsToComboboxOptions } from "@/features/people/utils/farmer-link-combobox"
 import { OutgoingSummarySheet } from "@/features/outgoing/forms/outgoing-summary-sheet"
@@ -38,6 +39,18 @@ import {
 
 function isFieldInvalid(meta: { isTouched: boolean; isValid: boolean }) {
   return meta.isTouched && !meta.isValid
+}
+
+function parseOptionalPositiveNumber(value: string): number | undefined {
+  if (value === "") return undefined
+  const parsed = Number(value)
+  return Number.isNaN(parsed) ? undefined : parsed
+}
+
+const numericInputProps = {
+  type: "number" as const,
+  min: 0,
+  onWheel: (e: React.WheelEvent<HTMLInputElement>) => e.currentTarget.blur(),
 }
 
 type OutgoingReviewSheetProps = {
@@ -98,10 +111,28 @@ const CreateOutgoingForm = () => {
     [farmerSearch, farmerOptions],
   )
 
-  const form = useCreateOutgoingForm({
+  function resetComboboxState() {
+    setFarmerSearch("")
+    setFarmerComboboxOpen(false)
+  }
+
+  const {
+    form,
+    nextVoucherNumber,
+    isLoadingVoucherNumber,
+    isVoucherNumberError,
+    isGatePassNumberReady,
+  } = useCreateOutgoingForm({
     onOpenReview: () => setReviewOpen(true),
     onCloseReview: () => setReviewOpen(false),
+    onResetComboboxState: resetComboboxState,
   })
+
+  const displayGatePassNo = isLoadingVoucherNumber
+    ? "…"
+    : isVoucherNumberError
+      ? "—"
+      : (nextVoucherNumber ?? "—")
 
   const getFarmerLabel = (farmerStorageLinkId: string) =>
     farmerOptions.find((option) => option.id === farmerStorageLinkId)?.label ??
@@ -115,16 +146,14 @@ const CreateOutgoingForm = () => {
     void form.handleSubmit({ submitAction: "submit" })
   }
 
-  const resetComboboxState = () => {
-    setFarmerSearch("")
-    setFarmerComboboxOpen(false)
-  }
-
   return (
     <Card className="mx-auto w-full max-w-7xl shadow-sm">
       <CardHeader className="border-b bg-muted/30 pb-6">
         <CardTitle className="font-heading text-xl font-semibold tracking-tight sm:text-2xl">
-          Outgoing
+          Outgoing{" "}
+          <span className="font-mono text-xl tabular-nums text-primary sm:text-2xl">
+            #{displayGatePassNo}
+          </span>
         </CardTitle>
         <CardDescription className="text-base">
           Record stock leaving storage for a farmer account.
@@ -223,6 +252,135 @@ const CreateOutgoingForm = () => {
                     )
                   }}
                 </form.Field>
+
+                <form.Field name="manualGatePassNumber">
+                  {(field) => {
+                    const isInvalid = isFieldInvalid(field.state.meta)
+                    return (
+                      <Field
+                        data-invalid={isInvalid}
+                        className="@md/field-group:max-w-sm"
+                      >
+                        <FieldLabel htmlFor={field.name}>
+                          Manual gate pass no.
+                        </FieldLabel>
+                        <Input
+                          {...numericInputProps}
+                          id={field.name}
+                          name={field.name}
+                          value={
+                            field.state.value != null
+                              ? String(field.state.value)
+                              : ""
+                          }
+                          onBlur={field.handleBlur}
+                          onChange={(e) =>
+                            field.handleChange(
+                              parseOptionalPositiveNumber(e.target.value),
+                            )
+                          }
+                          inputMode="numeric"
+                          placeholder="Optional"
+                          aria-invalid={isInvalid}
+                          className="h-11 text-base tabular-nums"
+                        />
+                        <FieldDescription>
+                          Optional reference number if used on the physical pass.
+                        </FieldDescription>
+                        {isInvalid && (
+                          <FieldError errors={field.state.meta.errors} />
+                        )}
+                      </Field>
+                    )
+                  }}
+                </form.Field>
+              </FieldGroup>
+            </FieldSet>
+
+            <FieldSet>
+              <FieldLegend className="font-heading text-base font-semibold">
+                Route &amp; vehicle
+              </FieldLegend>
+              <FieldDescription>
+                Source, destination, and truck for this outgoing dispatch.
+              </FieldDescription>
+              <FieldGroup className="mt-5 grid grid-cols-1 gap-6 @md/field-group:grid-cols-3">
+                <form.Field name="from">
+                  {(field) => {
+                    const isInvalid = isFieldInvalid(field.state.meta)
+                    return (
+                      <Field data-invalid={isInvalid}>
+                        <FieldLabel htmlFor={field.name}>From</FieldLabel>
+                        <Input
+                          id={field.name}
+                          name={field.name}
+                          value={field.state.value}
+                          onBlur={field.handleBlur}
+                          onChange={(e) => field.handleChange(e.target.value)}
+                          placeholder="e.g. Kapur Cold Storage"
+                          autoComplete="off"
+                          aria-invalid={isInvalid}
+                          className="h-11 text-base"
+                        />
+                        {isInvalid && (
+                          <FieldError errors={field.state.meta.errors} />
+                        )}
+                      </Field>
+                    )
+                  }}
+                </form.Field>
+
+                <form.Field name="to">
+                  {(field) => {
+                    const isInvalid = isFieldInvalid(field.state.meta)
+                    return (
+                      <Field data-invalid={isInvalid}>
+                        <FieldLabel htmlFor={field.name}>To</FieldLabel>
+                        <Input
+                          id={field.name}
+                          name={field.name}
+                          value={field.state.value}
+                          onBlur={field.handleBlur}
+                          onChange={(e) => field.handleChange(e.target.value)}
+                          placeholder="e.g. Azadpur Mandi"
+                          autoComplete="off"
+                          aria-invalid={isInvalid}
+                          className="h-11 text-base"
+                        />
+                        {isInvalid && (
+                          <FieldError errors={field.state.meta.errors} />
+                        )}
+                      </Field>
+                    )
+                  }}
+                </form.Field>
+
+                <form.Field name="truckNumber">
+                  {(field) => {
+                    const isInvalid = isFieldInvalid(field.state.meta)
+                    return (
+                      <Field data-invalid={isInvalid}>
+                        <FieldLabel htmlFor={field.name}>Truck number</FieldLabel>
+                        <Input
+                          id={field.name}
+                          name={field.name}
+                          value={field.state.value}
+                          onBlur={field.handleBlur}
+                          onChange={(e) =>
+                            field.handleChange(e.target.value.toUpperCase())
+                          }
+                          placeholder="e.g. HR-12-AB-1234"
+                          autoComplete="off"
+                          aria-invalid={isInvalid}
+                          className="h-11 text-base uppercase"
+                        />
+                        {isInvalid && (
+                          <FieldError errors={field.state.meta.errors} />
+                        )}
+                      </Field>
+                    )
+                  }}
+                </form.Field>
               </FieldGroup>
             </FieldSet>
 
@@ -304,7 +462,7 @@ const CreateOutgoingForm = () => {
             children={(isSubmitting) => (
               <Button
                 type="button"
-                disabled={isSubmitting}
+                disabled={isSubmitting || !isGatePassNumberReady}
                 onClick={handleOpenReview}
               >
                 {isSubmitting ? "Validating…" : "Review"}

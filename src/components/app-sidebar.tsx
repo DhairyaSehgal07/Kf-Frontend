@@ -70,6 +70,7 @@ const reportNavItems = [
   { name: 'Incoming', to: '/incoming/report' },
   { name: 'Grading', to: '/grading/report' },
   { name: 'Storage', to: '/storage/report' },
+  { name: 'Transfer Stock', to: '/transfer/report' },
   { name: 'Dispatch', to: '/dispatch-pre-storage/report' },
   { name: 'Booking', to: '/dispatch-post-storage/report' },
 ] as const;

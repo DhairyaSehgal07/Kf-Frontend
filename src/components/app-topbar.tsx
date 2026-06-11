@@ -39,6 +39,7 @@ const routeTitles: Record<string, string> = {
   '/incoming/report': 'Incoming report',
   '/grading/report': 'Grading report',
   '/storage/report': 'Storage report',
+  '/transfer/report': 'Transfer stock report',
   '/dispatch-pre-storage/report': 'Dispatch report',
   '/dispatch-post-storage/report': 'Booking report',
   '/booking': 'Booking',

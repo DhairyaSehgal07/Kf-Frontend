@@ -18,7 +18,17 @@ export const outgoingAllocationSchema = z.object({
 
 export const outgoingFormSchema = z.object({
   farmerStorageLinkId: objectId,
-  date: z.string().min(1, "Date is required"),
+  date: z.string().datetime("Select a valid date."),
+  manualGatePassNumber: z.union([
+    z.undefined(),
+    z
+      .number()
+      .int("Manual gate pass number must be a whole number")
+      .positive("Manual gate pass number must be greater than zero"),
+  ]),
+  from: z.string().trim().min(1, "From is required"),
+  to: z.string().trim().min(1, "To is required"),
+  truckNumber: z.string().trim().min(1, "Truck number is required"),
   remarks: z.string().max(500),
   allocations: z
     .record(z.string(), z.number().int().min(1))

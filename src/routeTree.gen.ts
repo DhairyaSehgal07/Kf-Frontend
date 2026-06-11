@@ -22,6 +22,7 @@ import { Route as AuthenticatedGradingIndexRouteImport } from './routes/_authent
 import { Route as AuthenticatedDispatchPreStorageIndexRouteImport } from './routes/_authenticated/dispatch-pre-storage.index'
 import { Route as AuthenticatedBookingIndexRouteImport } from './routes/_authenticated/booking.index'
 import { Route as AuthenticatedAdditionalIndexRouteImport } from './routes/_authenticated/additional.index'
+import { Route as AuthenticatedTransferReportRouteImport } from './routes/_authenticated/transfer.report'
 import { Route as AuthenticatedStorageReportRouteImport } from './routes/_authenticated/storage.report'
 import { Route as AuthenticatedStorageEditHistoryRouteImport } from './routes/_authenticated/storage.edit-history'
 import { Route as AuthenticatedStorageIdRouteImport } from './routes/_authenticated/storage.$id'
@@ -110,6 +111,12 @@ const AuthenticatedAdditionalIndexRoute =
   AuthenticatedAdditionalIndexRouteImport.update({
     id: '/additional/',
     path: '/additional/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedTransferReportRoute =
+  AuthenticatedTransferReportRouteImport.update({
+    id: '/transfer/report',
+    path: '/transfer/report',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedStorageReportRoute =
@@ -223,6 +230,7 @@ export interface FileRoutesByFullPath {
   '/storage/$id': typeof AuthenticatedStorageIdRoute
   '/storage/edit-history': typeof AuthenticatedStorageEditHistoryRoute
   '/storage/report': typeof AuthenticatedStorageReportRoute
+  '/transfer/report': typeof AuthenticatedTransferReportRoute
   '/additional/': typeof AuthenticatedAdditionalIndexRoute
   '/booking/': typeof AuthenticatedBookingIndexRoute
   '/dispatch-pre-storage/': typeof AuthenticatedDispatchPreStorageIndexRoute
@@ -253,6 +261,7 @@ export interface FileRoutesByTo {
   '/storage/$id': typeof AuthenticatedStorageIdRoute
   '/storage/edit-history': typeof AuthenticatedStorageEditHistoryRoute
   '/storage/report': typeof AuthenticatedStorageReportRoute
+  '/transfer/report': typeof AuthenticatedTransferReportRoute
   '/additional': typeof AuthenticatedAdditionalIndexRoute
   '/booking': typeof AuthenticatedBookingIndexRoute
   '/dispatch-pre-storage': typeof AuthenticatedDispatchPreStorageIndexRoute
@@ -285,6 +294,7 @@ export interface FileRoutesById {
   '/_authenticated/storage/$id': typeof AuthenticatedStorageIdRoute
   '/_authenticated/storage/edit-history': typeof AuthenticatedStorageEditHistoryRoute
   '/_authenticated/storage/report': typeof AuthenticatedStorageReportRoute
+  '/_authenticated/transfer/report': typeof AuthenticatedTransferReportRoute
   '/_authenticated/additional/': typeof AuthenticatedAdditionalIndexRoute
   '/_authenticated/booking/': typeof AuthenticatedBookingIndexRoute
   '/_authenticated/dispatch-pre-storage/': typeof AuthenticatedDispatchPreStorageIndexRoute
@@ -317,6 +327,7 @@ export interface FileRouteTypes {
     | '/storage/$id'
     | '/storage/edit-history'
     | '/storage/report'
+    | '/transfer/report'
     | '/additional/'
     | '/booking/'
     | '/dispatch-pre-storage/'
@@ -347,6 +358,7 @@ export interface FileRouteTypes {
     | '/storage/$id'
     | '/storage/edit-history'
     | '/storage/report'
+    | '/transfer/report'
     | '/additional'
     | '/booking'
     | '/dispatch-pre-storage'
@@ -378,6 +390,7 @@ export interface FileRouteTypes {
     | '/_authenticated/storage/$id'
     | '/_authenticated/storage/edit-history'
     | '/_authenticated/storage/report'
+    | '/_authenticated/transfer/report'
     | '/_authenticated/additional/'
     | '/_authenticated/booking/'
     | '/_authenticated/dispatch-pre-storage/'
@@ -486,6 +499,13 @@ declare module '@tanstack/react-router' {
       path: '/additional'
       fullPath: '/additional/'
       preLoaderRoute: typeof AuthenticatedAdditionalIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/transfer/report': {
+      id: '/_authenticated/transfer/report'
+      path: '/transfer/report'
+      fullPath: '/transfer/report'
+      preLoaderRoute: typeof AuthenticatedTransferReportRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/storage/report': {
@@ -621,6 +641,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedStorageIdRoute: typeof AuthenticatedStorageIdRoute
   AuthenticatedStorageEditHistoryRoute: typeof AuthenticatedStorageEditHistoryRoute
   AuthenticatedStorageReportRoute: typeof AuthenticatedStorageReportRoute
+  AuthenticatedTransferReportRoute: typeof AuthenticatedTransferReportRoute
   AuthenticatedAdditionalIndexRoute: typeof AuthenticatedAdditionalIndexRoute
   AuthenticatedBookingIndexRoute: typeof AuthenticatedBookingIndexRoute
   AuthenticatedDispatchPreStorageIndexRoute: typeof AuthenticatedDispatchPreStorageIndexRoute
@@ -654,6 +675,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedStorageIdRoute: AuthenticatedStorageIdRoute,
   AuthenticatedStorageEditHistoryRoute: AuthenticatedStorageEditHistoryRoute,
   AuthenticatedStorageReportRoute: AuthenticatedStorageReportRoute,
+  AuthenticatedTransferReportRoute: AuthenticatedTransferReportRoute,
   AuthenticatedAdditionalIndexRoute: AuthenticatedAdditionalIndexRoute,
   AuthenticatedBookingIndexRoute: AuthenticatedBookingIndexRoute,
   AuthenticatedDispatchPreStorageIndexRoute:

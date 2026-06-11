@@ -12,6 +12,7 @@ export type VoucherNumberType =
   | "nikasi-gate-pass"
   | "outgoing-gate-pass"
   | "booking-gate-pass"
+  | "transfer-stock-gate-pass"
 
 /** API response shape for voucher-number endpoint */
 export interface VoucherNumberApiResponse {
