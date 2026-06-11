@@ -13,17 +13,22 @@ export function formQuantitiesToUpdateBagSizes(
   quantities: BookingFormValues["quantities"],
   originalBagSizes: readonly BookingGatePassBagSize[],
 ): BookingGatePassBagSize[] {
-  const initialBySize = new Map(
-    originalBagSizes.map((bagSize) => [bagSize.size, bagSize.initialQuantity]),
+  const initialByLine = new Map(
+    originalBagSizes.map((bagSize) => [
+      `${bagSize.size}\0${bagSize.variety}`,
+      bagSize.initialQuantity,
+    ]),
   )
 
   return activeBookingQuantityRows(quantities).map((row) => {
     const currentQuantity = row.qty ?? 0
+    const lineKey = `${row.size}\0${row.variety}`
 
     return {
       size: row.size,
+      variety: row.variety,
       currentQuantity,
-      initialQuantity: initialBySize.get(row.size) ?? currentQuantity,
+      initialQuantity: initialByLine.get(lineKey) ?? currentQuantity,
     }
   })
 }
@@ -48,7 +53,6 @@ export function toUpdateBookingBody({
     manualGatePassNumber: form.manualGatePassNumber ?? null,
     date: form.date,
     dispatchLedgerId: form.dispatchLedgerId,
-    variety: form.variety,
     bagSizes,
   }
 

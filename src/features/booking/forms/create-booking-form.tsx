@@ -33,8 +33,9 @@ import { useCreateBooking } from "@/features/booking/api/use-create-booking"
 import { BookingQuantitiesSection } from "@/features/booking/forms/booking-quantities-section"
 import { BookingSummarySheet } from "@/features/booking/forms/booking-summary-sheet"
 import { useCreateBookingForm } from "@/features/booking/forms/use-create-booking-form"
+import { useBookingAvailability } from "@/features/booking/hooks/use-booking-availability"
 import {
-  bookingFormSchema,
+  createBookingFormSchema,
   createDefaultBookingQuantities,
 } from "@/features/booking/schemas/booking-form-schema"
 import { useDispatchLedgers } from "@/features/people/api/use-dispatch-ledgers"
@@ -44,7 +45,6 @@ import {
   useGetReceiptVoucherNumber,
   voucherNumberKeys,
 } from "@/hooks/use-get-voucher-number"
-import { POTATO_VARIETY_OPTIONS } from "@/lib/constants"
 import { queryClient } from "@/lib/queryClient"
 
 function isFieldInvalid(meta: { isTouched: boolean; isValid: boolean }) {
@@ -71,22 +71,38 @@ const CreateBookingForm = () => {
     isError: isVoucherNumberError,
   } = useGetReceiptVoucherNumber("booking-gate-pass")
   const { mutateAsync: createBooking } = useCreateBooking()
+  const {
+    availabilityMap,
+    isLoading: isAvailabilityLoading,
+    isError: isAvailabilityError,
+    isReady: isAvailabilityReady,
+  } = useBookingAvailability()
+
+  const availabilityContext = useMemo(
+    () => ({
+      availabilityMap,
+      validateAvailability: isAvailabilityReady,
+    }),
+    [availabilityMap, isAvailabilityReady],
+  )
+
+  const formSchema = useMemo(
+    () => createBookingFormSchema(availabilityContext),
+    [availabilityContext],
+  )
 
   const [ledgerSearch, setLedgerSearch] = useState("")
   const [ledgerComboboxOpen, setLedgerComboboxOpen] = useState(false)
-  const [varietySearch, setVarietySearch] = useState("")
-  const [varietyComboboxOpen, setVarietyComboboxOpen] = useState(false)
   const [addLedgerOpen, setAddLedgerOpen] = useState(false)
   const [reviewOpen, setReviewOpen] = useState(false)
 
   const resetComboboxState = () => {
     setLedgerSearch("")
     setLedgerComboboxOpen(false)
-    setVarietySearch("")
-    setVarietyComboboxOpen(false)
   }
 
   const { form } = useCreateBookingForm({
+    availability: availabilityContext,
     onOpenReview: () => setReviewOpen(true),
     onCreate: async (parsed) => {
       const gatePassNo = queryClient.getQueryData<number>(
@@ -137,11 +153,6 @@ const CreateBookingForm = () => {
     () => filterAndSortOptions(ledgerSearch, dispatchLedgerOptions),
     [ledgerSearch, dispatchLedgerOptions],
   )
-  const sortedVarieties = useMemo(
-    () => filterAndSortOptions(varietySearch, POTATO_VARIETY_OPTIONS),
-    [varietySearch],
-  )
-
   const getDispatchLedgerLabel = (dispatchLedgerId: string) =>
     dispatchLedgers.find((ledger) => ledger._id === dispatchLedgerId)?.name ??
     ""
@@ -187,8 +198,7 @@ const CreateBookingForm = () => {
           </span>
         </CardTitle>
         <CardDescription className="text-base">
-          Record dispatch ledger, variety, and bag quantities for a new booking
-          gate pass.
+          Record dispatch ledger and bag quantities for a new booking gate pass.
         </CardDescription>
       </CardHeader>
 
@@ -204,7 +214,7 @@ const CreateBookingForm = () => {
                 Booking Details
               </FieldLegend>
               <FieldDescription>
-                Gate pass reference, date, dispatch ledger, and crop variety.
+                Gate pass reference, date, and dispatch ledger.
               </FieldDescription>
               <FieldGroup className="mt-5 grid grid-cols-1 gap-6 @md/field-group:grid-cols-2">
                 <form.Field name="manualGatePassNumber">
@@ -320,44 +330,24 @@ const CreateBookingForm = () => {
                     )
                   }}
                 </form.Field>
-
-                <form.Field name="variety">
-                  {(field) => {
-                    const isInvalid = isFieldInvalid(field.state.meta)
-                    return (
-                      <Field data-invalid={isInvalid}>
-                        <FieldLabel htmlFor="create-booking-variety">
-                          Variety
-                        </FieldLabel>
-                        <SearchableOptionCombobox
-                          id="create-booking-variety"
-                          name={field.name}
-                          value={field.state.value}
-                          onValueChange={field.handleChange}
-                          onBlur={field.handleBlur}
-                          isInvalid={isInvalid}
-                          placeholder="Search varieties..."
-                          emptyMessage="No varieties found."
-                          options={POTATO_VARIETY_OPTIONS}
-                          sortedOptions={sortedVarieties}
-                          search={varietySearch}
-                          setSearch={setVarietySearch}
-                          open={varietyComboboxOpen}
-                          setOpen={setVarietyComboboxOpen}
-                        />
-                        {isInvalid && (
-                          <FieldError errors={field.state.meta.errors} />
-                        )}
-                      </Field>
-                    )
-                  }}
-                </form.Field>
               </FieldGroup>
             </FieldSet>
 
             <FieldSeparator />
 
-            <BookingQuantitiesSection form={form} />
+            {isAvailabilityError ? (
+              <p className="text-sm text-destructive">
+                Availability limits could not be loaded. Refresh the daybook
+                booking tab and try again.
+              </p>
+            ) : null}
+
+            <BookingQuantitiesSection
+              form={form}
+              availabilityMap={availabilityMap}
+              isAvailabilityLoading={isAvailabilityLoading}
+              isAvailabilityReady={isAvailabilityReady}
+            />
 
             <FieldSeparator />
 
@@ -426,7 +416,7 @@ const CreateBookingForm = () => {
           isSubmitting: state.isSubmitting,
         })}
         children={({ values, canSubmit, isSubmitting }) => {
-          const parsed = bookingFormSchema.safeParse(values)
+          const parsed = formSchema.safeParse(values)
 
           return (
             <BookingSummarySheet

@@ -33,6 +33,7 @@ const routeTitles: Record<string, string> = {
   '/incoming/edit-history': 'Incoming edit history',
   '/storage/edit-history': 'Storage edit history',
   '/grading/edit-history': 'Grading edit history',
+  '/booking/edit-history': 'Booking edit history',
   '/additional': 'Additional',
   '/additional/temperature': 'Temperature',
   '/incoming/report': 'Incoming report',

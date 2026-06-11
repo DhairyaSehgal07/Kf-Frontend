@@ -37,12 +37,12 @@ import { BookingQuantitiesSection } from "@/features/booking/forms/booking-quant
 import { BookingSummarySheet } from "@/features/booking/forms/booking-summary-sheet"
 import { bookingToFormValues } from "@/features/booking/forms/booking-to-form-values"
 import { useCreateBookingForm } from "@/features/booking/forms/use-create-booking-form"
-import { bookingFormSchema } from "@/features/booking/schemas/booking-form-schema"
+import { useBookingAvailability } from "@/features/booking/hooks/use-booking-availability"
+import { buildOriginalQtyMap } from "@/features/booking/lib/booking-availability"
+import { createBookingFormSchema } from "@/features/booking/schemas/booking-form-schema"
 import { useDispatchLedgers } from "@/features/people/api/use-dispatch-ledgers"
 import { AddDispatchLedgerDialog } from "@/features/people/components/add-dispatch-ledger-dialog"
 import type { DispatchLedger } from "@/features/people/types"
-import { POTATO_VARIETY_OPTIONS } from "@/lib/constants"
-
 type EditBookingFormContentProps = {
   bookingId: string
 }
@@ -61,16 +61,6 @@ function parseOptionalPositiveNumber(value: string): number | undefined {
   if (value === "") return undefined
   const parsed = Number(value)
   return Number.isNaN(parsed) ? undefined : parsed
-}
-
-function ensureOptionInList(
-  options: ComboboxOption[],
-  value: string | undefined,
-  label?: string,
-): ComboboxOption[] {
-  if (!value?.trim()) return options
-  if (options.some((option) => option.id === value)) return options
-  return [...options, { id: value, label: label ?? value }]
 }
 
 function ledgerSearchLabelFromBooking(booking: Booking): string {
@@ -142,6 +132,32 @@ function EditBookingFormFields({ booking }: EditBookingFormFieldsProps) {
     [booking],
   )
 
+  const originalQtyMap = useMemo(
+    () => buildOriginalQtyMap(booking.bagSizes),
+    [booking.bagSizes],
+  )
+
+  const {
+    availabilityMap,
+    isLoading: isAvailabilityLoading,
+    isError: isAvailabilityError,
+    isReady: isAvailabilityReady,
+  } = useBookingAvailability()
+
+  const availabilityContext = useMemo(
+    () => ({
+      availabilityMap,
+      originalQtyMap,
+      validateAvailability: isAvailabilityReady,
+    }),
+    [availabilityMap, originalQtyMap, isAvailabilityReady],
+  )
+
+  const formSchema = useMemo(
+    () => createBookingFormSchema(availabilityContext),
+    [availabilityContext],
+  )
+
   const dispatchLedgerOptions = useMemo<ComboboxOption[]>(() => {
     const base = dispatchLedgers.map((ledger) => ({
       id: ledger._id,
@@ -154,17 +170,10 @@ function EditBookingFormFields({ booking }: EditBookingFormFieldsProps) {
     return [...base, { id: ledger._id, label: ledger.name }]
   }, [dispatchLedgers, booking])
 
-  const varietyOptions = useMemo(
-    () => ensureOptionInList(POTATO_VARIETY_OPTIONS, booking.variety),
-    [booking.variety],
-  )
-
   const [ledgerSearch, setLedgerSearch] = useState(() =>
     ledgerSearchLabelFromBooking(booking),
   )
   const [ledgerComboboxOpen, setLedgerComboboxOpen] = useState(false)
-  const [varietySearch, setVarietySearch] = useState(() => booking.variety)
-  const [varietyComboboxOpen, setVarietyComboboxOpen] = useState(false)
   const [addLedgerOpen, setAddLedgerOpen] = useState(false)
   const [reviewOpen, setReviewOpen] = useState(false)
 
@@ -172,20 +181,14 @@ function EditBookingFormFields({ booking }: EditBookingFormFieldsProps) {
     () => filterAndSortOptions(ledgerSearch, dispatchLedgerOptions),
     [ledgerSearch, dispatchLedgerOptions],
   )
-  const sortedVarieties = useMemo(
-    () => filterAndSortOptions(varietySearch, varietyOptions),
-    [varietySearch, varietyOptions],
-  )
-
   const resetComboboxState = () => {
     setLedgerSearch(ledgerSearchLabelFromBooking(booking))
     setLedgerComboboxOpen(false)
-    setVarietySearch(booking.variety)
-    setVarietyComboboxOpen(false)
   }
 
   const { form } = useCreateBookingForm({
     defaultValues,
+    availability: availabilityContext,
     onOpenReview: () => setReviewOpen(true),
     onCreate: async (parsed) => {
       try {
@@ -250,8 +253,7 @@ function EditBookingFormFields({ booking }: EditBookingFormFieldsProps) {
           </span>
         </CardTitle>
         <CardDescription className="text-base">
-          Update dispatch ledger, variety, and bag quantities for this booking
-          gate pass.
+          Update dispatch ledger and bag quantities for this booking gate pass.
         </CardDescription>
       </CardHeader>
 
@@ -267,7 +269,7 @@ function EditBookingFormFields({ booking }: EditBookingFormFieldsProps) {
                 Booking Details
               </FieldLegend>
               <FieldDescription>
-                Gate pass reference, date, dispatch ledger, and crop variety.
+                Gate pass reference, date, and dispatch ledger.
               </FieldDescription>
               <FieldGroup className="mt-5 grid grid-cols-1 gap-6 @md/field-group:grid-cols-2">
                 <form.Field name="manualGatePassNumber">
@@ -383,44 +385,25 @@ function EditBookingFormFields({ booking }: EditBookingFormFieldsProps) {
                     )
                   }}
                 </form.Field>
-
-                <form.Field name="variety">
-                  {(field) => {
-                    const isInvalid = isFieldInvalid(field.state.meta)
-                    return (
-                      <Field data-invalid={isInvalid}>
-                        <FieldLabel htmlFor="edit-booking-variety">
-                          Variety
-                        </FieldLabel>
-                        <SearchableOptionCombobox
-                          id="edit-booking-variety"
-                          name={field.name}
-                          value={field.state.value}
-                          onValueChange={field.handleChange}
-                          onBlur={field.handleBlur}
-                          isInvalid={isInvalid}
-                          placeholder="Search varieties..."
-                          emptyMessage="No varieties found."
-                          options={varietyOptions}
-                          sortedOptions={sortedVarieties}
-                          search={varietySearch}
-                          setSearch={setVarietySearch}
-                          open={varietyComboboxOpen}
-                          setOpen={setVarietyComboboxOpen}
-                        />
-                        {isInvalid && (
-                          <FieldError errors={field.state.meta.errors} />
-                        )}
-                      </Field>
-                    )
-                  }}
-                </form.Field>
               </FieldGroup>
             </FieldSet>
 
             <FieldSeparator />
 
-            <BookingQuantitiesSection form={form} />
+            {isAvailabilityError ? (
+              <p className="text-sm text-destructive">
+                Availability limits could not be loaded. Refresh the daybook
+                booking tab and try again.
+              </p>
+            ) : null}
+
+            <BookingQuantitiesSection
+              form={form}
+              availabilityMap={availabilityMap}
+              originalQtyMap={originalQtyMap}
+              isAvailabilityLoading={isAvailabilityLoading}
+              isAvailabilityReady={isAvailabilityReady}
+            />
 
             <FieldSeparator />
 
@@ -485,7 +468,7 @@ function EditBookingFormFields({ booking }: EditBookingFormFieldsProps) {
           isSubmitting: state.isSubmitting,
         })}
         children={({ values, canSubmit, isSubmitting }) => {
-          const parsed = bookingFormSchema.safeParse(values)
+          const parsed = formSchema.safeParse(values)
 
           return (
             <BookingSummarySheet

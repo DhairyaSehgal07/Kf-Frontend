@@ -221,6 +221,10 @@ const DaybookBookingTab = () => {
     navigate({ to: "/booking" })
   }
 
+  const handleEditHistory = () => {
+    navigate({to: "/booking/edit-history"})
+  }
+
   const handleSearchChange = (value: string) => {
     setSearchInput(value)
     setDebouncedSearch(value)
@@ -302,7 +306,7 @@ const DaybookBookingTab = () => {
           </Select>
 
           <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-row sm:shrink-0">
-            <Button variant="secondary" className="min-w-0 px-2.5 sm:px-3">
+            <Button onClick={handleEditHistory} variant="secondary" className="min-w-0 px-2.5 sm:px-3">
               <span className="truncate sm:hidden">Edit History</span>
               <span className="hidden sm:inline">Booking Edit History</span>
             </Button>

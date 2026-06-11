@@ -21,6 +21,9 @@ export function useUpdateBooking(id: string) {
       void queryClient.invalidateQueries({
         queryKey: bookingKeys.searches(),
       })
+      void queryClient.invalidateQueries({
+        queryKey: bookingKeys.summary(),
+      })
 
       void router.navigate({ to: "/daybook", search: { tab: "booking" } })
     },

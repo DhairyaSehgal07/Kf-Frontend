@@ -87,11 +87,13 @@ function nikasiTotalBags(bagSize: readonly NikasiGatePassBagSizeItem[]): number 
   return bagSize.reduce((sum, row) => sum + row.quantityIssued, 0)
 }
 
-interface NikasiGatePassCardProps {
+interface DispatchPreStorageGatePassCardProps {
   data: NikasiGatePass
 }
 
-export function NikasiGatePassCard({ data: gatePass }: NikasiGatePassCardProps) {
+export function DispatchPreStorageGatePassCard({
+  data: gatePass,
+}: DispatchPreStorageGatePassCardProps) {
   const [isExpanded, setIsExpanded] = useState(false)
 
   const farmer = gatePass.farmerStorageLinkId.farmerId
@@ -372,7 +374,7 @@ export function NikasiGatePassCard({ data: gatePass }: NikasiGatePassCardProps) 
   )
 }
 
-export function NikasiGatePassCardSkeleton() {
+export function DispatchPreStorageGatePassCardSkeleton() {
   return (
     <Card className="overflow-hidden border-border/60">
       <CardHeader className="flex flex-col gap-4 border-b border-border/40 bg-muted/10 pb-4 sm:flex-row sm:items-start sm:justify-between">

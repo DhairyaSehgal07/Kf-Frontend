@@ -39,9 +39,9 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs"
 import {
-  NikasiGatePassCard,
-  NikasiGatePassCardSkeleton,
-} from "@/features/dispatch-pre-storage/components/nikasi-gate-pass-card"
+  DispatchPreStorageGatePassCard,
+  DispatchPreStorageGatePassCardSkeleton,
+} from "@/features/dispatch-pre-storage/components/dispatch-pre-storage-gate-pass-card"
 import type { NikasiGatePass } from "@/features/dispatch-pre-storage/api/types"
 import type { GradingGatePass } from "@/features/grading/api/types"
 import type { IncomingGatePass } from "@/features/incoming/api/types"
@@ -113,9 +113,9 @@ const GATE_PASS_TABS: readonly GatePassTabConfig[] = [
     emptyTitle: "No dispatch gate passes",
     emptyDescription: "Nikasi gate passes for this farmer will appear here.",
     getItems: (data) => data?.nikasi ?? [],
-    skeleton: <NikasiGatePassCardSkeleton />,
+    skeleton: <DispatchPreStorageGatePassCardSkeleton />,
     renderItem: (item) => (
-      <NikasiGatePassCard data={item as NikasiGatePass} />
+      <DispatchPreStorageGatePassCard data={item as NikasiGatePass} />
     ),
   },
   {

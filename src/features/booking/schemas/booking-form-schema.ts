@@ -1,5 +1,8 @@
 import * as z from "zod"
-import { bookingQuantitiesSchema } from "@/features/booking/schemas/booking-quantities-schema"
+import {
+  createBookingQuantitiesSchema,
+  type AvailabilityValidationContext,
+} from "@/features/booking/schemas/booking-quantities-schema"
 
 export const objectId = z
   .string()
@@ -12,17 +15,23 @@ const bookingBaseSchema = z.object({
   ]),
   dispatchLedgerId: objectId,
   date: z.string().datetime("Select a valid date."),
-  variety: z.string().min(1, "Select a variety."),
   remarks: z.string(),
 })
 
-export const bookingFormSchema = bookingBaseSchema.merge(bookingQuantitiesSchema)
+export function createBookingFormSchema(
+  availability?: AvailabilityValidationContext,
+) {
+  return bookingBaseSchema.merge(createBookingQuantitiesSchema(availability))
+}
 
-export type BookingFormValues = z.infer<typeof bookingFormSchema>
+export const bookingFormSchema = createBookingFormSchema()
+
+export type BookingFormValues = z.infer<ReturnType<typeof createBookingFormSchema>>
 
 export {
-  bookingQuantitiesSchema,
+  createBookingQuantitiesSchema,
   createDefaultBookingQuantities,
   createEmptyBookingQuantityRow,
+  type AvailabilityValidationContext,
   type BookingQuantityRow,
 } from "@/features/booking/schemas/booking-quantities-schema"

@@ -2,6 +2,7 @@ import type { BookingFormValues } from "@/features/booking/schemas/booking-form-
 
 export type BookingGatePassBagSize = {
   size: string
+  variety: string
   currentQuantity: number
   initialQuantity: number
 }
@@ -10,7 +11,6 @@ export type CreateBookingBody = {
   dispatchLedgerId: string
   gatePassNo: number
   date: string
-  variety: string
   bagSizes: BookingGatePassBagSize[]
   manualGatePassNumber?: number
   remarks?: string
@@ -50,7 +50,6 @@ export type Booking = {
   gatePassNo: number
   manualGatePassNumber?: number
   date: string
-  variety: string
   bagSizes: BookingGatePassBagSize[]
   editHistory: BookingEditHistoryEntry[]
   remarks?: string
@@ -102,7 +101,6 @@ export type UpdateBookingBody = {
   manualGatePassNumber?: number | null
   date: string
   dispatchLedgerId: string
-  variety: string
   bagSizes: BookingGatePassBagSize[]
   remarks?: string
 }
@@ -116,5 +114,53 @@ export type UpdateBookingInput = {
 export type UpdateBookingResponse = {
   success: boolean
   data: Booking
+  message?: string
+}
+
+export type BookingAuditEditor = {
+  _id: string
+  name: string
+  mobileNumber?: string
+}
+
+export type BookingAuditRef = {
+  _id: string
+  gatePassNo: number
+  manualGatePassNumber?: number
+  dispatchLedgerId: BookingDispatchLedger
+}
+
+export type BookingAuditState = Partial<{
+  manualGatePassNumber: number | null
+  date: string
+  dispatchLedgerId: BookingDispatchLedger | string
+  bagSizes: BookingGatePassBagSize[]
+  remarks: string
+}>
+
+export type BookingAudit = {
+  _id: string
+  bookingId: BookingAuditRef | string
+  editedById: BookingAuditEditor
+  previousState: BookingAuditState
+  modifiedState: BookingAuditState
+  ipAddress?: string
+  userAgent?: string
+  createdAt: string
+}
+
+export type BookingEditsListParams = {
+  page?: number
+  limit?: number
+}
+
+export type BookingEditsListResult = {
+  audits: BookingAudit[]
+  pagination: BookingPagination
+}
+
+export type GetBookingEditsResponse = {
+  success: boolean
+  data: BookingEditsListResult
   message?: string
 }

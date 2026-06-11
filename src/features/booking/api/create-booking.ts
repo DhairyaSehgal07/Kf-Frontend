@@ -25,6 +25,7 @@ export function formQuantitiesToBagSizes(
 
     return {
       size: row.size,
+      variety: row.variety,
       currentQuantity: quantity,
       initialQuantity: quantity,
     }
@@ -45,7 +46,6 @@ export function toCreateBookingBody({
     dispatchLedgerId: form.dispatchLedgerId,
     gatePassNo,
     date: form.date,
-    variety: form.variety,
     bagSizes,
     idempotencyKey: crypto.randomUUID(),
   }

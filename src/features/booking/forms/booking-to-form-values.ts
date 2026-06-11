@@ -26,6 +26,7 @@ function toQuantityRow(
   return {
     size: toBagSize(bagSize.size),
     isExtra,
+    variety: bagSize.variety,
     qty: bagSize.currentQuantity,
   }
 }
@@ -64,7 +65,6 @@ export function bookingToFormValues(booking: Booking): BookingFormValues {
     manualGatePassNumber: booking.manualGatePassNumber,
     dispatchLedgerId: booking.dispatchLedgerId._id,
     date: toIsoDateTime(booking.date),
-    variety: booking.variety,
     quantities: bookingBagSizesToFormQuantities(booking.bagSizes),
     remarks: booking.remarks ?? "",
   }

@@ -49,9 +49,9 @@ import {
 } from "@/components/ui/empty"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
-  NikasiGatePassCard,
-  NikasiGatePassCardSkeleton,
-} from "@/features/dispatch-pre-storage/components/nikasi-gate-pass-card"
+  DispatchPreStorageGatePassCard,
+  DispatchPreStorageGatePassCardSkeleton,
+} from "@/features/dispatch-pre-storage/components/dispatch-pre-storage-gate-pass-card"
 import { useNikasiGatePasses } from "@/features/dispatch-pre-storage/api/use-nikasi-gate-passes"
 import type { NikasiGatePassListParams } from "@/features/dispatch-pre-storage/api/types"
 
@@ -107,7 +107,7 @@ function DispatchTabSkeleton() {
 
       <div className="space-y-6">
         {Array.from({ length: 3 }).map((_, index) => (
-          <NikasiGatePassCardSkeleton key={index} />
+          <DispatchPreStorageGatePassCardSkeleton key={index} />
         ))}
       </div>
 
@@ -318,7 +318,7 @@ const DaybookDispatchTab = () => {
 
       {showSearchLoading ? (
         <div className="space-y-6">
-          <NikasiGatePassCardSkeleton />
+          <DispatchPreStorageGatePassCardSkeleton />
         </div>
       ) : isError ? (
         <Empty className="rounded-xl border bg-muted/10">
@@ -355,7 +355,7 @@ const DaybookDispatchTab = () => {
       ) : nikasiGatePasses.length > 0 ? (
         <div className="space-y-6">
           {nikasiGatePasses.map((gatePass) => (
-            <NikasiGatePassCard key={gatePass._id} data={gatePass} />
+            <DispatchPreStorageGatePassCard key={gatePass._id} data={gatePass} />
           ))}
         </div>
       ) : (

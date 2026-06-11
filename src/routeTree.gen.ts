@@ -33,6 +33,7 @@ import { Route as AuthenticatedGradingEditHistoryRouteImport } from './routes/_a
 import { Route as AuthenticatedGradingIdRouteImport } from './routes/_authenticated/grading.$id'
 import { Route as AuthenticatedDispatchPreStorageReportRouteImport } from './routes/_authenticated/dispatch-pre-storage.report'
 import { Route as AuthenticatedDispatchPostStorageReportRouteImport } from './routes/_authenticated/dispatch-post-storage.report'
+import { Route as AuthenticatedBookingEditHistoryRouteImport } from './routes/_authenticated/booking.edit-history'
 import { Route as AuthenticatedBookingIdRouteImport } from './routes/_authenticated/booking.$id'
 import { Route as AuthenticatedAdditionalTemperatureRouteImport } from './routes/_authenticated/additional.temperature'
 import { Route as AuthenticatedStorageChamberBreakdownChamberRouteImport } from './routes/_authenticated/storage.chamber-breakdown.$chamber'
@@ -172,6 +173,12 @@ const AuthenticatedDispatchPostStorageReportRoute =
     path: '/dispatch-post-storage/report',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedBookingEditHistoryRoute =
+  AuthenticatedBookingEditHistoryRouteImport.update({
+    id: '/booking/edit-history',
+    path: '/booking/edit-history',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedBookingIdRoute = AuthenticatedBookingIdRouteImport.update({
   id: '/booking/$id',
   path: '/booking/$id',
@@ -196,6 +203,7 @@ export interface FileRoutesByFullPath {
   '/daybook': typeof AuthenticatedDaybookRoute
   '/additional/temperature': typeof AuthenticatedAdditionalTemperatureRoute
   '/booking/$id': typeof AuthenticatedBookingIdRoute
+  '/booking/edit-history': typeof AuthenticatedBookingEditHistoryRoute
   '/dispatch-post-storage/report': typeof AuthenticatedDispatchPostStorageReportRoute
   '/dispatch-pre-storage/report': typeof AuthenticatedDispatchPreStorageReportRoute
   '/grading/$id': typeof AuthenticatedGradingIdRoute
@@ -224,6 +232,7 @@ export interface FileRoutesByTo {
   '/daybook': typeof AuthenticatedDaybookRoute
   '/additional/temperature': typeof AuthenticatedAdditionalTemperatureRoute
   '/booking/$id': typeof AuthenticatedBookingIdRoute
+  '/booking/edit-history': typeof AuthenticatedBookingEditHistoryRoute
   '/dispatch-post-storage/report': typeof AuthenticatedDispatchPostStorageReportRoute
   '/dispatch-pre-storage/report': typeof AuthenticatedDispatchPreStorageReportRoute
   '/grading/$id': typeof AuthenticatedGradingIdRoute
@@ -254,6 +263,7 @@ export interface FileRoutesById {
   '/_authenticated/daybook': typeof AuthenticatedDaybookRoute
   '/_authenticated/additional/temperature': typeof AuthenticatedAdditionalTemperatureRoute
   '/_authenticated/booking/$id': typeof AuthenticatedBookingIdRoute
+  '/_authenticated/booking/edit-history': typeof AuthenticatedBookingEditHistoryRoute
   '/_authenticated/dispatch-post-storage/report': typeof AuthenticatedDispatchPostStorageReportRoute
   '/_authenticated/dispatch-pre-storage/report': typeof AuthenticatedDispatchPreStorageReportRoute
   '/_authenticated/grading/$id': typeof AuthenticatedGradingIdRoute
@@ -284,6 +294,7 @@ export interface FileRouteTypes {
     | '/daybook'
     | '/additional/temperature'
     | '/booking/$id'
+    | '/booking/edit-history'
     | '/dispatch-post-storage/report'
     | '/dispatch-pre-storage/report'
     | '/grading/$id'
@@ -312,6 +323,7 @@ export interface FileRouteTypes {
     | '/daybook'
     | '/additional/temperature'
     | '/booking/$id'
+    | '/booking/edit-history'
     | '/dispatch-post-storage/report'
     | '/dispatch-pre-storage/report'
     | '/grading/$id'
@@ -341,6 +353,7 @@ export interface FileRouteTypes {
     | '/_authenticated/daybook'
     | '/_authenticated/additional/temperature'
     | '/_authenticated/booking/$id'
+    | '/_authenticated/booking/edit-history'
     | '/_authenticated/dispatch-post-storage/report'
     | '/_authenticated/dispatch-pre-storage/report'
     | '/_authenticated/grading/$id'
@@ -539,6 +552,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDispatchPostStorageReportRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/booking/edit-history': {
+      id: '/_authenticated/booking/edit-history'
+      path: '/booking/edit-history'
+      fullPath: '/booking/edit-history'
+      preLoaderRoute: typeof AuthenticatedBookingEditHistoryRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/booking/$id': {
       id: '/_authenticated/booking/$id'
       path: '/booking/$id'
@@ -568,6 +588,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedDaybookRoute: typeof AuthenticatedDaybookRoute
   AuthenticatedAdditionalTemperatureRoute: typeof AuthenticatedAdditionalTemperatureRoute
   AuthenticatedBookingIdRoute: typeof AuthenticatedBookingIdRoute
+  AuthenticatedBookingEditHistoryRoute: typeof AuthenticatedBookingEditHistoryRoute
   AuthenticatedDispatchPostStorageReportRoute: typeof AuthenticatedDispatchPostStorageReportRoute
   AuthenticatedDispatchPreStorageReportRoute: typeof AuthenticatedDispatchPreStorageReportRoute
   AuthenticatedGradingIdRoute: typeof AuthenticatedGradingIdRoute
@@ -597,6 +618,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAdditionalTemperatureRoute:
     AuthenticatedAdditionalTemperatureRoute,
   AuthenticatedBookingIdRoute: AuthenticatedBookingIdRoute,
+  AuthenticatedBookingEditHistoryRoute: AuthenticatedBookingEditHistoryRoute,
   AuthenticatedDispatchPostStorageReportRoute:
     AuthenticatedDispatchPostStorageReportRoute,
   AuthenticatedDispatchPreStorageReportRoute:

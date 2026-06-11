@@ -141,7 +141,7 @@ function BookingReviewSummary({
           </span>
           <div className="min-w-0">
             <p className="truncate text-sm font-semibold tracking-tight">
-              {values.variety}
+              {dispatchLedgerLabel || "—"}
             </p>
             <p className="mt-0.5 flex items-center gap-1 text-[11px] text-muted-foreground">
               <Calendar className="size-3 shrink-0" />
@@ -183,7 +183,6 @@ function BookingReviewSummary({
       <div className="space-y-2">
         <SectionLabel icon={Package2}>Booking details</SectionLabel>
         <SummaryCard>
-          <DetailRow label="Variety" value={values.variety} />
           <DetailRow
             label="Date"
             value={formatReviewDate(values.date)}
@@ -216,6 +215,9 @@ function BookingReviewSummary({
                   <th className="h-10 px-3 font-medium text-muted-foreground">
                     Size
                   </th>
+                  <th className="h-10 px-3 font-medium text-muted-foreground">
+                    Variety
+                  </th>
                   <th className="h-10 px-3 text-right font-medium text-muted-foreground">
                     Qty
                   </th>
@@ -224,10 +226,13 @@ function BookingReviewSummary({
               <tbody>
                 {rows.map((row, index) => (
                   <tr
-                    key={`${row.size}-${index}`}
+                    key={`${row.size}-${row.variety}-${index}`}
                     className="border-b border-border/40 last:border-0"
                   >
                     <td className="px-3 py-2.5 font-medium">{row.size}</td>
+                    <td className="px-3 py-2.5 text-muted-foreground">
+                      {row.variety || "—"}
+                    </td>
                     <td className="px-3 py-2.5 text-right tabular-nums">
                       {(row.qty ?? 0).toLocaleString("en-IN")}
                     </td>

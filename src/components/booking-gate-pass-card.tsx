@@ -19,7 +19,6 @@ import {
   Package,
   Pencil,
   Printer,
-  Sprout,
   User,
   type LucideIcon,
 } from "lucide-react"
@@ -127,13 +126,6 @@ export function BookingGatePassCard({
         <div className="flex flex-wrap items-center justify-end gap-2">
           <Badge
             variant="outline"
-            className="max-w-36 truncate bg-background text-xs"
-            title={booking.variety}
-          >
-            {booking.variety}
-          </Badge>
-          <Badge
-            variant="outline"
             className="bg-background text-xs tabular-nums"
           >
             {totalBags.toLocaleString("en-IN")} Bags
@@ -153,11 +145,15 @@ export function BookingGatePassCard({
             value={ledger.mobileNumber ?? "—"}
             valueClassName="tabular-nums"
           />
-          <InfoBlock label="Variety" value={booking.variety} icon={Sprout} />
           <InfoBlock
             label="Bag lines"
             value={booking.bagSizes.length}
             icon={Package}
+            valueClassName="tabular-nums"
+          />
+          <InfoBlock
+            label="Total bags"
+            value={totalBags.toLocaleString("en-IN")}
             valueClassName="tabular-nums"
           />
         </div>
@@ -216,6 +212,9 @@ export function BookingGatePassCard({
                           <th className="h-10 px-3 text-left text-xs font-medium text-muted-foreground">
                             Size
                           </th>
+                          <th className="h-10 px-3 text-left text-xs font-medium text-muted-foreground">
+                            Variety
+                          </th>
                           <th className="h-10 px-3 text-right text-xs font-medium text-muted-foreground">
                             Current
                           </th>
@@ -227,11 +226,14 @@ export function BookingGatePassCard({
                       <tbody>
                         {booking.bagSizes.map((slot, index) => (
                           <tr
-                            key={`${slot.size}-${index}`}
+                            key={`${slot.size}-${slot.variety}-${index}`}
                             className="border-b border-border/40 last:border-0"
                           >
                             <td className="px-3 py-2.5 font-medium text-foreground">
                               {slot.size}
+                            </td>
+                            <td className="px-3 py-2.5 text-muted-foreground">
+                              {slot.variety}
                             </td>
                             <td className="px-3 py-2.5 text-right tabular-nums font-medium text-foreground">
                               {slot.currentQuantity.toLocaleString("en-IN")}

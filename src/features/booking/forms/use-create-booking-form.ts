@@ -1,8 +1,10 @@
+import { useMemo } from "react"
 import { useForm } from "@tanstack/react-form"
 
 import {
-  bookingFormSchema,
+  createBookingFormSchema,
   createDefaultBookingQuantities,
+  type AvailabilityValidationContext,
   type BookingFormValues,
 } from "@/features/booking/schemas/booking-form-schema"
 import {
@@ -16,6 +18,7 @@ export type CreateBookingFormApi = ReturnType<
 
 type UseCreateBookingFormOptions = {
   defaultValues?: BookingFormValues
+  availability?: AvailabilityValidationContext
   onOpenReview?: () => void
   onCreate?: (values: BookingFormValues) => Promise<void>
 }
@@ -25,22 +28,42 @@ export function useCreateBookingForm(
 ) {
   const todayIso = new Date().toISOString()
 
+  const formSchema = useMemo(
+    () =>
+      createBookingFormSchema(
+        options.availability
+          ? {
+              availabilityMap:
+                options.availability.availabilityMap ?? new Map(),
+              originalQtyMap: options.availability.originalQtyMap,
+              validateAvailability:
+                options.availability.validateAvailability ?? false,
+            }
+          : undefined,
+      ),
+    [options.availability],
+  )
+
+  const validators = useMemo(
+    () => ({
+      onBlur: formSchema,
+      onSubmit: formSchema,
+    }),
+    [formSchema],
+  )
+
   const form = useForm({
     defaultValues: options.defaultValues ?? {
       manualGatePassNumber: undefined as number | undefined,
       dispatchLedgerId: "",
       date: todayIso,
-      variety: "",
       quantities: createDefaultBookingQuantities(),
       remarks: "",
     },
-    validators: {
-      onBlur: bookingFormSchema,
-      onSubmit: bookingFormSchema,
-    },
+    validators,
     onSubmitMeta: defaultSubmitMeta,
     onSubmit: async ({ value, meta }) => {
-      const parsed = bookingFormSchema.parse(value)
+      const parsed = formSchema.parse(value)
 
       if ((meta as BookingSubmitMeta).submitAction === "review") {
         options.onOpenReview?.()
