@@ -26,6 +26,7 @@ export type TransferAllocationKey = string
 export type TransferStockItem = {
   storageGatePassId: string
   gatePassNo: number
+  variety: string
   bagSize: string
   bagIndex: number
   quantity: number
@@ -34,6 +35,11 @@ export type TransferStockItem = {
     floor: string
     row: string
   }
+}
+
+export type VarietyItemGroup = {
+  variety: string
+  items: TransferStockItem[]
 }
 
 export type LocationFilters = {

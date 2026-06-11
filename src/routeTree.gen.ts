@@ -16,6 +16,7 @@ import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authentica
 import { Route as AuthenticatedTransferIndexRouteImport } from './routes/_authenticated/transfer.index'
 import { Route as AuthenticatedStorageIndexRouteImport } from './routes/_authenticated/storage.index'
 import { Route as AuthenticatedPeopleIndexRouteImport } from './routes/_authenticated/people.index'
+import { Route as AuthenticatedOutgoingIndexRouteImport } from './routes/_authenticated/outgoing.index'
 import { Route as AuthenticatedIncomingIndexRouteImport } from './routes/_authenticated/incoming.index'
 import { Route as AuthenticatedGradingIndexRouteImport } from './routes/_authenticated/grading.index'
 import { Route as AuthenticatedDispatchPreStorageIndexRouteImport } from './routes/_authenticated/dispatch-pre-storage.index'
@@ -73,6 +74,12 @@ const AuthenticatedPeopleIndexRoute =
   AuthenticatedPeopleIndexRouteImport.update({
     id: '/people/',
     path: '/people/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedOutgoingIndexRoute =
+  AuthenticatedOutgoingIndexRouteImport.update({
+    id: '/outgoing/',
+    path: '/outgoing/',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedIncomingIndexRoute =
@@ -221,6 +228,7 @@ export interface FileRoutesByFullPath {
   '/dispatch-pre-storage/': typeof AuthenticatedDispatchPreStorageIndexRoute
   '/grading/': typeof AuthenticatedGradingIndexRoute
   '/incoming/': typeof AuthenticatedIncomingIndexRoute
+  '/outgoing/': typeof AuthenticatedOutgoingIndexRoute
   '/people/': typeof AuthenticatedPeopleIndexRoute
   '/storage/': typeof AuthenticatedStorageIndexRoute
   '/transfer/': typeof AuthenticatedTransferIndexRoute
@@ -250,6 +258,7 @@ export interface FileRoutesByTo {
   '/dispatch-pre-storage': typeof AuthenticatedDispatchPreStorageIndexRoute
   '/grading': typeof AuthenticatedGradingIndexRoute
   '/incoming': typeof AuthenticatedIncomingIndexRoute
+  '/outgoing': typeof AuthenticatedOutgoingIndexRoute
   '/people': typeof AuthenticatedPeopleIndexRoute
   '/storage': typeof AuthenticatedStorageIndexRoute
   '/transfer': typeof AuthenticatedTransferIndexRoute
@@ -281,6 +290,7 @@ export interface FileRoutesById {
   '/_authenticated/dispatch-pre-storage/': typeof AuthenticatedDispatchPreStorageIndexRoute
   '/_authenticated/grading/': typeof AuthenticatedGradingIndexRoute
   '/_authenticated/incoming/': typeof AuthenticatedIncomingIndexRoute
+  '/_authenticated/outgoing/': typeof AuthenticatedOutgoingIndexRoute
   '/_authenticated/people/': typeof AuthenticatedPeopleIndexRoute
   '/_authenticated/storage/': typeof AuthenticatedStorageIndexRoute
   '/_authenticated/transfer/': typeof AuthenticatedTransferIndexRoute
@@ -312,6 +322,7 @@ export interface FileRouteTypes {
     | '/dispatch-pre-storage/'
     | '/grading/'
     | '/incoming/'
+    | '/outgoing/'
     | '/people/'
     | '/storage/'
     | '/transfer/'
@@ -341,6 +352,7 @@ export interface FileRouteTypes {
     | '/dispatch-pre-storage'
     | '/grading'
     | '/incoming'
+    | '/outgoing'
     | '/people'
     | '/storage'
     | '/transfer'
@@ -371,6 +383,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dispatch-pre-storage/'
     | '/_authenticated/grading/'
     | '/_authenticated/incoming/'
+    | '/_authenticated/outgoing/'
     | '/_authenticated/people/'
     | '/_authenticated/storage/'
     | '/_authenticated/transfer/'
@@ -431,6 +444,13 @@ declare module '@tanstack/react-router' {
       path: '/people'
       fullPath: '/people/'
       preLoaderRoute: typeof AuthenticatedPeopleIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/outgoing/': {
+      id: '/_authenticated/outgoing/'
+      path: '/outgoing'
+      fullPath: '/outgoing/'
+      preLoaderRoute: typeof AuthenticatedOutgoingIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/incoming/': {
@@ -606,6 +626,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedDispatchPreStorageIndexRoute: typeof AuthenticatedDispatchPreStorageIndexRoute
   AuthenticatedGradingIndexRoute: typeof AuthenticatedGradingIndexRoute
   AuthenticatedIncomingIndexRoute: typeof AuthenticatedIncomingIndexRoute
+  AuthenticatedOutgoingIndexRoute: typeof AuthenticatedOutgoingIndexRoute
   AuthenticatedPeopleIndexRoute: typeof AuthenticatedPeopleIndexRoute
   AuthenticatedStorageIndexRoute: typeof AuthenticatedStorageIndexRoute
   AuthenticatedTransferIndexRoute: typeof AuthenticatedTransferIndexRoute
@@ -639,6 +660,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
     AuthenticatedDispatchPreStorageIndexRoute,
   AuthenticatedGradingIndexRoute: AuthenticatedGradingIndexRoute,
   AuthenticatedIncomingIndexRoute: AuthenticatedIncomingIndexRoute,
+  AuthenticatedOutgoingIndexRoute: AuthenticatedOutgoingIndexRoute,
   AuthenticatedPeopleIndexRoute: AuthenticatedPeopleIndexRoute,
   AuthenticatedStorageIndexRoute: AuthenticatedStorageIndexRoute,
   AuthenticatedTransferIndexRoute: AuthenticatedTransferIndexRoute,

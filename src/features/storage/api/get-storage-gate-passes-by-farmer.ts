@@ -2,19 +2,13 @@ import apiClient, { getApiErrorMessage } from "@/lib/api-client"
 import { getHttpStatusFromError } from "@/lib/http-error"
 
 import type {
-  GetStorageGatePassesResponse,
+  GetStorageGatePassesByFarmerResponse,
   StorageGatePassesByFarmerParams,
-  StorageGatePassListResult,
+  StorageGatePassesByFarmerResult,
 } from "./types"
 
-const EMPTY_RESULT: StorageGatePassListResult = {
+const EMPTY_RESULT: StorageGatePassesByFarmerResult = {
   storageGatePasses: [],
-  pagination: {
-    page: 1,
-    limit: 10,
-    total: 0,
-    totalPages: 0,
-  },
 }
 
 export function buildStorageGatePassesByFarmerParams(
@@ -23,7 +17,6 @@ export function buildStorageGatePassesByFarmerParams(
   const query: Record<string, string> = {}
 
   if (params.sortOrder) query.sortOrder = params.sortOrder
-  if (params.status) query.status = params.status
 
   return query
 }
@@ -31,9 +24,9 @@ export function buildStorageGatePassesByFarmerParams(
 export async function getStorageGatePassesByFarmer(
   farmerStorageLinkId: string,
   params: StorageGatePassesByFarmerParams = {},
-): Promise<StorageGatePassListResult> {
+): Promise<StorageGatePassesByFarmerResult> {
   try {
-    const { data } = await apiClient.get<GetStorageGatePassesResponse>(
+    const { data } = await apiClient.get<GetStorageGatePassesByFarmerResponse>(
       `/storage-gate-pass/farmer-storage-link/${farmerStorageLinkId}`,
       { params: buildStorageGatePassesByFarmerParams(params) },
     )

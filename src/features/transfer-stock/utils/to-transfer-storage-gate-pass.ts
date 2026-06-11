@@ -1,17 +1,12 @@
-import type { StorageGatePass as ApiStorageGatePass } from "@/features/storage/api/types"
+import type { StorageGatePassByFarmer } from "@/features/storage/api/types"
 import type { StorageGatePass } from "@/features/transfer-stock/types/storage-gate-pass"
 
 export function toTransferStorageGatePass(
-  pass: ApiStorageGatePass,
+  pass: StorageGatePassByFarmer,
 ): StorageGatePass {
-  const farmerStorageLinkId =
-    typeof pass.farmerStorageLinkId === "string"
-      ? pass.farmerStorageLinkId
-      : (pass.farmerStorageLinkId._id ?? "")
-
   return {
     _id: pass._id,
-    farmerStorageLinkId,
+    farmerStorageLinkId: pass.farmerStorageLinkId,
     gatePassNo: pass.gatePassNo,
     manualGatePassNumber: pass.manualGatePassNumber ?? 0,
     date: pass.date,
@@ -26,6 +21,6 @@ export function toTransferStorageGatePass(
       floor: bag.floor,
       row: bag.row,
     })),
-    remarks: pass.remarks ?? "",
+    remarks: "",
   }
 }

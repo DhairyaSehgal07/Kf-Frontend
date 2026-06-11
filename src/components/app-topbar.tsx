@@ -42,6 +42,8 @@ const routeTitles: Record<string, string> = {
   '/dispatch-pre-storage/report': 'Dispatch report',
   '/dispatch-post-storage/report': 'Booking report',
   '/booking': 'Booking',
+  '/outgoing': 'Outgoing',
+  '/transfer': 'Transfer stock',
 };
 
 function getInitials(name?: string) {

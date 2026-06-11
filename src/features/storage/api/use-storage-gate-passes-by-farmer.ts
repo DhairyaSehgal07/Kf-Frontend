@@ -9,7 +9,7 @@ import { getStorageGatePassesByFarmer } from "./get-storage-gate-passes-by-farme
 import { storageGatePassKeys } from "./query-keys"
 import type {
   StorageGatePassesByFarmerParams,
-  StorageGatePassListResult,
+  StorageGatePassesByFarmerResult,
 } from "./types"
 
 const DEFAULT_PARAMS: StorageGatePassesByFarmerParams = {
@@ -30,9 +30,9 @@ export function storageGatePassesByFarmerQueryOptions(
 
 type UseStorageGatePassesByFarmerOptions = Omit<
   UseQueryOptions<
-    StorageGatePassListResult,
+    StorageGatePassesByFarmerResult,
     Error,
-    StorageGatePassListResult,
+    StorageGatePassesByFarmerResult,
     ReturnType<typeof storageGatePassKeys.byFarmer>
   >,
   "queryKey" | "queryFn" | "placeholderData"

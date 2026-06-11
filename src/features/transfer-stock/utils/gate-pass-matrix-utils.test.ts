@@ -4,6 +4,7 @@ import {
   allocationKey,
   buildTransferItems,
   filterStorageGatePasses,
+  groupItemsByVariety,
   groupPassesByDate,
   parseAllocationKey,
 } from "@/features/transfer-stock/utils/gate-pass-matrix-utils"
@@ -95,11 +96,34 @@ describe("buildTransferItems", () => {
       {
         storageGatePassId: "pass-1",
         gatePassNo: 100,
+        variety: "K. Jyoti",
         bagSize: "Ration",
         bagIndex: 0,
         quantity: 25,
         location: { chamber: "4", floor: "1", row: "D" },
       },
     ])
+  })
+})
+
+describe("groupItemsByVariety", () => {
+  it("groups line items by variety", () => {
+    const keyA = allocationKey("pass-1", "Ration", 0)
+    const passB: StorageGatePass = {
+      ...samplePass,
+      _id: "pass-2",
+      gatePassNo: 101,
+      variety: "Chipsona",
+    }
+    const keyB = allocationKey("pass-2", "Ration", 0)
+    const items = buildTransferItems(
+      { [keyA]: 10, [keyB]: 20 },
+      [samplePass, passB],
+    )
+
+    const groups = groupItemsByVariety(items)
+    expect(groups).toHaveLength(2)
+    expect(groups.find((g) => g.variety === "K. Jyoti")?.items).toHaveLength(1)
+    expect(groups.find((g) => g.variety === "Chipsona")?.items).toHaveLength(1)
   })
 })

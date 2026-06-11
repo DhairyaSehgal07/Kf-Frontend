@@ -1,7 +1,7 @@
 import type { ReactNode } from "react"
 import {
   ArrowLeft,
-  ArrowRightLeft,
+  ArrowUpRight,
   Calendar,
   CheckCircle2,
   ClipboardCheck,
@@ -20,20 +20,19 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet"
+import type { OutgoingFormValues } from "@/features/outgoing/types"
 import { AllocationReviewByVariety } from "@/features/transfer-stock/forms/allocation-review-by-variety"
-import type { TransferStockFormValues } from "@/features/transfer-stock/types"
 import type { TransferStockItem } from "@/features/transfer-stock/types/storage-gate-pass"
 import { cn } from "@/lib/utils"
 
-export type TransferStockSummaryValues = TransferStockFormValues
+export type OutgoingSummaryValues = OutgoingFormValues
 
-type TransferStockSummarySheetProps = {
+type OutgoingSummarySheetProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
-  values: TransferStockSummaryValues | null
-  fromFarmerLabel: string
-  toFarmerLabel: string
-  transferItems: TransferStockItem[]
+  values: OutgoingSummaryValues | null
+  farmerLabel: string
+  outgoingItems: TransferStockItem[]
   onBack: () => void
   onSubmit: () => void
   canSubmit: boolean
@@ -119,27 +118,25 @@ function SummaryCard({
   )
 }
 
-function TransferReviewSummary({
+function OutgoingReviewSummary({
   values,
-  fromFarmerLabel,
-  toFarmerLabel,
-  transferItems,
+  farmerLabel,
+  outgoingItems,
 }: {
-  values: TransferStockSummaryValues
-  fromFarmerLabel: string
-  toFarmerLabel: string
-  transferItems: TransferStockItem[]
+  values: OutgoingSummaryValues
+  farmerLabel: string
+  outgoingItems: TransferStockItem[]
 }) {
-  const totalBags = transferItems.reduce((sum, item) => sum + item.quantity, 0)
+  const totalBags = outgoingItems.reduce((sum, item) => sum + item.quantity, 0)
   return (
     <div className="space-y-7">
       <div className="flex items-center justify-between gap-3 rounded-xl border border-border/40 bg-muted/30 px-4 py-3.5">
         <div className="flex min-w-0 items-center gap-3">
           <span className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-primary/20 bg-primary/10 text-primary">
-            <ArrowRightLeft className="size-4" />
+            <ArrowUpRight className="size-4" />
           </span>
           <div className="min-w-0">
-            <p className="text-sm font-semibold tracking-tight">Stock transfer</p>
+            <p className="text-sm font-semibold tracking-tight">Stock outgoing</p>
             <p className="mt-0.5 flex items-center gap-1 text-[11px] text-muted-foreground">
               <Calendar className="size-3 shrink-0" />
               {formatReviewDate(values.date)}
@@ -149,20 +146,14 @@ function TransferReviewSummary({
       </div>
 
       <div className="space-y-2">
-        <SectionLabel icon={User2}>Accounts</SectionLabel>
+        <SectionLabel icon={User2}>Account</SectionLabel>
         <SummaryCard>
-          <DetailRow label="From" value={fromFarmerLabel} icon={User2} />
-          <DetailRow
-            label="To"
-            value={toFarmerLabel}
-            icon={User2}
-            valueClassName="text-primary"
-          />
+          <DetailRow label="Farmer" value={farmerLabel} icon={User2} />
         </SummaryCard>
       </div>
 
       <div className="space-y-2">
-        <SectionLabel icon={Calendar}>Transfer date</SectionLabel>
+        <SectionLabel icon={Calendar}>Outgoing date</SectionLabel>
         <SummaryCard>
           <DetailRow
             label="Date"
@@ -174,7 +165,7 @@ function TransferReviewSummary({
 
       <div className="space-y-2">
         <SectionLabel icon={Scale}>Allocations</SectionLabel>
-        <AllocationReviewByVariety items={transferItems} />
+        <AllocationReviewByVariety items={outgoingItems} />
         <SummaryCard className="mt-3">
           <DetailRow
             label="Total bags"
@@ -199,18 +190,17 @@ function TransferReviewSummary({
   )
 }
 
-export function TransferStockSummarySheet({
+export function OutgoingSummarySheet({
   open,
   onOpenChange,
   values,
-  fromFarmerLabel,
-  toFarmerLabel,
-  transferItems,
+  farmerLabel,
+  outgoingItems,
   onBack,
   onSubmit,
   canSubmit,
   isSubmitting,
-}: TransferStockSummarySheetProps) {
+}: OutgoingSummarySheetProps) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
@@ -224,10 +214,10 @@ export function TransferStockSummarySheet({
             </span>
             <div className="min-w-0 space-y-0.5">
               <SheetTitle className="text-base leading-none font-semibold">
-                Review transfer
+                Review outgoing
               </SheetTitle>
               <SheetDescription className="text-xs leading-snug text-muted-foreground">
-                Verify source, destination, and date before confirming.
+                Verify farmer, allocations, and date before confirming.
               </SheetDescription>
             </div>
           </div>
@@ -235,15 +225,14 @@ export function TransferStockSummarySheet({
 
         <div className="flex-1 overflow-y-auto px-5 py-5">
           {values ? (
-            <TransferReviewSummary
+            <OutgoingReviewSummary
               values={values}
-              fromFarmerLabel={fromFarmerLabel}
-              toFarmerLabel={toFarmerLabel}
-              transferItems={transferItems}
+              farmerLabel={farmerLabel}
+              outgoingItems={outgoingItems}
             />
           ) : (
             <div className="flex min-h-48 flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border/50 bg-muted/20 px-6 text-center">
-              <ArrowRightLeft className="size-7 text-muted-foreground/40" />
+              <ArrowUpRight className="size-7 text-muted-foreground/40" />
               <p className="text-sm font-medium">No summary available</p>
               <p className="text-xs text-muted-foreground">
                 Complete the form and open review again.

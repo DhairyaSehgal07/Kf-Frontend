@@ -43,12 +43,15 @@ type TransferGatePassesSectionProps = {
   fromFarmerStorageLinkId: string
   allocations: Record<string, number>
   onAllocationsChange: (next: Record<string, number>) => void
+  /** Label used in empty state, e.g. "From" (transfer) or "a farmer" (outgoing). */
+  farmerPromptLabel?: string
 }
 
 export function TransferGatePassesSection({
   fromFarmerStorageLinkId,
   allocations,
   onAllocationsChange,
+  farmerPromptLabel = "From",
 }: TransferGatePassesSectionProps) {
   const { data: allPasses, isLoading, error } =
     useStorageGatePassesForFarmer(fromFarmerStorageLinkId)
@@ -64,10 +67,18 @@ export function TransferGatePassesSection({
       <GatePassesSectionMessage
         title="Select a farmer"
         description={
-          <>
-            Choose a <span className="font-medium text-foreground">From</span>{" "}
-            farmer to view storage gate passes.
-          </>
+          farmerPromptLabel === "From" ? (
+            <>
+              Choose a <span className="font-medium text-foreground">From</span>{" "}
+              farmer to view storage gate passes.
+            </>
+          ) : (
+            <>
+              Choose a{" "}
+              <span className="font-medium text-foreground">farmer</span> to view
+              storage gate passes.
+            </>
+          )
         }
       />
     )

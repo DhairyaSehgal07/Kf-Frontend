@@ -6,6 +6,7 @@ import {
 import { useNavigate } from "@tanstack/react-router"
 import { useDebounceValue } from "usehooks-ts"
 import {
+  ArrowRightFromLine,
   ArrowRightLeft,
   ArrowUpFromLine,
   Loader2,
@@ -53,9 +54,11 @@ import {
   StorageGatePassCardSkeleton,
 } from "@/components/storage-gate-pass-card"
 import { Skeleton } from "@/components/ui/skeleton"
+import { nikasiAccent } from "@/features/dispatch-pre-storage/constants/nikasi-accent"
 import { useSearchStorageGatePass } from "@/features/storage/api/use-search-storage-gate-pass"
 import { useStorageGatePasses } from "@/features/storage/api/use-storage-gate-passes"
 import type { StorageGatePassListParams } from "@/features/storage/api/types"
+import { cn } from "@/lib/utils"
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50, 100] as const
 const DEFAULT_PAGE_SIZE = PAGE_SIZE_OPTIONS[0]
@@ -223,6 +226,10 @@ const DaybookStorageTab = () => {
     navigate({ to: "/storage" })
   }
 
+  const handleAddOutgoing = () => {
+    navigate({to:"/outgoing"})
+  }
+
     const handleEditHistory= () => {
     navigate({ to: "/storage/edit-history" })
   }
@@ -327,6 +334,19 @@ const DaybookStorageTab = () => {
             >
               <ArrowUpFromLine className="h-4 w-4 shrink-0 sm:mr-2" />
               <span className="truncate">Add Storage</span>
+            </Button>
+
+            <Button
+              variant="outline"
+              className={cn(
+                "min-w-0 px-2.5 sm:px-3 transition-colors",
+                nikasiAccent.emphasis,
+                "border-rose-200 bg-rose-50 hover:bg-rose-100 dark:border-rose-900/60 dark:bg-rose-950/50 dark:hover:bg-rose-950/70",
+              )}
+              onClick={handleAddOutgoing}
+            >
+              <ArrowRightFromLine className="h-4 w-4 shrink-0 sm:mr-2" />
+              <span className="truncate">Add Outgoing</span>
             </Button>
           </div>
         </div>

@@ -80,9 +80,33 @@ export type StorageGatePassListParams = {
   dateTo?: string
 }
 
+export type StorageGatePassByFarmer = {
+  _id: string
+  farmerStorageLinkId: string
+  gatePassNo: number
+  manualGatePassNumber?: number
+  date: string
+  variety: string
+  storageCategory: string
+  stage?: string
+  bagSizes: StorageGatePassBagSize[]
+  editHistory?: unknown[]
+  createdAt?: string
+  updatedAt?: string
+}
+
+export type StorageGatePassesByFarmerResult = {
+  storageGatePasses: StorageGatePassByFarmer[]
+}
+
 export type StorageGatePassesByFarmerParams = {
   sortOrder?: StorageGatePassSortOrder
-  status?: StorageGatePassStatusFilter
+}
+
+export type GetStorageGatePassesByFarmerResponse = {
+  success: boolean
+  data: StorageGatePassesByFarmerResult
+  message?: string
 }
 
 export type GetStorageGatePassesResponse = {

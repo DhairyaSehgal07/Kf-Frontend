@@ -5,6 +5,7 @@ import type {
   StorageGatePassBagSlot,
   TransferAllocationKey,
   TransferStockItem,
+  VarietyItemGroup,
   VoucherSort,
 } from "@/features/transfer-stock/types/storage-gate-pass"
 
@@ -233,6 +234,7 @@ export function buildTransferItems(
     items.push({
       storageGatePassId: parsed.passId,
       gatePassNo: found.pass.gatePassNo,
+      variety: found.pass.variety?.trim() || "Unspecified",
       bagSize: parsed.sizeName,
       bagIndex: parsed.bagIndex,
       quantity,
@@ -245,6 +247,24 @@ export function buildTransferItems(
   }
 
   return items
+}
+
+export function groupItemsByVariety(
+  items: TransferStockItem[],
+): VarietyItemGroup[] {
+  const byVariety = new Map<string, TransferStockItem[]>()
+
+  for (const item of items) {
+    const variety = item.variety?.trim() || "Unspecified"
+    const group = byVariety.get(variety) ?? []
+    group.push(item)
+    byVariety.set(variety, group)
+  }
+
+  return [...byVariety.entries()].map(([variety, groupItems]) => ({
+    variety,
+    items: groupItems,
+  }))
 }
 
 export function formatLocationShort(slot: StorageGatePassBagSlot): string {
