@@ -67,9 +67,18 @@ export function toCreateOutgoingGatePassBody({
     variety: deriveVarietyFromItems(items),
     from: form.from.trim(),
     to: form.to.trim(),
-    truckNumber: form.truckNumber.trim(),
+    category: form.category.trim(),
+    billNumber: Number(form.billNumber),
+    biltiNumber: Number(form.biltiNumber),
+    billBook: Number(form.billBook),
+    biltiBook: Number(form.biltiBook),
     storageGatePasses: buildStorageGatePassesPayload(items),
     idempotencyKey: crypto.randomUUID(),
+  }
+
+  const truckNumber = form.truckNumber.trim()
+  if (truckNumber) {
+    body.truckNumber = truckNumber
   }
 
   if (form.manualGatePassNumber != null) {

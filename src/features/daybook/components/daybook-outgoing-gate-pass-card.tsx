@@ -5,7 +5,9 @@ import {
   ChevronUp,
   FileText,
   Loader2,
+  Pencil,
   Printer,
+  Receipt,
   Sprout,
   Truck,
   User,
@@ -36,6 +38,7 @@ import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Textarea } from "@/components/ui/textarea"
 import type { DaybookOutgoingEntry } from "@/features/daybook/api/types"
+import { EditOutgoingGatePassSheet } from "@/features/outgoing/forms/edit-outgoing-form"
 import { useCancelOutgoingGatePass } from "@/features/outgoing/api/use-cancel-outgoing-gate-pass"
 import { nikasiAccent } from "@/features/dispatch-pre-storage/constants/nikasi-accent"
 import {
@@ -51,6 +54,10 @@ interface InfoBlockProps {
   value: string | number
   icon?: LucideIcon
   valueClassName?: string
+}
+
+function formatOptionalInt(value: number | undefined): string {
+  return value != null ? value.toLocaleString("en-IN") : "—"
 }
 
 const InfoBlock = ({
@@ -186,6 +193,7 @@ export function DaybookOutgoingGatePassCard({
   data: gatePass,
 }: DaybookOutgoingGatePassCardProps) {
   const [isExpanded, setIsExpanded] = useState(false)
+  const [editOpen, setEditOpen] = useState(false)
   const [cancelOpen, setCancelOpen] = useState(false)
   const [remarks, setRemarks] = useState("")
   const [remarksError, setRemarksError] = useState<string | null>(null)
@@ -278,6 +286,15 @@ export function DaybookOutgoingGatePassCard({
           >
             {gatePass.variety}
           </Badge>
+          {gatePass.category?.trim() ? (
+            <Badge
+              variant="outline"
+              className="bg-background text-xs"
+              title={gatePass.category}
+            >
+              {gatePass.category}
+            </Badge>
+          ) : null}
           <Badge
             variant="outline"
             className="bg-background text-xs tabular-nums"
@@ -294,7 +311,7 @@ export function DaybookOutgoingGatePassCard({
       </CardHeader>
 
       <CardContent className="pt-5">
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
           <InfoBlock label="Farmer" value={farmer.name ?? "—"} icon={User} />
           <InfoBlock
             label="Account"
@@ -302,9 +319,34 @@ export function DaybookOutgoingGatePassCard({
             valueClassName="tabular-nums"
           />
           <InfoBlock
-            label="Route"
-            value={`${gatePass.from || "—"} → ${gatePass.to || "—"}`}
+            label="From"
+            value={gatePass.from || "—"}
             icon={Truck}
+          />
+          <InfoBlock label="To" value={gatePass.to || "—"} />
+        </div>
+
+        <div className="mt-6 grid grid-cols-2 gap-6 sm:grid-cols-4">
+          <InfoBlock
+            label="Bill no."
+            value={formatOptionalInt(gatePass.billNumber)}
+            icon={Receipt}
+            valueClassName="tabular-nums"
+          />
+          <InfoBlock
+            label="Bilti no."
+            value={formatOptionalInt(gatePass.biltiNumber)}
+            valueClassName="tabular-nums"
+          />
+          <InfoBlock
+            label="Bill book"
+            value={formatOptionalInt(gatePass.billBook)}
+            valueClassName="tabular-nums"
+          />
+          <InfoBlock
+            label="Bilti book"
+            value={formatOptionalInt(gatePass.biltiBook)}
+            valueClassName="tabular-nums"
           />
         </div>
 
@@ -357,6 +399,39 @@ export function DaybookOutgoingGatePassCard({
                 </div>
               </div>
 
+              <div>
+                <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
+                  <Receipt className={cn("h-4 w-4", nikasiAccent.icon)} />
+                  Billing &amp; bilti
+                </h4>
+                <div className="grid grid-cols-2 gap-4 rounded-xl border border-border/50 bg-muted/20 p-4 sm:grid-cols-3 lg:grid-cols-5">
+                  <InfoBlock
+                    label="Category"
+                    value={gatePass.category?.trim() || "—"}
+                  />
+                  <InfoBlock
+                    label="Bill no."
+                    value={formatOptionalInt(gatePass.billNumber)}
+                    valueClassName="tabular-nums"
+                  />
+                  <InfoBlock
+                    label="Bilti no."
+                    value={formatOptionalInt(gatePass.biltiNumber)}
+                    valueClassName="tabular-nums"
+                  />
+                  <InfoBlock
+                    label="Bill book"
+                    value={formatOptionalInt(gatePass.billBook)}
+                    valueClassName="tabular-nums"
+                  />
+                  <InfoBlock
+                    label="Bilti book"
+                    value={formatOptionalInt(gatePass.biltiBook)}
+                    valueClassName="tabular-nums"
+                  />
+                </div>
+              </div>
+
               {gatePass.remarks?.trim() ? (
                 <div>
                   <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
@@ -402,6 +477,15 @@ export function DaybookOutgoingGatePassCard({
         <div className="flex items-center gap-2">
           <Button
             variant="secondary"
+            size="icon-sm"
+            className="h-8 w-8"
+            aria-label={`Edit outgoing gate pass ${gatePass.gatePassNo}`}
+            onClick={() => setEditOpen(true)}
+          >
+            <Pencil className="h-3.5 w-3.5" />
+          </Button>
+          <Button
+            variant="secondary"
             size="sm"
             className="h-8 text-muted-foreground hover:text-destructive"
             aria-label={`Mark outgoing gate pass ${gatePass.gatePassNo} as null`}
@@ -416,6 +500,12 @@ export function DaybookOutgoingGatePassCard({
           </Button>
         </div>
       </CardFooter>
+
+      <EditOutgoingGatePassSheet
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        gatePass={gatePass}
+      />
 
       <AlertDialog open={cancelOpen} onOpenChange={handleCancelOpenChange}>
         <AlertDialogContent className="sm:max-w-lg">
@@ -492,11 +582,19 @@ export function DaybookOutgoingGatePassCardSkeleton() {
         </div>
       </CardHeader>
       <CardContent className="pt-5">
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
-          {Array.from({ length: 3 }).map((_, index) => (
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, index) => (
             <div key={index} className="space-y-2">
               <Skeleton className="h-3 w-14" />
               <Skeleton className="h-5 w-full max-w-28" />
+            </div>
+          ))}
+        </div>
+        <div className="mt-6 grid grid-cols-2 gap-6 sm:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, index) => (
+            <div key={index} className="space-y-2">
+              <Skeleton className="h-3 w-14" />
+              <Skeleton className="h-5 w-full max-w-20" />
             </div>
           ))}
         </div>

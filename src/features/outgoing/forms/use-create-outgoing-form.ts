@@ -55,6 +55,11 @@ export function useCreateOutgoingForm(
     from: coldStorageName,
     to: "",
     truckNumber: "",
+    category: "",
+    billNumber: "",
+    biltiNumber: "",
+    billBook: "",
+    biltiBook: "",
     remarks: "",
     allocations: {},
   }

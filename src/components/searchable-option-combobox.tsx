@@ -1,3 +1,5 @@
+import type { RefObject } from "react"
+
 import {
   Combobox,
   ComboboxContent,
@@ -31,6 +33,7 @@ export type SearchableOptionComboboxProps = {
   open: boolean
   setOpen: (open: boolean) => void
   disabled?: boolean
+  portalContainer?: RefObject<HTMLElement | ShadowRoot | null>
 }
 
 // eslint-disable-next-line react-refresh/only-export-components
@@ -73,6 +76,7 @@ export function SearchableOptionCombobox({
   open,
   setOpen,
   disabled = false,
+  portalContainer,
 }: SearchableOptionComboboxProps) {
   const selected = options.find((option) => option.id === value) ?? null
 
@@ -87,11 +91,10 @@ export function SearchableOptionCombobox({
       autoHighlight={"always" as unknown as boolean}
       onInputValueChange={(inputValue) => {
         setSearch(inputValue)
-        const matches = filterAndSortOptions(inputValue, options)
         if (!inputValue.trim()) {
-          onValueChange("")
           return
         }
+        const matches = filterAndSortOptions(inputValue, options)
         onValueChange(matches[0]?.id ?? "")
       }}
       onValueChange={(val) => {
@@ -115,7 +118,7 @@ export function SearchableOptionCombobox({
             "cursor-not-allowed **:data-[slot=input-group-control]:cursor-not-allowed **:data-[slot=input-group-button]:cursor-not-allowed",
         )}
       />
-      <ComboboxContent>
+      <ComboboxContent portalContainer={portalContainer}>
         <ComboboxEmpty>{emptyMessage}</ComboboxEmpty>
         <ComboboxList>
           {(option) => (

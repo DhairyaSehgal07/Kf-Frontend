@@ -58,6 +58,13 @@ export const INCOMING_CATEGORIES = [
   "Transfer From Stores",
 ] as const
 
+export const OUTGOING_CATEGORIES = [
+  "Outgoing to Shed",
+  "Outgoing To Farmer",
+] as const
+
+export type OutgoingCategory = (typeof OUTGOING_CATEGORIES)[number]
+
 export const INCOMING_STAGES = [
   "G0",
   "G1",

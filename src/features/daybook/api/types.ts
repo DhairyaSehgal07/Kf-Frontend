@@ -103,6 +103,11 @@ export type DaybookOutgoingEntry = DaybookEntryBase & {
   from: string
   to: string
   truckNumber: string
+  category?: string
+  billNumber?: number
+  biltiNumber?: number
+  billBook?: number
+  biltiBook?: number
   orderDetails: DaybookOrderDetail[]
   storageGatePassSnapshots: DaybookStorageGatePassSnapshot[]
   status: "ACTIVE"

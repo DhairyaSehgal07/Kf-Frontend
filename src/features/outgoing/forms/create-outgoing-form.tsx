@@ -36,6 +36,12 @@ import {
   filterAndSortOptions,
   type ComboboxOption,
 } from "@/components/searchable-option-combobox"
+import { OUTGOING_CATEGORIES } from "@/lib/constants"
+
+const CATEGORY_ITEMS = OUTGOING_CATEGORIES.map((value) => ({
+  id: value,
+  label: value,
+}))
 
 function isFieldInvalid(meta: { isTouched: boolean; isValid: boolean }) {
   return meta.isTouched && !meta.isValid
@@ -104,6 +110,8 @@ const CreateOutgoingForm = () => {
   )
   const [farmerSearch, setFarmerSearch] = useState("")
   const [farmerComboboxOpen, setFarmerComboboxOpen] = useState(false)
+  const [categorySearch, setCategorySearch] = useState("")
+  const [categoryComboboxOpen, setCategoryComboboxOpen] = useState(false)
   const [reviewOpen, setReviewOpen] = useState(false)
 
   const sortedFarmers = useMemo(
@@ -111,9 +119,16 @@ const CreateOutgoingForm = () => {
     [farmerSearch, farmerOptions],
   )
 
+  const sortedCategories = useMemo(
+    () => filterAndSortOptions(categorySearch, CATEGORY_ITEMS),
+    [categorySearch],
+  )
+
   function resetComboboxState() {
     setFarmerSearch("")
     setFarmerComboboxOpen(false)
+    setCategorySearch("")
+    setCategoryComboboxOpen(false)
   }
 
   const {
@@ -369,10 +384,159 @@ const CreateOutgoingForm = () => {
                           onChange={(e) =>
                             field.handleChange(e.target.value.toUpperCase())
                           }
-                          placeholder="e.g. HR-12-AB-1234"
+                          placeholder="Optional"
                           autoComplete="off"
                           aria-invalid={isInvalid}
                           className="h-11 text-base uppercase"
+                        />
+                        <FieldDescription>
+                          Optional vehicle registration for this dispatch.
+                        </FieldDescription>
+                        {isInvalid && (
+                          <FieldError errors={field.state.meta.errors} />
+                        )}
+                      </Field>
+                    )
+                  }}
+                </form.Field>
+              </FieldGroup>
+            </FieldSet>
+
+            <FieldSet>
+              <FieldLegend className="font-heading text-base font-semibold">
+                Billing &amp; bilti
+              </FieldLegend>
+              <FieldDescription>
+                Category and bill/bilti reference numbers for this dispatch.
+              </FieldDescription>
+              <FieldGroup className="mt-5 grid grid-cols-1 gap-6 @md/field-group:grid-cols-2 @lg/field-group:grid-cols-3">
+                <form.Field name="category">
+                  {(field) => {
+                    const isInvalid = isFieldInvalid(field.state.meta)
+                    return (
+                      <Field data-invalid={isInvalid}>
+                        <FieldLabel htmlFor="outgoing-category">
+                          Category
+                        </FieldLabel>
+                        <SearchableOptionCombobox
+                          id="outgoing-category"
+                          name={field.name}
+                          value={field.state.value}
+                          onValueChange={field.handleChange}
+                          onBlur={field.handleBlur}
+                          isInvalid={isInvalid}
+                          placeholder="Select category"
+                          emptyMessage="No categories found."
+                          options={CATEGORY_ITEMS}
+                          sortedOptions={sortedCategories}
+                          search={categorySearch}
+                          setSearch={setCategorySearch}
+                          open={categoryComboboxOpen}
+                          setOpen={setCategoryComboboxOpen}
+                        />
+                        {isInvalid && (
+                          <FieldError errors={field.state.meta.errors} />
+                        )}
+                      </Field>
+                    )
+                  }}
+                </form.Field>
+
+                <form.Field name="billNumber">
+                  {(field) => {
+                    const isInvalid = isFieldInvalid(field.state.meta)
+                    return (
+                      <Field data-invalid={isInvalid}>
+                        <FieldLabel htmlFor={field.name}>Bill number</FieldLabel>
+                        <Input
+                          {...numericInputProps}
+                          id={field.name}
+                          name={field.name}
+                          value={field.state.value}
+                          onBlur={field.handleBlur}
+                          onChange={(e) => field.handleChange(e.target.value)}
+                          inputMode="numeric"
+                          placeholder="e.g. 1234"
+                          aria-invalid={isInvalid}
+                          className="h-11 text-base tabular-nums"
+                        />
+                        {isInvalid && (
+                          <FieldError errors={field.state.meta.errors} />
+                        )}
+                      </Field>
+                    )
+                  }}
+                </form.Field>
+
+                <form.Field name="biltiNumber">
+                  {(field) => {
+                    const isInvalid = isFieldInvalid(field.state.meta)
+                    return (
+                      <Field data-invalid={isInvalid}>
+                        <FieldLabel htmlFor={field.name}>Bilti number</FieldLabel>
+                        <Input
+                          {...numericInputProps}
+                          id={field.name}
+                          name={field.name}
+                          value={field.state.value}
+                          onBlur={field.handleBlur}
+                          onChange={(e) => field.handleChange(e.target.value)}
+                          inputMode="numeric"
+                          placeholder="e.g. 5678"
+                          aria-invalid={isInvalid}
+                          className="h-11 text-base tabular-nums"
+                        />
+                        {isInvalid && (
+                          <FieldError errors={field.state.meta.errors} />
+                        )}
+                      </Field>
+                    )
+                  }}
+                </form.Field>
+
+                <form.Field name="billBook">
+                  {(field) => {
+                    const isInvalid = isFieldInvalid(field.state.meta)
+                    return (
+                      <Field data-invalid={isInvalid}>
+                        <FieldLabel htmlFor={field.name}>Bill book</FieldLabel>
+                        <Input
+                          {...numericInputProps}
+                          id={field.name}
+                          name={field.name}
+                          value={field.state.value}
+                          onBlur={field.handleBlur}
+                          onChange={(e) => field.handleChange(e.target.value)}
+                          inputMode="numeric"
+                          placeholder="e.g. 1"
+                          aria-invalid={isInvalid}
+                          className="h-11 text-base tabular-nums"
+                        />
+                        {isInvalid && (
+                          <FieldError errors={field.state.meta.errors} />
+                        )}
+                      </Field>
+                    )
+                  }}
+                </form.Field>
+
+                <form.Field name="biltiBook">
+                  {(field) => {
+                    const isInvalid = isFieldInvalid(field.state.meta)
+                    return (
+                      <Field data-invalid={isInvalid}>
+                        <FieldLabel htmlFor={field.name}>Bilti book</FieldLabel>
+                        <Input
+                          {...numericInputProps}
+                          id={field.name}
+                          name={field.name}
+                          value={field.state.value}
+                          onBlur={field.handleBlur}
+                          onChange={(e) => field.handleChange(e.target.value)}
+                          inputMode="numeric"
+                          placeholder="e.g. 2"
+                          aria-invalid={isInvalid}
+                          className="h-11 text-base tabular-nums"
                         />
                         {isInvalid && (
                           <FieldError errors={field.state.meta.errors} />

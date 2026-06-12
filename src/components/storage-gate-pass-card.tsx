@@ -239,7 +239,10 @@ export function StorageGatePassCard({
                             Type
                           </th>
                           <th className="h-10 px-3 text-right text-xs font-medium text-muted-foreground">
-                            Qty
+                            Current
+                          </th>
+                          <th className="h-10 px-3 text-right text-xs font-medium text-muted-foreground">
+                            Initial
                           </th>
                           <th className="h-10 px-3 text-left text-xs font-medium text-muted-foreground">
                             Location
@@ -260,6 +263,9 @@ export function StorageGatePassCard({
                             </td>
                             <td className="px-3 py-2.5 text-right tabular-nums font-medium text-foreground">
                               {slot.currentQuantity.toLocaleString("en-IN")}
+                            </td>
+                            <td className="px-3 py-2.5 text-right tabular-nums text-muted-foreground">
+                              {slot.initialQuantity.toLocaleString("en-IN")}
                             </td>
                             <td className="px-3 py-2.5 text-muted-foreground">
                               <span className="inline-flex items-center gap-1">

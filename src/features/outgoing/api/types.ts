@@ -21,8 +21,13 @@ export type CreateOutgoingGatePassBody = {
   variety: string
   from: string
   to: string
-  truckNumber: string
   storageGatePasses: CreateOutgoingStorageGatePass[]
+  category: string
+  billNumber: number
+  biltiNumber: number
+  billBook: number
+  biltiBook: number
+  truckNumber?: string
   manualGatePassNumber?: number
   remarks?: string
   idempotencyKey?: string
@@ -53,4 +58,41 @@ export type CancelOutgoingGatePassResponse = {
 export type CancelOutgoingGatePassInput = {
   id: string
   cancellationRemarks: string
+}
+
+export type UpdateOutgoingGatePassBody = {
+  date: string
+  manualGatePassNumber?: number | null
+  from: string
+  to: string
+  truckNumber: string
+  category: string
+  billNumber: number
+  biltiNumber: number
+  billBook: number
+  biltiBook: number
+  remarks?: string
+}
+
+export type UpdateOutgoingGatePassResponse = {
+  status: "Success" | "error"
+  message?: string
+  data: Record<string, unknown> | null
+}
+
+export type UpdateOutgoingGatePassInput = {
+  id: string
+  form: {
+    date: string
+    manualGatePassNumber?: number
+    from: string
+    to: string
+    truckNumber: string
+    category: string
+    billNumber: string
+    biltiNumber: string
+    billBook: string
+    biltiBook: string
+    remarks: string
+  }
 }

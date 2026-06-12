@@ -7,6 +7,7 @@ import {
   ClipboardCheck,
   FileText,
   MapPin,
+  Receipt,
   Scale,
   Truck,
   User2,
@@ -177,11 +178,40 @@ function OutgoingReviewSummary({
         <SummaryCard>
           <DetailRow label="From" value={values.from} icon={MapPin} />
           <DetailRow label="To" value={values.to} icon={MapPin} />
+          {values.truckNumber.trim() ? (
+            <DetailRow
+              label="Truck"
+              value={values.truckNumber}
+              icon={Truck}
+              valueClassName="font-mono uppercase"
+            />
+          ) : null}
+        </SummaryCard>
+      </div>
+
+      <div className="space-y-2">
+        <SectionLabel icon={Receipt}>Billing &amp; bilti</SectionLabel>
+        <SummaryCard>
+          <DetailRow label="Category" value={values.category} />
           <DetailRow
-            label="Truck"
-            value={values.truckNumber}
-            icon={Truck}
-            valueClassName="font-mono uppercase"
+            label="Bill no."
+            value={Number(values.billNumber).toLocaleString("en-IN")}
+            valueClassName="tabular-nums"
+          />
+          <DetailRow
+            label="Bilti no."
+            value={Number(values.biltiNumber).toLocaleString("en-IN")}
+            valueClassName="tabular-nums"
+          />
+          <DetailRow
+            label="Bill book"
+            value={Number(values.billBook).toLocaleString("en-IN")}
+            valueClassName="tabular-nums"
+          />
+          <DetailRow
+            label="Bilti book"
+            value={Number(values.biltiBook).toLocaleString("en-IN")}
+            valueClassName="tabular-nums"
           />
         </SummaryCard>
       </div>

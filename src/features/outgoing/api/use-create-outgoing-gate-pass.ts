@@ -1,4 +1,5 @@
 import { useMutation } from "@tanstack/react-query"
+import { useRouter } from "@tanstack/react-router"
 
 import { daybookKeys } from "@/features/daybook/api/query-keys"
 import { storageGatePassKeys } from "@/features/storage/api/query-keys"
@@ -10,6 +11,8 @@ import { outgoingGatePassKeys } from "./query-keys"
 import type { CreateOutgoingGatePassInput } from "./types"
 
 export function useCreateOutgoingGatePass() {
+  const router = useRouter()
+
   return useMutation({
     mutationKey: outgoingGatePassKeys.create(),
     mutationFn: (input: CreateOutgoingGatePassInput) =>
@@ -29,6 +32,8 @@ export function useCreateOutgoingGatePass() {
       void queryClient.invalidateQueries({
         queryKey: voucherNumberKeys.detail("outgoing-gate-pass"),
       })
+
+      void router.navigate({ to: "/daybook", search: { tab: "storage" } })
     },
   })
 }
