@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react"
+import { useMemo } from "react"
 import type { UseQueryResult } from "@tanstack/react-query"
 import { AlertCircle, ChevronRight, Package, RefreshCw } from "lucide-react"
 
@@ -16,7 +16,6 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { BookingSummaryTable } from "@/features/booking/components/booking-summary-table"
 import type { SummaryVariety } from "@/features/booking/api/summary-types"
 import {
@@ -24,8 +23,6 @@ import {
   computeNetAvailable,
   formatBookingBagCount,
   mapApiSummaryToVarietySummary,
-  sumBookingGrandTotal,
-  type BookingQuantityMode,
 } from "@/features/booking/lib/booking-summary-utils"
 import { cn } from "@/lib/utils"
 
@@ -105,9 +102,6 @@ export function BookingSummary({
   bookingQuery,
   storageQuery,
 }: BookingSummaryProps) {
-  const [quantityMode, setQuantityMode] =
-    useState<BookingQuantityMode>("current")
-
   const {
     data: bookingData,
     error: bookingError,
@@ -135,34 +129,12 @@ export function BookingSummary({
   const isFetching = isBookingFetching || isStorageFetching
 
   const mappedStorage = useMemo(
-    () => mapApiSummaryToVarietySummary(storageData ?? [], quantityMode),
-    [storageData, quantityMode],
+    () => mapApiSummaryToVarietySummary(storageData ?? [], "initial"),
+    [storageData],
   )
   const mappedBooked = useMemo(
-    () => mapApiSummaryToVarietySummary(bookingData ?? [], quantityMode),
-    [bookingData, quantityMode],
-  )
-
-  const modeTotals = useMemo(
-    () => ({
-      current: {
-        storage: sumBookingGrandTotal(
-          mapApiSummaryToVarietySummary(storageData ?? [], "current"),
-        ),
-        booked: sumBookingGrandTotal(
-          mapApiSummaryToVarietySummary(bookingData ?? [], "current"),
-        ),
-      },
-      initial: {
-        storage: sumBookingGrandTotal(
-          mapApiSummaryToVarietySummary(storageData ?? [], "initial"),
-        ),
-        booked: sumBookingGrandTotal(
-          mapApiSummaryToVarietySummary(bookingData ?? [], "initial"),
-        ),
-      },
-    }),
-    [storageData, bookingData],
+    () => mapApiSummaryToVarietySummary(bookingData ?? [], "initial"),
+    [bookingData],
   )
 
   const totalTable = useMemo(
@@ -247,36 +219,12 @@ export function BookingSummary({
             </div>
           </div>
 
-          <Tabs
-            value={quantityMode}
-            onValueChange={(value) =>
-              setQuantityMode(value as BookingQuantityMode)
-            }
-          >
-            <TabsList
-              aria-label="Booking quantity view"
-              className="h-auto w-full flex-wrap justify-start gap-1 bg-transparent p-0"
-            >
-              <TabsTrigger
-                value="current"
-                className="rounded-none border-b-2 border-transparent px-3 py-2 data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:shadow-none"
-              >
-                Current{" "}
-                <span className="tabular-nums">
-                  ({formatBookingBagCount(modeTotals.current.storage - modeTotals.current.booked)})
-                </span>
-              </TabsTrigger>
-              <TabsTrigger
-                value="initial"
-                className="rounded-none border-b-2 border-transparent px-3 py-2 data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:shadow-none"
-              >
-                Initial{" "}
-                <span className="tabular-nums">
-                  ({formatBookingBagCount(modeTotals.initial.storage - modeTotals.initial.booked)})
-                </span>
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
+          <p className="text-sm font-medium text-foreground">
+            Quantity{" "}
+            <span className="tabular-nums text-muted-foreground">
+              ({formatBookingBagCount(netTable.grandTotal)})
+            </span>
+          </p>
         </CardHeader>
 
         <CardContent>

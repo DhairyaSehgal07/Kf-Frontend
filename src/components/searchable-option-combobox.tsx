@@ -36,6 +36,85 @@ export type SearchableOptionComboboxProps = {
   portalContainer?: RefObject<HTMLElement | ShadowRoot | null>
 }
 
+const TOKEN_SEPARATOR_REGEX = /[\s./\-_,]+/
+
+function tokenizeLabel(label: string): string[] {
+  return label
+    .split(TOKEN_SEPARATOR_REGEX)
+    .map((token) => token.trim())
+    .filter(Boolean)
+}
+
+type MatchScore = {
+  rank: number
+  tokenIndex: number
+  matchPosition: number
+  label: string
+}
+
+function getMatchScore(label: string, query: string): MatchScore | null {
+  const normalized = query.trim().toLowerCase()
+  if (!normalized) {
+    return { rank: 0, tokenIndex: 0, matchPosition: 0, label }
+  }
+
+  const labelLower = label.toLowerCase()
+  const tokens = tokenizeLabel(label).map((token) => token.toLowerCase())
+
+  if (labelLower === normalized) {
+    return { rank: 1, tokenIndex: 0, matchPosition: 0, label }
+  }
+
+  const tokenStartIndex = tokens.findIndex((token) =>
+    token.startsWith(normalized)
+  )
+  if (tokenStartIndex !== -1) {
+    return {
+      rank: 2,
+      tokenIndex: tokenStartIndex,
+      matchPosition: tokenStartIndex,
+      label,
+    }
+  }
+
+  if (labelLower.startsWith(normalized)) {
+    return {
+      rank: 3,
+      tokenIndex: Number.MAX_SAFE_INTEGER,
+      matchPosition: 0,
+      label,
+    }
+  }
+
+  const containsIndex = labelLower.indexOf(normalized)
+  if (containsIndex !== -1) {
+    return {
+      rank: 4,
+      tokenIndex: Number.MAX_SAFE_INTEGER,
+      matchPosition: containsIndex,
+      label,
+    }
+  }
+
+  return null
+}
+
+function compareMatchScores(a: MatchScore, b: MatchScore): number {
+  if (a.rank !== b.rank) {
+    return a.rank - b.rank
+  }
+
+  if (a.rank === 2 && a.tokenIndex !== b.tokenIndex) {
+    return a.tokenIndex - b.tokenIndex
+  }
+
+  if (a.rank === 4 && a.matchPosition !== b.matchPosition) {
+    return a.matchPosition - b.matchPosition
+  }
+
+  return a.label.localeCompare(b.label)
+}
+
 // eslint-disable-next-line react-refresh/only-export-components
 export function filterAndSortOptions(
   query: string,
@@ -47,17 +126,17 @@ export function filterAndSortOptions(
     return options
   }
 
-  const filtered = options.filter((option) =>
-    option.label.toLowerCase().includes(normalized)
-  )
-
-  return filtered.sort((a, b) => {
-    const aStarts = a.label.toLowerCase().startsWith(normalized)
-    const bStarts = b.label.toLowerCase().startsWith(normalized)
-    if (aStarts && !bStarts) return -1
-    if (!aStarts && bStarts) return 1
-    return a.label.localeCompare(b.label)
-  })
+  return options
+    .map((option) => ({
+      option,
+      score: getMatchScore(option.label, normalized),
+    }))
+    .filter(
+      (entry): entry is { option: ComboboxOption; score: MatchScore } =>
+        entry.score !== null
+    )
+    .sort((a, b) => compareMatchScores(a.score, b.score))
+    .map((entry) => entry.option)
 }
 
 export function SearchableOptionCombobox({
@@ -82,7 +161,10 @@ export function SearchableOptionCombobox({
 
   return (
     <Combobox
-      items={sortedOptions}
+      items={options}
+      filteredItems={sortedOptions}
+      filter={null}
+      itemToStringLabel={(option) => option.label}
       itemToStringValue={(option) => option.label}
       value={selected}
       inputValue={search}

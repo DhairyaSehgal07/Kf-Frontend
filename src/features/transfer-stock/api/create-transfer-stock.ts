@@ -72,6 +72,7 @@ export function toCreateTransferStockBody({
     destinationStorageGatePassNo,
     date: form.date,
     variety: deriveVarietyFromItems(items),
+    category: form.category,
     from: fromLabel.trim(),
     to: toLabel.trim(),
     truckNumber: form.truckNumber.trim(),

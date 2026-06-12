@@ -22,12 +22,12 @@ export type CreateTransferStockBody = {
   destinationStorageGatePassNo: number
   date: string
   variety: string
+  category: string
   from: string
   to: string
   truckNumber: string
   storageGatePasses: CreateTransferStockStorageGatePass[]
   remarks?: string
-  storageCategory?: string
   idempotencyKey?: string
 }
 

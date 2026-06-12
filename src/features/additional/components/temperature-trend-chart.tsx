@@ -1,3 +1,12 @@
+import { useMemo } from 'react'
+import {
+  CartesianGrid,
+  Line,
+  LineChart,
+  XAxis,
+  YAxis,
+} from 'recharts'
+
 import {
   Card,
   CardContent,
@@ -5,7 +14,14 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import { cn } from '@/lib/utils'
+import {
+  ChartContainer,
+  ChartLegend,
+  ChartLegendContent,
+  ChartTooltip,
+  ChartTooltipContent,
+  type ChartConfig,
+} from '@/components/ui/chart'
 
 export type TemperatureChartPoint = {
   label: string
@@ -17,78 +33,85 @@ type TemperatureTrendChartProps = {
   data: TemperatureChartPoint[]
 }
 
-const CHAMBER_LINE_CLASSES = [
-  'text-primary',
-  'text-foreground',
-  'text-muted-foreground',
-  'text-destructive',
-  'text-primary/70',
-  'text-foreground/60',
-]
+const CHART_COLOR_COUNT = 8
 
-function getSeriesPath(
-  values: Array<number | undefined>,
-  min: number,
-  max: number,
-) {
-  const spread = max - min || 1
-  const step = values.length > 1 ? 100 / (values.length - 1) : 100
+function getChamberChartColor(index: number): string {
+  return `var(--chart-${(index % CHART_COLOR_COUNT) + 1})`
+}
 
-  return values
-    .map((value, index) => {
-      if (value == null) return null
+function toChamberChartKey(index: number): string {
+  return `chamber${index}`
+}
 
-      const x = index * step
-      const y = 90 - ((value - min) / spread) * 70
-      return `${x},${y}`
-    })
-    .filter(Boolean)
-    .join(' ')
+const temperatureFormatter = new Intl.NumberFormat('en-IN', {
+  minimumFractionDigits: 1,
+  maximumFractionDigits: 1,
+})
+
+function formatTemperature(value: number) {
+  return `${temperatureFormatter.format(value)}°F`
 }
 
 export function TemperatureTrendChart({
   chamberIds,
   data,
 }: TemperatureTrendChartProps) {
-  const allValues = data.flatMap((point) =>
-    chamberIds
-      .map((chamberId) => point.values[chamberId])
-      .filter((value): value is number => value != null),
-  )
+  const { chartData, chartConfig } = useMemo(() => {
+    const config: ChartConfig = {}
 
-  const min = Math.min(...allValues, 30)
-  const max = Math.max(...allValues, 50)
+    for (const [index, chamberId] of chamberIds.entries()) {
+      const chartKey = toChamberChartKey(index)
+      config[chartKey] = {
+        label: `Chamber ${chamberId}`,
+        color: getChamberChartColor(index),
+      }
+    }
+
+    const points = data.map((point) => {
+      const row: Record<string, string | number | null> = {
+        axisLabel: point.label,
+      }
+
+      for (const [index, chamberId] of chamberIds.entries()) {
+        const chartKey = toChamberChartKey(index)
+        row[chartKey] = point.values[chamberId] ?? null
+      }
+
+      return row
+    })
+
+    return { chartData: points, chartConfig: config }
+  }, [chamberIds, data])
+
+  const yDomain = useMemo(() => {
+    const allValues = data.flatMap((point) =>
+      chamberIds
+        .map((chamberId) => point.values[chamberId])
+        .filter((value): value is number => value != null),
+    )
+
+    if (allValues.length === 0) {
+      return [30, 50] as const
+    }
+
+    const min = Math.min(...allValues, 30)
+    const max = Math.max(...allValues, 50)
+    const padding = Math.max((max - min) * 0.08, 0.5)
+
+    return [min - padding, max + padding] as const
+  }, [chamberIds, data])
 
   return (
     <Card className="rounded-xl shadow-sm">
       <CardHeader className="border-b border-border/60">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div className="space-y-1">
-            <CardTitle className="font-heading text-base font-semibold text-foreground">
-              Temperature trend
-            </CardTitle>
-            <CardDescription>
-              Recent chamber movement across the filtered records.
-            </CardDescription>
-          </div>
-
-          <div className="flex flex-wrap gap-2">
-            {chamberIds.map((chamberId, index) => (
-              <span
-                key={chamberId}
-                className="inline-flex items-center gap-1.5 text-xs text-muted-foreground"
-              >
-                <span
-                  className={cn(
-                    'size-2 rounded-full bg-current',
-                    CHAMBER_LINE_CLASSES[index % CHAMBER_LINE_CLASSES.length],
-                  )}
-                  aria-hidden="true"
-                />
-                Ch {chamberId}
-              </span>
-            ))}
-          </div>
+        <div className="space-y-1">
+          <CardTitle className="font-heading text-base font-semibold text-foreground">
+            Temperature trend
+          </CardTitle>
+          <CardDescription>
+            Each colored line is one chamber. Hover a point to see the exact
+            reading; the vertical axis shows temperature in °F.
+          </CardDescription>
         </div>
       </CardHeader>
       <CardContent>
@@ -97,52 +120,112 @@ export function TemperatureTrendChart({
             No trend data to display.
           </div>
         ) : (
-          <div className="space-y-3">
-            <div className="relative h-56 overflow-hidden rounded-xl border border-border bg-muted/20 p-4">
-              <div className="absolute inset-x-4 top-8 border-t border-border/70" />
-              <div className="absolute inset-x-4 top-1/2 border-t border-border/70" />
-              <div className="absolute inset-x-4 bottom-8 border-t border-border/70" />
+          <ChartContainer
+            config={chartConfig}
+            className="min-h-[280px] w-full [&_.recharts-cartesian-grid_line]:stroke-border/60"
+          >
+            <LineChart
+              accessibilityLayer
+              data={chartData}
+              margin={{ left: 4, right: 12, top: 12, bottom: 20 }}
+            >
+              <CartesianGrid vertical={false} strokeDasharray="4 4" />
+              <XAxis
+                dataKey="axisLabel"
+                tickLine={false}
+                axisLine={false}
+                tickMargin={8}
+                label={{
+                  value: 'Reading date',
+                  position: 'insideBottom',
+                  offset: -2,
+                  className: 'fill-muted-foreground text-xs',
+                }}
+              />
+              <YAxis
+                domain={yDomain}
+                tickLine={false}
+                axisLine={false}
+                tickMargin={8}
+                width={48}
+                tickFormatter={(value) =>
+                  temperatureFormatter.format(Number(value))
+                }
+                label={{
+                  value: '°F',
+                  angle: -90,
+                  position: 'insideLeft',
+                  offset: 4,
+                  className: 'fill-muted-foreground text-xs font-medium',
+                }}
+              />
+              <ChartTooltip
+                content={
+                  <ChartTooltipContent
+                    labelFormatter={(_, payload) =>
+                      String(payload?.[0]?.payload?.axisLabel ?? '')
+                    }
+                    formatter={(value, name) => {
+                      const chartKey = String(name)
+                      const chamberLabel =
+                        chartConfig[chartKey]?.label ?? chartKey
 
-              <svg
-                viewBox="0 0 100 100"
-                preserveAspectRatio="none"
-                className="relative h-full w-full"
-                role="img"
-                aria-label="Temperature line chart"
-              >
-                {chamberIds.map((chamberId, index) => (
-                  <polyline
+                      return (
+                        <>
+                          <div
+                            className="size-2.5 shrink-0 rounded-[2px]"
+                            style={{
+                              backgroundColor: `var(--color-${chartKey})`,
+                            }}
+                          />
+                          <div className="flex flex-1 items-center justify-between gap-4 leading-none">
+                            <span className="text-muted-foreground">
+                              {chamberLabel}
+                            </span>
+                            <span className="tabular-nums font-medium text-foreground">
+                              {formatTemperature(Number(value))}
+                            </span>
+                          </div>
+                        </>
+                      )
+                    }}
+                  />
+                }
+              />
+              <ChartLegend
+                content={<ChartLegendContent className="flex-wrap gap-x-4 gap-y-2" />}
+              />
+              {chamberIds.map((chamberId, index) => {
+                const chartKey = toChamberChartKey(index)
+
+                return (
+                  <Line
                     key={chamberId}
-                    points={getSeriesPath(
-                      data.map((point) => point.values[chamberId]),
-                      min,
-                      max,
-                    )}
-                    fill="none"
-                    stroke="currentColor"
+                    type="monotone"
+                    dataKey={chartKey}
+                    name={chartKey}
+                    stroke={`var(--color-${chartKey})`}
+                    strokeWidth={2.5}
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    strokeWidth="2"
-                    vectorEffect="non-scaling-stroke"
-                    className={cn(
-                      'opacity-90',
-                      CHAMBER_LINE_CLASSES[
-                        index % CHAMBER_LINE_CLASSES.length
-                      ],
-                    )}
+                    connectNulls
+                    dot={{
+                      fill: 'var(--background)',
+                      stroke: `var(--color-${chartKey})`,
+                      strokeWidth: 2,
+                      r: 3.5,
+                    }}
+                    activeDot={{
+                      fill: `var(--color-${chartKey})`,
+                      stroke: 'var(--background)',
+                      strokeWidth: 2,
+                      r: 5,
+                    }}
                   />
-                ))}
-              </svg>
-            </div>
-
-            <div className="flex justify-between gap-3 text-xs text-muted-foreground">
-              <span>{data[0]?.label}</span>
-              <span className="tabular-nums">
-                Range {min.toFixed(1)}°F - {max.toFixed(1)}°F
-              </span>
-              <span>{data[data.length - 1]?.label}</span>
-            </div>
-          </div>
+                )
+              })}
+            </LineChart>
+          </ChartContainer>
         )}
       </CardContent>
     </Card>

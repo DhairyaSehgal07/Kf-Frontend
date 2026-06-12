@@ -76,6 +76,7 @@ export function useCreateTransferStockForm(
     fromFarmerStorageLinkId: "",
     toFarmerStorageLinkId: "",
     date: todayIso,
+    category: "",
     truckNumber: "",
     remarks: "",
     allocations: {} as Record<string, number>,

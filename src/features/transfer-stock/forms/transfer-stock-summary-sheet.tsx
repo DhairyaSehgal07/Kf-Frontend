@@ -7,6 +7,7 @@ import {
   ClipboardCheck,
   FileText,
   Scale,
+  Tag,
   Truck,
   User2,
   Warehouse,
@@ -170,6 +171,13 @@ function TransferReviewSummary({
             value={formatReviewDate(values.date)}
             icon={Calendar}
           />
+        </SummaryCard>
+      </div>
+
+      <div className="space-y-2">
+        <SectionLabel icon={Tag}>Category</SectionLabel>
+        <SummaryCard>
+          <DetailRow label="Category" value={values.category} icon={Tag} />
         </SummaryCard>
       </div>
 

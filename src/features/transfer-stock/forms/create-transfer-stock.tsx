@@ -36,6 +36,12 @@ import {
   filterAndSortOptions,
   type ComboboxOption,
 } from "@/components/searchable-option-combobox"
+import { STORAGE_CATEGORIES } from "@/lib/constants"
+
+const CATEGORY_ITEMS = STORAGE_CATEGORIES.map((value) => ({
+  id: value,
+  label: value,
+}))
 
 function isFieldInvalid(meta: { isTouched: boolean; isValid: boolean }) {
   return meta.isTouched && !meta.isValid
@@ -97,6 +103,8 @@ const CreateTransferStock = () => {
   const [fromFarmerComboboxOpen, setFromFarmerComboboxOpen] = useState(false)
   const [toFarmerSearch, setToFarmerSearch] = useState("")
   const [toFarmerComboboxOpen, setToFarmerComboboxOpen] = useState(false)
+  const [categorySearch, setCategorySearch] = useState("")
+  const [categoryComboboxOpen, setCategoryComboboxOpen] = useState(false)
   const [reviewOpen, setReviewOpen] = useState(false)
 
   const sortedFromFarmers = useMemo(
@@ -107,12 +115,18 @@ const CreateTransferStock = () => {
     () => filterAndSortOptions(toFarmerSearch, farmerOptions),
     [toFarmerSearch, farmerOptions]
   )
+  const sortedCategories = useMemo(
+    () => filterAndSortOptions(categorySearch, CATEGORY_ITEMS),
+    [categorySearch]
+  )
 
   function resetComboboxState() {
     setFromFarmerSearch("")
     setFromFarmerComboboxOpen(false)
     setToFarmerSearch("")
     setToFarmerComboboxOpen(false)
+    setCategorySearch("")
+    setCategoryComboboxOpen(false)
   }
 
   const {
@@ -295,6 +309,41 @@ const CreateTransferStock = () => {
                           aria-invalid={isInvalid}
                           placeholder="Pick a date"
                         />
+                        {isInvalid && (
+                          <FieldError errors={field.state.meta.errors} />
+                        )}
+                      </Field>
+                    )
+                  }}
+                </form.Field>
+
+                <form.Field name="category">
+                  {(field) => {
+                    const isInvalid = isFieldInvalid(field.state.meta)
+                    return (
+                      <Field data-invalid={isInvalid}>
+                        <FieldLabel htmlFor="transfer-stock-category">
+                          Category
+                        </FieldLabel>
+                        <SearchableOptionCombobox
+                          id="transfer-stock-category"
+                          name={field.name}
+                          value={field.state.value}
+                          onValueChange={field.handleChange}
+                          onBlur={field.handleBlur}
+                          isInvalid={isInvalid}
+                          placeholder="Search categories..."
+                          emptyMessage="No categories found."
+                          options={CATEGORY_ITEMS}
+                          sortedOptions={sortedCategories}
+                          search={categorySearch}
+                          setSearch={setCategorySearch}
+                          open={categoryComboboxOpen}
+                          setOpen={setCategoryComboboxOpen}
+                        />
+                        <FieldDescription>
+                          Storage category for the destination gate pass.
+                        </FieldDescription>
                         {isInvalid && (
                           <FieldError errors={field.state.meta.errors} />
                         )}
