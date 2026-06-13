@@ -171,6 +171,14 @@ function TransferReviewSummary({
             value={formatReviewDate(values.date)}
             icon={Calendar}
           />
+          {values.manualGatePassNumber != null && (
+            <DetailRow
+              label="Manual gate pass no."
+              value={`#${values.manualGatePassNumber.toLocaleString("en-IN")}`}
+              icon={FileText}
+              valueClassName="font-mono tabular-nums"
+            />
+          )}
         </SummaryCard>
       </div>
 

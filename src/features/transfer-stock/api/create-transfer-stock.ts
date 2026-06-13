@@ -80,6 +80,10 @@ export function toCreateTransferStockBody({
     idempotencyKey: crypto.randomUUID(),
   }
 
+  if (form.manualGatePassNumber != null) {
+    body.manualGatePassNumber = form.manualGatePassNumber
+  }
+
   const remarks = form.remarks.trim()
   if (remarks) {
     body.remarks = remarks

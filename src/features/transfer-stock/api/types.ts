@@ -21,6 +21,7 @@ export type CreateTransferStockBody = {
   gatePassNo: number
   outgoingGatePassNo: number
   destinationStorageGatePassNo: number
+  manualGatePassNumber?: number
   date: string
   variety: string
   category: IncomingGatePassCategory

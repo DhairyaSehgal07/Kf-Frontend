@@ -47,6 +47,18 @@ function isFieldInvalid(meta: { isTouched: boolean; isValid: boolean }) {
   return meta.isTouched && !meta.isValid
 }
 
+function parseOptionalPositiveNumber(value: string): number | undefined {
+  if (value === "") return undefined
+  const parsed = Number(value)
+  return Number.isNaN(parsed) ? undefined : parsed
+}
+
+const numericInputProps = {
+  type: "number" as const,
+  min: 0,
+  onWheel: (e: React.WheelEvent<HTMLInputElement>) => e.currentTarget.blur(),
+}
+
 type TransferStockReviewSheetProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -194,12 +206,49 @@ const CreateTransferStock = () => {
               <FieldDescription>
                 Select source and destination accounts, then the transfer date.
               </FieldDescription>
-              <FieldGroup className="mt-5 grid grid-cols-1 gap-6">
-                <form.Field name="fromFarmerStorageLinkId">
+              <FieldGroup className="mt-5 grid grid-cols-1 gap-6 @md/field-group:grid-cols-2">
+                <form.Field name="manualGatePassNumber">
                   {(field) => {
                     const isInvalid = isFieldInvalid(field.state.meta)
                     return (
                       <Field data-invalid={isInvalid}>
+                        <FieldLabel htmlFor={field.name}>
+                          Manual Gate Pass No.
+                        </FieldLabel>
+                        <Input
+                          {...numericInputProps}
+                          id={field.name}
+                          name={field.name}
+                          value={field.state.value ?? ""}
+                          onBlur={field.handleBlur}
+                          onChange={(e) =>
+                            field.handleChange(
+                              parseOptionalPositiveNumber(e.target.value),
+                            )
+                          }
+                          aria-invalid={isInvalid}
+                          placeholder="e.g. 1024 (optional)"
+                          className="h-11 text-base"
+                        />
+                        <FieldDescription>
+                          Leave blank if no manual slip number was issued.
+                        </FieldDescription>
+                        {isInvalid && (
+                          <FieldError errors={field.state.meta.errors} />
+                        )}
+                      </Field>
+                    )
+                  }}
+                </form.Field>
+
+                <form.Field name="fromFarmerStorageLinkId">
+                  {(field) => {
+                    const isInvalid = isFieldInvalid(field.state.meta)
+                    return (
+                      <Field
+                        data-invalid={isInvalid}
+                        className="@md/field-group:col-span-2"
+                      >
                         <FieldLabel htmlFor="transfer-stock-from-farmer">
                           From
                         </FieldLabel>
@@ -246,7 +295,10 @@ const CreateTransferStock = () => {
                   {(field) => {
                     const isInvalid = isFieldInvalid(field.state.meta)
                     return (
-                      <Field data-invalid={isInvalid}>
+                      <Field
+                        data-invalid={isInvalid}
+                        className="@md/field-group:col-span-2"
+                      >
                         <FieldLabel htmlFor="transfer-stock-to-farmer">
                           To
                         </FieldLabel>

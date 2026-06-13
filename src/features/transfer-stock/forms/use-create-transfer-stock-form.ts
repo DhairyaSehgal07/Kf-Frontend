@@ -73,6 +73,7 @@ export function useCreateTransferStockForm(
     nextDestinationStorageGatePassNo != null
 
   const defaultValues: TransferStockFormValues = {
+    manualGatePassNumber: undefined,
     fromFarmerStorageLinkId: "",
     toFarmerStorageLinkId: "",
     date: todayIso,

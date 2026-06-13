@@ -18,6 +18,10 @@ export const transferStockAllocationSchema = z.object({
 
 export const transferStockFormSchema = z
   .object({
+    manualGatePassNumber: z.union([
+      z.undefined(),
+      z.number().positive("Enter a positive gate pass number."),
+    ]),
     fromFarmerStorageLinkId: objectId,
     toFarmerStorageLinkId: objectId,
     date: z.string().min(1, "Date is required"),
