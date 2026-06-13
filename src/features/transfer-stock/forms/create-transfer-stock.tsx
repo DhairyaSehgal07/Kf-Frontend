@@ -36,9 +36,9 @@ import {
   filterAndSortOptions,
   type ComboboxOption,
 } from "@/components/searchable-option-combobox"
-import { STORAGE_CATEGORIES } from "@/lib/constants"
+import { INCOMING_CATEGORIES } from "@/lib/constants"
 
-const CATEGORY_ITEMS = STORAGE_CATEGORIES.map((value) => ({
+const CATEGORY_ITEMS = INCOMING_CATEGORIES.map((value) => ({
   id: value,
   label: value,
 }))
@@ -342,7 +342,7 @@ const CreateTransferStock = () => {
                           setOpen={setCategoryComboboxOpen}
                         />
                         <FieldDescription>
-                          Storage category for the destination gate pass.
+                          Gate pass category for the transfer, same as incoming.
                         </FieldDescription>
                         {isInvalid && (
                           <FieldError errors={field.state.meta.errors} />

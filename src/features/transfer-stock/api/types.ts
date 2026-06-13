@@ -1,3 +1,4 @@
+import type { IncomingGatePassCategory } from "@/features/incoming/api/types"
 import type { TransferStockFormValues } from "@/features/transfer-stock/types"
 import type { TransferStockItem } from "@/features/transfer-stock/types/storage-gate-pass"
 
@@ -22,7 +23,7 @@ export type CreateTransferStockBody = {
   destinationStorageGatePassNo: number
   date: string
   variety: string
-  category: string
+  category: IncomingGatePassCategory
   from: string
   to: string
   truckNumber: string
