@@ -1,10 +1,12 @@
 import { useState } from "react"
+import { useNavigate } from "@tanstack/react-router"
 import {
   Building2,
   ChevronDown,
   ChevronUp,
   FileText,
   Package,
+  Pencil,
   Printer,
   Scale,
   Truck,
@@ -75,6 +77,10 @@ function formatWeight(value: number) {
   }).format(value)
 }
 
+function formatOptionalInt(value: number | undefined) {
+  return value != null ? value.toLocaleString("en-IN") : "—"
+}
+
 function nikasiTotalBags(bagSize: readonly NikasiGatePassBagSizeItem[]): number {
   return bagSize.reduce((sum, row) => sum + row.quantityIssued, 0)
 }
@@ -87,6 +93,7 @@ export function DispatchPreStorageGatePassCard({
   data: gatePass,
 }: DispatchPreStorageGatePassCardProps) {
   const [isExpanded, setIsExpanded] = useState(false)
+  const navigate = useNavigate()
 
   const farmer = gatePass.farmerStorageLinkId.farmerId
   const farmerStorageLink = gatePass.farmerStorageLinkId
@@ -264,12 +271,22 @@ export function DispatchPreStorageGatePassCard({
                     <InfoBlock label="To" value={gatePass.to || "—"} />
                     <InfoBlock
                       label="Bill no."
-                      value={gatePass.billNumber ?? "—"}
+                      value={formatOptionalInt(gatePass.billNumber)}
                       valueClassName="tabular-nums"
                     />
                     <InfoBlock
                       label="Bitli no."
-                      value={gatePass.bitliNumber ?? "—"}
+                      value={formatOptionalInt(gatePass.bitliNumber)}
+                      valueClassName="tabular-nums"
+                    />
+                    <InfoBlock
+                      label="Bill book"
+                      value={formatOptionalInt(gatePass.billBook)}
+                      valueClassName="tabular-nums"
+                    />
+                    <InfoBlock
+                      label="Bilti book"
+                      value={formatOptionalInt(gatePass.biltiBook)}
                       valueClassName="tabular-nums"
                     />
                     <InfoBlock
@@ -357,10 +374,26 @@ export function DispatchPreStorageGatePassCard({
           )}
         </Button>
 
-        <Button variant="secondary" size="sm" className="h-8">
-          <Printer className="mr-2 h-3.5 w-3.5" />
-          Print
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="secondary"
+            size="icon-sm"
+            className="h-8 w-8"
+            aria-label={`Edit nikasi gate pass ${gatePass.gatePassNo}`}
+            onClick={() =>
+              navigate({
+                to: "/dispatch-pre-storage/$id",
+                params: { id: gatePass._id },
+              })
+            }
+          >
+            <Pencil className="h-3.5 w-3.5" />
+          </Button>
+          <Button variant="secondary" size="sm" className="h-8">
+            <Printer className="mr-2 h-3.5 w-3.5" />
+            Print
+          </Button>
+        </div>
       </CardFooter>
     </Card>
   )

@@ -21,6 +21,8 @@ export type CreateNikasiGatePassBody = {
   billNumber?: number
   /** Maps to `bitliNumber` on backend */
   bitliNumber?: number
+  billBook: number
+  biltiBook: number
   manualGatePassNumber?: number
   remarks?: string
   idempotencyKey?: string
@@ -69,6 +71,8 @@ export type NikasiGatePass = {
   truckNumber: string
   billNumber?: number
   bitliNumber?: number
+  billBook?: number
+  biltiBook?: number
   bagSize: NikasiGatePassBagSizeItem[]
   netWeight: number
   averageWeightPerBag: number
@@ -116,10 +120,68 @@ export type CreateNikasiGatePassResponse = {
   message?: string
 }
 
+export type UpdateNikasiGatePassBody = {
+  farmerStorageLinkId: string
+  dispatchLedgerId: string
+  category: string
+  isBooked: boolean
+  date: string
+  from: string
+  to: string
+  truckNumber: string
+  bagSize: NikasiGatePassBagSizeItem[]
+  netWeight: number
+  averageWeightPerBag: number
+  billNumber?: number
+  bitliNumber?: number
+  billBook: number
+  biltiBook: number
+  manualGatePassNumber?: number | null
+  remarks?: string
+}
+
+export type UpdateNikasiGatePassResponse = {
+  success: boolean
+  data: NikasiGatePass | null
+  message?: string
+}
+
+export type GetNikasiGatePassByIdResponse = {
+  success: boolean
+  data: NikasiGatePass | null
+  message?: string
+}
+
+export type DispatchPreStorageFormValues = {
+  manualGatePassNumber: string
+  date: string
+  farmerStorageLinkId: string
+  dispatchLedgerId: string
+  category: string
+  billNumber: string
+  biltiNo: string
+  billBook: string
+  biltiBook: string
+  from: string
+  to: string
+  truckNumber: string
+  bagSize: Array<{
+    size: string
+    isExtra: boolean
+    variety: string
+    quantityIssued: string
+  }>
+  netWeight: string
+  remarks: string
+}
+
 export const nikasiGatePassKeys = {
   all: ["nikasi-gate-pass"] as const,
   lists: () => [...nikasiGatePassKeys.all, "list"] as const,
   list: (params: NikasiGatePassListParams) =>
     [...nikasiGatePassKeys.lists(), params] as const,
   create: () => [...nikasiGatePassKeys.all, "create"] as const,
+  details: () => [...nikasiGatePassKeys.all, "detail"] as const,
+  detail: (id: string) => [...nikasiGatePassKeys.details(), id] as const,
+  update: (id: string) => [...nikasiGatePassKeys.all, "update", id] as const,
 }

@@ -44,7 +44,7 @@ const coreNavItems: NavItem[] = [
     name: 'Daybook',
     icon: BookOpen,
     to: '/daybook',
-    activePaths: ['/daybook', '/incoming', '/grading', '/storage', '/transfer'],
+    activePaths: ['/daybook', '/incoming', '/grading', '/storage', '/transfer', '/dispatch-pre-storage', '/booking', "/outgoing" ],
   },
   {
     name: 'People',

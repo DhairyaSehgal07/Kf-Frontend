@@ -1,8 +1,7 @@
-import type { ReactNode } from "react"
+import { useState, type ReactNode } from "react"
 import {
   ArrowLeft,
   ArrowRight,
-  BookMarked,
   Calendar,
   CheckCircle2,
   ClipboardCheck,
@@ -15,6 +14,13 @@ import {
   User2,
   type LucideIcon,
 } from "lucide-react"
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -26,31 +32,15 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet"
 import { cn } from "@/lib/utils"
+import type {
+  DispatchPreStorageBagSizeSummary,
+  DispatchPreStorageSummaryValues,
+} from "@/features/dispatch-pre-storage/forms/dispatch-pre-storage-form-utils"
 
-export type DispatchPreStorageBagSizeSummary = {
-  size: string
-  variety: string
-  quantityIssued: number
-}
-
-export type DispatchPreStorageSummaryValues = {
-  gatePassNo: string
-  manualGatePassNumber?: string
-  date: string
-  isBooked: boolean
-  farmerStorageLinkId: string
-  dispatchLedgerId: string
-  category: string
-  billNumber: string
-  biltiNo: string
-  from: string
-  to: string
-  truckNumber: string
-  bagSize: DispatchPreStorageBagSizeSummary[]
-  netWeight: number
-  averageWeightPerBag: number
-  remarks: string
-}
+export type {
+  DispatchPreStorageBagSizeSummary,
+  DispatchPreStorageSummaryValues,
+} from "@/features/dispatch-pre-storage/forms/dispatch-pre-storage-form-utils"
 
 type DispatchPreStorageSummarySheetProps = {
   open: boolean
@@ -59,7 +49,7 @@ type DispatchPreStorageSummarySheetProps = {
   farmerLabel: string
   dispatchLedgerLabel: string
   onBack: () => void
-  onSubmit: () => void
+  onSubmit: (isBooked: boolean) => void
   canSubmit: boolean
   isSubmitting: boolean
 }
@@ -234,11 +224,6 @@ function DispatchPreStorageReviewSummary({
               M #{values.manualGatePassNumber}
             </Badge>
           ) : null}
-          {values.isBooked ? (
-            <Badge className="h-5 bg-primary/10 px-2 text-xs text-primary">
-              Booked
-            </Badge>
-          ) : null}
         </div>
       </div>
 
@@ -275,12 +260,6 @@ function DispatchPreStorageReviewSummary({
             icon={Calendar}
           />
           <DetailRow label="Category" value={values.category} />
-          <DetailRow
-            label="Booking"
-            value={values.isBooked ? "Booked" : "Not booked"}
-            icon={BookMarked}
-            valueClassName={values.isBooked ? "text-primary" : undefined}
-          />
         </SummaryCard>
       </div>
 
@@ -322,6 +301,16 @@ function DispatchPreStorageReviewSummary({
           {values.biltiNo.trim() ? (
             <DetailRow label="Bilti no." value={values.biltiNo} />
           ) : null}
+          <DetailRow
+            label="Bill book"
+            value={Number(values.billBook).toLocaleString("en-IN")}
+            valueClassName="tabular-nums"
+          />
+          <DetailRow
+            label="Bilti book"
+            value={Number(values.biltiBook).toLocaleString("en-IN")}
+            valueClassName="tabular-nums"
+          />
         </SummaryCard>
       </div>
 
@@ -413,75 +402,111 @@ export function DispatchPreStorageSummarySheet({
   canSubmit,
   isSubmitting,
 }: DispatchPreStorageSummarySheetProps) {
+  const [bookingDialogOpen, setBookingDialogOpen] = useState(false)
+
+  const handleBookingChoice = (isBooked: boolean) => {
+    setBookingDialogOpen(false)
+    onSubmit(isBooked)
+  }
+
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent
-        side="right"
-        className="flex flex-col gap-0 p-0 data-[side=right]:w-full data-[side=right]:max-w-full sm:data-[side=right]:max-w-md"
-      >
-        <SheetHeader className="border-b border-border/40 px-5 py-4">
-          <div className="flex items-center gap-3">
-            <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-              <ClipboardCheck className="size-4" />
-            </span>
-            <div className="min-w-0 space-y-0.5">
-              <SheetTitle className="font-heading text-base leading-none font-semibold">
-                Review nikasi pass
-              </SheetTitle>
-              <SheetDescription className="text-xs leading-snug text-muted-foreground">
-                Verify route, accounts, and quantities before confirming.
-              </SheetDescription>
+    <>
+      <Sheet open={open} onOpenChange={onOpenChange}>
+        <SheetContent
+          side="right"
+          className="flex flex-col gap-0 p-0 data-[side=right]:w-full data-[side=right]:max-w-full sm:data-[side=right]:max-w-md"
+        >
+          <SheetHeader className="border-b border-border/40 px-5 py-4">
+            <div className="flex items-center gap-3">
+              <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <ClipboardCheck className="size-4" />
+              </span>
+              <div className="min-w-0 space-y-0.5">
+                <SheetTitle className="font-heading text-base leading-none font-semibold">
+                  Review nikasi pass
+                </SheetTitle>
+                <SheetDescription className="text-xs leading-snug text-muted-foreground">
+                  Verify route, accounts, and quantities before confirming.
+                </SheetDescription>
+              </div>
             </div>
-          </div>
-        </SheetHeader>
+          </SheetHeader>
 
-        <div className="flex-1 overflow-y-auto px-5 py-5">
-          {values ? (
-            <DispatchPreStorageReviewSummary
-              values={values}
-              farmerLabel={farmerLabel}
-              dispatchLedgerLabel={dispatchLedgerLabel}
-            />
-          ) : (
-            <div className="flex min-h-48 flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border/50 bg-muted/20 px-6 text-center">
-              <Truck className="size-7 text-muted-foreground/40" />
-              <p className="text-sm font-medium">No summary available</p>
-              <p className="text-xs text-muted-foreground">
-                Complete the form and open review again.
-              </p>
-            </div>
-          )}
-        </div>
-
-        <SheetFooter className="flex-row gap-2.5 border-t border-border/40 px-5 py-4">
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="gap-1.5 text-muted-foreground hover:text-foreground"
-            onClick={onBack}
-          >
-            <ArrowLeft className="size-3.5" />
-            Back
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            className="flex-1 gap-1.5"
-            disabled={!canSubmit || isSubmitting}
-            onClick={onSubmit}
-          >
-            {isSubmitting ? (
-              "Submitting…"
+          <div className="flex-1 overflow-y-auto px-5 py-5">
+            {values ? (
+              <DispatchPreStorageReviewSummary
+                values={values}
+                farmerLabel={farmerLabel}
+                dispatchLedgerLabel={dispatchLedgerLabel}
+              />
             ) : (
-              <>
-                <CheckCircle2 className="size-3.5" />
-                Confirm &amp; submit
-              </>
+              <div className="flex min-h-48 flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border/50 bg-muted/20 px-6 text-center">
+                <Truck className="size-7 text-muted-foreground/40" />
+                <p className="text-sm font-medium">No summary available</p>
+                <p className="text-xs text-muted-foreground">
+                  Complete the form and open review again.
+                </p>
+              </div>
             )}
-          </Button>
-        </SheetFooter>
-      </SheetContent>
-    </Sheet>
+          </div>
+
+          <SheetFooter className="flex-row gap-2.5 border-t border-border/40 px-5 py-4">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="gap-1.5 text-muted-foreground hover:text-foreground"
+              onClick={onBack}
+            >
+              <ArrowLeft className="size-3.5" />
+              Back
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              className="flex-1 gap-1.5"
+              disabled={!canSubmit || isSubmitting}
+              onClick={() => setBookingDialogOpen(true)}
+            >
+              {isSubmitting ? (
+                "Submitting…"
+              ) : (
+                <>
+                  <CheckCircle2 className="size-3.5" />
+                  Confirm &amp; submit
+                </>
+              )}
+            </Button>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
+
+      <AlertDialog open={bookingDialogOpen} onOpenChange={setBookingDialogOpen}>
+        <AlertDialogContent className="sm:max-w-md">
+          <AlertDialogHeader className="sm:text-left">
+            <AlertDialogTitle>
+              Do you want to adjust booking stock?
+            </AlertDialogTitle>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={isSubmitting}
+              onClick={() => handleBookingChoice(false)}
+            >
+              No
+            </Button>
+            <Button
+              type="button"
+              disabled={isSubmitting}
+              onClick={() => handleBookingChoice(true)}
+            >
+              Yes
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   )
 }

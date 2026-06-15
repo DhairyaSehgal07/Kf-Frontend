@@ -1,4 +1,4 @@
-import { useMemo, useState, type WheelEvent } from "react"
+import { useMemo, useState } from "react"
 import { Plus, Trash2, UserPlus } from "lucide-react"
 import { toast } from "sonner"
 
@@ -11,10 +11,10 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
 import {
   Field,
   FieldDescription,
+  FieldError,
   FieldGroup,
   FieldLabel,
   FieldLegend,
@@ -41,7 +41,6 @@ import {
   type ComboboxOption,
 } from "@/components/searchable-option-combobox"
 import {
-  BAG_SIZES,
   DISPATCH_PRE_STORAGE_CATEGORIES,
   POTATO_VARIETY_OPTIONS,
 } from "@/lib/constants"
@@ -57,195 +56,27 @@ import {
 } from "@/hooks/use-get-voucher-number"
 import { queryClient } from "@/lib/queryClient"
 import { useCreateNikasiGatePass } from "@/features/dispatch-pre-storage/api/use-create-nikasi-gate-pass"
-import type { CreateNikasiGatePassBody } from "@/features/dispatch-pre-storage/api/types"
 import {
   DispatchPreStorageSummarySheet,
-  type DispatchPreStorageSummaryValues,
 } from "@/features/dispatch-pre-storage/forms/dispatch-pre-storage-summary-sheet"
-
-type BagSizeValue = (typeof BAG_SIZES)[number] | ""
+import {
+  buildCreateApiBody,
+  buildSummaryValues,
+  calculateAverageWeightPerBagKg,
+  canSubmitSummaryValues,
+  createDefaultBagSizeRows,
+  createEmptyBagSizeRow,
+  formatOptionalNumber,
+  formatWeightKg,
+  numericInputProps,
+  parseOptionalNumber,
+  type DispatchPreStorageBagSizeRow,
+} from "@/features/dispatch-pre-storage/forms/dispatch-pre-storage-form-utils"
+import { isValidRequiredPositiveInt } from "@/features/dispatch-pre-storage/schemas/dispatch-pre-storage-form-schema"
 
 const CATEGORY_ITEMS: ComboboxOption[] = DISPATCH_PRE_STORAGE_CATEGORIES.map(
   (value) => ({ id: value, label: value })
 )
-
-function normalizeVariety(value: string): string {
-  const selected = POTATO_VARIETY_OPTIONS.find((item) => item.id === value)
-  return (selected?.label ?? value).trim()
-}
-
-type DispatchPreStorageBagSizeRow = {
-  size: BagSizeValue
-  isExtra: boolean
-  variety: string
-  quantityIssued: string
-}
-
-const numericInputProps = {
-  type: "number" as const,
-  min: 0,
-  onWheel: (e: WheelEvent<HTMLInputElement>) => e.currentTarget.blur(),
-}
-
-function createDefaultBagSizeRows(): DispatchPreStorageBagSizeRow[] {
-  return BAG_SIZES.map((size) => ({
-    size,
-    isExtra: false,
-    variety: "",
-    quantityIssued: "",
-  }))
-}
-
-function createEmptyBagSizeRow(): DispatchPreStorageBagSizeRow {
-  return { size: "", isExtra: true, variety: "", quantityIssued: "" }
-}
-
-function formatOptionalNumber(value: string) {
-  if (value === "") return "0"
-  const parsed = Number(value)
-  return Number.isNaN(parsed) ? "0" : parsed.toLocaleString("en-IN")
-}
-
-function parseOptionalNumber(value: string): number {
-  if (value === "") return 0
-  const parsed = Number(value)
-  return Number.isNaN(parsed) ? 0 : parsed
-}
-
-function parseOptionalPositiveInt(value: string): number | undefined {
-  if (value.trim() === "") return undefined
-  const parsed = parseInt(value, 10)
-  return Number.isNaN(parsed) ? undefined : parsed
-}
-
-function roundToDecimals(value: number, decimals: number): number {
-  const factor = 10 ** decimals
-  return Math.round(value * factor) / factor
-}
-
-function calculateAverageWeightPerBagKg(
-  netWeightKg: number,
-  totalBags: number,
-): number {
-  if (totalBags <= 0 || netWeightKg <= 0) return 0
-  return roundToDecimals(netWeightKg / totalBags, 2)
-}
-
-function formatWeightKg(value: number, maximumFractionDigits = 2): string {
-  return `${value.toLocaleString("en-IN", {
-    minimumFractionDigits: 0,
-    maximumFractionDigits,
-  })} kg`
-}
-
-function buildSummaryValues(input: {
-  gatePassNo: string
-  manualGatePassNumber: string
-  date: Date | undefined
-  isBooked: boolean
-  farmerStorageLinkId: string
-  dispatchLedgerId: string
-  category: string
-  billNumber: string
-  biltiNo: string
-  from: string
-  to: string
-  truckNumber: string
-  bagSize: DispatchPreStorageBagSizeRow[]
-  netWeight: string
-  remarks: string
-}): DispatchPreStorageSummaryValues | null {
-  if (!input.date) return null
-
-  const netWeightKg = parseOptionalNumber(input.netWeight)
-  const totalBags = input.bagSize.reduce(
-    (sum, row) => sum + parseOptionalNumber(row.quantityIssued),
-    0,
-  )
-
-  return {
-    gatePassNo: input.gatePassNo.trim(),
-    manualGatePassNumber: input.manualGatePassNumber.trim() || undefined,
-    date: input.date.toISOString(),
-    isBooked: input.isBooked,
-    farmerStorageLinkId: input.farmerStorageLinkId,
-    dispatchLedgerId: input.dispatchLedgerId,
-    category: input.category,
-    billNumber: input.billNumber,
-    biltiNo: input.biltiNo,
-    from: input.from,
-    to: input.to,
-    truckNumber: input.truckNumber,
-    bagSize: input.bagSize.map((row) => ({
-      size: row.size.trim(),
-      variety: normalizeVariety(row.variety),
-      quantityIssued: parseOptionalNumber(row.quantityIssued),
-    })),
-    netWeight: netWeightKg,
-    averageWeightPerBag: calculateAverageWeightPerBagKg(
-      netWeightKg,
-      totalBags,
-    ),
-    remarks: input.remarks,
-  }
-}
-
-function buildApiBody(
-  values: DispatchPreStorageSummaryValues,
-  gatePassNo: number,
-): CreateNikasiGatePassBody {
-  const activeBags = values.bagSize.filter(
-    (row) => row.quantityIssued > 0 && row.size.trim() !== "",
-  )
-
-  if (activeBags.length === 0) {
-    throw new Error("Enter at least one bag line with quantity.")
-  }
-
-  const bagSizePayload = activeBags.map((row) => ({
-    size: row.size,
-    variety: normalizeVariety(row.variety),
-    quantityIssued: row.quantityIssued,
-  }))
-
-  if (bagSizePayload.some((row) => row.variety === "")) {
-    throw new Error("Select variety for each issued bag line.")
-  }
-
-  const body: CreateNikasiGatePassBody = {
-    farmerStorageLinkId: values.farmerStorageLinkId,
-    dispatchLedgerId: values.dispatchLedgerId,
-    gatePassNo,
-    category: values.category,
-    isBooked: values.isBooked,
-    date: values.date,
-    from: values.from,
-    to: values.to,
-    truckNumber: values.truckNumber,
-    bagSize: bagSizePayload,
-    netWeight: values.netWeight,
-    averageWeightPerBag: values.averageWeightPerBag,
-  }
-
-  const billNumber = parseOptionalPositiveInt(values.billNumber)
-  if (billNumber != null) body.billNumber = billNumber
-
-  const bitliNumber = parseOptionalPositiveInt(values.biltiNo)
-  if (bitliNumber != null) body.bitliNumber = bitliNumber
-
-  const manualGatePassNumber = parseOptionalPositiveInt(
-    values.manualGatePassNumber ?? "",
-  )
-  if (manualGatePassNumber != null)
-    body.manualGatePassNumber = manualGatePassNumber
-
-  const remarks = values.remarks.trim()
-  if (remarks) body.remarks = remarks
-
-  body.idempotencyKey = crypto.randomUUID()
-
-  return body
-}
 
 const CreateDispatchPreStorageForm = () => {
   const { data: farmerLinkOptions = [], isLoading: isLoadingFarmers } =
@@ -280,12 +111,13 @@ const CreateDispatchPreStorageForm = () => {
 
   const [manualGatePassNumber, setManualGatePassNumber] = useState("")
   const [date, setDate] = useState<Date | undefined>(new Date())
-  const [isBooked, setIsBooked] = useState(false)
   const [farmerStorageLinkId, setFarmerStorageLinkId] = useState("")
   const [dispatchLedgerId, setDispatchLedgerId] = useState("")
   const [category, setCategory] = useState("")
   const [billNumber, setBillNumber] = useState("")
   const [biltiNo, setBiltiNo] = useState("")
+  const [billBook, setBillBook] = useState("")
+  const [biltiBook, setBiltiBook] = useState("")
   const [from, setFrom] = useState("")
   const [to, setTo] = useState("")
   const [truckNumber, setTruckNumber] = useState("")
@@ -301,6 +133,8 @@ const CreateDispatchPreStorageForm = () => {
   const [categorySearch, setCategorySearch] = useState("")
   const [categoryComboboxOpen, setCategoryComboboxOpen] = useState(false)
   const [reviewOpen, setReviewOpen] = useState(false)
+  const [billBookTouched, setBillBookTouched] = useState(false)
+  const [biltiBookTouched, setBiltiBookTouched] = useState(false)
 
   const sortedFarmers = useMemo(
     () => filterAndSortOptions(farmerSearch, farmerOptions),
@@ -346,12 +180,13 @@ const CreateDispatchPreStorageForm = () => {
         gatePassNo: String(nextVoucherNumber ?? ""),
         manualGatePassNumber,
         date,
-        isBooked,
         farmerStorageLinkId,
         dispatchLedgerId,
         category,
         billNumber,
         biltiNo,
+        billBook,
+        biltiBook,
         from,
         to,
         truckNumber,
@@ -363,12 +198,13 @@ const CreateDispatchPreStorageForm = () => {
       nextVoucherNumber,
       manualGatePassNumber,
       date,
-      isBooked,
       farmerStorageLinkId,
       dispatchLedgerId,
       category,
       billNumber,
       biltiNo,
+      billBook,
+      biltiBook,
       from,
       to,
       truckNumber,
@@ -390,15 +226,9 @@ const CreateDispatchPreStorageForm = () => {
     [dispatchLedgerId, dispatchLedgerOptions],
   )
 
-  const canSubmit = Boolean(
-    summaryValues &&
-      summaryValues.gatePassNo &&
-      summaryValues.farmerStorageLinkId &&
-      summaryValues.dispatchLedgerId &&
-      summaryValues.category &&
-      summaryValues.bagSize.some((row) => row.quantityIssued > 0) &&
-      isGatePassNumberReady,
-  )
+  const canSubmit = canSubmitSummaryValues(summaryValues, {
+    gatePassNumberReady: isGatePassNumberReady,
+  })
 
   const handleOpenReview = () => {
     if (!summaryValues) {
@@ -417,7 +247,7 @@ const CreateDispatchPreStorageForm = () => {
     setReviewOpen(true)
   }
 
-  const handleConfirmSubmit = async () => {
+  const handleConfirmSubmit = async (isBooked: boolean) => {
     if (!canSubmit || !summaryValues) return
 
     const gatePassNo = queryClient.getQueryData<number>(
@@ -431,9 +261,9 @@ const CreateDispatchPreStorageForm = () => {
       return
     }
 
-    let body: CreateNikasiGatePassBody
+    let body
     try {
-      body = buildApiBody(summaryValues, gatePassNo)
+      body = buildCreateApiBody(summaryValues, gatePassNo, isBooked)
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Invalid form data.",
@@ -471,18 +301,21 @@ const CreateDispatchPreStorageForm = () => {
   const resetForm = () => {
     setManualGatePassNumber("")
     setDate(new Date())
-    setIsBooked(false)
     setFarmerStorageLinkId("")
     setDispatchLedgerId("")
     setCategory("")
     setBillNumber("")
     setBiltiNo("")
+    setBillBook("")
+    setBiltiBook("")
     setFrom("")
     setTo("")
     setTruckNumber("")
     setBagSize(createDefaultBagSizeRows())
     setNetWeight("")
     setRemarks("")
+    setBillBookTouched(false)
+    setBiltiBookTouched(false)
     resetComboboxState()
   }
 
@@ -502,13 +335,13 @@ const CreateDispatchPreStorageForm = () => {
       <Card className="mx-auto w-full max-w-4xl shadow-sm">
         <CardHeader className="border-b bg-muted/30 pb-6">
           <CardTitle className="font-heading text-xl font-semibold tracking-tight sm:text-2xl">
-            Dispatch (Pre-Storage) Gate Pass{" "}
+            Dispatch Gate Pass {" "}
             <span className="font-mono tabular-nums text-primary sm:text-2xl">
               #{displayGatePassNo}
             </span>
           </CardTitle>
           <CardDescription className="text-base">
-            Create a nikasi gate pass before storage booking.
+            Create a dispatch gate pass.
           </CardDescription>
         </CardHeader>
 
@@ -571,32 +404,6 @@ const CreateDispatchPreStorageForm = () => {
                       open={categoryComboboxOpen}
                       setOpen={setCategoryComboboxOpen}
                     />
-                  </Field>
-
-                  <Field className="@md/field-group:col-span-2">
-                    <label
-                      htmlFor="dispatch-pre-storage-is-booked"
-                      className="flex min-h-11 cursor-pointer items-start gap-3 rounded-lg border border-border bg-muted/20 p-4 transition-colors hover:bg-muted/30"
-                    >
-                      <Checkbox
-                        id="dispatch-pre-storage-is-booked"
-                        name="isBooked"
-                        checked={isBooked}
-                        onCheckedChange={(value) =>
-                          setIsBooked(value === true)
-                        }
-                        className="mt-0.5"
-                      />
-                      <span className="flex min-w-0 flex-col gap-1">
-                        <span className="text-sm font-medium text-foreground">
-                          Mark this dispatch as booked
-                        </span>
-                        <span className="text-sm text-muted-foreground">
-                          Maps to the payload field{" "}
-                          <span className="font-mono">isBooked</span>.
-                        </span>
-                      </span>
-                    </label>
                   </Field>
                 </FieldGroup>
               </FieldSet>
@@ -774,6 +581,52 @@ const CreateDispatchPreStorageForm = () => {
                       placeholder="e.g. 42"
                       className="tabular-nums"
                     />
+                  </Field>
+
+                  <Field data-invalid={billBookTouched && !isValidRequiredPositiveInt(billBook)}>
+                    <FieldLabel htmlFor="dispatch-pre-storage-bill-book">
+                      Bill book
+                    </FieldLabel>
+                    <Input
+                      {...numericInputProps}
+                      id="dispatch-pre-storage-bill-book"
+                      name="billBook"
+                      value={billBook}
+                      onBlur={() => setBillBookTouched(true)}
+                      onChange={(e) => setBillBook(e.target.value)}
+                      inputMode="numeric"
+                      placeholder="e.g. 1"
+                      aria-invalid={billBookTouched && !isValidRequiredPositiveInt(billBook)}
+                      className="tabular-nums"
+                    />
+                    {billBookTouched && !isValidRequiredPositiveInt(billBook) ? (
+                      <FieldError>
+                        Must be a whole number greater than zero.
+                      </FieldError>
+                    ) : null}
+                  </Field>
+
+                  <Field data-invalid={biltiBookTouched && !isValidRequiredPositiveInt(biltiBook)}>
+                    <FieldLabel htmlFor="dispatch-pre-storage-bilti-book">
+                      Bilti book
+                    </FieldLabel>
+                    <Input
+                      {...numericInputProps}
+                      id="dispatch-pre-storage-bilti-book"
+                      name="biltiBook"
+                      value={biltiBook}
+                      onBlur={() => setBiltiBookTouched(true)}
+                      onChange={(e) => setBiltiBook(e.target.value)}
+                      inputMode="numeric"
+                      placeholder="e.g. 2"
+                      aria-invalid={biltiBookTouched && !isValidRequiredPositiveInt(biltiBook)}
+                      className="tabular-nums"
+                    />
+                    {biltiBookTouched && !isValidRequiredPositiveInt(biltiBook) ? (
+                      <FieldError>
+                        Must be a whole number greater than zero.
+                      </FieldError>
+                    ) : null}
                   </Field>
                 </FieldGroup>
               </FieldSet>
