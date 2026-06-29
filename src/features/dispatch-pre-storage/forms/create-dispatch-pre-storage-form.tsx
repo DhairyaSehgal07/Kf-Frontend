@@ -14,7 +14,6 @@ import { Button } from "@/components/ui/button"
 import {
   Field,
   FieldDescription,
-  FieldError,
   FieldGroup,
   FieldLabel,
   FieldLegend,
@@ -72,7 +71,6 @@ import {
   parseOptionalNumber,
   type DispatchPreStorageBagSizeRow,
 } from "@/features/dispatch-pre-storage/forms/dispatch-pre-storage-form-utils"
-import { isValidRequiredPositiveInt } from "@/features/dispatch-pre-storage/schemas/dispatch-pre-storage-form-schema"
 
 const CATEGORY_ITEMS: ComboboxOption[] = DISPATCH_PRE_STORAGE_CATEGORIES.map(
   (value) => ({ id: value, label: value })
@@ -133,8 +131,6 @@ const CreateDispatchPreStorageForm = () => {
   const [categorySearch, setCategorySearch] = useState("")
   const [categoryComboboxOpen, setCategoryComboboxOpen] = useState(false)
   const [reviewOpen, setReviewOpen] = useState(false)
-  const [billBookTouched, setBillBookTouched] = useState(false)
-  const [biltiBookTouched, setBiltiBookTouched] = useState(false)
 
   const sortedFarmers = useMemo(
     () => filterAndSortOptions(farmerSearch, farmerOptions),
@@ -314,8 +310,6 @@ const CreateDispatchPreStorageForm = () => {
     setBagSize(createDefaultBagSizeRows())
     setNetWeight("")
     setRemarks("")
-    setBillBookTouched(false)
-    setBiltiBookTouched(false)
     resetComboboxState()
   }
 
@@ -583,50 +577,32 @@ const CreateDispatchPreStorageForm = () => {
                     />
                   </Field>
 
-                  <Field data-invalid={billBookTouched && !isValidRequiredPositiveInt(billBook)}>
+                  <Field>
                     <FieldLabel htmlFor="dispatch-pre-storage-bill-book">
                       Bill book
                     </FieldLabel>
                     <Input
-                      {...numericInputProps}
                       id="dispatch-pre-storage-bill-book"
                       name="billBook"
                       value={billBook}
-                      onBlur={() => setBillBookTouched(true)}
                       onChange={(e) => setBillBook(e.target.value)}
-                      inputMode="numeric"
-                      placeholder="e.g. 1"
-                      aria-invalid={billBookTouched && !isValidRequiredPositiveInt(billBook)}
-                      className="tabular-nums"
+                      placeholder="e.g. Book A"
+                      autoComplete="off"
                     />
-                    {billBookTouched && !isValidRequiredPositiveInt(billBook) ? (
-                      <FieldError>
-                        Must be a whole number greater than zero.
-                      </FieldError>
-                    ) : null}
                   </Field>
 
-                  <Field data-invalid={biltiBookTouched && !isValidRequiredPositiveInt(biltiBook)}>
+                  <Field>
                     <FieldLabel htmlFor="dispatch-pre-storage-bilti-book">
                       Bilti book
                     </FieldLabel>
                     <Input
-                      {...numericInputProps}
                       id="dispatch-pre-storage-bilti-book"
                       name="biltiBook"
                       value={biltiBook}
-                      onBlur={() => setBiltiBookTouched(true)}
                       onChange={(e) => setBiltiBook(e.target.value)}
-                      inputMode="numeric"
-                      placeholder="e.g. 2"
-                      aria-invalid={biltiBookTouched && !isValidRequiredPositiveInt(biltiBook)}
-                      className="tabular-nums"
+                      placeholder="e.g. Book B"
+                      autoComplete="off"
                     />
-                    {biltiBookTouched && !isValidRequiredPositiveInt(biltiBook) ? (
-                      <FieldError>
-                        Must be a whole number greater than zero.
-                      </FieldError>
-                    ) : null}
                   </Field>
                 </FieldGroup>
               </FieldSet>

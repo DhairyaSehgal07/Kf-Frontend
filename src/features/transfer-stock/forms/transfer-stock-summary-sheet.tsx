@@ -194,7 +194,7 @@ function TransferReviewSummary({
         <SummaryCard>
           <DetailRow
             label="Truck number"
-            value={values.truckNumber}
+            value={values.truckNumber || "—"}
             icon={Truck}
             valueClassName="font-mono uppercase"
           />

@@ -21,8 +21,8 @@ export type CreateNikasiGatePassBody = {
   billNumber?: number
   /** Maps to `bitliNumber` on backend */
   bitliNumber?: number
-  billBook: number
-  biltiBook: number
+  billBook?: string
+  biltiBook?: string
   manualGatePassNumber?: number
   remarks?: string
   idempotencyKey?: string
@@ -134,8 +134,8 @@ export type UpdateNikasiGatePassBody = {
   averageWeightPerBag: number
   billNumber?: number
   bitliNumber?: number
-  billBook: number
-  biltiBook: number
+  billBook?: string
+  biltiBook?: string
   manualGatePassNumber?: number | null
   remarks?: string
 }

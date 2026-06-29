@@ -7,7 +7,6 @@ import type {
   NikasiGatePassBagSizeItem,
   UpdateNikasiGatePassBody,
 } from "@/features/dispatch-pre-storage/api/types"
-import { isValidRequiredPositiveInt } from "@/features/dispatch-pre-storage/schemas/dispatch-pre-storage-form-schema"
 
 export type BagSizeValue = (typeof BAG_SIZES)[number] | ""
 
@@ -230,8 +229,8 @@ function applyOptionalFieldsToBody<
     bitliNumber?: number
     manualGatePassNumber?: number | null
     remarks?: string
-    billBook: number
-    biltiBook: number
+    billBook?: string
+    biltiBook?: string
   },
 >(body: T, values: DispatchPreStorageSummaryValues): T {
   const billNumber = parseOptionalPositiveInt(values.billNumber)
@@ -240,8 +239,11 @@ function applyOptionalFieldsToBody<
   const bitliNumber = parseOptionalPositiveInt(values.biltiNo)
   if (bitliNumber != null) body.bitliNumber = bitliNumber
 
-  body.billBook = parseRequiredPositiveInt(values.billBook, "Bill book")
-  body.biltiBook = parseRequiredPositiveInt(values.biltiBook, "Bilti book")
+  const billBook = values.billBook.trim()
+  if (billBook) body.billBook = billBook
+
+  const biltiBook = values.biltiBook.trim()
+  if (biltiBook) body.biltiBook = biltiBook
 
   const manualGatePassNumber = parseOptionalPositiveInt(
     values.manualGatePassNumber ?? "",
@@ -274,8 +276,6 @@ export function buildCreateApiBody(
     bagSize: buildActiveBagSizePayload(values),
     netWeight: values.netWeight,
     averageWeightPerBag: values.averageWeightPerBag,
-    billBook: 0,
-    biltiBook: 0,
   }
 
   applyOptionalFieldsToBody(body, values)
@@ -300,8 +300,6 @@ export function buildUpdateApiBody(
     bagSize: buildActiveBagSizePayload(values),
     netWeight: values.netWeight,
     averageWeightPerBag: values.averageWeightPerBag,
-    billBook: 0,
-    biltiBook: 0,
   }
 
   applyOptionalFieldsToBody(body, values)
@@ -328,8 +326,6 @@ export function canSubmitSummaryValues(
     values.farmerStorageLinkId &&
       values.dispatchLedgerId &&
       values.category &&
-      hasActiveBags &&
-      isValidRequiredPositiveInt(values.billBook) &&
-      isValidRequiredPositiveInt(values.biltiBook),
+      hasActiveBags,
   )
 }

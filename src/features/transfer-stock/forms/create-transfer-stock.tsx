@@ -36,9 +36,9 @@ import {
   filterAndSortOptions,
   type ComboboxOption,
 } from "@/components/searchable-option-combobox"
-import { INCOMING_CATEGORIES } from "@/lib/constants"
+import { STORAGE_CATEGORIES } from "@/lib/constants"
 
-const CATEGORY_ITEMS = INCOMING_CATEGORIES.map((value) => ({
+const CATEGORY_ITEMS = STORAGE_CATEGORIES.map((value) => ({
   id: value,
   label: value,
 }))
@@ -438,7 +438,7 @@ const CreateTransferStock = () => {
                 Vehicle
               </FieldLegend>
               <FieldDescription>
-                Truck used to move stock between accounts.
+                Truck used to move stock between accounts (optional).
               </FieldDescription>
               <FieldGroup className="mt-5 grid grid-cols-1 gap-6 @md/field-group:max-w-sm">
                 <form.Field name="truckNumber">

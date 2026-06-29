@@ -70,8 +70,8 @@ export function toCreateOutgoingGatePassBody({
     category: form.category.trim(),
     billNumber: Number(form.billNumber),
     biltiNumber: Number(form.biltiNumber),
-    billBook: Number(form.billBook),
-    biltiBook: Number(form.biltiBook),
+    billBook: form.billBook.trim(),
+    biltiBook: form.biltiBook.trim(),
     storageGatePasses: buildStorageGatePassesPayload(items),
     idempotencyKey: crypto.randomUUID(),
   }

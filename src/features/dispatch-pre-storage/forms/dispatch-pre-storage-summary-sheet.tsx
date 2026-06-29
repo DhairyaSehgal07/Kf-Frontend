@@ -301,16 +301,12 @@ function DispatchPreStorageReviewSummary({
           {values.biltiNo.trim() ? (
             <DetailRow label="Bilti no." value={values.biltiNo} />
           ) : null}
-          <DetailRow
-            label="Bill book"
-            value={Number(values.billBook).toLocaleString("en-IN")}
-            valueClassName="tabular-nums"
-          />
-          <DetailRow
-            label="Bilti book"
-            value={Number(values.biltiBook).toLocaleString("en-IN")}
-            valueClassName="tabular-nums"
-          />
+          {values.billBook.trim() ? (
+            <DetailRow label="Bill book" value={values.billBook} />
+          ) : null}
+          {values.biltiBook.trim() ? (
+            <DetailRow label="Bilti book" value={values.biltiBook} />
+          ) : null}
         </SummaryCard>
       </div>
 

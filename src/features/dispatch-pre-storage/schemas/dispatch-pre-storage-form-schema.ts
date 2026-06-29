@@ -12,8 +12,8 @@ export const requiredPositiveIntField = z
   .refine(isPositiveIntString, "Must be a whole number greater than zero")
 
 export const dispatchPreStorageBookFieldsSchema = z.object({
-  billBook: requiredPositiveIntField,
-  biltiBook: requiredPositiveIntField,
+  billBook: z.string(),
+  biltiBook: z.string(),
 })
 
 export const editDispatchPreStorageFormSchema = z.object({

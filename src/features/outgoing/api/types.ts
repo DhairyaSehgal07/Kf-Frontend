@@ -25,8 +25,8 @@ export type CreateOutgoingGatePassBody = {
   category: string
   billNumber: number
   biltiNumber: number
-  billBook: number
-  biltiBook: number
+  billBook: string
+  biltiBook: string
   truckNumber?: string
   manualGatePassNumber?: number
   remarks?: string

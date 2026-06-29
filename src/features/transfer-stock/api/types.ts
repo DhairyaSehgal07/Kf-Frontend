@@ -27,7 +27,7 @@ export type CreateTransferStockBody = {
   category: IncomingGatePassCategory
   from: string
   to: string
-  truckNumber: string
+  truckNumber?: string
   storageGatePasses: CreateTransferStockStorageGatePass[]
   remarks?: string
   idempotencyKey?: string

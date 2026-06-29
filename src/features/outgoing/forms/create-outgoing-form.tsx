@@ -501,16 +501,14 @@ const CreateOutgoingForm = () => {
                       <Field data-invalid={isInvalid}>
                         <FieldLabel htmlFor={field.name}>Bill book</FieldLabel>
                         <Input
-                          {...numericInputProps}
                           id={field.name}
                           name={field.name}
                           value={field.state.value}
                           onBlur={field.handleBlur}
                           onChange={(e) => field.handleChange(e.target.value)}
-                          inputMode="numeric"
-                          placeholder="e.g. 1"
+                          placeholder="e.g. Book A"
                           aria-invalid={isInvalid}
-                          className="h-11 text-base tabular-nums"
+                          className="h-11 text-base"
                         />
                         {isInvalid && (
                           <FieldError errors={field.state.meta.errors} />
@@ -527,16 +525,14 @@ const CreateOutgoingForm = () => {
                       <Field data-invalid={isInvalid}>
                         <FieldLabel htmlFor={field.name}>Bilti book</FieldLabel>
                         <Input
-                          {...numericInputProps}
                           id={field.name}
                           name={field.name}
                           value={field.state.value}
                           onBlur={field.handleBlur}
                           onChange={(e) => field.handleChange(e.target.value)}
-                          inputMode="numeric"
-                          placeholder="e.g. 2"
+                          placeholder="e.g. Book B"
                           aria-invalid={isInvalid}
-                          className="h-11 text-base tabular-nums"
+                          className="h-11 text-base"
                         />
                         {isInvalid && (
                           <FieldError errors={field.state.meta.errors} />

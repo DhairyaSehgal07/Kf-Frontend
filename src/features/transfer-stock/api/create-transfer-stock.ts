@@ -75,13 +75,17 @@ export function toCreateTransferStockBody({
     category: form.category,
     from: fromLabel.trim(),
     to: toLabel.trim(),
-    truckNumber: form.truckNumber.trim(),
     storageGatePasses: buildStorageGatePassesPayload(items),
     idempotencyKey: crypto.randomUUID(),
   }
 
   if (form.manualGatePassNumber != null) {
     body.manualGatePassNumber = form.manualGatePassNumber
+  }
+
+  const truckNumber = form.truckNumber.trim()
+  if (truckNumber) {
+    body.truckNumber = truckNumber
   }
 
   const remarks = form.remarks.trim()

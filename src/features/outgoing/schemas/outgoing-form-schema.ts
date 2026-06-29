@@ -47,8 +47,8 @@ export const outgoingFormSchema = z.object({
     .max(100),
   billNumber: requiredPositiveIntField,
   biltiNumber: requiredPositiveIntField,
-  billBook: requiredPositiveIntField,
-  biltiBook: requiredPositiveIntField,
+  billBook: z.string().trim().min(1, "This field is required."),
+  biltiBook: z.string().trim().min(1, "This field is required."),
   remarks: z.string().max(500),
   allocations: z
     .record(z.string(), z.number().int().min(1))

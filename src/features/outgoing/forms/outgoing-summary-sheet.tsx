@@ -205,13 +205,11 @@ function OutgoingReviewSummary({
           />
           <DetailRow
             label="Bill book"
-            value={Number(values.billBook).toLocaleString("en-IN")}
-            valueClassName="tabular-nums"
+            value={values.billBook}
           />
           <DetailRow
             label="Bilti book"
-            value={Number(values.biltiBook).toLocaleString("en-IN")}
-            valueClassName="tabular-nums"
+            value={values.biltiBook}
           />
         </SummaryCard>
       </div>
