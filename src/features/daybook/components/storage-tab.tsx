@@ -68,7 +68,7 @@ import { cn } from "@/lib/utils"
 
 const daybookRouteApi = getRouteApi("/_authenticated/daybook")
 
-const PAGE_SIZE_OPTIONS = [10, 20, 50] as const
+const PAGE_SIZE_OPTIONS = [10, 25, 50, 100] as const
 const DEFAULT_PAGE_SIZE = PAGE_SIZE_OPTIONS[0]
 
 type PageSize = (typeof PAGE_SIZE_OPTIONS)[number]
