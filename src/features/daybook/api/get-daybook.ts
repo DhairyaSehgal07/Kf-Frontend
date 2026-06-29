@@ -2,7 +2,6 @@ import apiClient, { getApiErrorMessage } from "@/lib/api-client"
 
 import type {
   DaybookListResult,
-  DaybookPagination,
   DaybookQueryParams,
   DaybookResponse,
 } from "./types"
