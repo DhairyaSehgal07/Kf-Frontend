@@ -115,9 +115,12 @@ export type DaybookOutgoingEntry = DaybookEntryBase & {
 
 export type DaybookEntry = DaybookStorageEntry | DaybookOutgoingEntry
 
+export type DaybookResponseFormat = "modern" | "legacy"
+
 export type DaybookListResult = {
   entries: DaybookEntry[]
   pagination: DaybookPagination
+  format?: DaybookResponseFormat
 }
 
 export type DaybookResponse = {

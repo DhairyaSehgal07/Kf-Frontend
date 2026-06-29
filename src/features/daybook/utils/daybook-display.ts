@@ -6,6 +6,7 @@ import type {
   DaybookStorageEntry,
   DaybookStorageGatePassSnapshot,
 } from "@/features/daybook/api/types"
+import type { StorageGatePassPagination } from "@/features/storage/api/types"
 
 export type OutgoingBreakdownRow = {
   type: string
@@ -157,4 +158,21 @@ export function paginationRangeLabel(pagination: DaybookPagination): string {
   )
 
   return `Showing ${rangeStart.toLocaleString("en-IN")}–${rangeEnd.toLocaleString("en-IN")} of ${pagination.totalItems.toLocaleString("en-IN")}`
+}
+
+export function storagePaginationToDaybook(
+  pagination: StorageGatePassPagination,
+): DaybookPagination {
+  const { page, limit, total, totalPages } = pagination
+
+  return {
+    currentPage: page,
+    totalPages,
+    totalItems: total,
+    itemsPerPage: limit,
+    hasNextPage: page < totalPages,
+    hasPreviousPage: page > 1,
+    nextPage: page < totalPages ? page + 1 : null,
+    previousPage: page > 1 ? page - 1 : null,
+  }
 }

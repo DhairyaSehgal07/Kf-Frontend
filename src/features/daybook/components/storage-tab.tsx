@@ -52,12 +52,18 @@ import {
   DaybookOutgoingGatePassCard,
   DaybookOutgoingGatePassCardSkeleton,
 } from "@/features/daybook/components/daybook-outgoing-gate-pass-card"
-import { paginationRangeLabel } from "@/features/daybook/utils/daybook-display"
+import {
+  paginationRangeLabel,
+  storagePaginationToDaybook,
+} from "@/features/daybook/utils/daybook-display"
 import { daybookStorageEntryToGatePass } from "@/features/daybook/utils/daybook-storage-adapter"
 import {
   isOutgoingEntry,
+  isRenderableDaybookEntry,
   isStorageEntry,
 } from "@/features/daybook/utils/daybook-type-guards"
+import { useStorageGatePasses } from "@/features/storage/api/use-storage-gate-passes"
+import type { StorageGatePassListParams } from "@/features/storage/api/types"
 import { nikasiAccent } from "@/features/dispatch-pre-storage/constants/nikasi-accent"
 import type {
   DaybookListType,
@@ -166,12 +172,60 @@ const DaybookStorageTab = () => {
     [type, sortBy, page, pageSize],
   )
 
-  const { data, isLoading, isError, error, isFetching, refetch } =
-    useDaybook(queryParams)
+  const storageListParams = useMemo<StorageGatePassListParams>(
+    () => ({
+      page,
+      limit: pageSize,
+      sortOrder: sortFilter === "newest" ? "desc" : "asc",
+    }),
+    [page, pageSize, sortFilter],
+  )
 
-  const entries = data?.entries ?? []
-  const pagination = data?.pagination
-  const totalCount = pagination?.totalItems ?? 0
+  const daybookQuery = useDaybook(queryParams)
+  const isLegacyDaybook = daybookQuery.data?.format === "legacy"
+  const useStorageFeed = isLegacyDaybook && type !== "outgoing"
+
+  const storageQuery = useStorageGatePasses(storageListParams, {
+    enabled: useStorageFeed && !daybookQuery.isLoading,
+  })
+
+  const isLoading =
+    daybookQuery.isLoading || (useStorageFeed && storageQuery.isLoading)
+  const isError = useStorageFeed ? storageQuery.isError : daybookQuery.isError
+  const error = useStorageFeed ? storageQuery.error : daybookQuery.error
+  const isFetching = useStorageFeed
+    ? storageQuery.isFetching
+    : daybookQuery.isFetching
+
+  const refetch = () => {
+    if (useStorageFeed) {
+      return storageQuery.refetch()
+    }
+
+    return daybookQuery.refetch()
+  }
+
+  const daybookEntries = Array.isArray(daybookQuery.data?.entries)
+    ? daybookQuery.data.entries
+    : []
+  const renderableEntries = daybookEntries.filter(isRenderableDaybookEntry)
+  const hasUnsupportedEntries =
+    !useStorageFeed &&
+    daybookEntries.length > 0 &&
+    renderableEntries.length === 0
+  const storageGatePasses = storageQuery.data?.storageGatePasses ?? []
+
+  const pagination = useStorageFeed
+    ? storageQuery.data?.pagination
+      ? storagePaginationToDaybook(storageQuery.data.pagination)
+      : undefined
+    : daybookQuery.data?.pagination
+
+  const totalCount = useStorageFeed
+    ? (pagination?.totalItems ?? 0)
+    : isLegacyDaybook && type === "outgoing"
+      ? 0
+      : (pagination?.totalItems ?? 0)
   const currentPage = pagination?.currentPage ?? page
   const totalPages = Math.max(pagination?.totalPages ?? 1, 1)
   const isOnFirstPage = pagination
@@ -395,9 +449,47 @@ const DaybookStorageTab = () => {
             Try again
           </Button>
         </Empty>
-      ) : entries.length > 0 ? (
+      ) : hasUnsupportedEntries ? (
+        <Empty className="rounded-xl border bg-muted/10">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <Scale />
+            </EmptyMedia>
+
+            <EmptyTitle>Daybook response format mismatch</EmptyTitle>
+
+            <EmptyDescription>
+              The server returned {totalCount.toLocaleString("en-IN")} entries,
+              but none match the storage/outgoing daybook format. Ensure the
+              production backend is on v1.23.0 or newer and redeployed with the
+              frontend.
+            </EmptyDescription>
+          </EmptyHeader>
+        </Empty>
+      ) : isLegacyDaybook && type === "outgoing" ? (
+        <Empty className="rounded-xl border bg-muted/10">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <Scale />
+            </EmptyMedia>
+
+            <EmptyTitle>Outgoing list unavailable</EmptyTitle>
+
+            <EmptyDescription>
+              Outgoing gate passes in the daybook require backend v1.23.0 or
+              newer. Redeploy the backend to view outgoing deliveries here.
+            </EmptyDescription>
+          </EmptyHeader>
+        </Empty>
+      ) : useStorageFeed && storageGatePasses.length > 0 ? (
         <div className="space-y-6">
-          {entries.map((entry) =>
+          {storageGatePasses.map((gatePass) => (
+            <StorageGatePassCard key={gatePass._id} data={gatePass} />
+          ))}
+        </div>
+      ) : renderableEntries.length > 0 ? (
+        <div className="space-y-6">
+          {renderableEntries.map((entry) =>
             isStorageEntry(entry) ? (
               <StorageGatePassCard
                 key={entry._id}

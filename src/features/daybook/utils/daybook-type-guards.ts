@@ -15,3 +15,7 @@ export function isOutgoingEntry(
 ): entry is DaybookOutgoingEntry {
   return entry.passKind === "outgoing"
 }
+
+export function isRenderableDaybookEntry(entry: DaybookEntry): boolean {
+  return isStorageEntry(entry) || isOutgoingEntry(entry)
+}

@@ -2,9 +2,14 @@ import apiClient, { getApiErrorMessage } from "@/lib/api-client"
 
 import type {
   DaybookListResult,
+  DaybookPagination,
   DaybookQueryParams,
   DaybookResponse,
 } from "./types"
+
+type LegacyDaybookPayload = {
+  daybook: unknown[]
+}
 
 const EMPTY_PAGINATION: DaybookListResult["pagination"] = {
   currentPage: 1,
@@ -30,6 +35,46 @@ export function buildDaybookQueryParams(
   return query
 }
 
+function isLegacyDaybookPayload(value: unknown): value is LegacyDaybookPayload {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "daybook" in value &&
+    Array.isArray((value as LegacyDaybookPayload).daybook)
+  )
+}
+
+function parseDaybookResponse(
+  body: DaybookResponse,
+  limit = EMPTY_PAGINATION.itemsPerPage,
+): DaybookListResult {
+  const payload = body.data as DaybookListResult["entries"] | LegacyDaybookPayload | undefined
+
+  if (Array.isArray(payload)) {
+    return {
+      entries: payload,
+      pagination: body.pagination ?? {
+        ...EMPTY_PAGINATION,
+        itemsPerPage: limit,
+      },
+      format: "modern",
+    }
+  }
+
+  if (isLegacyDaybookPayload(payload)) {
+    return {
+      entries: [],
+      pagination: {
+        ...EMPTY_PAGINATION,
+        itemsPerPage: limit,
+      },
+      format: "legacy",
+    }
+  }
+
+  return { ...emptyDaybookResult(limit), format: "modern" }
+}
+
 export async function getDaybook(
   params: DaybookQueryParams = {},
 ): Promise<DaybookListResult> {
@@ -43,10 +88,7 @@ export async function getDaybook(
       throw new Error("Failed to load daybook")
     }
 
-    return {
-      entries: data.data,
-      pagination: data.pagination,
-    }
+    return parseDaybookResponse(data, params.limit ?? EMPTY_PAGINATION.itemsPerPage)
   } catch (error) {
     throw new Error(getApiErrorMessage(error, "Failed to load daybook"), {
       cause: error,
