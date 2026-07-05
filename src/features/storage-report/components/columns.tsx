@@ -152,6 +152,14 @@ const baseColumns: ColumnDef<StorageGatePass>[] = [
     ...aggregateNone,
   },
   {
+    accessorKey: "stage",
+    header: "Stage",
+    meta: { filterLabel: "Stage" },
+    ...sortText,
+    ...aggregateNone,
+    cell: ({ getValue }) => getValue<string | undefined>() || "-",
+  },
+  {
     accessorKey: "storageCategory",
     header: "Storage Category",
     meta: { filterLabel: "Storage category" },

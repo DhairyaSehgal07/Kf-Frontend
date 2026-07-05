@@ -3,6 +3,7 @@ import type { Table } from "@tanstack/react-table"
 
 import type { StorageGatePass } from "@/features/storage/api/types"
 import type { StorageQuantityMode } from "@/features/storage-report/components/columns"
+import { buildStorageReportSummaries } from "@/features/storage-report/utils/build-storage-report-summaries"
 import {
   buildFilterSummaryLines,
   collectExportRows,
@@ -14,6 +15,10 @@ import {
   getFooterExportValue,
   isSummableExportColumn,
 } from "@/features/storage-report/utils/export-cell-value"
+import {
+  buildSummaryPreviewStyles,
+  buildSummarySectionsHtml,
+} from "@/features/storage-report/utils/render-storage-report-summary-html"
 import { COLDOP_BRANDING, EXPORT_THEME_CSS } from "@/lib/export-report-theme"
 
 export const STORAGE_REPORT_DOWNLOAD_EXCEL_MESSAGE =
@@ -159,6 +164,7 @@ function buildPreviewStyles(): string {
       border-top: 2px solid var(--border);
     }
     tfoot .numeric { text-align: right; }
+    ${buildSummaryPreviewStyles()}
     @media print {
       body { padding: 0.5rem; }
       .toolbar { display: none; }
@@ -194,6 +200,9 @@ export function buildStorageReportPreviewHtml({
     filterSummaryLines.length > 0
       ? filterSummaryLines.join("\n")
       : "Filters: none applied"
+
+  const summaries = buildStorageReportSummaries(table, quantityMode)
+  const summarySectionsHtml = buildSummarySectionsHtml(summaries)
 
   const headerCells = visibleColumns
     .map((column) => {
@@ -324,6 +333,7 @@ export function buildStorageReportPreviewHtml({
         </tfoot>
       </table>
     </div>
+    ${summarySectionsHtml}
   </body>
 </html>`
 }
