@@ -1,6 +1,9 @@
 import apiClient, { getApiErrorMessage } from "@/lib/api-client"
 
-import type { TransferStockItem } from "@/features/transfer-stock/types/storage-gate-pass"
+import type {
+  StorageGatePass,
+  TransferStockItem,
+} from "@/features/transfer-stock/types/storage-gate-pass"
 
 import type {
   CreateTransferStockAllocation,
@@ -9,6 +12,7 @@ import type {
   CreateTransferStockResponse,
   CreateTransferStockStorageGatePass,
 } from "./types"
+import type { STORAGE_CATEGORIES } from "@/lib/constants"
 
 function deriveVarietyFromItems(items: TransferStockItem[]): string {
   const varieties = new Set(
@@ -26,6 +30,21 @@ function deriveVarietyFromItems(items: TransferStockItem[]): string {
   }
 
   return [...varieties][0]!
+}
+
+export function deriveStageFromSelections(
+  items: TransferStockItem[],
+  passes: StorageGatePass[],
+): string | undefined {
+  const selectedPassIds = new Set(items.map((item) => item.storageGatePassId))
+  const stages = new Set(
+    passes
+      .filter((pass) => selectedPassIds.has(pass._id))
+      .map((pass) => pass.stage?.trim())
+      .filter((stage): stage is string => Boolean(stage)),
+  )
+
+  return stages.size === 1 ? [...stages][0] : undefined
 }
 
 function buildStorageGatePassesPayload(
@@ -57,6 +76,7 @@ export function toCreateTransferStockBody({
   fromLabel,
   toLabel,
   items,
+  passes,
 }: CreateTransferStockInput): CreateTransferStockBody {
   if (items.length === 0) {
     throw new Error("Select at least one allocation in the gate passes table.")
@@ -68,11 +88,16 @@ export function toCreateTransferStockBody({
     gatePassNo,
     date: form.date,
     variety: deriveVarietyFromItems(items),
-    category: form.category,
+    category: form.category as (typeof STORAGE_CATEGORIES)[number],
     from: fromLabel.trim(),
     to: toLabel.trim(),
     storageGatePasses: buildStorageGatePassesPayload(items),
     idempotencyKey: crypto.randomUUID(),
+  }
+
+  const stage = deriveStageFromSelections(items, passes)
+  if (stage) {
+    body.stage = stage
   }
 
   if (form.manualGatePassNumber != null) {
@@ -97,7 +122,7 @@ export async function createTransferStock(
 ): Promise<CreateTransferStockResponse> {
   try {
     const { data } = await apiClient.post<CreateTransferStockResponse>(
-      "/transfer-stock/",
+      "/transfer-stock",
       toCreateTransferStockBody(input),
     )
 

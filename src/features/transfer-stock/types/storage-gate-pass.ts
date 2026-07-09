@@ -16,6 +16,7 @@ export type StorageGatePass = {
   date: string
   variety: string
   storageCategory: string
+  stage?: string
   bagSizes: StorageGatePassBagSlot[]
   remarks: string
 }

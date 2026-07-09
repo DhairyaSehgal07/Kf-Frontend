@@ -12,6 +12,7 @@ export function toTransferStorageGatePass(
     date: pass.date,
     variety: pass.variety,
     storageCategory: pass.storageCategory,
+    stage: pass.stage,
     bagSizes: pass.bagSizes.map((bag) => ({
       size: bag.size,
       currentQuantity: bag.currentQuantity,

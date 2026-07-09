@@ -1,6 +1,9 @@
-import type { IncomingGatePassCategory } from "@/features/incoming/api/types"
 import type { TransferStockFormValues } from "@/features/transfer-stock/types"
-import type { TransferStockItem } from "@/features/transfer-stock/types/storage-gate-pass"
+import type {
+  StorageGatePass,
+  TransferStockItem,
+} from "@/features/transfer-stock/types/storage-gate-pass"
+import type { STORAGE_CATEGORIES } from "@/lib/constants"
 
 export type CreateTransferStockAllocation = {
   size: string
@@ -22,7 +25,8 @@ export type CreateTransferStockBody = {
   manualGatePassNumber?: number
   date: string
   variety: string
-  category: IncomingGatePassCategory
+  category: (typeof STORAGE_CATEGORIES)[number]
+  stage?: string
   from: string
   to: string
   truckNumber?: string
@@ -43,4 +47,5 @@ export type CreateTransferStockInput = {
   fromLabel: string
   toLabel: string
   items: TransferStockItem[]
+  passes: StorageGatePass[]
 }

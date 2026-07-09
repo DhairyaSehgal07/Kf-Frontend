@@ -123,6 +123,7 @@ export function useCreateTransferStockForm(
           fromLabel: formatTransferAccountLabel(fromOption),
           toLabel: formatTransferAccountLabel(toOption),
           items,
+          passes,
         })
 
         toast.success(message ?? "Transfer stock gate pass created.", {
