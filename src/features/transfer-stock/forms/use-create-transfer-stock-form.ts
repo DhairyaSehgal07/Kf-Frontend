@@ -6,6 +6,7 @@ import type { FarmerLinkOption } from "@/features/people/types"
 import { formatTransferAccountLabel } from "@/features/people/utils/farmer-link-combobox"
 import { storageGatePassesByFarmerQueryOptions } from "@/features/storage/api/use-storage-gate-passes-by-farmer"
 import { useCreateTransferStock } from "@/features/transfer-stock/api/use-create-transfer-stock"
+import { TRANSFER_STOCK_VOUCHER_TYPE } from "@/features/transfer-stock/api/voucher-type"
 import {
   transferStockFormSchema,
   type TransferStockFormValues,
@@ -38,39 +39,15 @@ export function useCreateTransferStockForm(
   const { mutateAsync: createTransferStock } = useCreateTransferStock()
 
   const {
-    isLoading: isLoadingTransferGatePassNo,
-    isError: isTransferGatePassNoError,
+    isLoading: isLoadingVoucherNumber,
+    isError: isVoucherNumberError,
     data: nextTransferGatePassNo,
-  } = useGetReceiptVoucherNumber("transfer-stock-gate-pass")
+  } = useGetReceiptVoucherNumber(TRANSFER_STOCK_VOUCHER_TYPE)
 
-  const {
-    isLoading: isLoadingOutgoingGatePassNo,
-    isError: isOutgoingGatePassNoError,
-    data: nextOutgoingGatePassNo,
-  } = useGetReceiptVoucherNumber("outgoing-gate-pass")
-
-  const {
-    isLoading: isLoadingDestinationStorageGatePassNo,
-    isError: isDestinationStorageGatePassNoError,
-    data: nextDestinationStorageGatePassNo,
-  } = useGetReceiptVoucherNumber("storage-gate-pass")
-
-  const isLoadingVoucherNumbers =
-    isLoadingTransferGatePassNo ||
-    isLoadingOutgoingGatePassNo ||
-    isLoadingDestinationStorageGatePassNo
-
-  const isVoucherNumbersError =
-    isTransferGatePassNoError ||
-    isOutgoingGatePassNoError ||
-    isDestinationStorageGatePassNoError
-
-  const isGatePassNumbersReady =
-    !isLoadingVoucherNumbers &&
-    !isVoucherNumbersError &&
-    nextTransferGatePassNo != null &&
-    nextOutgoingGatePassNo != null &&
-    nextDestinationStorageGatePassNo != null
+  const isGatePassNumberReady =
+    !isLoadingVoucherNumber &&
+    !isVoucherNumberError &&
+    nextTransferGatePassNo != null
 
   const defaultValues: TransferStockFormValues = {
     manualGatePassNumber: undefined,
@@ -98,32 +75,22 @@ export function useCreateTransferStockForm(
         return
       }
 
-      if (!isGatePassNumbersReady) {
+      if (!isGatePassNumberReady) {
         toast.error(
-          isLoadingVoucherNumbers
-            ? "Loading gate pass numbers, please wait…"
-            : "Gate pass numbers unavailable. Refresh and try again.",
+          isLoadingVoucherNumber
+            ? "Loading gate pass number, please wait…"
+            : "Gate pass number unavailable. Refresh and try again.",
           { position: "bottom-right" },
         )
         return
       }
 
       const gatePassNo = queryClient.getQueryData<number>(
-        voucherNumberKeys.detail("transfer-stock-gate-pass"),
-      )
-      const outgoingGatePassNo = queryClient.getQueryData<number>(
-        voucherNumberKeys.detail("outgoing-gate-pass"),
-      )
-      const destinationStorageGatePassNo = queryClient.getQueryData<number>(
-        voucherNumberKeys.detail("storage-gate-pass"),
+        voucherNumberKeys.detail(TRANSFER_STOCK_VOUCHER_TYPE),
       )
 
-      if (
-        gatePassNo == null ||
-        outgoingGatePassNo == null ||
-        destinationStorageGatePassNo == null
-      ) {
-        toast.error("Gate pass numbers are unavailable. Refresh and try again.", {
+      if (gatePassNo == null) {
+        toast.error("Gate pass number is unavailable. Refresh and try again.", {
           position: "bottom-right",
         })
         return
@@ -153,8 +120,6 @@ export function useCreateTransferStockForm(
         const { message } = await createTransferStock({
           form: parsed,
           gatePassNo,
-          outgoingGatePassNo,
-          destinationStorageGatePassNo,
           fromLabel: formatTransferAccountLabel(fromOption),
           toLabel: formatTransferAccountLabel(toOption),
           items,
@@ -183,9 +148,9 @@ export function useCreateTransferStockForm(
   return {
     form,
     nextTransferGatePassNo,
-    isLoadingVoucherNumbers,
-    isVoucherNumbersError,
-    isGatePassNumbersReady,
+    isLoadingVoucherNumbers: isLoadingVoucherNumber,
+    isVoucherNumbersError: isVoucherNumberError,
+    isGatePassNumbersReady: isGatePassNumberReady,
   }
 }
 

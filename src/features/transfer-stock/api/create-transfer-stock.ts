@@ -54,8 +54,6 @@ function buildStorageGatePassesPayload(
 export function toCreateTransferStockBody({
   form,
   gatePassNo,
-  outgoingGatePassNo,
-  destinationStorageGatePassNo,
   fromLabel,
   toLabel,
   items,
@@ -68,8 +66,6 @@ export function toCreateTransferStockBody({
     fromFarmerStorageLinkId: form.fromFarmerStorageLinkId,
     toFarmerStorageLinkId: form.toFarmerStorageLinkId,
     gatePassNo,
-    outgoingGatePassNo,
-    destinationStorageGatePassNo,
     date: form.date,
     variety: deriveVarietyFromItems(items),
     category: form.category,

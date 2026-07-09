@@ -8,6 +8,7 @@ import { voucherNumberKeys } from "@/hooks/use-get-voucher-number"
 import { queryClient } from "@/lib/queryClient"
 
 import { createTransferStock } from "./create-transfer-stock"
+import { TRANSFER_STOCK_VOUCHER_TYPE } from "./voucher-type"
 import { transferStockKeys } from "./query-keys"
 import type { CreateTransferStockInput } from "./types"
 
@@ -36,13 +37,7 @@ export function useCreateTransferStock() {
         queryKey: outgoingGatePassKeys.lists(),
       })
       void queryClient.invalidateQueries({
-        queryKey: voucherNumberKeys.detail("transfer-stock-gate-pass"),
-      })
-      void queryClient.invalidateQueries({
-        queryKey: voucherNumberKeys.detail("outgoing-gate-pass"),
-      })
-      void queryClient.invalidateQueries({
-        queryKey: voucherNumberKeys.detail("storage-gate-pass"),
+        queryKey: voucherNumberKeys.detail(TRANSFER_STOCK_VOUCHER_TYPE),
       })
 
       void router.navigate({ to: "/daybook", search: { tab: "storage" } })

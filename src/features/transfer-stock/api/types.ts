@@ -19,8 +19,6 @@ export type CreateTransferStockBody = {
   fromFarmerStorageLinkId: string
   toFarmerStorageLinkId: string
   gatePassNo: number
-  outgoingGatePassNo: number
-  destinationStorageGatePassNo: number
   manualGatePassNumber?: number
   date: string
   variety: string
@@ -42,8 +40,6 @@ export type CreateTransferStockResponse = {
 export type CreateTransferStockInput = {
   form: TransferStockFormValues
   gatePassNo: number
-  outgoingGatePassNo: number
-  destinationStorageGatePassNo: number
   fromLabel: string
   toLabel: string
   items: TransferStockItem[]
