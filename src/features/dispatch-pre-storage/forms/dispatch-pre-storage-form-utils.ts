@@ -27,7 +27,6 @@ export type DispatchPreStorageSummaryValues = {
   gatePassNo: string
   manualGatePassNumber?: string
   date: string
-  farmerStorageLinkId: string
   dispatchLedgerId: string
   category: string
   billNumber: string
@@ -152,7 +151,6 @@ export function buildSummaryValues(input: {
   gatePassNo: string
   manualGatePassNumber: string
   date: Date | undefined
-  farmerStorageLinkId: string
   dispatchLedgerId: string
   category: string
   billNumber: string
@@ -178,7 +176,6 @@ export function buildSummaryValues(input: {
     gatePassNo: input.gatePassNo.trim(),
     manualGatePassNumber: input.manualGatePassNumber.trim() || undefined,
     date: input.date.toISOString(),
-    farmerStorageLinkId: input.farmerStorageLinkId,
     dispatchLedgerId: input.dispatchLedgerId,
     category: input.category,
     billNumber: input.billNumber,
@@ -264,7 +261,6 @@ export function buildCreateApiBody(
   isBooked: boolean,
 ): CreateNikasiGatePassBody {
   const body: CreateNikasiGatePassBody = {
-    farmerStorageLinkId: values.farmerStorageLinkId,
     dispatchLedgerId: values.dispatchLedgerId,
     gatePassNo,
     category: values.category,
@@ -289,7 +285,6 @@ export function buildUpdateApiBody(
   isBooked: boolean,
 ): UpdateNikasiGatePassBody {
   const body: UpdateNikasiGatePassBody = {
-    farmerStorageLinkId: values.farmerStorageLinkId,
     dispatchLedgerId: values.dispatchLedgerId,
     category: values.category,
     isBooked,
@@ -323,9 +318,6 @@ export function canSubmitSummaryValues(
   const hasActiveBags = values.bagSize.some((row) => row.quantityIssued > 0)
 
   return Boolean(
-    values.farmerStorageLinkId &&
-      values.dispatchLedgerId &&
-      values.category &&
-      hasActiveBags,
+    values.dispatchLedgerId && values.category && hasActiveBags,
   )
 }

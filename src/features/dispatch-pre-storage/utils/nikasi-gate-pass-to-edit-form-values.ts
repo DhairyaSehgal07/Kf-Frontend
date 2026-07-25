@@ -28,7 +28,6 @@ export function nikasiGatePassToEditFormValues(
         ? String(gatePass.manualGatePassNumber)
         : "",
     date: gatePass.date,
-    farmerStorageLinkId: gatePass.farmerStorageLinkId._id ?? "",
     dispatchLedgerId: gatePass.dispatchLedgerId._id ?? "",
     category: gatePass.category,
     billNumber:
@@ -53,7 +52,6 @@ export function createEmptyDispatchPreStorageFormValues(): DispatchPreStorageFor
   return {
     manualGatePassNumber: "",
     date: new Date().toISOString(),
-    farmerStorageLinkId: "",
     dispatchLedgerId: "",
     category: "",
     billNumber: "",

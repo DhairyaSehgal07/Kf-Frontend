@@ -43,12 +43,7 @@ import {
   DISPATCH_PRE_STORAGE_CATEGORIES,
   POTATO_VARIETY_OPTIONS,
 } from "@/lib/constants"
-import { useFarmerLinkOptions } from "@/features/people/api/use-farmer-link-options"
 import { useDispatchLedgers } from "@/features/people/api/use-dispatch-ledgers"
-import {
-  farmerLinkOptionsToComboboxOptions,
-  getFarmerLinkLabel,
-} from "@/features/people/utils/farmer-link-combobox"
 import {
   useGetReceiptVoucherNumber,
   voucherNumberKeys,
@@ -77,8 +72,6 @@ const CATEGORY_ITEMS: ComboboxOption[] = DISPATCH_PRE_STORAGE_CATEGORIES.map(
 )
 
 const CreateDispatchPreStorageForm = () => {
-  const { data: farmerLinkOptions = [], isLoading: isLoadingFarmers } =
-    useFarmerLinkOptions()
   const { data: dispatchLedgersData } = useDispatchLedgers()
   const {
     data: nextVoucherNumber,
@@ -93,11 +86,6 @@ const CreateDispatchPreStorageForm = () => {
     !isVoucherNumberError &&
     nextVoucherNumber != null
 
-  const farmerOptions = useMemo<ComboboxOption[]>(
-    () => farmerLinkOptionsToComboboxOptions(farmerLinkOptions),
-    [farmerLinkOptions],
-  )
-
   const dispatchLedgerOptions = useMemo<ComboboxOption[]>(
     () =>
       (dispatchLedgersData ?? []).map((ledger) => ({
@@ -109,7 +97,6 @@ const CreateDispatchPreStorageForm = () => {
 
   const [manualGatePassNumber, setManualGatePassNumber] = useState("")
   const [date, setDate] = useState<Date | undefined>(new Date())
-  const [farmerStorageLinkId, setFarmerStorageLinkId] = useState("")
   const [dispatchLedgerId, setDispatchLedgerId] = useState("")
   const [category, setCategory] = useState("")
   const [billNumber, setBillNumber] = useState("")
@@ -123,8 +110,6 @@ const CreateDispatchPreStorageForm = () => {
   const [netWeight, setNetWeight] = useState("")
   const [remarks, setRemarks] = useState("")
 
-  const [farmerSearch, setFarmerSearch] = useState("")
-  const [farmerComboboxOpen, setFarmerComboboxOpen] = useState(false)
   const [dispatchLedgerSearch, setDispatchLedgerSearch] = useState("")
   const [dispatchLedgerComboboxOpen, setDispatchLedgerComboboxOpen] =
     useState(false)
@@ -132,10 +117,6 @@ const CreateDispatchPreStorageForm = () => {
   const [categoryComboboxOpen, setCategoryComboboxOpen] = useState(false)
   const [reviewOpen, setReviewOpen] = useState(false)
 
-  const sortedFarmers = useMemo(
-    () => filterAndSortOptions(farmerSearch, farmerOptions),
-    [farmerSearch, farmerOptions],
-  )
   const sortedDispatchLedgers = useMemo(
     () => filterAndSortOptions(dispatchLedgerSearch, dispatchLedgerOptions),
     [dispatchLedgerSearch, dispatchLedgerOptions],
@@ -176,7 +157,6 @@ const CreateDispatchPreStorageForm = () => {
         gatePassNo: String(nextVoucherNumber ?? ""),
         manualGatePassNumber,
         date,
-        farmerStorageLinkId,
         dispatchLedgerId,
         category,
         billNumber,
@@ -194,7 +174,6 @@ const CreateDispatchPreStorageForm = () => {
       nextVoucherNumber,
       manualGatePassNumber,
       date,
-      farmerStorageLinkId,
       dispatchLedgerId,
       category,
       billNumber,
@@ -208,11 +187,6 @@ const CreateDispatchPreStorageForm = () => {
       netWeight,
       remarks,
     ],
-  )
-
-  const farmerLabel = useMemo(
-    () => getFarmerLinkLabel(farmerStorageLinkId, farmerLinkOptions),
-    [farmerStorageLinkId, farmerLinkOptions],
   )
 
   const dispatchLedgerLabel = useMemo(
@@ -286,8 +260,6 @@ const CreateDispatchPreStorageForm = () => {
   }
 
   const resetComboboxState = () => {
-    setFarmerSearch("")
-    setFarmerComboboxOpen(false)
     setDispatchLedgerSearch("")
     setDispatchLedgerComboboxOpen(false)
     setCategorySearch("")
@@ -297,7 +269,6 @@ const CreateDispatchPreStorageForm = () => {
   const resetForm = () => {
     setManualGatePassNumber("")
     setDate(new Date())
-    setFarmerStorageLinkId("")
     setDispatchLedgerId("")
     setCategory("")
     setBillNumber("")
@@ -409,49 +380,9 @@ const CreateDispatchPreStorageForm = () => {
                   Account Links
                 </FieldLegend>
                 <FieldDescription>
-                  Select the farmer storage link and the dispatch ledger this
-                  pass belongs to.
+                  Select the dispatch ledger this pass belongs to.
                 </FieldDescription>
                 <FieldGroup className="mt-5 grid grid-cols-1 gap-6 @md/field-group:grid-cols-2">
-                  <Field>
-                    <FieldLabel htmlFor="dispatch-pre-storage-farmer">
-                      Farmer Storage Link
-                    </FieldLabel>
-                    <div className="flex gap-2">
-                      <div className="min-w-0 flex-1">
-                        <SearchableOptionCombobox
-                          id="dispatch-pre-storage-farmer"
-                          name="farmerStorageLinkId"
-                          value={farmerStorageLinkId}
-                          onValueChange={setFarmerStorageLinkId}
-                          onBlur={() => {}}
-                          isInvalid={false}
-                          placeholder={
-                            isLoadingFarmers
-                              ? "Loading farmers…"
-                              : "Search farmer storage links..."
-                          }
-                          emptyMessage="No farmer links found."
-                          options={farmerOptions}
-                          sortedOptions={sortedFarmers}
-                          search={farmerSearch}
-                          setSearch={setFarmerSearch}
-                          open={farmerComboboxOpen}
-                          setOpen={setFarmerComboboxOpen}
-                        />
-                      </div>
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        className="h-auto min-h-9 shrink-0 gap-1.5 px-3"
-                        aria-label="Add farmer"
-                      >
-                        <UserPlus className="size-4 shrink-0" />
-                        <span className="hidden sm:inline">Add</span>
-                      </Button>
-                    </div>
-                  </Field>
-
                   <Field>
                     <FieldLabel htmlFor="dispatch-pre-storage-dispatch-ledger">
                       Dispatch Ledger
@@ -885,7 +816,6 @@ const CreateDispatchPreStorageForm = () => {
         open={reviewOpen}
         onOpenChange={setReviewOpen}
         values={summaryValues}
-        farmerLabel={farmerLabel}
         dispatchLedgerLabel={dispatchLedgerLabel}
         onBack={() => setReviewOpen(false)}
         onSubmit={handleConfirmSubmit}

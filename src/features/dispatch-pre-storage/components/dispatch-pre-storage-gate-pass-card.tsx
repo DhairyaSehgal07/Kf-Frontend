@@ -95,8 +95,8 @@ export function DispatchPreStorageGatePassCard({
   const [isExpanded, setIsExpanded] = useState(false)
   const navigate = useNavigate()
 
-  const farmer = gatePass.farmerStorageLinkId.farmerId
   const farmerStorageLink = gatePass.farmerStorageLinkId
+  const farmer = farmerStorageLink?.farmerId
   const dispatchParty = gatePass.dispatchLedgerId
   const totalBags = nikasiTotalBags(gatePass.bagSize)
   const createdBy = gatePass.createdBy?.name ?? "—"
@@ -168,12 +168,16 @@ export function DispatchPreStorageGatePassCard({
 
       <CardContent className="pt-5">
         <div className="grid grid-cols-2 gap-6 sm:grid-cols-4">
-          <InfoBlock label="Farmer" value={farmer.name ?? "—"} icon={User} />
-          <InfoBlock
-            label="Account"
-            value={farmerStorageLink.accountNumber ?? "—"}
-            valueClassName="tabular-nums"
-          />
+          {farmer ? (
+            <InfoBlock label="Farmer" value={farmer.name ?? "—"} icon={User} />
+          ) : null}
+          {farmerStorageLink ? (
+            <InfoBlock
+              label="Account"
+              value={farmerStorageLink.accountNumber ?? "—"}
+              valueClassName="tabular-nums"
+            />
+          ) : null}
           <InfoBlock
             label="Dispatch party"
             value={dispatchParty.name ?? "—"}
@@ -191,36 +195,36 @@ export function DispatchPreStorageGatePassCard({
             <Separator className="mb-6" />
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
               <div className="space-y-6">
-                <div>
-                  <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
-                    <User className={cn("h-4 w-4", nikasiAccent.icon)} />
-                    Farmer information
-                  </h4>
-                  <div className="grid grid-cols-2 gap-4 rounded-xl border border-border/50 bg-muted/20 p-4">
-                    <InfoBlock label="Name" value={farmer.name ?? "—"} />
-                    <InfoBlock
-                      label="Mobile"
-                      value={farmer.mobileNumber ?? "—"}
-                    />
-                    <div className="col-span-2">
+                {farmerStorageLink || farmer ? (
+                  <div>
+                    <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
+                      <User className={cn("h-4 w-4", nikasiAccent.icon)} />
+                      Farmer information
+                    </h4>
+                    <div className="grid grid-cols-2 gap-4 rounded-xl border border-border/50 bg-muted/20 p-4">
+                      <InfoBlock label="Name" value={farmer?.name ?? "—"} />
                       <InfoBlock
-                        label="Address"
-                        value={farmer.address ?? "—"}
+                        label="Mobile"
+                        value={farmer?.mobileNumber ?? "—"}
+                      />
+                      <div className="col-span-2">
+                        <InfoBlock
+                          label="Address"
+                          value={farmer?.address ?? "—"}
+                        />
+                      </div>
+                      <InfoBlock
+                        label="Account"
+                        value={farmerStorageLink?.accountNumber ?? "—"}
+                        valueClassName="tabular-nums"
+                      />
+                      <InfoBlock
+                        label="Linked by"
+                        value={farmerStorageLink?.linkedById?.name ?? "—"}
                       />
                     </div>
-                    <InfoBlock
-                      label="Account"
-                      value={farmerStorageLink.accountNumber ?? "—"}
-                      valueClassName="tabular-nums"
-                    />
-                    <InfoBlock
-                      label="Linked by"
-                      value={
-                        farmerStorageLink.linkedById?.name ?? "—"
-                      }
-                    />
                   </div>
-                </div>
+                ) : null}
 
                 <div>
                   <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">

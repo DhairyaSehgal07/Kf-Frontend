@@ -11,7 +11,6 @@ import {
   Package2,
   Scale,
   Truck,
-  User2,
   type LucideIcon,
 } from "lucide-react"
 import {
@@ -46,7 +45,6 @@ type DispatchPreStorageSummarySheetProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
   values: DispatchPreStorageSummaryValues | null
-  farmerLabel: string
   dispatchLedgerLabel: string
   onBack: () => void
   onSubmit: (isBooked: boolean) => void
@@ -175,11 +173,9 @@ function activeBagRows(bagSize: DispatchPreStorageBagSizeSummary[]) {
 
 function DispatchPreStorageReviewSummary({
   values,
-  farmerLabel,
   dispatchLedgerLabel,
 }: {
   values: DispatchPreStorageSummaryValues
-  farmerLabel: string
   dispatchLedgerLabel: string
 }) {
   const rows = activeBagRows(values.bagSize)
@@ -264,13 +260,8 @@ function DispatchPreStorageReviewSummary({
       </div>
 
       <div className="space-y-2">
-        <SectionLabel icon={User2}>Accounts</SectionLabel>
+        <SectionLabel icon={Landmark}>Accounts</SectionLabel>
         <SummaryCard>
-          <DetailRow
-            label="Farmer storage link"
-            value={farmerLabel}
-            icon={User2}
-          />
           <DetailRow
             label="Dispatch ledger"
             value={dispatchLedgerLabel}
@@ -391,7 +382,6 @@ export function DispatchPreStorageSummarySheet({
   open,
   onOpenChange,
   values,
-  farmerLabel,
   dispatchLedgerLabel,
   onBack,
   onSubmit,
@@ -432,7 +422,6 @@ export function DispatchPreStorageSummarySheet({
             {values ? (
               <DispatchPreStorageReviewSummary
                 values={values}
-                farmerLabel={farmerLabel}
                 dispatchLedgerLabel={dispatchLedgerLabel}
               />
             ) : (

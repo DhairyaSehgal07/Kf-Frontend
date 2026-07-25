@@ -19,9 +19,6 @@ export const dispatchPreStorageBookFieldsSchema = z.object({
 export const editDispatchPreStorageFormSchema = z.object({
   manualGatePassNumber: z.string(),
   date: z.string().datetime("Select a valid date."),
-  farmerStorageLinkId: z
-    .string()
-    .length(24, "Select a valid farmer storage link."),
   dispatchLedgerId: z
     .string()
     .length(24, "Select a valid dispatch ledger."),

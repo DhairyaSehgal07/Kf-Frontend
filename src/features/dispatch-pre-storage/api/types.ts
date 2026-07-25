@@ -5,7 +5,6 @@ export type NikasiGatePassBagSizeItem = {
 }
 
 export type CreateNikasiGatePassBody = {
-  farmerStorageLinkId: string
   dispatchLedgerId: string
   gatePassNo: number
   category: string
@@ -77,7 +76,8 @@ export type NikasiGatePass = {
   netWeight: number
   averageWeightPerBag: number
   remarks?: string
-  farmerStorageLinkId: NikasiGatePassFarmerStorageLink
+  /** Present on older records; no longer set on create/update. */
+  farmerStorageLinkId?: NikasiGatePassFarmerStorageLink
   dispatchLedgerId: NikasiGatePassDispatchLedger
   createdBy?: NikasiGatePassCreatedBy
   idempotencyKey?: string
@@ -121,7 +121,6 @@ export type CreateNikasiGatePassResponse = {
 }
 
 export type UpdateNikasiGatePassBody = {
-  farmerStorageLinkId: string
   dispatchLedgerId: string
   category: string
   isBooked: boolean
@@ -155,7 +154,6 @@ export type GetNikasiGatePassByIdResponse = {
 export type DispatchPreStorageFormValues = {
   manualGatePassNumber: string
   date: string
-  farmerStorageLinkId: string
   dispatchLedgerId: string
   category: string
   billNumber: string
