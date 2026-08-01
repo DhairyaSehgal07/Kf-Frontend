@@ -79,12 +79,13 @@ export const JUTE_BAG_WEIGHT = 0.7;
 export const LENO_BAG_WEIGHT = 0.06;
 
 export const DISPATCH_PRE_STORAGE_CATEGORIES = [
-  'Local Sale',
-  'Contract Farming',
-  'Sowing',
-  'Fazalpur',
   'Consumption/Donation',
+  'Contract Farming',
+  'Fazalpur',
+  'Local Sale',
+  'Sowing',
   'Transfer to other store',
+  'Truck Loading',
 ] as const;
 
 export const POTATO_VARIETIES = [

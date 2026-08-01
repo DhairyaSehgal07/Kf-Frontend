@@ -24,3 +24,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Local docs
+src/features/incoming-report/Incoming-report-table-guide.md
+
