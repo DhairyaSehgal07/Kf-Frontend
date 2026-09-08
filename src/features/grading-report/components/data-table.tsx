@@ -1,25 +1,17 @@
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  type ColumnFiltersState,
   type ColumnDef,
+  type ColumnFiltersState,
   type ColumnOrderState,
   type ExpandedState,
-  getPaginationRowModel,
   type GroupingState,
   type PaginationState,
   type SortDirection,
   type SortingState,
   type Table as TanStackTable,
-  type VisibilityState,
+  type ColumnVisibilityState,
   flexRender,
-  getCoreRowModel,
-  getExpandedRowModel,
-  getFacetedRowModel,
-  getFacetedUniqueValues,
-  getFilteredRowModel,
-  getGroupedRowModel,
-  getSortedRowModel,
-  useReactTable,
+  useTable,
 } from '@tanstack/react-table';
 import {
   ArrowDown,
@@ -69,7 +61,11 @@ import {
   getGradingReportColumnIds,
   getStoredGradingReportColumnState,
 } from '@/features/grading-report/utils/report-column-preferences';
-import { reportSortingFns } from '@/features/grading-report/utils/report-sorting-fns';
+import { gradingReportTableFeatures } from '@/features/grading-report/table-features';
+import type {
+  ReportColumnMeta,
+  ReportFeatures,
+} from '@/lib/tanstack-table/report-table-features';
 import { cn } from '@/lib/utils';
 
 const INCOMING_GATE_PASS_COLUMN_IDS = new Set([
@@ -119,13 +115,13 @@ const TABLE_GRID_CLASS = cn(
   '[&_th:last-child]:border-r-0 [&_td:last-child]:border-r-0',
 );
 
-type ColumnMeta = NonNullable<ColumnDef<unknown, unknown>['meta']>;
+type ColumnMeta = ReportColumnMeta;
 
-interface DataTableProps<TValue> {
-  columns: ColumnDef<GradingGatePassReportRow, TValue>[];
+interface DataTableProps {
+  columns: ColumnDef<ReportFeatures, GradingGatePassReportRow>[];
   data: GradingGatePassReportRow[];
   isLoading?: boolean;
-  onTableReady?: (table: TanStackTable<GradingGatePassReportRow>) => void;
+  onTableReady?: (table: TanStackTable<ReportFeatures, GradingGatePassReportRow>) => void;
 }
 
 type IncomingGatePassRow =
@@ -257,12 +253,12 @@ function getFooterClassName(meta: ColumnMeta | undefined) {
   );
 }
 
-export function DataTable<TValue>({
+export function DataTable({
   columns,
   data,
   isLoading = false,
   onTableReady,
-}: DataTableProps<TValue>) {
+}: DataTableProps) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [grouping, setGrouping] = useState<GroupingState>([]);
@@ -276,26 +272,25 @@ export function DataTable<TValue>({
     conditions: [],
     manualGatePassSearch: '',
   });
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(() => {
-    const columnIds = getGradingReportColumnIds(columns as ColumnDef<unknown, unknown>[]);
+  const [columnVisibility, setColumnVisibility] = useState<ColumnVisibilityState>(() => {
+    const columnIds = getGradingReportColumnIds(columns as ColumnDef<ReportFeatures, Record<string, unknown>>[]);
     return getStoredGradingReportColumnState(columnIds).columnVisibility;
   });
   const [columnOrder, setColumnOrder] = useState<ColumnOrderState>(() => {
-    const columnIds = getGradingReportColumnIds(columns as ColumnDef<unknown, unknown>[]);
+    const columnIds = getGradingReportColumnIds(columns as ColumnDef<ReportFeatures, Record<string, unknown>>[]);
     return getStoredGradingReportColumnState(columnIds).columnOrder;
   });
   const [isHeaderScrolled, setIsHeaderScrolled] = useState(false);
   const [isFooterElevated, setIsFooterElevated] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  // eslint-disable-next-line react-hooks/incompatible-library
-  const table = useReactTable({
+  const table = useTable<ReportFeatures, GradingGatePassReportRow>({
+    features: gradingReportTableFeatures,
     data,
     columns,
     defaultColumn: {
       filterFn: selectedValuesFilterFn,
     },
-    sortingFns: reportSortingFns,
     globalFilterFn: advancedReportGlobalFilterFn,
     state: {
       sorting,
@@ -315,14 +310,6 @@ export function DataTable<TValue>({
     onGlobalFilterChange: setGlobalFilter,
     onColumnVisibilityChange: setColumnVisibility,
     onColumnOrderChange: setColumnOrder,
-    getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getGroupedRowModel: getGroupedRowModel(),
-    getExpandedRowModel: getExpandedRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getFacetedRowModel: getFacetedRowModel(),
-    getFacetedUniqueValues: getFacetedUniqueValues(),
-    getSortedRowModel: getSortedRowModel(),
     sortDescFirst: false,
     enableSortingRemoval: true,
     autoResetPageIndex: false,

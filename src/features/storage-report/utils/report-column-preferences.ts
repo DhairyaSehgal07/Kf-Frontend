@@ -1,8 +1,9 @@
 import type {
   ColumnDef,
   ColumnOrderState,
-  VisibilityState,
+  ColumnVisibilityState,
 } from "@tanstack/react-table"
+import type { ReportFeatures } from "@/lib/tanstack-table/report-table-features"
 
 const STORAGE_KEY = "storage-report:column-preferences:v1"
 
@@ -13,7 +14,7 @@ type StoredColumnPreferences = {
 }
 
 export type StorageReportColumnState = {
-  columnVisibility: VisibilityState
+  columnVisibility: ColumnVisibilityState
   columnOrder: ColumnOrderState
 }
 
@@ -27,7 +28,7 @@ function getStorage(): Storage | null {
   }
 }
 
-function getColumnId(column: ColumnDef<unknown, unknown>, index: number) {
+function getColumnId(column: ColumnDef<ReportFeatures, Record<string, unknown>>, index: number) {
   const candidate = column as {
     id?: string
     accessorKey?: string | number | symbol
@@ -78,7 +79,7 @@ function toColumnState(
   }
 
   const columnIdSet = new Set(columnIds)
-  const columnVisibility = preferences.hiddenColumnIds.reduce<VisibilityState>(
+  const columnVisibility = preferences.hiddenColumnIds.reduce<ColumnVisibilityState>(
     (visibility, columnId) => {
       if (columnIdSet.has(columnId)) visibility[columnId] = false
       return visibility
@@ -95,7 +96,7 @@ function toColumnState(
 }
 
 export function getStorageReportColumnIds(
-  columns: ColumnDef<unknown, unknown>[],
+  columns: ColumnDef<ReportFeatures, Record<string, unknown>>[],
 ) {
   return columns.map(getColumnId)
 }
@@ -115,7 +116,7 @@ export function hasStoredStorageReportColumnState() {
 
 export function saveStorageReportColumnState(
   columnIds: string[],
-  columnVisibility: VisibilityState,
+  columnVisibility: ColumnVisibilityState,
   columnOrder: ColumnOrderState,
 ) {
   const storage = getStorage()

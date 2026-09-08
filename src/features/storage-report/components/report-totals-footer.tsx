@@ -1,4 +1,5 @@
 import type { Row } from "@tanstack/react-table"
+import type { ReportFeatures } from "@/lib/tanstack-table/report-table-features"
 
 import type { StorageGatePass } from "@/features/storage/api/types"
 import { cn } from "@/lib/utils"
@@ -20,7 +21,7 @@ function renderTotalValue(value: number) {
 }
 
 function sumBagSizeQuantity(
-  rows: readonly Row<StorageGatePass>[],
+  rows: readonly Row<ReportFeatures, StorageGatePass>[],
   size: string,
   quantityMode: StorageQuantityMode,
 ) {
@@ -47,7 +48,7 @@ export function ReportTotalLabel() {
 
 export function getStorageReportFooterContent(
   columnId: string,
-  rows: readonly Row<StorageGatePass>[],
+  rows: readonly Row<ReportFeatures, StorageGatePass>[],
   quantityMode: StorageQuantityMode,
 ) {
   if (columnId === "totalBags") {

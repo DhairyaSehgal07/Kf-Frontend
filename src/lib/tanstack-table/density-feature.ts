@@ -1,61 +1,82 @@
 import {
+  assignTableAPIs,
   functionalUpdate,
   makeStateUpdater,
   type OnChangeFn,
   type RowData,
-  type Table,
   type TableFeature,
+  type TableFeatures,
   type Updater,
 } from "@tanstack/react-table"
 
 export type DensityState = "sm" | "md" | "lg"
 
-export interface DensityTableState {
+export interface TableState_Density {
   density: DensityState
 }
 
-export interface DensityOptions {
+export interface TableOptions_Density {
   enableDensity?: boolean
   onDensityChange?: OnChangeFn<DensityState>
 }
 
-export interface DensityInstance {
+export interface Table_Density {
   setDensity: (updater: Updater<DensityState>) => void
   toggleDensity: (value?: DensityState) => void
 }
 
 declare module "@tanstack/react-table" {
-  interface TableState extends DensityTableState {}
-  interface TableOptionsResolved<TData extends RowData> extends DensityOptions {}
-  interface Table<TData extends RowData> extends DensityInstance {}
+  interface Plugins {
+    densityPlugin: TableFeature
+  }
+
+  interface TableState_FeatureMap {
+    densityPlugin: TableState_Density
+  }
+
+  interface TableOptions_FeatureMap<
+    TFeatures extends TableFeatures,
+    TData extends RowData,
+  > {
+    densityPlugin: TableOptions_Density
+  }
+
+  interface Table_FeatureMap<TFeatures extends TableFeatures, TData extends RowData> {
+    densityPlugin: Table_Density
+  }
 }
 
-export const DensityFeature: TableFeature<RowData> = {
-  getInitialState: (state): DensityTableState => ({
+export const densityPlugin: TableFeature = {
+  getInitialState: (initialState) => ({
     density: "md",
-    ...state,
+    ...initialState,
   }),
 
-  getDefaultOptions: <TData extends RowData>(
-    table: Table<TData>,
-  ): DensityOptions =>
-    ({
-      enableDensity: true,
-      onDensityChange: makeStateUpdater("density", table),
-    }) as DensityOptions,
+  getDefaultTableOptions: (table) => ({
+    enableDensity: true,
+    onDensityChange: makeStateUpdater("density", table),
+  }),
 
-  createTable: <TData extends RowData>(table: Table<TData>): void => {
-    table.setDensity = (updater) => {
-      const safeUpdater: Updater<DensityState> = (old) =>
-        functionalUpdate(updater, old)
-      return table.options.onDensityChange?.(safeUpdater)
-    }
+  constructTableAPIs: (table) => {
+    const onDensityChange = (table.options as TableOptions_Density).onDensityChange
 
-    table.toggleDensity = (value) => {
-      table.setDensity((old) => {
-        if (value) return value
-        return old === "lg" ? "md" : old === "md" ? "sm" : "lg"
-      })
-    }
+    assignTableAPIs("densityPlugin", table, {
+      table_setDensity: {
+        fn: (updater: Updater<DensityState>) => {
+          const safeUpdater: Updater<DensityState> = (old) =>
+            functionalUpdate(updater, old)
+          return onDensityChange?.(safeUpdater)
+        },
+      },
+      table_toggleDensity: {
+        fn: (value?: DensityState) => {
+          const safeUpdater: Updater<DensityState> = (old) => {
+            if (value) return value
+            return old === "lg" ? "md" : old === "md" ? "sm" : "lg"
+          }
+          return onDensityChange?.(safeUpdater)
+        },
+      },
+    })
   },
 }

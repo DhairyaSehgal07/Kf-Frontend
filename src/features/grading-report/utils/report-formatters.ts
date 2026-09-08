@@ -1,4 +1,5 @@
 import type { Row } from '@tanstack/react-table';
+import type { ReportFeatures } from '@/lib/tanstack-table/report-table-features';
 
 import type {
   GradingGatePassReportIncomingGatePass,
@@ -67,7 +68,7 @@ export function getIncomingGatePassObjects(row: GradingGatePassReportRow) {
 }
 
 export function sumReportNumericColumn(
-  rows: readonly Row<GradingGatePassReportRow>[],
+  rows: readonly Row<ReportFeatures, GradingGatePassReportRow>[],
   key: keyof GradingGatePassReportRow,
 ): number {
   return rows.reduce((sum, row) => {
@@ -77,7 +78,7 @@ export function sumReportNumericColumn(
 }
 
 export function averageReportNumericColumn(
-  rows: readonly Row<GradingGatePassReportRow>[],
+  rows: readonly Row<ReportFeatures, GradingGatePassReportRow>[],
   key: keyof GradingGatePassReportRow,
 ): number | null {
   const values = rows
@@ -90,7 +91,7 @@ export function averageReportNumericColumn(
 }
 
 export function sumIncomingGatePassNumericColumn(
-  rows: readonly Row<GradingGatePassReportRow>[],
+  rows: readonly Row<ReportFeatures, GradingGatePassReportRow>[],
   key: 'bagsReceived' | 'netWeightKg',
 ): number {
   return rows.reduce((sum, row) => {
@@ -104,7 +105,7 @@ export function sumIncomingGatePassNumericColumn(
 }
 
 export function sumOrderDetailSizeQuantity(
-  rows: readonly Row<GradingGatePassReportRow>[],
+  rows: readonly Row<ReportFeatures, GradingGatePassReportRow>[],
   size: string,
 ): number {
   return rows.reduce((sum, row) => {

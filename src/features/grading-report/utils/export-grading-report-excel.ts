@@ -1,6 +1,7 @@
 import { format } from 'date-fns';
 import type ExcelJS from 'exceljs';
 import type { Table } from '@tanstack/react-table';
+import type { ReportFeatures } from '@/lib/tanstack-table/report-table-features';
 
 import type { GradingGatePassReportRow } from '@/features/grading-report/api/types';
 import {
@@ -239,7 +240,7 @@ function autoFitColumns(worksheet: ExcelJS.Worksheet, columnCount: number, maxWi
 }
 
 export type ExportGradingReportOptions = {
-  table: Table<GradingGatePassReportRow>;
+  table: Table<ReportFeatures, GradingGatePassReportRow>;
   coldStorageName: string;
   reportTitle?: string;
   fromDate?: Date;

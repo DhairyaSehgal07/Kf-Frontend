@@ -9,97 +9,67 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AuthenticatedDaybookRouteImport } from './routes/_authenticated/daybook'
+import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
-import { Route as AuthenticatedTransferIndexRouteImport } from './routes/_authenticated/transfer.index'
-import { Route as AuthenticatedStorageIndexRouteImport } from './routes/_authenticated/storage.index'
-import { Route as AuthenticatedPeopleIndexRouteImport } from './routes/_authenticated/people.index'
-import { Route as AuthenticatedOutgoingIndexRouteImport } from './routes/_authenticated/outgoing.index'
-import { Route as AuthenticatedIncomingIndexRouteImport } from './routes/_authenticated/incoming.index'
-import { Route as AuthenticatedGradingIndexRouteImport } from './routes/_authenticated/grading.index'
-import { Route as AuthenticatedDispatchPreStorageIndexRouteImport } from './routes/_authenticated/dispatch-pre-storage.index'
-import { Route as AuthenticatedBookingIndexRouteImport } from './routes/_authenticated/booking.index'
+import { Route as AuthenticatedDaybookRouteImport } from './routes/_authenticated/daybook'
 import { Route as AuthenticatedAdditionalIndexRouteImport } from './routes/_authenticated/additional.index'
-import { Route as AuthenticatedTransferReportRouteImport } from './routes/_authenticated/transfer.report'
-import { Route as AuthenticatedStorageReportRouteImport } from './routes/_authenticated/storage.report'
-import { Route as AuthenticatedStorageEditHistoryRouteImport } from './routes/_authenticated/storage.edit-history'
-import { Route as AuthenticatedStorageIdRouteImport } from './routes/_authenticated/storage.$id'
-import { Route as AuthenticatedPeopleIdRouteImport } from './routes/_authenticated/people.$id'
-import { Route as AuthenticatedIncomingReportRouteImport } from './routes/_authenticated/incoming.report'
-import { Route as AuthenticatedIncomingEditHistoryRouteImport } from './routes/_authenticated/incoming.edit-history'
-import { Route as AuthenticatedIncomingIdRouteImport } from './routes/_authenticated/incoming.$id'
-import { Route as AuthenticatedGradingReportRouteImport } from './routes/_authenticated/grading.report'
-import { Route as AuthenticatedGradingEditHistoryRouteImport } from './routes/_authenticated/grading.edit-history'
-import { Route as AuthenticatedGradingIdRouteImport } from './routes/_authenticated/grading.$id'
-import { Route as AuthenticatedDispatchPreStorageReportRouteImport } from './routes/_authenticated/dispatch-pre-storage.report'
-import { Route as AuthenticatedDispatchPreStorageIdRouteImport } from './routes/_authenticated/dispatch-pre-storage.$id'
-import { Route as AuthenticatedDispatchPostStorageReportRouteImport } from './routes/_authenticated/dispatch-post-storage.report'
-import { Route as AuthenticatedBookingEditHistoryRouteImport } from './routes/_authenticated/booking.edit-history'
-import { Route as AuthenticatedBookingIdRouteImport } from './routes/_authenticated/booking.$id'
 import { Route as AuthenticatedAdditionalTemperatureRouteImport } from './routes/_authenticated/additional.temperature'
+import { Route as AuthenticatedBookingIndexRouteImport } from './routes/_authenticated/booking.index'
+import { Route as AuthenticatedBookingIdRouteImport } from './routes/_authenticated/booking.$id'
+import { Route as AuthenticatedBookingEditHistoryRouteImport } from './routes/_authenticated/booking.edit-history'
+import { Route as AuthenticatedDispatchPostStorageReportRouteImport } from './routes/_authenticated/dispatch-post-storage.report'
+import { Route as AuthenticatedDispatchPreStorageIndexRouteImport } from './routes/_authenticated/dispatch-pre-storage.index'
+import { Route as AuthenticatedDispatchPreStorageIdRouteImport } from './routes/_authenticated/dispatch-pre-storage.$id'
+import { Route as AuthenticatedDispatchPreStorageReportRouteImport } from './routes/_authenticated/dispatch-pre-storage.report'
+import { Route as AuthenticatedGradingIndexRouteImport } from './routes/_authenticated/grading.index'
+import { Route as AuthenticatedGradingIdRouteImport } from './routes/_authenticated/grading.$id'
+import { Route as AuthenticatedGradingEditHistoryRouteImport } from './routes/_authenticated/grading.edit-history'
+import { Route as AuthenticatedGradingReportRouteImport } from './routes/_authenticated/grading.report'
+import { Route as AuthenticatedIncomingIndexRouteImport } from './routes/_authenticated/incoming.index'
+import { Route as AuthenticatedIncomingIdRouteImport } from './routes/_authenticated/incoming.$id'
+import { Route as AuthenticatedIncomingEditHistoryRouteImport } from './routes/_authenticated/incoming.edit-history'
+import { Route as AuthenticatedIncomingReportRouteImport } from './routes/_authenticated/incoming.report'
+import { Route as AuthenticatedOutgoingIndexRouteImport } from './routes/_authenticated/outgoing.index'
+import { Route as AuthenticatedPeopleIndexRouteImport } from './routes/_authenticated/people.index'
+import { Route as AuthenticatedPeopleIdRouteImport } from './routes/_authenticated/people.$id'
+import { Route as AuthenticatedStorageIndexRouteImport } from './routes/_authenticated/storage.index'
+import { Route as AuthenticatedStorageIdRouteImport } from './routes/_authenticated/storage.$id'
+import { Route as AuthenticatedStorageEditHistoryRouteImport } from './routes/_authenticated/storage.edit-history'
+import { Route as AuthenticatedStorageReportRouteImport } from './routes/_authenticated/storage.report'
+import { Route as AuthenticatedTransferIndexRouteImport } from './routes/_authenticated/transfer.index'
+import { Route as AuthenticatedTransferReportRouteImport } from './routes/_authenticated/transfer.report'
 import { Route as AuthenticatedStorageChamberBreakdownChamberRouteImport } from './routes/_authenticated/storage.chamber-breakdown.$chamber'
 
-const AuthenticatedRoute = AuthenticatedRouteImport.update({
-  id: '/_authenticated',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedDaybookRoute = AuthenticatedDaybookRouteImport.update({
-  id: '/daybook',
-  path: '/daybook',
-  getParentRoute: () => AuthenticatedRoute,
+const AuthenticatedRoute = AuthenticatedRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedAnalyticsRoute = AuthenticatedAnalyticsRouteImport.update({
   id: '/analytics',
   path: '/analytics',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
-const AuthenticatedTransferIndexRoute =
-  AuthenticatedTransferIndexRouteImport.update({
-    id: '/transfer/',
-    path: '/transfer/',
+const AuthenticatedDaybookRoute = AuthenticatedDaybookRouteImport.update({
+  id: '/daybook',
+  path: '/daybook',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedAdditionalIndexRoute =
+  AuthenticatedAdditionalIndexRouteImport.update({
+    id: '/additional/',
+    path: '/additional/',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
-const AuthenticatedStorageIndexRoute =
-  AuthenticatedStorageIndexRouteImport.update({
-    id: '/storage/',
-    path: '/storage/',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedPeopleIndexRoute =
-  AuthenticatedPeopleIndexRouteImport.update({
-    id: '/people/',
-    path: '/people/',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedOutgoingIndexRoute =
-  AuthenticatedOutgoingIndexRouteImport.update({
-    id: '/outgoing/',
-    path: '/outgoing/',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedIncomingIndexRoute =
-  AuthenticatedIncomingIndexRouteImport.update({
-    id: '/incoming/',
-    path: '/incoming/',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedGradingIndexRoute =
-  AuthenticatedGradingIndexRouteImport.update({
-    id: '/grading/',
-    path: '/grading/',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedDispatchPreStorageIndexRoute =
-  AuthenticatedDispatchPreStorageIndexRouteImport.update({
-    id: '/dispatch-pre-storage/',
-    path: '/dispatch-pre-storage/',
+const AuthenticatedAdditionalTemperatureRoute =
+  AuthenticatedAdditionalTemperatureRouteImport.update({
+    id: '/additional/temperature',
+    path: '/additional/temperature',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedBookingIndexRoute =
@@ -108,84 +78,15 @@ const AuthenticatedBookingIndexRoute =
     path: '/booking/',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
-const AuthenticatedAdditionalIndexRoute =
-  AuthenticatedAdditionalIndexRouteImport.update({
-    id: '/additional/',
-    path: '/additional/',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedTransferReportRoute =
-  AuthenticatedTransferReportRouteImport.update({
-    id: '/transfer/report',
-    path: '/transfer/report',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedStorageReportRoute =
-  AuthenticatedStorageReportRouteImport.update({
-    id: '/storage/report',
-    path: '/storage/report',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedStorageEditHistoryRoute =
-  AuthenticatedStorageEditHistoryRouteImport.update({
-    id: '/storage/edit-history',
-    path: '/storage/edit-history',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedStorageIdRoute = AuthenticatedStorageIdRouteImport.update({
-  id: '/storage/$id',
-  path: '/storage/$id',
+const AuthenticatedBookingIdRoute = AuthenticatedBookingIdRouteImport.update({
+  id: '/booking/$id',
+  path: '/booking/$id',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
-const AuthenticatedPeopleIdRoute = AuthenticatedPeopleIdRouteImport.update({
-  id: '/people/$id',
-  path: '/people/$id',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
-const AuthenticatedIncomingReportRoute =
-  AuthenticatedIncomingReportRouteImport.update({
-    id: '/incoming/report',
-    path: '/incoming/report',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedIncomingEditHistoryRoute =
-  AuthenticatedIncomingEditHistoryRouteImport.update({
-    id: '/incoming/edit-history',
-    path: '/incoming/edit-history',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedIncomingIdRoute = AuthenticatedIncomingIdRouteImport.update({
-  id: '/incoming/$id',
-  path: '/incoming/$id',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
-const AuthenticatedGradingReportRoute =
-  AuthenticatedGradingReportRouteImport.update({
-    id: '/grading/report',
-    path: '/grading/report',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedGradingEditHistoryRoute =
-  AuthenticatedGradingEditHistoryRouteImport.update({
-    id: '/grading/edit-history',
-    path: '/grading/edit-history',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedGradingIdRoute = AuthenticatedGradingIdRouteImport.update({
-  id: '/grading/$id',
-  path: '/grading/$id',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
-const AuthenticatedDispatchPreStorageReportRoute =
-  AuthenticatedDispatchPreStorageReportRouteImport.update({
-    id: '/dispatch-pre-storage/report',
-    path: '/dispatch-pre-storage/report',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedDispatchPreStorageIdRoute =
-  AuthenticatedDispatchPreStorageIdRouteImport.update({
-    id: '/dispatch-pre-storage/$id',
-    path: '/dispatch-pre-storage/$id',
+const AuthenticatedBookingEditHistoryRoute =
+  AuthenticatedBookingEditHistoryRouteImport.update({
+    id: '/booking/edit-history',
+    path: '/booking/edit-history',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedDispatchPostStorageReportRoute =
@@ -194,21 +95,120 @@ const AuthenticatedDispatchPostStorageReportRoute =
     path: '/dispatch-post-storage/report',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
-const AuthenticatedBookingEditHistoryRoute =
-  AuthenticatedBookingEditHistoryRouteImport.update({
-    id: '/booking/edit-history',
-    path: '/booking/edit-history',
+const AuthenticatedDispatchPreStorageIndexRoute =
+  AuthenticatedDispatchPreStorageIndexRouteImport.update({
+    id: '/dispatch-pre-storage/',
+    path: '/dispatch-pre-storage/',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
-const AuthenticatedBookingIdRoute = AuthenticatedBookingIdRouteImport.update({
-  id: '/booking/$id',
-  path: '/booking/$id',
+const AuthenticatedDispatchPreStorageIdRoute =
+  AuthenticatedDispatchPreStorageIdRouteImport.update({
+    id: '/dispatch-pre-storage/$id',
+    path: '/dispatch-pre-storage/$id',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedDispatchPreStorageReportRoute =
+  AuthenticatedDispatchPreStorageReportRouteImport.update({
+    id: '/dispatch-pre-storage/report',
+    path: '/dispatch-pre-storage/report',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedGradingIndexRoute =
+  AuthenticatedGradingIndexRouteImport.update({
+    id: '/grading/',
+    path: '/grading/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedGradingIdRoute = AuthenticatedGradingIdRouteImport.update({
+  id: '/grading/$id',
+  path: '/grading/$id',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
-const AuthenticatedAdditionalTemperatureRoute =
-  AuthenticatedAdditionalTemperatureRouteImport.update({
-    id: '/additional/temperature',
-    path: '/additional/temperature',
+const AuthenticatedGradingEditHistoryRoute =
+  AuthenticatedGradingEditHistoryRouteImport.update({
+    id: '/grading/edit-history',
+    path: '/grading/edit-history',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedGradingReportRoute =
+  AuthenticatedGradingReportRouteImport.update({
+    id: '/grading/report',
+    path: '/grading/report',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedIncomingIndexRoute =
+  AuthenticatedIncomingIndexRouteImport.update({
+    id: '/incoming/',
+    path: '/incoming/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedIncomingIdRoute = AuthenticatedIncomingIdRouteImport.update({
+  id: '/incoming/$id',
+  path: '/incoming/$id',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedIncomingEditHistoryRoute =
+  AuthenticatedIncomingEditHistoryRouteImport.update({
+    id: '/incoming/edit-history',
+    path: '/incoming/edit-history',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedIncomingReportRoute =
+  AuthenticatedIncomingReportRouteImport.update({
+    id: '/incoming/report',
+    path: '/incoming/report',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedOutgoingIndexRoute =
+  AuthenticatedOutgoingIndexRouteImport.update({
+    id: '/outgoing/',
+    path: '/outgoing/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedPeopleIndexRoute =
+  AuthenticatedPeopleIndexRouteImport.update({
+    id: '/people/',
+    path: '/people/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedPeopleIdRoute = AuthenticatedPeopleIdRouteImport.update({
+  id: '/people/$id',
+  path: '/people/$id',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedStorageIndexRoute =
+  AuthenticatedStorageIndexRouteImport.update({
+    id: '/storage/',
+    path: '/storage/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedStorageIdRoute = AuthenticatedStorageIdRouteImport.update({
+  id: '/storage/$id',
+  path: '/storage/$id',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedStorageEditHistoryRoute =
+  AuthenticatedStorageEditHistoryRouteImport.update({
+    id: '/storage/edit-history',
+    path: '/storage/edit-history',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedStorageReportRoute =
+  AuthenticatedStorageReportRouteImport.update({
+    id: '/storage/report',
+    path: '/storage/report',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedTransferIndexRoute =
+  AuthenticatedTransferIndexRouteImport.update({
+    id: '/transfer/',
+    path: '/transfer/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedTransferReportRoute =
+  AuthenticatedTransferReportRouteImport.update({
+    id: '/transfer/report',
+    path: '/transfer/report',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedStorageChamberBreakdownChamberRoute =
@@ -423,13 +423,6 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/_authenticated': {
-      id: '/_authenticated'
-      path: ''
-      fullPath: '/'
-      preLoaderRoute: typeof AuthenticatedRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/': {
       id: '/'
       path: '/'
@@ -437,12 +430,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/daybook': {
-      id: '/_authenticated/daybook'
-      path: '/daybook'
-      fullPath: '/daybook'
-      preLoaderRoute: typeof AuthenticatedDaybookRouteImport
-      parentRoute: typeof AuthenticatedRoute
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/analytics': {
       id: '/_authenticated/analytics'
@@ -451,60 +444,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAnalyticsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/transfer/': {
-      id: '/_authenticated/transfer/'
-      path: '/transfer'
-      fullPath: '/transfer/'
-      preLoaderRoute: typeof AuthenticatedTransferIndexRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/storage/': {
-      id: '/_authenticated/storage/'
-      path: '/storage'
-      fullPath: '/storage/'
-      preLoaderRoute: typeof AuthenticatedStorageIndexRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/people/': {
-      id: '/_authenticated/people/'
-      path: '/people'
-      fullPath: '/people/'
-      preLoaderRoute: typeof AuthenticatedPeopleIndexRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/outgoing/': {
-      id: '/_authenticated/outgoing/'
-      path: '/outgoing'
-      fullPath: '/outgoing/'
-      preLoaderRoute: typeof AuthenticatedOutgoingIndexRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/incoming/': {
-      id: '/_authenticated/incoming/'
-      path: '/incoming'
-      fullPath: '/incoming/'
-      preLoaderRoute: typeof AuthenticatedIncomingIndexRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/grading/': {
-      id: '/_authenticated/grading/'
-      path: '/grading'
-      fullPath: '/grading/'
-      preLoaderRoute: typeof AuthenticatedGradingIndexRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/dispatch-pre-storage/': {
-      id: '/_authenticated/dispatch-pre-storage/'
-      path: '/dispatch-pre-storage'
-      fullPath: '/dispatch-pre-storage/'
-      preLoaderRoute: typeof AuthenticatedDispatchPreStorageIndexRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/booking/': {
-      id: '/_authenticated/booking/'
-      path: '/booking'
-      fullPath: '/booking/'
-      preLoaderRoute: typeof AuthenticatedBookingIndexRouteImport
+    '/_authenticated/daybook': {
+      id: '/_authenticated/daybook'
+      path: '/daybook'
+      fullPath: '/daybook'
+      preLoaderRoute: typeof AuthenticatedDaybookRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/additional/': {
@@ -514,109 +458,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdditionalIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/transfer/report': {
-      id: '/_authenticated/transfer/report'
-      path: '/transfer/report'
-      fullPath: '/transfer/report'
-      preLoaderRoute: typeof AuthenticatedTransferReportRouteImport
+    '/_authenticated/additional/temperature': {
+      id: '/_authenticated/additional/temperature'
+      path: '/additional/temperature'
+      fullPath: '/additional/temperature'
+      preLoaderRoute: typeof AuthenticatedAdditionalTemperatureRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/storage/report': {
-      id: '/_authenticated/storage/report'
-      path: '/storage/report'
-      fullPath: '/storage/report'
-      preLoaderRoute: typeof AuthenticatedStorageReportRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/storage/edit-history': {
-      id: '/_authenticated/storage/edit-history'
-      path: '/storage/edit-history'
-      fullPath: '/storage/edit-history'
-      preLoaderRoute: typeof AuthenticatedStorageEditHistoryRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/storage/$id': {
-      id: '/_authenticated/storage/$id'
-      path: '/storage/$id'
-      fullPath: '/storage/$id'
-      preLoaderRoute: typeof AuthenticatedStorageIdRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/people/$id': {
-      id: '/_authenticated/people/$id'
-      path: '/people/$id'
-      fullPath: '/people/$id'
-      preLoaderRoute: typeof AuthenticatedPeopleIdRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/incoming/report': {
-      id: '/_authenticated/incoming/report'
-      path: '/incoming/report'
-      fullPath: '/incoming/report'
-      preLoaderRoute: typeof AuthenticatedIncomingReportRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/incoming/edit-history': {
-      id: '/_authenticated/incoming/edit-history'
-      path: '/incoming/edit-history'
-      fullPath: '/incoming/edit-history'
-      preLoaderRoute: typeof AuthenticatedIncomingEditHistoryRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/incoming/$id': {
-      id: '/_authenticated/incoming/$id'
-      path: '/incoming/$id'
-      fullPath: '/incoming/$id'
-      preLoaderRoute: typeof AuthenticatedIncomingIdRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/grading/report': {
-      id: '/_authenticated/grading/report'
-      path: '/grading/report'
-      fullPath: '/grading/report'
-      preLoaderRoute: typeof AuthenticatedGradingReportRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/grading/edit-history': {
-      id: '/_authenticated/grading/edit-history'
-      path: '/grading/edit-history'
-      fullPath: '/grading/edit-history'
-      preLoaderRoute: typeof AuthenticatedGradingEditHistoryRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/grading/$id': {
-      id: '/_authenticated/grading/$id'
-      path: '/grading/$id'
-      fullPath: '/grading/$id'
-      preLoaderRoute: typeof AuthenticatedGradingIdRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/dispatch-pre-storage/report': {
-      id: '/_authenticated/dispatch-pre-storage/report'
-      path: '/dispatch-pre-storage/report'
-      fullPath: '/dispatch-pre-storage/report'
-      preLoaderRoute: typeof AuthenticatedDispatchPreStorageReportRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/dispatch-pre-storage/$id': {
-      id: '/_authenticated/dispatch-pre-storage/$id'
-      path: '/dispatch-pre-storage/$id'
-      fullPath: '/dispatch-pre-storage/$id'
-      preLoaderRoute: typeof AuthenticatedDispatchPreStorageIdRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/dispatch-post-storage/report': {
-      id: '/_authenticated/dispatch-post-storage/report'
-      path: '/dispatch-post-storage/report'
-      fullPath: '/dispatch-post-storage/report'
-      preLoaderRoute: typeof AuthenticatedDispatchPostStorageReportRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/booking/edit-history': {
-      id: '/_authenticated/booking/edit-history'
-      path: '/booking/edit-history'
-      fullPath: '/booking/edit-history'
-      preLoaderRoute: typeof AuthenticatedBookingEditHistoryRouteImport
+    '/_authenticated/booking/': {
+      id: '/_authenticated/booking/'
+      path: '/booking'
+      fullPath: '/booking/'
+      preLoaderRoute: typeof AuthenticatedBookingIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/booking/$id': {
@@ -626,11 +479,158 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBookingIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/additional/temperature': {
-      id: '/_authenticated/additional/temperature'
-      path: '/additional/temperature'
-      fullPath: '/additional/temperature'
-      preLoaderRoute: typeof AuthenticatedAdditionalTemperatureRouteImport
+    '/_authenticated/booking/edit-history': {
+      id: '/_authenticated/booking/edit-history'
+      path: '/booking/edit-history'
+      fullPath: '/booking/edit-history'
+      preLoaderRoute: typeof AuthenticatedBookingEditHistoryRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/dispatch-post-storage/report': {
+      id: '/_authenticated/dispatch-post-storage/report'
+      path: '/dispatch-post-storage/report'
+      fullPath: '/dispatch-post-storage/report'
+      preLoaderRoute: typeof AuthenticatedDispatchPostStorageReportRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/dispatch-pre-storage/': {
+      id: '/_authenticated/dispatch-pre-storage/'
+      path: '/dispatch-pre-storage'
+      fullPath: '/dispatch-pre-storage/'
+      preLoaderRoute: typeof AuthenticatedDispatchPreStorageIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/dispatch-pre-storage/$id': {
+      id: '/_authenticated/dispatch-pre-storage/$id'
+      path: '/dispatch-pre-storage/$id'
+      fullPath: '/dispatch-pre-storage/$id'
+      preLoaderRoute: typeof AuthenticatedDispatchPreStorageIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/dispatch-pre-storage/report': {
+      id: '/_authenticated/dispatch-pre-storage/report'
+      path: '/dispatch-pre-storage/report'
+      fullPath: '/dispatch-pre-storage/report'
+      preLoaderRoute: typeof AuthenticatedDispatchPreStorageReportRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/grading/': {
+      id: '/_authenticated/grading/'
+      path: '/grading'
+      fullPath: '/grading/'
+      preLoaderRoute: typeof AuthenticatedGradingIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/grading/$id': {
+      id: '/_authenticated/grading/$id'
+      path: '/grading/$id'
+      fullPath: '/grading/$id'
+      preLoaderRoute: typeof AuthenticatedGradingIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/grading/edit-history': {
+      id: '/_authenticated/grading/edit-history'
+      path: '/grading/edit-history'
+      fullPath: '/grading/edit-history'
+      preLoaderRoute: typeof AuthenticatedGradingEditHistoryRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/grading/report': {
+      id: '/_authenticated/grading/report'
+      path: '/grading/report'
+      fullPath: '/grading/report'
+      preLoaderRoute: typeof AuthenticatedGradingReportRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/incoming/': {
+      id: '/_authenticated/incoming/'
+      path: '/incoming'
+      fullPath: '/incoming/'
+      preLoaderRoute: typeof AuthenticatedIncomingIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/incoming/$id': {
+      id: '/_authenticated/incoming/$id'
+      path: '/incoming/$id'
+      fullPath: '/incoming/$id'
+      preLoaderRoute: typeof AuthenticatedIncomingIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/incoming/edit-history': {
+      id: '/_authenticated/incoming/edit-history'
+      path: '/incoming/edit-history'
+      fullPath: '/incoming/edit-history'
+      preLoaderRoute: typeof AuthenticatedIncomingEditHistoryRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/incoming/report': {
+      id: '/_authenticated/incoming/report'
+      path: '/incoming/report'
+      fullPath: '/incoming/report'
+      preLoaderRoute: typeof AuthenticatedIncomingReportRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/outgoing/': {
+      id: '/_authenticated/outgoing/'
+      path: '/outgoing'
+      fullPath: '/outgoing/'
+      preLoaderRoute: typeof AuthenticatedOutgoingIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/people/': {
+      id: '/_authenticated/people/'
+      path: '/people'
+      fullPath: '/people/'
+      preLoaderRoute: typeof AuthenticatedPeopleIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/people/$id': {
+      id: '/_authenticated/people/$id'
+      path: '/people/$id'
+      fullPath: '/people/$id'
+      preLoaderRoute: typeof AuthenticatedPeopleIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/storage/': {
+      id: '/_authenticated/storage/'
+      path: '/storage'
+      fullPath: '/storage/'
+      preLoaderRoute: typeof AuthenticatedStorageIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/storage/$id': {
+      id: '/_authenticated/storage/$id'
+      path: '/storage/$id'
+      fullPath: '/storage/$id'
+      preLoaderRoute: typeof AuthenticatedStorageIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/storage/edit-history': {
+      id: '/_authenticated/storage/edit-history'
+      path: '/storage/edit-history'
+      fullPath: '/storage/edit-history'
+      preLoaderRoute: typeof AuthenticatedStorageEditHistoryRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/storage/report': {
+      id: '/_authenticated/storage/report'
+      path: '/storage/report'
+      fullPath: '/storage/report'
+      preLoaderRoute: typeof AuthenticatedStorageReportRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/transfer/': {
+      id: '/_authenticated/transfer/'
+      path: '/transfer'
+      fullPath: '/transfer/'
+      preLoaderRoute: typeof AuthenticatedTransferIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/transfer/report': {
+      id: '/_authenticated/transfer/report'
+      path: '/transfer/report'
+      fullPath: '/transfer/report'
+      preLoaderRoute: typeof AuthenticatedTransferReportRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/storage/chamber-breakdown/$chamber': {

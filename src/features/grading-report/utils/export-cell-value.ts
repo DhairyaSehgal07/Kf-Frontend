@@ -1,5 +1,6 @@
 import { format, isValid, parse, parseISO } from 'date-fns';
 import type { Column, Row, Table } from '@tanstack/react-table';
+import type { ReportFeatures } from '@/lib/tanstack-table/report-table-features';
 
 import type { GradingGatePassReportRow } from '@/features/grading-report/api/types';
 import type {
@@ -78,7 +79,7 @@ export type ExportCellValue =
   | { kind: 'empty' };
 
 export type GradingExportLine = {
-  row: Row<GradingGatePassReportRow>;
+  row: Row<ReportFeatures, GradingGatePassReportRow>;
   incomingIndex: number;
   incomingCount: number;
 };
@@ -94,7 +95,7 @@ type IncomingGatePassRow =
     };
 
 export function getColumnExportLabel(
-  column: Column<GradingGatePassReportRow, unknown>,
+  column: Column<ReportFeatures, GradingGatePassReportRow, unknown>,
 ): string {
   return column.columnDef.meta?.filterLabel ?? column.id;
 }
@@ -116,7 +117,7 @@ function formatReportDate(value: unknown): string | null {
 
 function formatDisplayValue(
   value: unknown,
-  column: Column<GradingGatePassReportRow, unknown>,
+  column: Column<ReportFeatures, GradingGatePassReportRow, unknown>,
 ): string {
   const meta = column.columnDef.meta;
   if (meta?.filterValueFormatter) return meta.filterValueFormatter(value);
@@ -227,7 +228,7 @@ export function formatExportCellValue(
 
 export function getExportCellForLine(
   line: GradingExportLine,
-  column: Column<GradingGatePassReportRow, unknown>,
+  column: Column<ReportFeatures, GradingGatePassReportRow, unknown>,
 ): ExportCellValue {
   const { row, incomingIndex } = line;
   const columnId = column.id;
@@ -276,18 +277,18 @@ export function getExportCellForLine(
 }
 
 export function collectExportRows(
-  table: Table<GradingGatePassReportRow>,
-): Row<GradingGatePassReportRow>[] {
-  const grouping = table.getState().grouping;
+  table: Table<ReportFeatures, GradingGatePassReportRow>,
+): Row<ReportFeatures, GradingGatePassReportRow>[] {
+  const grouping = table.store.state.grouping;
 
   if (grouping.length === 0) {
     return table.getSortedRowModel().rows;
   }
 
   function flattenGroupedRows(
-    rows: Row<GradingGatePassReportRow>[],
-  ): Row<GradingGatePassReportRow>[] {
-    const result: Row<GradingGatePassReportRow>[] = [];
+    rows: Row<ReportFeatures, GradingGatePassReportRow>[],
+  ): Row<ReportFeatures, GradingGatePassReportRow>[] {
+    const result: Row<ReportFeatures, GradingGatePassReportRow>[] = [];
 
     for (const row of rows) {
       result.push(row);
@@ -303,7 +304,7 @@ export function collectExportRows(
 }
 
 export function collectGradingExportLines(
-  table: Table<GradingGatePassReportRow>,
+  table: Table<ReportFeatures, GradingGatePassReportRow>,
 ): GradingExportLine[] {
   const lines: GradingExportLine[] = [];
 
@@ -324,12 +325,12 @@ export function collectGradingExportLines(
   return lines;
 }
 
-export function getFilteredLeafRowCount(table: Table<GradingGatePassReportRow>): number {
+export function getFilteredLeafRowCount(table: Table<ReportFeatures, GradingGatePassReportRow>): number {
   return table.getFilteredRowModel().flatRows.length;
 }
 
 function formatConditionLabel(
-  table: Table<GradingGatePassReportRow>,
+  table: Table<ReportFeatures, GradingGatePassReportRow>,
   condition: AdvancedFilterCondition,
 ): string {
   const column = table.getColumn(String(condition.columnId));
@@ -346,10 +347,10 @@ function formatConditionLabel(
   return `${columnLabel} ${operatorLabel} "${value}"`;
 }
 
-function formatColumnFilterSummary(table: Table<GradingGatePassReportRow>): string[] {
+function formatColumnFilterSummary(table: Table<ReportFeatures, GradingGatePassReportRow>): string[] {
   const summaries: string[] = [];
 
-  for (const filter of table.getState().columnFilters) {
+  for (const filter of table.store.state.columnFilters) {
     if (!Array.isArray(filter.value) || filter.value.length === 0) continue;
 
     const column = table.getColumn(filter.id);
@@ -372,7 +373,7 @@ function formatColumnFilterSummary(table: Table<GradingGatePassReportRow>): stri
 }
 
 function formatAdvancedFilterSummary(
-  table: Table<GradingGatePassReportRow>,
+  table: Table<ReportFeatures, GradingGatePassReportRow>,
   globalFilter: AdvancedReportGlobalFilter,
 ): string[] {
   const summaries: string[] = [];
@@ -397,8 +398,8 @@ function formatAdvancedFilterSummary(
   return summaries;
 }
 
-function formatGroupingSummary(table: Table<GradingGatePassReportRow>): string | null {
-  const grouping = table.getState().grouping;
+function formatGroupingSummary(table: Table<ReportFeatures, GradingGatePassReportRow>): string | null {
+  const grouping = table.store.state.grouping;
   if (grouping.length === 0) return null;
 
   const labels = grouping
@@ -411,8 +412,8 @@ function formatGroupingSummary(table: Table<GradingGatePassReportRow>): string |
   return `Grouped by: ${labels}`;
 }
 
-function formatSortingSummary(table: Table<GradingGatePassReportRow>): string | null {
-  const sorting = table.getState().sorting;
+function formatSortingSummary(table: Table<ReportFeatures, GradingGatePassReportRow>): string | null {
+  const sorting = table.store.state.sorting;
   if (sorting.length === 0) return null;
 
   const labels = sorting
@@ -426,8 +427,8 @@ function formatSortingSummary(table: Table<GradingGatePassReportRow>): string | 
   return `Sorted by: ${labels}`;
 }
 
-export function buildFilterSummaryLines(table: Table<GradingGatePassReportRow>): string[] {
-  const globalFilter = table.getState().globalFilter;
+export function buildFilterSummaryLines(table: Table<ReportFeatures, GradingGatePassReportRow>): string[] {
+  const globalFilter = table.store.state.globalFilter;
 
   const lines = [
     ...formatColumnFilterSummary(table),
@@ -485,7 +486,7 @@ export function isAverageExportColumn(columnId: string): boolean {
 
 export function getFooterExportValue(
   columnId: string,
-  rows: readonly Row<GradingGatePassReportRow>[],
+  rows: readonly Row<ReportFeatures, GradingGatePassReportRow>[],
 ): ExportCellValue {
   if (columnId.startsWith('size-')) {
     const total = sumOrderDetailSizeQuantity(rows, columnId.replace(/^size-/, ''));

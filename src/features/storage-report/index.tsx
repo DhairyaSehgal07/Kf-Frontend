@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import type { Table as TanStackTable } from "@tanstack/react-table"
 import { Loader2 } from "lucide-react"
 import { toast } from "sonner"
+import type { ReportFeatures } from "@/lib/tanstack-table/report-table-features"
 
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -35,7 +36,7 @@ const StorageReportPage = () => {
   const [dateTo, setDateTo] = useState("")
   const [searchQuery, setSearchQuery] = useState("")
   const [reportTable, setReportTable] =
-    useState<TanStackTable<StorageGatePass> | null>(null)
+    useState<TanStackTable<ReportFeatures, StorageGatePass> | null>(null)
   const [quantityMode, setQuantityMode] =
     useState<StorageQuantityMode>("current")
   const [appliedParams, setAppliedParams] =
@@ -63,7 +64,7 @@ const StorageReportPage = () => {
   )
 
   const handleTableReady = useCallback(
-    (table: TanStackTable<StorageGatePass>) => {
+    (table: TanStackTable<ReportFeatures, StorageGatePass>) => {
       setReportTable((current) => (current === table ? current : table))
     },
     [],

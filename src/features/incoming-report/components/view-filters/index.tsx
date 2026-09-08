@@ -4,7 +4,7 @@ import type {
   ColumnOrderState,
   GroupingState,
   Table,
-  VisibilityState,
+  ColumnVisibilityState,
 } from "@tanstack/react-table"
 import { Button } from "@/components/ui/button"
 import {
@@ -25,9 +25,10 @@ import AdvancedTab from "./advanced-tab"
 import type { IncomingGatePassReportRow } from "@/features/incoming-report/api/types"
 import type { AdvancedReportGlobalFilter } from "@/features/incoming-report/utils/report-filter-fns"
 import { getStoredIncomingReportColumnState } from "@/features/incoming-report/utils/report-column-preferences"
+import type { ReportFeatures } from "@/lib/tanstack-table/report-table-features"
 
 interface ViewFiltersSheetProps {
-  table: Table<IncomingGatePassReportRow>
+  table: Table<ReportFeatures, IncomingGatePassReportRow>
 }
 
 function getDefaultGlobalFilter(
@@ -40,9 +41,9 @@ function getDefaultGlobalFilter(
   }
 }
 
-function areVisibilityStatesEqual(
-  a: VisibilityState,
-  b: VisibilityState,
+function areColumnVisibilityStatesEqual(
+  a: ColumnVisibilityState,
+  b: ColumnVisibilityState,
 ) {
   const keys = new Set([...Object.keys(a), ...Object.keys(b)])
 
@@ -63,25 +64,25 @@ function areColumnOrdersEqual(a: ColumnOrderState, b: ColumnOrderState) {
 export function ViewFiltersSheet({ table }: ViewFiltersSheetProps) {
   const [open, setOpen] = useState(false)
   const [draftColumnFilters, setDraftColumnFilters] =
-    useState<ColumnFiltersState>(() => table.getState().columnFilters)
+    useState<ColumnFiltersState>(() => table.store.state.columnFilters)
   const [draftColumnVisibility, setDraftColumnVisibility] =
-    useState<VisibilityState>(() => table.getState().columnVisibility)
+    useState<ColumnVisibilityState>(() => table.store.state.columnVisibility)
   const [draftColumnOrder, setDraftColumnOrder] = useState<ColumnOrderState>(
-    () => table.getState().columnOrder,
+    () => table.store.state.columnOrder,
   )
   const [draftGrouping, setDraftGrouping] = useState<GroupingState>(
-    () => table.getState().grouping,
+    () => table.store.state.grouping,
   )
   const [draftGlobalFilter, setDraftGlobalFilter] =
     useState<AdvancedReportGlobalFilter>(() => ({
       logic: "AND",
       conditions: [],
-      ...table.getState().globalFilter,
+      ...table.store.state.globalFilter,
     }))
-  const activeFilterCount = table.getState().columnFilters.length
-  const activeGroupingCount = table.getState().grouping.length
+  const activeFilterCount = table.store.state.columnFilters.length
+  const activeGroupingCount = table.store.state.grouping.length
   const activeAdvancedCount =
-    table.getState().globalFilter?.conditions?.filter(
+    table.store.state.globalFilter?.conditions?.filter(
       (condition: { operator: string; value: string }) =>
         condition.operator === "isEmpty" ||
         condition.operator === "isNotEmpty" ||
@@ -89,14 +90,14 @@ export function ViewFiltersSheet({ table }: ViewFiltersSheetProps) {
     ).length ?? 0
   const hiddenColumnCount = table
     .getAllLeafColumns()
-    .filter((column) => table.getState().columnVisibility[column.id] === false)
+    .filter((column) => table.store.state.columnVisibility[column.id] === false)
     .length
   const defaultColumnState = getStoredIncomingReportColumnState(
     table.getAllLeafColumns().map((column) => column.id),
   )
   const hasDraftViewChanges =
     draftColumnFilters.length > 0 ||
-    !areVisibilityStatesEqual(
+    !areColumnVisibilityStatesEqual(
       draftColumnVisibility,
       defaultColumnState.columnVisibility,
     ) ||
@@ -107,7 +108,7 @@ export function ViewFiltersSheet({ table }: ViewFiltersSheetProps) {
 
   const handleOpenChange = (nextOpen: boolean) => {
     if (nextOpen) {
-      const tableState = table.getState()
+      const tableState = table.store.state
       setDraftColumnFilters(tableState.columnFilters)
       setDraftColumnVisibility(tableState.columnVisibility)
       setDraftColumnOrder(tableState.columnOrder)
@@ -130,7 +131,7 @@ export function ViewFiltersSheet({ table }: ViewFiltersSheetProps) {
     table.setGlobalFilter({
       ...draftGlobalFilter,
       manualGatePassSearch:
-        table.getState().globalFilter?.manualGatePassSearch ??
+        table.store.state.globalFilter?.manualGatePassSearch ??
         draftGlobalFilter.manualGatePassSearch ??
         "",
     })
@@ -139,7 +140,7 @@ export function ViewFiltersSheet({ table }: ViewFiltersSheetProps) {
 
   const handleResetChanges = () => {
     const manualGatePassSearch =
-      table.getState().globalFilter?.manualGatePassSearch ??
+      table.store.state.globalFilter?.manualGatePassSearch ??
       draftGlobalFilter.manualGatePassSearch ??
       ""
     const defaultGlobalFilter = getDefaultGlobalFilter(manualGatePassSearch)

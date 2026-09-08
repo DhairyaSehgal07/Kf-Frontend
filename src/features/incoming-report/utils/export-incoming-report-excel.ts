@@ -1,6 +1,7 @@
 import { format } from "date-fns"
 import type ExcelJS from "exceljs"
 import type { Table } from "@tanstack/react-table"
+import type { ReportFeatures } from "@/lib/tanstack-table/report-table-features"
 
 import type { IncomingGatePassReportRow } from "@/features/incoming-report/api/types"
 import { downloadBlob } from "@/lib/download-blob"
@@ -255,7 +256,7 @@ function autoFitColumns(
 }
 
 export type ExportIncomingReportOptions = {
-  table: Table<IncomingGatePassReportRow>
+  table: Table<ReportFeatures, IncomingGatePassReportRow>
   coldStorageName: string
   reportTitle?: string
   fromDate?: Date

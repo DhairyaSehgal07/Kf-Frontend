@@ -1,6 +1,5 @@
-import type { FilterFn } from "@tanstack/react-table"
-
 import type { IncomingGatePassReportRow } from "@/features/incoming-report/api/types"
+import type { ReportFilterFn } from "@/lib/tanstack-table/report-table-features"
 import { parseReportNumber } from "@/features/incoming-report/utils/report-formatters"
 
 export type SelectedValuesFilterValue = string[]
@@ -51,7 +50,7 @@ export function getReportFilterValueKey(value: unknown): string {
   return String(value)
 }
 
-export const selectedValuesFilterFn: FilterFn<IncomingGatePassReportRow> = (
+export const selectedValuesFilterFn: ReportFilterFn<IncomingGatePassReportRow> = (
   row,
   columnId,
   filterValue,
@@ -148,7 +147,7 @@ function evaluateCondition(
   }
 }
 
-export const advancedReportGlobalFilterFn: FilterFn<IncomingGatePassReportRow> = (
+export const advancedReportGlobalFilterFn: ReportFilterFn<IncomingGatePassReportRow> = (
   row,
   _columnId,
   filterValue,

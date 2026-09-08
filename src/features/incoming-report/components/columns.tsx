@@ -1,9 +1,10 @@
-import type {
-  AggregationFn,
-  CellContext,
-  Column,
-  ColumnDef,
-  HeaderContext,
+import {
+  type CellContext,
+  type Column,
+  type ColumnDef,
+  constructAggregationFn,
+  type HeaderContext,
+  type RowData,
 } from "@tanstack/react-table"
 import { format, isValid, parse, parseISO } from "date-fns"
 import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react"
@@ -20,13 +21,14 @@ import {
   parseReportNumber,
 } from "@/features/incoming-report/utils/report-formatters"
 import { cn } from "@/lib/utils"
+import type { ReportFeatures } from "@/lib/tanstack-table/report-table-features"
 
 type ReportColumnHeaderAlign = "left" | "right"
 
 /* eslint-disable react-refresh/only-export-components -- internal column header helpers */
 
-interface ReportColumnHeaderProps<TData, TValue> {
-  column: Column<TData, TValue>
+interface ReportColumnHeaderProps<TData extends RowData, TValue> {
+  column: Column<ReportFeatures, TData, TValue>
   /** Passed explicitly so React Compiler re-renders when sort state changes */
   sorted: false | "asc" | "desc"
   title: string
@@ -47,7 +49,7 @@ function SortIcon({ sorted }: { sorted: false | "asc" | "desc" }) {
   return <ArrowUpDown className="size-3.5 shrink-0" aria-hidden />
 }
 
-function ReportColumnHeader<TData, TValue>({
+function ReportColumnHeader<TData extends RowData, TValue>({
   column,
   sorted,
   title,
@@ -118,11 +120,11 @@ type HeaderOptions = {
 }
 
 /** ColumnDef header factory with sortable label + hover icon */
-function reportColumnHeader<TData>(
+function reportColumnHeader<TData extends RowData>(
   title: string,
   options?: HeaderOptions,
 ) {
-  return ({ column }: HeaderContext<TData, unknown>) => (
+  return ({ column }: HeaderContext<ReportFeatures, TData, unknown>) => (
     <ReportColumnHeader
       column={column}
       sorted={column.getIsSorted()}
@@ -165,7 +167,9 @@ function formatWeightFilterValue(value: unknown): string {
   return formatIndianWeight(value) ?? formatFilterFallback(value)
 }
 
-function reportDateCell({ getValue }: CellContext<IncomingGatePassReportRow, unknown>) {
+function reportDateCell({
+  getValue,
+}: CellContext<ReportFeatures, IncomingGatePassReportRow, unknown>) {
   const formatted = formatReportDate(getValue())
 
   if (formatted == null) {
@@ -179,7 +183,9 @@ function indianNumberCell(
   format: "integer" | "weight",
   options?: { emphasize?: boolean },
 ) {
-  return ({ getValue }: CellContext<IncomingGatePassReportRow, unknown>) => {
+  return ({
+    getValue,
+  }: CellContext<ReportFeatures, IncomingGatePassReportRow, unknown>) => {
     const formatted =
       format === "integer"
         ? formatIndianInteger(getValue())
@@ -211,24 +217,29 @@ function getStatusLabel(status: string) {
   return STATUS_LABELS[status] ?? status.replace(/_/g, " ")
 }
 
-const sortText = { sortingFn: "text" as const, sortUndefined: "last" as const }
+const sortText = { sortFn: "text" as const, sortUndefined: "last" as const }
 const sortNumeric = {
-  sortingFn: "reportNumeric" as const,
+  sortFn: "reportNumeric" as const,
   sortUndefined: "last" as const,
 }
-const sortDate = { sortingFn: "reportDate" as const, sortUndefined: "last" as const }
-const aggregateUnique = { aggregationFn: "uniqueCount" as const }
-const reportSumAggregation: AggregationFn<IncomingGatePassReportRow> = (
-  columnId,
-  leafRows,
-) =>
-  leafRows.reduce((sum, row) => {
-    const parsed = parseReportNumber(row.getValue(columnId))
-    return sum + (parsed ?? 0)
-  }, 0)
-const aggregateSum = { aggregationFn: reportSumAggregation }
+const sortDate = { sortFn: "reportDate" as const, sortUndefined: "last" as const }
+const aggregateUnique = {
+  aggregationFn: "uniqueCount" as const,
+  maxAggregationDepth: Infinity,
+}
+const reportSumAggregation = constructAggregationFn({
+  aggregate: ({ rows, getValue }) =>
+    rows.reduce((sum, row) => {
+      const parsed = parseReportNumber(getValue(row))
+      return sum + (parsed ?? 0)
+    }, 0),
+})
+const aggregateSum = {
+  aggregationFn: reportSumAggregation,
+  maxAggregationDepth: Infinity,
+}
 
-export const columns: ColumnDef<IncomingGatePassReportRow>[] = [
+export const columns: ColumnDef<ReportFeatures, IncomingGatePassReportRow>[] = [
   {
     accessorKey: "name",
     header: reportColumnHeader("Name"),

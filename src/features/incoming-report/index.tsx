@@ -7,19 +7,11 @@ import {
   type ColumnOrderState,
   type ExpandedState,
   functionalUpdate,
-  getCoreRowModel,
-  getExpandedRowModel,
-  getFacetedRowModel,
-  getFacetedUniqueValues,
-  getFilteredRowModel,
-  getGroupedRowModel,
-  getPaginationRowModel,
   type GroupingState,
   type PaginationState,
-  getSortedRowModel,
   type SortingState,
-  useReactTable,
-  type VisibilityState,
+  useTable,
+  type ColumnVisibilityState,
 } from "@tanstack/react-table"
 
 import { columns } from "./components/columns"
@@ -35,9 +27,9 @@ import {
   type AdvancedReportGlobalFilter,
   selectedValuesFilterFn,
 } from "./utils/report-filter-fns"
-import { reportSortingFns } from "./utils/report-sorting-fns"
+import { incomingReportTableFeatures } from "./table-features"
+import type { ReportFeatures } from "@/lib/tanstack-table/report-table-features"
 import {
-  DensityFeature,
   type DensityState,
 } from "@/lib/tanstack-table/density-feature"
 import {
@@ -61,7 +53,7 @@ function toReportDateParam(date: Date | undefined): string | undefined {
 }
 
 const INCOMING_REPORT_COLUMN_IDS = getIncomingReportColumnIds(
-  columns as ColumnDef<unknown, unknown>[],
+  columns as ColumnDef<ReportFeatures, Record<string, unknown>>[],
 )
 
 const IncomingReportPage = () => {
@@ -72,7 +64,7 @@ const IncomingReportPage = () => {
   const [searchQuery, setSearchQuery] = useState("")
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(
+  const [columnVisibility, setColumnVisibility] = useState<ColumnVisibilityState>(
     () =>
       getStoredIncomingReportColumnState(INCOMING_REPORT_COLUMN_IDS)
         .columnVisibility,
@@ -103,30 +95,16 @@ const IncomingReportPage = () => {
     () => data?.incomingGatePasses ?? [],
     [data?.incomingGatePasses],
   )
-  // TanStack Table returns stable APIs that React Compiler cannot memoize safely.
-  // eslint-disable-next-line react-hooks/incompatible-library
-  const table = useReactTable<IncomingGatePassReportRow>({
-    _features: [DensityFeature],
+  const table = useTable<ReportFeatures, IncomingGatePassReportRow>({
+    features: incomingReportTableFeatures,
     data: reportRows,
     columns,
     defaultColumn: {
       filterFn: selectedValuesFilterFn,
     },
-    filterFns: {
-      selectedValues: selectedValuesFilterFn,
-    },
     globalFilterFn: advancedReportGlobalFilterFn,
-    getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getGroupedRowModel: getGroupedRowModel(),
-    getExpandedRowModel: getExpandedRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getFacetedRowModel: getFacetedRowModel(),
-    getFacetedUniqueValues: getFacetedUniqueValues(),
-    getSortedRowModel: getSortedRowModel(),
     getRowId: (row) =>
       `${row.gatePassNo}-${row.date}-${row.manualGatePassNumber}`,
-    sortingFns: reportSortingFns,
     enableSortingRemoval: true,
     autoResetPageIndex: false,
     pageCount: Math.max(1, Math.ceil(reportRows.length / pagination.pageSize)),

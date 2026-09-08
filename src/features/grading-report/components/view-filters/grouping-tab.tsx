@@ -1,24 +1,25 @@
 import type { Column, GroupingState, RowData, Table } from '@tanstack/react-table';
 import { ArrowDown, ArrowUp, Layers3, ListTree, Plus, X } from 'lucide-react';
+import type { ReportFeatures } from '@/lib/tanstack-table/report-table-features';
 
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 interface GroupingTabProps<TData extends RowData> {
-  table: Table<TData>;
+  table: Table<ReportFeatures, TData>;
   draftGrouping: GroupingState;
   onDraftGroupingChange: (grouping: GroupingState) => void;
 }
 
 interface ActiveGroupRowProps<TData extends RowData> {
-  column: Column<TData, unknown>;
+  column: Column<ReportFeatures, TData, unknown>;
   index: number;
   total: number;
   onMove: (fromIndex: number, toIndex: number) => void;
   onRemove: (columnId: string) => void;
 }
 
-function getColumnLabel<TData extends RowData>(column: Column<TData, unknown>): string {
+function getColumnLabel<TData extends RowData>(column: Column<ReportFeatures, TData, unknown>): string {
   return column.columnDef.meta?.filterLabel ?? column.id;
 }
 
@@ -94,7 +95,7 @@ const GroupingTab = <TData extends RowData>({
   const columnsById = new Map(groupableColumns.map((column) => [column.id, column]));
   const activeColumns = draftGrouping
     .map((columnId) => columnsById.get(columnId))
-    .filter((column): column is Column<TData, unknown> => column != null);
+    .filter((column): column is Column<ReportFeatures, TData, unknown> => column != null);
   const availableColumns = groupableColumns.filter((column) => !draftGrouping.includes(column.id));
 
   const handleAddGroup = (columnId: string) => {

@@ -1,5 +1,6 @@
 import type { Column, Table } from '@tanstack/react-table';
 import { Plus, RotateCcw, X } from 'lucide-react';
+import type { ReportFeatures } from '@/lib/tanstack-table/report-table-features';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -21,7 +22,7 @@ import { isAdvancedNumericColumn } from '@/features/grading-report/utils/report-
 import { cn } from '@/lib/utils';
 
 interface AdvancedTabProps {
-  table: Table<GradingGatePassReportRow>;
+  table: Table<ReportFeatures, GradingGatePassReportRow>;
   draftGlobalFilter: AdvancedReportGlobalFilter;
   onDraftGlobalFilterChange: (filter: AdvancedReportGlobalFilter) => void;
 }
@@ -56,21 +57,21 @@ const NUMERIC_OPERATOR_OPTIONS: OperatorOption[] = [
 
 const OPERATOR_OPTIONS = [...STRING_OPERATOR_OPTIONS, ...NUMERIC_OPERATOR_OPTIONS];
 
-function getColumnLabel(column: Column<GradingGatePassReportRow, unknown>) {
+function getColumnLabel(column: Column<ReportFeatures, GradingGatePassReportRow, unknown>) {
   return column.columnDef.meta?.filterLabel ?? column.id;
 }
 
-function getDefaultOperator(column: Column<GradingGatePassReportRow, unknown>) {
+function getDefaultOperator(column: Column<ReportFeatures, GradingGatePassReportRow, unknown>) {
   return isAdvancedNumericColumn(column.id) ? 'greaterThan' : 'contains';
 }
 
-function getOperatorOptions(column: Column<GradingGatePassReportRow, unknown> | undefined) {
+function getOperatorOptions(column: Column<ReportFeatures, GradingGatePassReportRow, unknown> | undefined) {
   return column && isAdvancedNumericColumn(column.id)
     ? NUMERIC_OPERATOR_OPTIONS
     : STRING_OPERATOR_OPTIONS;
 }
 
-function getColumnValueOptions(column: Column<GradingGatePassReportRow, unknown> | undefined) {
+function getColumnValueOptions(column: Column<ReportFeatures, GradingGatePassReportRow, unknown> | undefined) {
   if (!column) return [];
 
   return Array.from(column.getFacetedUniqueValues().keys())
@@ -85,7 +86,7 @@ function getColumnValueOptions(column: Column<GradingGatePassReportRow, unknown>
 }
 
 function createCondition(
-  column: Column<GradingGatePassReportRow, unknown>,
+  column: Column<ReportFeatures, GradingGatePassReportRow, unknown>,
 ): AdvancedFilterCondition {
   return {
     id: `condition-${Date.now()}-${Math.random().toString(36).slice(2)}`,

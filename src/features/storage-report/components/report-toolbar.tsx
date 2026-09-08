@@ -1,5 +1,6 @@
 import type { Table } from "@tanstack/react-table"
 import { Eye, FileSpreadsheet, Loader2, RefreshCw, Search } from "lucide-react"
+import type { ReportFeatures } from "@/lib/tanstack-table/report-table-features"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -9,7 +10,7 @@ import { cn } from "@/lib/utils"
 import { ViewFiltersSheet } from "./view-filters"
 
 export interface ReportToolbarProps {
-  table: Table<StorageGatePass> | null
+  table: Table<ReportFeatures, StorageGatePass> | null
   dateFrom: string
   dateTo: string
   onDateFromChange: (value: string) => void

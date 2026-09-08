@@ -1,4 +1,5 @@
-import type { ColumnDef, ColumnOrderState, VisibilityState } from '@tanstack/react-table';
+import type { ColumnDef, ColumnOrderState, ColumnVisibilityState } from '@tanstack/react-table';
+import type { ReportFeatures } from '@/lib/tanstack-table/report-table-features';
 
 const STORAGE_KEY = 'grading-report:column-preferences:v1';
 
@@ -9,7 +10,7 @@ type StoredColumnPreferences = {
 };
 
 export type GradingReportColumnState = {
-  columnVisibility: VisibilityState;
+  columnVisibility: ColumnVisibilityState;
   columnOrder: ColumnOrderState;
 };
 
@@ -23,7 +24,7 @@ function getStorage(): Storage | null {
   }
 }
 
-function getColumnId(column: ColumnDef<unknown, unknown>, index: number) {
+function getColumnId(column: ColumnDef<ReportFeatures, Record<string, unknown>>, index: number) {
   const candidate = column as {
     id?: string;
     accessorKey?: string | number | symbol;
@@ -34,10 +35,10 @@ function getColumnId(column: ColumnDef<unknown, unknown>, index: number) {
   return `col-${index}`;
 }
 
-function getLeafColumnIds(columns: ColumnDef<unknown, unknown>[]): string[] {
+function getLeafColumnIds(columns: ColumnDef<ReportFeatures, Record<string, unknown>>[]): string[] {
   return columns.flatMap((column, index) => {
     if ('columns' in column && Array.isArray(column.columns)) {
-      return getLeafColumnIds(column.columns as ColumnDef<unknown, unknown>[]);
+      return getLeafColumnIds(column.columns as ColumnDef<ReportFeatures, Record<string, unknown>>[]);
     }
 
     return getColumnId(column, index);
@@ -84,7 +85,7 @@ function toColumnState(
   }
 
   const columnIdSet = new Set(columnIds);
-  const columnVisibility = preferences.hiddenColumnIds.reduce<VisibilityState>(
+  const columnVisibility = preferences.hiddenColumnIds.reduce<ColumnVisibilityState>(
     (visibility, columnId) => {
       if (columnIdSet.has(columnId)) visibility[columnId] = false;
       return visibility;
@@ -98,7 +99,7 @@ function toColumnState(
   };
 }
 
-export function getGradingReportColumnIds(columns: ColumnDef<unknown, unknown>[]) {
+export function getGradingReportColumnIds(columns: ColumnDef<ReportFeatures, Record<string, unknown>>[]) {
   return getLeafColumnIds(columns);
 }
 
@@ -115,7 +116,7 @@ export function hasStoredGradingReportColumnState() {
 
 export function saveGradingReportColumnState(
   columnIds: string[],
-  columnVisibility: VisibilityState,
+  columnVisibility: ColumnVisibilityState,
   columnOrder: ColumnOrderState,
 ) {
   const storage = getStorage();

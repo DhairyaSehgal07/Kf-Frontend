@@ -4,9 +4,10 @@ import type {
   ColumnOrderState,
   GroupingState,
   Table,
-  VisibilityState,
+  ColumnVisibilityState,
 } from '@tanstack/react-table';
 import { CheckCircle2, RotateCcw, SlidersHorizontal } from 'lucide-react';
+import type { ReportFeatures } from '@/lib/tanstack-table/report-table-features';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -28,7 +29,7 @@ import FiltersTab from './filters-tab';
 import GroupingTab from './grouping-tab';
 
 interface ViewFiltersSheetProps {
-  table: Table<GradingGatePassReportRow>;
+  table: Table<ReportFeatures, GradingGatePassReportRow>;
 }
 
 function getDefaultGlobalFilter(manualGatePassSearch = ''): AdvancedReportGlobalFilter {
@@ -42,26 +43,24 @@ function getDefaultGlobalFilter(manualGatePassSearch = ''): AdvancedReportGlobal
 export function ViewFiltersSheet({ table }: ViewFiltersSheetProps) {
   const [open, setOpen] = useState(false);
   const [draftColumnFilters, setDraftColumnFilters] = useState<ColumnFiltersState>(
-    () => table.getState().columnFilters,
+    () => table.store.state.columnFilters,
   );
-  const [draftColumnVisibility, setDraftColumnVisibility] = useState<VisibilityState>(
-    () => table.getState().columnVisibility,
+  const [draftColumnVisibility, setDraftColumnVisibility] = useState<ColumnVisibilityState>(
+    () => table.store.state.columnVisibility,
   );
   const [draftColumnOrder, setDraftColumnOrder] = useState<ColumnOrderState>(
-    () => table.getState().columnOrder,
+    () => table.store.state.columnOrder,
   );
-  const [draftGrouping, setDraftGrouping] = useState<GroupingState>(() => table.getState().grouping);
+  const [draftGrouping, setDraftGrouping] = useState<GroupingState>(() => table.store.state.grouping);
   const [draftGlobalFilter, setDraftGlobalFilter] = useState<AdvancedReportGlobalFilter>(() => ({
     logic: 'AND',
     conditions: [],
-    ...table.getState().globalFilter,
+    ...table.store.state.globalFilter,
   }));
-  const activeFilterCount = table.getState().columnFilters.length;
-  const activeGroupingCount = table.getState().grouping.length;
+  const activeFilterCount = table.store.state.columnFilters.length;
+  const activeGroupingCount = table.store.state.grouping.length;
   const activeAdvancedCount =
-    table
-      .getState()
-      .globalFilter?.conditions?.filter(
+    table.store.state.globalFilter?.conditions?.filter(
         (condition: { operator: string; value: string }) =>
           condition.operator === 'isEmpty' ||
           condition.operator === 'isNotEmpty' ||
@@ -69,13 +68,13 @@ export function ViewFiltersSheet({ table }: ViewFiltersSheetProps) {
       ).length ?? 0;
   const hiddenColumnCount = table
     .getAllLeafColumns()
-    .filter((column) => table.getState().columnVisibility[column.id] === false).length;
+    .filter((column) => table.store.state.columnVisibility[column.id] === false).length;
   const defaultColumnState = getStoredGradingReportColumnState(
     table.getAllLeafColumns().map((column) => column.id),
   );
   const hasDraftViewChanges =
     draftColumnFilters.length > 0 ||
-    !areVisibilityStatesEqual(draftColumnVisibility, defaultColumnState.columnVisibility) ||
+    !areColumnVisibilityStatesEqual(draftColumnVisibility, defaultColumnState.columnVisibility) ||
     !areColumnOrdersEqual(draftColumnOrder, defaultColumnState.columnOrder) ||
     draftGrouping.length > 0 ||
     draftGlobalFilter.logic !== 'AND' ||
@@ -83,7 +82,7 @@ export function ViewFiltersSheet({ table }: ViewFiltersSheetProps) {
 
   const handleOpenChange = (nextOpen: boolean) => {
     if (nextOpen) {
-      const tableState = table.getState();
+      const tableState = table.store.state;
       setDraftColumnFilters(tableState.columnFilters);
       setDraftColumnVisibility(tableState.columnVisibility);
       setDraftColumnOrder(tableState.columnOrder);
@@ -107,7 +106,7 @@ export function ViewFiltersSheet({ table }: ViewFiltersSheetProps) {
     table.setGlobalFilter({
       ...draftGlobalFilter,
       manualGatePassSearch:
-        table.getState().globalFilter?.manualGatePassSearch ??
+        table.store.state.globalFilter?.manualGatePassSearch ??
         draftGlobalFilter.manualGatePassSearch ??
         '',
     });
@@ -116,7 +115,7 @@ export function ViewFiltersSheet({ table }: ViewFiltersSheetProps) {
 
   const handleResetChanges = () => {
     const manualGatePassSearch =
-      table.getState().globalFilter?.manualGatePassSearch ??
+      table.store.state.globalFilter?.manualGatePassSearch ??
       draftGlobalFilter.manualGatePassSearch ??
       '';
     const defaultGlobalFilter = getDefaultGlobalFilter(manualGatePassSearch);
@@ -260,7 +259,7 @@ export function ViewFiltersSheet({ table }: ViewFiltersSheetProps) {
   );
 }
 
-function areVisibilityStatesEqual(a: VisibilityState, b: VisibilityState) {
+function areColumnVisibilityStatesEqual(a: ColumnVisibilityState, b: ColumnVisibilityState) {
   const keys = new Set([...Object.keys(a), ...Object.keys(b)]);
 
   for (const key of keys) {

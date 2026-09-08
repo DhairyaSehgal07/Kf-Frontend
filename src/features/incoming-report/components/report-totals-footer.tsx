@@ -1,4 +1,5 @@
 import type { Table } from "@tanstack/react-table"
+import type { ReportFeatures } from "@/lib/tanstack-table/report-table-features"
 
 import type { IncomingGatePassReportRow } from "@/features/incoming-report/api/types"
 import {
@@ -23,7 +24,7 @@ export function createReportTotalFooter(
   format: TotalFormat,
   options?: { emphasize?: boolean },
 ) {
-  return ({ table }: { table: Table<IncomingGatePassReportRow> }) => {
+  return ({ table }: { table: Table<ReportFeatures, IncomingGatePassReportRow> }) => {
     const rows = table.getFilteredRowModel().rows
     if (rows.length === 0) return null
 

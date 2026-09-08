@@ -1,9 +1,9 @@
 import { useMemo } from "react"
 import {
+  columnVisibilityFeature,
   flexRender,
-  getCoreRowModel,
-  type SortingFn,
-  useReactTable,
+  tableFeatures,
+  useTable,
 } from "@tanstack/react-table"
 import { Loader2 } from "lucide-react"
 
@@ -18,9 +18,10 @@ import {
 import { cn } from "@/lib/utils"
 
 import { useTransferStockReport } from "./api/use-transfer-stock-report"
-import type { TransferStockReportRow } from "./api/types"
 
-const noopSortingFn: SortingFn<unknown> = () => 0
+const transferStockReportTableFeatures = tableFeatures({
+  columnVisibilityFeature,
+})
 
 const NUMERIC_COLUMNS = new Set([
   "gatePassNo",
@@ -45,15 +46,11 @@ const TransferStockReportPage = () => {
 
   const rows = data?.data.transferStockGatePasses ?? []
 
-  const table = useReactTable<TransferStockReportRow>({
+  const table = useTable({
+    features: transferStockReportTableFeatures,
     data: rows,
     columns,
-    getCoreRowModel: getCoreRowModel(),
     getRowId: (row) => row._id,
-    sortingFns: {
-      reportNumeric: noopSortingFn,
-      reportDate: noopSortingFn,
-    },
   })
 
   if (isLoading) {

@@ -1,9 +1,10 @@
-import type { AggregationFn, ColumnDef } from "@tanstack/react-table"
+import { constructAggregationFn, type ColumnDef } from "@tanstack/react-table"
 
 import type {
   StorageGatePass,
   StorageGatePassBagSize,
 } from "@/features/storage/api/types"
+import type { ReportFeatures } from "@/lib/tanstack-table/report-table-features"
 
 const numberFormatter = new Intl.NumberFormat("en-IN")
 
@@ -24,29 +25,36 @@ const formatDate = (date: string) => {
 }
 
 const formatQuantity = (quantity: number) => numberFormatter.format(quantity)
-const sortText = { sortingFn: "text" as const, sortUndefined: "last" as const }
+const sortText = { sortFn: "text" as const, sortUndefined: "last" as const }
 const sortNumeric = {
-  sortingFn: "reportNumeric" as const,
+  sortFn: "reportNumeric" as const,
   sortUndefined: "last" as const,
 }
 const sortDate = {
-  sortingFn: "reportDate" as const,
+  sortFn: "reportDate" as const,
   sortUndefined: "last" as const,
 }
-const reportEmptyAggregation: AggregationFn<StorageGatePass> = () => null
-const reportSumAggregation: AggregationFn<StorageGatePass> = (
-  columnId,
-  leafRows,
-) =>
-  leafRows.reduce((sum, row) => {
-    const value = row.getValue(columnId)
+const reportEmptyAggregation = constructAggregationFn({
+  aggregate: () => null,
+})
+const reportSumAggregation = constructAggregationFn({
+  aggregate: ({ rows, getValue }) =>
+    rows.reduce((sum, row) => {
+      const value = getValue(row)
 
-    return (
-      sum + (typeof value === "number" && Number.isFinite(value) ? value : 0)
-    )
-  }, 0)
-const aggregateNone = { aggregationFn: reportEmptyAggregation }
-const aggregateSum = { aggregationFn: reportSumAggregation }
+      return (
+        sum + (typeof value === "number" && Number.isFinite(value) ? value : 0)
+      )
+    }, 0),
+})
+const aggregateNone = {
+  aggregationFn: reportEmptyAggregation,
+  maxAggregationDepth: Infinity,
+}
+const aggregateSum = {
+  aggregationFn: reportSumAggregation,
+  maxAggregationDepth: Infinity,
+}
 
 const getBagQuantity = (
   bag: StorageGatePassBagSize,
@@ -82,7 +90,7 @@ const renderBagSizeValue = (
   )
 }
 
-const baseColumns: ColumnDef<StorageGatePass>[] = [
+const baseColumns: ColumnDef<ReportFeatures, StorageGatePass>[] = [
   {
     id: "name",
     accessorFn: (row) => row.farmerStorageLinkId.farmerId.name,
@@ -168,7 +176,7 @@ const baseColumns: ColumnDef<StorageGatePass>[] = [
   },
 ]
 
-const totalBagsColumn: ColumnDef<StorageGatePass> = {
+const totalBagsColumn: ColumnDef<ReportFeatures, StorageGatePass> = {
   accessorKey: "totalBags",
   header: () => (
     <span className="flex min-w-0 flex-col gap-0.5">
@@ -195,7 +203,7 @@ const totalBagsColumn: ColumnDef<StorageGatePass> = {
   },
 }
 
-const trailingColumns: ColumnDef<StorageGatePass>[] = [
+const trailingColumns: ColumnDef<ReportFeatures, StorageGatePass>[] = [
   {
     id: "createdBy",
     accessorFn: (row) => row.createdBy?.name ?? "-",
@@ -217,12 +225,12 @@ const trailingColumns: ColumnDef<StorageGatePass>[] = [
 export function getStorageReportColumns(
   rows: StorageGatePass[],
   quantityMode: StorageQuantityMode = "current",
-): ColumnDef<StorageGatePass>[] {
+): ColumnDef<ReportFeatures, StorageGatePass>[] {
   const sizes = Array.from(
     new Set(rows.flatMap((row) => row.bagSizes.map((bag) => bag.size))),
   )
 
-  const sizeColumns: ColumnDef<StorageGatePass>[] = sizes.map((size) => ({
+  const sizeColumns: ColumnDef<ReportFeatures, StorageGatePass>[] = sizes.map((size) => ({
     id: `size-${size}`,
     accessorFn: (row) => getBagSizeQuantity(row, size, quantityMode),
     header: size,
@@ -264,4 +272,4 @@ export function getStorageReportColumns(
   return [...baseColumns, totalBagsColumn, ...sizeColumns, ...trailingColumns]
 }
 
-export const columns: ColumnDef<StorageGatePass>[] = getStorageReportColumns([])
+export const columns: ColumnDef<ReportFeatures, StorageGatePass>[] = getStorageReportColumns([])

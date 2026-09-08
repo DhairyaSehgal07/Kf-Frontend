@@ -1,5 +1,6 @@
 import { format } from 'date-fns';
 import type { Table } from '@tanstack/react-table';
+import type { ReportFeatures } from '@/lib/tanstack-table/report-table-features';
 
 import type { GradingGatePassReportRow } from '@/features/grading-report/api/types';
 import {
@@ -23,7 +24,7 @@ export const GRADING_REPORT_DOWNLOAD_EXCEL_DONE_MESSAGE =
   'kf-grading-report-download-excel-done' as const;
 
 export type PreviewGradingReportOptions = {
-  table: Table<GradingGatePassReportRow>;
+  table: Table<ReportFeatures, GradingGatePassReportRow>;
   coldStorageName: string;
   reportTitle?: string;
   fromDate?: Date;
@@ -177,7 +178,7 @@ function buildPreviewStyles(): string {
 }
 
 function renderCellHtml(
-  column: ReturnType<Table<GradingGatePassReportRow>['getVisibleLeafColumns']>[number],
+  column: ReturnType<Table<ReportFeatures, GradingGatePassReportRow>['getVisibleLeafColumns']>[number],
   exportCell: ReturnType<typeof getExportCellForLine>,
   options?: { incoming?: boolean; rowSpan?: number },
 ): string {

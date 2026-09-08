@@ -1,4 +1,5 @@
 import type { Row, Table } from '@tanstack/react-table';
+import type { ReportFeatures } from '@/lib/tanstack-table/report-table-features';
 
 import type { GradingGatePassReportRow } from '@/features/grading-report/api/types';
 import {
@@ -54,7 +55,7 @@ export function createReportTotalFooter(
   format: TotalFormat,
   options?: { emphasize?: boolean },
 ) {
-  return ({ table }: { table: Table<GradingGatePassReportRow> }) => {
+  return ({ table }: { table: Table<ReportFeatures, GradingGatePassReportRow> }) => {
     const rows = table.getFilteredRowModel().rows;
     if (rows.length === 0) return null;
 
@@ -67,7 +68,7 @@ export function createAverageReportFooter(
   format: TotalFormat,
   options?: { suffix?: string },
 ) {
-  return ({ table }: { table: Table<GradingGatePassReportRow> }) => {
+  return ({ table }: { table: Table<ReportFeatures, GradingGatePassReportRow> }) => {
     const rows = table.getFilteredRowModel().rows;
     if (rows.length === 0) return null;
 
@@ -80,7 +81,7 @@ export function createAverageReportFooter(
 
 export function getGradingReportFooterContent(
   columnId: string,
-  rows: readonly Row<GradingGatePassReportRow>[],
+  rows: readonly Row<ReportFeatures, GradingGatePassReportRow>[],
 ) {
   if (columnId.startsWith('size-')) {
     return renderTotalValue(sumOrderDetailSizeQuantity(rows, columnId.replace(/^size-/, '')), 'integer');

@@ -1,8 +1,8 @@
 import { isValid, parse, parseISO } from "date-fns"
-import type { SortingFn } from "@tanstack/react-table"
 
 import type { IncomingGatePassReportRow } from "@/features/incoming-report/api/types"
 import { parseReportNumber } from "@/features/incoming-report/utils/report-formatters"
+import type { ReportSortFn } from "@/lib/tanstack-table/report-table-features"
 
 function parseReportDateValue(value: unknown): number | null {
   if (value == null || value === "") return null
@@ -20,7 +20,7 @@ function parseReportDateValue(value: unknown): number | null {
   return parsed.getTime()
 }
 
-export const reportNumericSortingFn: SortingFn<IncomingGatePassReportRow> = (
+export const reportNumericSortingFn: ReportSortFn<IncomingGatePassReportRow> = (
   rowA,
   rowB,
   columnId,
@@ -35,7 +35,7 @@ export const reportNumericSortingFn: SortingFn<IncomingGatePassReportRow> = (
   return a === b ? 0 : a > b ? 1 : -1
 }
 
-export const reportDateSortingFn: SortingFn<IncomingGatePassReportRow> = (
+export const reportDateSortingFn: ReportSortFn<IncomingGatePassReportRow> = (
   rowA,
   rowB,
   columnId,
@@ -48,16 +48,4 @@ export const reportDateSortingFn: SortingFn<IncomingGatePassReportRow> = (
   if (b == null) return 1
 
   return a === b ? 0 : a > b ? 1 : -1
-}
-
-export const reportSortingFns = {
-  reportNumeric: reportNumericSortingFn,
-  reportDate: reportDateSortingFn,
-}
-
-declare module "@tanstack/react-table" {
-  interface SortingFns {
-    reportNumeric: SortingFn<IncomingGatePassReportRow>
-    reportDate: SortingFn<IncomingGatePassReportRow>
-  }
 }

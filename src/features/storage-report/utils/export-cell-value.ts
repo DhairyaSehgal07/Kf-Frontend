@@ -1,5 +1,6 @@
 import { format, isValid, parse, parseISO } from "date-fns"
 import type { Column, Row, Table } from "@tanstack/react-table"
+import type { ReportFeatures } from "@/lib/tanstack-table/report-table-features"
 
 import type {
   StorageGatePass,
@@ -79,7 +80,7 @@ function formatBagSizeText(
 }
 
 function sumBagSizeQuantity(
-  rows: readonly Row<StorageGatePass>[],
+  rows: readonly Row<ReportFeatures, StorageGatePass>[],
   size: string,
   quantityMode: StorageQuantityMode,
 ) {
@@ -94,7 +95,7 @@ function sumBagSizeQuantity(
 }
 
 export function getColumnExportLabel(
-  column: Column<StorageGatePass, unknown>,
+  column: Column<ReportFeatures, StorageGatePass, unknown>,
 ): string {
   return column.columnDef.meta?.filterLabel ?? column.id
 }
@@ -116,7 +117,7 @@ function formatReportDate(value: unknown): string | null {
 
 function formatDisplayValue(
   value: unknown,
-  column: Column<StorageGatePass, unknown>,
+  column: Column<ReportFeatures, StorageGatePass, unknown>,
 ): string {
   const meta = column.columnDef.meta
   if (meta?.filterValueFormatter) return meta.filterValueFormatter(value)
@@ -180,8 +181,8 @@ export function formatExportCellValue(
 }
 
 export function getExportCellForRow(
-  row: Row<StorageGatePass>,
-  column: Column<StorageGatePass, unknown>,
+  row: Row<ReportFeatures, StorageGatePass>,
+  column: Column<ReportFeatures, StorageGatePass, unknown>,
   quantityMode: StorageQuantityMode,
 ): ExportCellValue {
   const cell = row
@@ -230,18 +231,18 @@ export function getExportCellForRow(
 }
 
 export function collectExportRows(
-  table: Table<StorageGatePass>,
-): Row<StorageGatePass>[] {
-  const grouping = table.getState().grouping
+  table: Table<ReportFeatures, StorageGatePass>,
+): Row<ReportFeatures, StorageGatePass>[] {
+  const grouping = table.store.state.grouping
 
   if (grouping.length === 0) {
     return table.getSortedRowModel().rows
   }
 
   function flattenGroupedRows(
-    rows: Row<StorageGatePass>[],
-  ): Row<StorageGatePass>[] {
-    const result: Row<StorageGatePass>[] = []
+    rows: Row<ReportFeatures, StorageGatePass>[],
+  ): Row<ReportFeatures, StorageGatePass>[] {
+    const result: Row<ReportFeatures, StorageGatePass>[] = []
 
     for (const row of rows) {
       result.push(row)
@@ -256,12 +257,12 @@ export function collectExportRows(
   return flattenGroupedRows(table.getGroupedRowModel().rows)
 }
 
-export function getFilteredLeafRowCount(table: Table<StorageGatePass>): number {
+export function getFilteredLeafRowCount(table: Table<ReportFeatures, StorageGatePass>): number {
   return table.getFilteredRowModel().flatRows.length
 }
 
 function formatConditionLabel(
-  table: Table<StorageGatePass>,
+  table: Table<ReportFeatures, StorageGatePass>,
   condition: AdvancedFilterCondition,
 ): string {
   const column = table.getColumn(String(condition.columnId))
@@ -281,10 +282,10 @@ function formatConditionLabel(
   return `${columnLabel} ${operatorLabel} "${value}"`
 }
 
-function formatColumnFilterSummary(table: Table<StorageGatePass>): string[] {
+function formatColumnFilterSummary(table: Table<ReportFeatures, StorageGatePass>): string[] {
   const summaries: string[] = []
 
-  for (const filter of table.getState().columnFilters) {
+  for (const filter of table.store.state.columnFilters) {
     if (!Array.isArray(filter.value) || filter.value.length === 0) continue
 
     const column = table.getColumn(filter.id)
@@ -307,7 +308,7 @@ function formatColumnFilterSummary(table: Table<StorageGatePass>): string[] {
 }
 
 function formatAdvancedFilterSummary(
-  table: Table<StorageGatePass>,
+  table: Table<ReportFeatures, StorageGatePass>,
   globalFilter: AdvancedReportGlobalFilter,
 ): string[] {
   const activeConditions = globalFilter.conditions
@@ -323,8 +324,8 @@ function formatAdvancedFilterSummary(
   ]
 }
 
-function formatGroupingSummary(table: Table<StorageGatePass>): string | null {
-  const grouping = table.getState().grouping
+function formatGroupingSummary(table: Table<ReportFeatures, StorageGatePass>): string | null {
+  const grouping = table.store.state.grouping
   if (grouping.length === 0) return null
 
   const labels = grouping
@@ -337,8 +338,8 @@ function formatGroupingSummary(table: Table<StorageGatePass>): string | null {
   return `Grouped by: ${labels}`
 }
 
-function formatSortingSummary(table: Table<StorageGatePass>): string | null {
-  const sorting = table.getState().sorting
+function formatSortingSummary(table: Table<ReportFeatures, StorageGatePass>): string | null {
+  const sorting = table.store.state.sorting
   if (sorting.length === 0) return null
 
   const labels = sorting
@@ -353,10 +354,10 @@ function formatSortingSummary(table: Table<StorageGatePass>): string | null {
 }
 
 export function buildFilterSummaryLines(
-  table: Table<StorageGatePass>,
+  table: Table<ReportFeatures, StorageGatePass>,
   quantityMode: StorageQuantityMode,
 ): string[] {
-  const globalFilter = table.getState().globalFilter
+  const globalFilter = table.store.state.globalFilter
 
   const lines = [
     `Quantity view: ${quantityMode === "current" ? "Current Qty" : "Initial Qty"}`,
@@ -400,7 +401,7 @@ export function isSummableExportColumn(columnId: string): boolean {
 
 export function getFooterExportValue(
   columnId: string,
-  rows: readonly Row<StorageGatePass>[],
+  rows: readonly Row<ReportFeatures, StorageGatePass>[],
   quantityMode: StorageQuantityMode,
 ): ExportCellValue {
   if (columnId === "totalBags") {

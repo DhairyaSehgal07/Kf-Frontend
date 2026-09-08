@@ -1,5 +1,6 @@
 import type { Column, Table } from "@tanstack/react-table"
 import { Plus, RotateCcw, X } from "lucide-react"
+import type { ReportFeatures } from "@/lib/tanstack-table/report-table-features"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -21,7 +22,7 @@ import { isAdvancedNumericColumn } from "@/features/storage-report/utils/report-
 import { cn } from "@/lib/utils"
 
 interface AdvancedTabProps {
-  table: Table<StorageGatePass>
+  table: Table<ReportFeatures, StorageGatePass>
   draftGlobalFilter: AdvancedReportGlobalFilter
   onDraftGlobalFilterChange: (filter: AdvancedReportGlobalFilter) => void
 }
@@ -67,16 +68,16 @@ const OPERATOR_OPTIONS = [
   ...NUMERIC_OPERATOR_OPTIONS,
 ]
 
-function getColumnLabel(column: Column<StorageGatePass, unknown>) {
+function getColumnLabel(column: Column<ReportFeatures, StorageGatePass, unknown>) {
   return column.columnDef.meta?.filterLabel ?? column.id
 }
 
-function getDefaultOperator(column: Column<StorageGatePass, unknown>) {
+function getDefaultOperator(column: Column<ReportFeatures, StorageGatePass, unknown>) {
   return isAdvancedNumericColumn(column.id) ? "greaterThan" : "contains"
 }
 
 function getOperatorOptions(
-  column: Column<StorageGatePass, unknown> | undefined,
+  column: Column<ReportFeatures, StorageGatePass, unknown> | undefined,
 ) {
   return column && isAdvancedNumericColumn(column.id)
     ? NUMERIC_OPERATOR_OPTIONS
@@ -84,7 +85,7 @@ function getOperatorOptions(
 }
 
 function getColumnValueOptions(
-  column: Column<StorageGatePass, unknown> | undefined,
+  column: Column<ReportFeatures, StorageGatePass, unknown> | undefined,
 ) {
   if (!column) return []
 
@@ -100,7 +101,7 @@ function getColumnValueOptions(
 }
 
 function createCondition(
-  column: Column<StorageGatePass, unknown>,
+  column: Column<ReportFeatures, StorageGatePass, unknown>,
 ): AdvancedFilterCondition {
   return {
     id: `condition-${Date.now()}-${Math.random().toString(36).slice(2)}`,

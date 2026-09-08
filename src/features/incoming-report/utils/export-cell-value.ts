@@ -1,5 +1,6 @@
 import { format, isValid, parse, parseISO } from "date-fns"
 import type { Column, Row, Table } from "@tanstack/react-table"
+import type { ReportFeatures } from "@/lib/tanstack-table/report-table-features"
 
 import type { IncomingGatePassReportRow } from "@/features/incoming-report/api/types"
 import type {
@@ -54,7 +55,7 @@ export type ExportCellValue =
   | { kind: "empty" }
 
 export function getColumnExportLabel(
-  column: Column<IncomingGatePassReportRow, unknown>,
+  column: Column<ReportFeatures, IncomingGatePassReportRow, unknown>,
 ): string {
   return column.columnDef.meta?.filterLabel ?? column.id
 }
@@ -81,7 +82,7 @@ function getStatusLabel(status: string) {
 
 function formatDisplayValue(
   value: unknown,
-  column: Column<IncomingGatePassReportRow, unknown>,
+  column: Column<ReportFeatures, IncomingGatePassReportRow, unknown>,
 ): string {
   const meta = column.columnDef.meta
   if (meta?.filterValueFormatter) return meta.filterValueFormatter(value)
@@ -126,8 +127,8 @@ export function formatExportCellValue(
 }
 
 export function getExportCellForRow(
-  row: Row<IncomingGatePassReportRow>,
-  column: Column<IncomingGatePassReportRow, unknown>,
+  row: Row<ReportFeatures, IncomingGatePassReportRow>,
+  column: Column<ReportFeatures, IncomingGatePassReportRow, unknown>,
 ): ExportCellValue {
   const cell = row
     .getVisibleCells()
@@ -165,18 +166,18 @@ export function getExportCellForRow(
 }
 
 export function collectExportRows(
-  table: Table<IncomingGatePassReportRow>,
-): Row<IncomingGatePassReportRow>[] {
-  const grouping = table.getState().grouping
+  table: Table<ReportFeatures, IncomingGatePassReportRow>,
+): Row<ReportFeatures, IncomingGatePassReportRow>[] {
+  const grouping = table.store.state.grouping
 
   if (grouping.length === 0) {
     return table.getSortedRowModel().rows
   }
 
   function flattenGroupedRows(
-    rows: Row<IncomingGatePassReportRow>[],
-  ): Row<IncomingGatePassReportRow>[] {
-    const result: Row<IncomingGatePassReportRow>[] = []
+    rows: Row<ReportFeatures, IncomingGatePassReportRow>[],
+  ): Row<ReportFeatures, IncomingGatePassReportRow>[] {
+    const result: Row<ReportFeatures, IncomingGatePassReportRow>[] = []
 
     for (const row of rows) {
       result.push(row)
@@ -192,13 +193,13 @@ export function collectExportRows(
 }
 
 export function getFilteredLeafRowCount(
-  table: Table<IncomingGatePassReportRow>,
+  table: Table<ReportFeatures, IncomingGatePassReportRow>,
 ): number {
   return table.getFilteredRowModel().flatRows.length
 }
 
 function formatConditionLabel(
-  table: Table<IncomingGatePassReportRow>,
+  table: Table<ReportFeatures, IncomingGatePassReportRow>,
   condition: AdvancedFilterCondition,
 ): string {
   const column = table.getColumn(String(condition.columnId))
@@ -219,11 +220,11 @@ function formatConditionLabel(
 }
 
 function formatColumnFilterSummary(
-  table: Table<IncomingGatePassReportRow>,
+  table: Table<ReportFeatures, IncomingGatePassReportRow>,
 ): string[] {
   const summaries: string[] = []
 
-  for (const filter of table.getState().columnFilters) {
+  for (const filter of table.store.state.columnFilters) {
     if (!Array.isArray(filter.value) || filter.value.length === 0) continue
 
     const column = table.getColumn(filter.id)
@@ -246,7 +247,7 @@ function formatColumnFilterSummary(
 }
 
 function formatAdvancedFilterSummary(
-  table: Table<IncomingGatePassReportRow>,
+  table: Table<ReportFeatures, IncomingGatePassReportRow>,
   globalFilter: AdvancedReportGlobalFilter,
 ): string[] {
   const summaries: string[] = []
@@ -272,9 +273,9 @@ function formatAdvancedFilterSummary(
 }
 
 function formatGroupingSummary(
-  table: Table<IncomingGatePassReportRow>,
+  table: Table<ReportFeatures, IncomingGatePassReportRow>,
 ): string | null {
-  const grouping = table.getState().grouping
+  const grouping = table.store.state.grouping
   if (grouping.length === 0) return null
 
   const labels = grouping
@@ -288,9 +289,9 @@ function formatGroupingSummary(
 }
 
 function formatSortingSummary(
-  table: Table<IncomingGatePassReportRow>,
+  table: Table<ReportFeatures, IncomingGatePassReportRow>,
 ): string | null {
-  const sorting = table.getState().sorting
+  const sorting = table.store.state.sorting
   if (sorting.length === 0) return null
 
   const labels = sorting
@@ -305,9 +306,9 @@ function formatSortingSummary(
 }
 
 export function buildFilterSummaryLines(
-  table: Table<IncomingGatePassReportRow>,
+  table: Table<ReportFeatures, IncomingGatePassReportRow>,
 ): string[] {
-  const globalFilter = table.getState().globalFilter
+  const globalFilter = table.store.state.globalFilter
 
   const lines = [
     ...formatColumnFilterSummary(table),

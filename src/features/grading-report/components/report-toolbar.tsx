@@ -1,5 +1,6 @@
 import type { Table } from '@tanstack/react-table';
 import { ArrowRight, Eye, FileSpreadsheet, Loader2, RefreshCw, Search } from 'lucide-react';
+import type { ReportFeatures } from '@/lib/tanstack-table/report-table-features';
 
 import { DatePickerInput } from '@/components/date-picker';
 import { Button } from '@/components/ui/button';
@@ -9,7 +10,7 @@ import { cn } from '@/lib/utils';
 import { ViewFiltersSheet } from './view-filters';
 
 export interface ReportToolbarProps {
-  table: Table<GradingGatePassReportRow> | null;
+  table: Table<ReportFeatures, GradingGatePassReportRow> | null;
   fromDate: Date | undefined;
   toDate: Date | undefined;
   onFromDateChange: (date: Date | undefined) => void;

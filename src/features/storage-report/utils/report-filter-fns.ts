@@ -1,6 +1,5 @@
-import type { FilterFn } from "@tanstack/react-table"
-
 import type { StorageGatePass } from "@/features/storage/api/types"
+import type { ReportFilterFn } from "@/lib/tanstack-table/report-table-features"
 
 export type SelectedValuesFilterValue = string[]
 export type AdvancedFilterLogic = "AND" | "OR"
@@ -71,7 +70,7 @@ function parseReportNumber(value: unknown): number | null {
   return Number.isFinite(parsed) ? parsed : null
 }
 
-export const selectedValuesFilterFn: FilterFn<StorageGatePass> = (
+export const selectedValuesFilterFn: ReportFilterFn<StorageGatePass> = (
   row,
   columnId,
   filterValue,
@@ -103,7 +102,7 @@ function normalizeText(value: unknown): string {
 }
 
 function evaluateCondition(
-  row: Parameters<FilterFn<StorageGatePass>>[0],
+  row: Parameters<ReportFilterFn<StorageGatePass>>[0],
   condition: AdvancedFilterCondition,
 ) {
   const rawValue = row.getValue(String(condition.columnId))
@@ -168,7 +167,7 @@ function evaluateCondition(
   }
 }
 
-export const advancedReportGlobalFilterFn: FilterFn<StorageGatePass> = (
+export const advancedReportGlobalFilterFn: ReportFilterFn<StorageGatePass> = (
   row,
   _columnId,
   filterValue,

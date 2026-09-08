@@ -7,6 +7,7 @@ import {
   Search,
 } from "lucide-react"
 import type { Table } from "@tanstack/react-table"
+import type { ReportFeatures } from "@/lib/tanstack-table/report-table-features"
 
 import { DatePickerInput } from "@/components/date-picker"
 import { Button } from "@/components/ui/button"
@@ -16,7 +17,7 @@ import type { IncomingGatePassReportRow } from "@/features/incoming-report/api/t
 import { ViewFiltersSheet } from "./view-filters"
 
 export interface ReportToolbarProps {
-  table: Table<IncomingGatePassReportRow>
+  table: Table<ReportFeatures, IncomingGatePassReportRow>
   fromDate: Date | undefined
   toDate: Date | undefined
   onFromDateChange: (date: Date | undefined) => void

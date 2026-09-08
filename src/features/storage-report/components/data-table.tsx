@@ -11,23 +11,15 @@ import {
   type ColumnDef,
   type ColumnFiltersState,
   type ColumnOrderState,
+  type ColumnVisibilityState,
   type ExpandedState,
   type GroupingState,
   type PaginationState,
-  type SortingFn,
+  type RowData,
   type SortingState,
   type Table as TanStackTable,
-  type VisibilityState,
   flexRender,
-  getCoreRowModel,
-  getFacetedRowModel,
-  getFacetedUniqueValues,
-  getFilteredRowModel,
-  getExpandedRowModel,
-  getGroupedRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  useReactTable,
+  useTable,
 } from "@tanstack/react-table"
 import {
   ArrowDown,
@@ -67,6 +59,11 @@ import {
   type AdvancedReportGlobalFilter,
   selectedValuesFilterFn,
 } from "@/features/storage-report/utils/report-filter-fns"
+import { storageReportTableFeatures } from "@/features/storage-report/table-features"
+import type {
+  ReportColumnMeta,
+  ReportFeatures,
+} from "@/lib/tanstack-table/report-table-features"
 import { cn } from "@/lib/utils"
 
 import type { StorageQuantityMode } from "./columns"
@@ -117,63 +114,7 @@ const TABLE_GRID_CLASS = cn(
   "[&_th:last-child]:border-r-0 [&_td:last-child]:border-r-0",
 )
 
-type ColumnMeta = NonNullable<ColumnDef<unknown, unknown>["meta"]>
-
-function parseReportNumber(value: unknown): number | null {
-  if (typeof value === "number") {
-    return Number.isFinite(value) ? value : null
-  }
-
-  if (value == null || value === "") return null
-
-  const parsed = Number(String(value).replaceAll(",", "").trim())
-
-  return Number.isFinite(parsed) ? parsed : null
-}
-
-function parseReportDateValue(value: unknown): number | null {
-  if (value == null || value === "") return null
-
-  const parsed = new Date(String(value))
-  const timestamp = parsed.getTime()
-
-  return Number.isNaN(timestamp) ? null : timestamp
-}
-
-const reportNumericSortingFn: SortingFn<StorageGatePass> = (
-  rowA,
-  rowB,
-  columnId,
-) => {
-  const a = parseReportNumber(rowA.getValue(columnId))
-  const b = parseReportNumber(rowB.getValue(columnId))
-
-  if (a == null && b == null) return 0
-  if (a == null) return -1
-  if (b == null) return 1
-
-  return a === b ? 0 : a > b ? 1 : -1
-}
-
-const reportDateSortingFn: SortingFn<StorageGatePass> = (
-  rowA,
-  rowB,
-  columnId,
-) => {
-  const a = parseReportDateValue(rowA.getValue(columnId))
-  const b = parseReportDateValue(rowB.getValue(columnId))
-
-  if (a == null && b == null) return 0
-  if (a == null) return -1
-  if (b == null) return 1
-
-  return a === b ? 0 : a > b ? 1 : -1
-}
-
-const reportSortingFns = {
-  reportNumeric: reportNumericSortingFn,
-  reportDate: reportDateSortingFn,
-}
+type ColumnMeta = ReportColumnMeta
 
 function SortIcon({ sorted }: { sorted: false | "asc" | "desc" }) {
   if (sorted === "desc") {
@@ -246,14 +187,14 @@ function getFooterClassName(meta: ColumnMeta | undefined) {
   )
 }
 
-interface DataTableColumnHeaderProps<TData, TValue> {
-  column: Column<TData, TValue>
+interface DataTableColumnHeaderProps<TData extends RowData, TValue> {
+  column: Column<ReportFeatures, TData, TValue>
   sorted: false | "asc" | "desc"
   align: "left" | "right"
   children: ReactNode
 }
 
-function DataTableColumnHeader<TData, TValue>({
+function DataTableColumnHeader<TData extends RowData, TValue>({
   column,
   sorted,
   align,
@@ -295,30 +236,30 @@ function DataTableColumnHeader<TData, TValue>({
   )
 }
 
-interface DataTableProps<TValue> {
-  columns: ColumnDef<StorageGatePass, TValue>[]
+interface DataTableProps {
+  columns: ColumnDef<ReportFeatures, StorageGatePass>[]
   data: StorageGatePass[]
   quantityMode: StorageQuantityMode
-  onTableReady?: (table: TanStackTable<StorageGatePass>) => void
+  onTableReady?: (table: TanStackTable<ReportFeatures, StorageGatePass>) => void
 }
 
-export function DataTable<TValue>({
+export function DataTable({
   columns,
   data,
   quantityMode,
   onTableReady,
-}: DataTableProps<TValue>) {
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(
+}: DataTableProps) {
+  const [columnVisibility, setColumnVisibility] = useState<ColumnVisibilityState>(
     () => {
       const columnIds = getStorageReportColumnIds(
-        columns as ColumnDef<unknown, unknown>[],
+        columns as ColumnDef<ReportFeatures, Record<string, unknown>>[],
       )
       return getStoredStorageReportColumnState(columnIds).columnVisibility
     },
   )
   const [columnOrder, setColumnOrder] = useState<ColumnOrderState>(() => {
     const columnIds = getStorageReportColumnIds(
-      columns as ColumnDef<unknown, unknown>[],
+        columns as ColumnDef<ReportFeatures, Record<string, unknown>>[],
     )
     return getStoredStorageReportColumnState(columnIds).columnOrder
   })
@@ -338,25 +279,14 @@ export function DataTable<TValue>({
   const [isFooterElevated, setIsFooterElevated] = useState(false)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
 
-  // eslint-disable-next-line react-hooks/incompatible-library
-  const table = useReactTable({
+  const table = useTable<ReportFeatures, StorageGatePass>({
+    features: storageReportTableFeatures,
     data,
     columns,
     defaultColumn: {
       filterFn: selectedValuesFilterFn,
     },
-    filterFns: {
-      selectedValues: selectedValuesFilterFn,
-    },
     globalFilterFn: advancedReportGlobalFilterFn,
-    getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getFacetedRowModel: getFacetedRowModel(),
-    getFacetedUniqueValues: getFacetedUniqueValues(),
-    getGroupedRowModel: getGroupedRowModel(),
-    getExpandedRowModel: getExpandedRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
@@ -365,7 +295,6 @@ export function DataTable<TValue>({
     onExpandedChange: setExpanded,
     onGlobalFilterChange: setGlobalFilter,
     onPaginationChange: setPagination,
-    sortingFns: reportSortingFns,
     sortDescFirst: false,
     enableSortingRemoval: true,
     paginateExpandedRows: false,
@@ -506,7 +435,6 @@ export function DataTable<TValue>({
                       isGroupedRow &&
                         "bg-primary/5 even:bg-primary/5 hover:bg-primary/10 [&>td]:border-b-border/60 [&>td]:border-t-border/60 [&>td]:shadow-[inset_0_1px_0_hsl(var(--primary)/0.12)]",
                     )}
-                    data-state={row.getIsSelected() ? "selected" : undefined}
                   >
                     {row.getVisibleCells().map((cell) => {
                       const meta = cell.column.columnDef.meta

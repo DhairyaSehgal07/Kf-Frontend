@@ -6,6 +6,7 @@ import type {
   Table,
 } from "@tanstack/react-table"
 import { ChevronDown, Search, X } from "lucide-react"
+import type { ReportFeatures } from "@/lib/tanstack-table/report-table-features"
 
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -24,13 +25,13 @@ type FilterOption = {
 }
 
 interface FiltersTabProps<TData extends RowData> {
-  table: Table<TData>
+  table: Table<ReportFeatures, TData>
   draftColumnFilters: ColumnFiltersState
   onDraftColumnFiltersChange: (filters: ColumnFiltersState) => void
 }
 
 interface ColumnFilterSectionProps<TData extends RowData> {
-  column: Column<TData, unknown>
+  column: Column<ReportFeatures, TData, unknown>
   isOpen: boolean
   draftColumnFilters: ColumnFiltersState
   searchQuery: string
@@ -40,7 +41,7 @@ interface ColumnFilterSectionProps<TData extends RowData> {
 }
 
 function getColumnLabel<TData extends RowData>(
-  column: Column<TData, unknown>,
+  column: Column<ReportFeatures, TData, unknown>,
 ): string {
   return column.columnDef.meta?.filterLabel ?? column.id
 }

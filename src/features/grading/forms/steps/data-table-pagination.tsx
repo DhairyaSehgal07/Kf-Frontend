@@ -1,4 +1,8 @@
-import { type PaginationState, type Table } from "@tanstack/react-table"
+import {
+  type PaginationState,
+  type RowData,
+  type Table,
+} from "@tanstack/react-table"
 import {
   ChevronLeft,
   ChevronRight,
@@ -15,16 +19,17 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
+import type { GradingFormTableFeatures } from "./table-features"
 
-interface DataTablePaginationProps<TData> {
-  table: Table<TData>
+interface DataTablePaginationProps<TData extends RowData> {
+  table: Table<GradingFormTableFeatures, TData>
   pagination: PaginationState
   className?: string
 }
 
 const PAGE_SIZE_OPTIONS = [10, 20, 25, 30, 40, 50] as const
 
-export function DataTablePagination<TData>({
+export function DataTablePagination<TData extends RowData>({
   table,
   pagination,
   className,

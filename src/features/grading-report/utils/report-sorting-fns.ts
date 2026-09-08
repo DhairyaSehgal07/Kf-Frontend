@@ -1,8 +1,8 @@
 import { isValid, parse, parseISO } from 'date-fns';
-import type { SortingFn } from '@tanstack/react-table';
 
 import type { GradingGatePassReportRow } from '@/features/grading-report/api/types';
 import { parseReportNumber } from '@/features/grading-report/utils/report-formatters';
+import type { ReportSortFn } from '@/lib/tanstack-table/report-table-features';
 
 function parseReportDateValue(value: unknown): number | null {
   if (value == null || value === '') return null;
@@ -19,7 +19,7 @@ function parseReportDateValue(value: unknown): number | null {
   return parsed.getTime();
 }
 
-export const reportNumericSortingFn: SortingFn<GradingGatePassReportRow> = (
+export const reportNumericSortingFn: ReportSortFn<GradingGatePassReportRow> = (
   rowA,
   rowB,
   columnId,
@@ -34,7 +34,7 @@ export const reportNumericSortingFn: SortingFn<GradingGatePassReportRow> = (
   return a === b ? 0 : a > b ? 1 : -1;
 };
 
-export const reportDateSortingFn: SortingFn<GradingGatePassReportRow> = (
+export const reportDateSortingFn: ReportSortFn<GradingGatePassReportRow> = (
   rowA,
   rowB,
   columnId,
@@ -47,9 +47,4 @@ export const reportDateSortingFn: SortingFn<GradingGatePassReportRow> = (
   if (b == null) return 1;
 
   return a === b ? 0 : a > b ? 1 : -1;
-};
-
-export const reportSortingFns = {
-  reportNumeric: reportNumericSortingFn,
-  reportDate: reportDateSortingFn,
 };

@@ -4,16 +4,12 @@ import {
   type ColumnFiltersState,
   type OnChangeFn,
   type PaginationState,
+  type RowData,
   type RowSelectionState,
-  type SortingFn,
   type SortingState,
   type Updater,
   flexRender,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  useReactTable,
+  useTable,
 } from "@tanstack/react-table"
 import { ClipboardList, Search } from "lucide-react"
 
@@ -36,11 +32,13 @@ import {
 } from "@/components/ui/table"
 import { cn } from "@/lib/utils"
 import { DataTablePagination } from "./data-table-pagination"
+import {
+  gradingFormTableFeatures,
+  type GradingFormTableFeatures,
+} from "./table-features"
 
-const noopSortingFn: SortingFn<unknown> = () => 0
-
-interface DataTableProps<TData, TValue> {
-  columns: ColumnDef<TData, TValue>[]
+interface DataTableProps<TData extends RowData> {
+  columns: ColumnDef<GradingFormTableFeatures, TData>[]
   data: TData[]
   getRowId?: (row: TData) => string
   isLoading?: boolean
@@ -54,14 +52,14 @@ function resolveUpdater<T>(updater: Updater<T>, previous: T): T {
     : updater
 }
 
-export function DataTable<TData, TValue>({
+export function DataTable<TData extends RowData>({
   columns,
   data,
   getRowId,
   isLoading = false,
   rowSelection: controlledRowSelection,
   onRowSelectionChange: controlledOnRowSelectionChange,
-}: DataTableProps<TData, TValue>) {
+}: DataTableProps<TData>) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
@@ -90,24 +88,17 @@ export function DataTable<TData, TValue>({
     pageSize: 10,
   })
 
-  const table = useReactTable({
+  const table = useTable<GradingFormTableFeatures, TData>({
+    features: gradingFormTableFeatures,
     data,
     columns,
     getRowId,
-    getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onRowSelectionChange: handleRowSelectionChange,
     onPaginationChange: setPagination,
     enableRowSelection: true,
     autoResetPageIndex: true,
-    sortingFns: {
-      reportNumeric: noopSortingFn,
-      reportDate: noopSortingFn,
-    },
     state: {
       sorting,
       columnFilters,
@@ -120,7 +111,7 @@ export function DataTable<TData, TValue>({
   const manualFilter = table.getColumn("manualGatePassNumber")?.getFilterValue()
   const hasActiveFilter =
     typeof manualFilter === "string" && manualFilter.length > 0
-  const rows = table.getPaginationRowModel().rows
+  const rows = table.getPaginatedRowModel().rows
 
   return (
     <div className="flex flex-col overflow-hidden rounded-xl border border-border bg-card text-card-foreground shadow-sm">

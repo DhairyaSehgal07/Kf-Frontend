@@ -1,4 +1,5 @@
 import type { Table } from "@tanstack/react-table"
+import type { ReportFeatures } from "@/lib/tanstack-table/report-table-features"
 
 import { orderGradingSizeNames } from "@/features/analytics/lib/grading-size-order"
 import type {
@@ -38,7 +39,7 @@ function getBagQuantity(
 }
 
 export function getFilteredGatePassesForSummary(
-  table: Table<StorageGatePass>,
+  table: Table<ReportFeatures, StorageGatePass>,
 ): StorageGatePass[] {
   return table
     .getFilteredRowModel()
@@ -115,7 +116,7 @@ function formatStageLabel(stage: string | undefined): string {
 }
 
 export function buildStorageReportSummaries(
-  table: Table<StorageGatePass>,
+  table: Table<ReportFeatures, StorageGatePass>,
   quantityMode: StorageQuantityMode,
 ): StorageReportSummaryTable[] {
   const gatePasses = getFilteredGatePassesForSummary(table)

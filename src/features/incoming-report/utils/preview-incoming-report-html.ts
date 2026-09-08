@@ -1,5 +1,6 @@
 import { format } from "date-fns"
 import type { Table } from "@tanstack/react-table"
+import type { ReportFeatures } from "@/lib/tanstack-table/report-table-features"
 
 import type { IncomingGatePassReportRow } from "@/features/incoming-report/api/types"
 import {
@@ -28,7 +29,7 @@ export const INCOMING_REPORT_DOWNLOAD_EXCEL_DONE_MESSAGE =
   "kf-incoming-report-download-excel-done" as const
 
 export type PreviewIncomingReportOptions = {
-  table: Table<IncomingGatePassReportRow>
+  table: Table<ReportFeatures, IncomingGatePassReportRow>
   coldStorageName: string
   reportTitle?: string
   fromDate?: Date

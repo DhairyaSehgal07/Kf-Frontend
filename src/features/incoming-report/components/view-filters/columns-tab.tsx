@@ -7,9 +7,10 @@ import type {
   ColumnOrderState,
   RowData,
   Table,
-  VisibilityState,
+  ColumnVisibilityState,
 } from "@tanstack/react-table"
 import { GripVertical, RotateCcw, Save, Trash2 } from "lucide-react"
+import type { ReportFeatures } from "@/lib/tanstack-table/report-table-features"
 
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
@@ -23,15 +24,15 @@ import {
 const COLUMN_ORDER_GROUP = "incoming-report-columns"
 
 interface ColumnsTabProps<TData extends RowData> {
-  table: Table<TData>
-  draftColumnVisibility: VisibilityState
+  table: Table<ReportFeatures, TData>
+  draftColumnVisibility: ColumnVisibilityState
   draftColumnOrder: ColumnOrderState
-  onDraftColumnVisibilityChange: (visibility: VisibilityState) => void
+  onDraftColumnVisibilityChange: (visibility: ColumnVisibilityState) => void
   onDraftColumnOrderChange: (order: ColumnOrderState) => void
 }
 
 interface ColumnVisibilityRowProps<TData extends RowData> {
-  column: Column<TData, unknown>
+  column: Column<ReportFeatures, TData, unknown>
   index: number
   isVisible: boolean
   visibleColumnCount: number
@@ -39,22 +40,22 @@ interface ColumnVisibilityRowProps<TData extends RowData> {
 }
 
 function getColumnLabel<TData extends RowData>(
-  column: Column<TData, unknown>,
+  column: Column<ReportFeatures, TData, unknown>,
 ): string {
   return column.columnDef.meta?.filterLabel ?? column.id
 }
 
 function getDraftColumnVisible(
   columnId: string,
-  draftColumnVisibility: VisibilityState,
+  draftColumnVisibility: ColumnVisibilityState,
 ): boolean {
   return draftColumnVisibility[columnId] !== false
 }
 
 function getOrderedColumns<TData extends RowData>(
-  columns: Column<TData, unknown>[],
+  columns: Column<ReportFeatures, TData, unknown>[],
   draftColumnOrder: ColumnOrderState,
-): Column<TData, unknown>[] {
+): Column<ReportFeatures, TData, unknown>[] {
   const columnsById = new Map(columns.map((column) => [column.id, column]))
   const orderedIds = [
     ...draftColumnOrder.filter((columnId) => columnsById.has(columnId)),
@@ -65,7 +66,7 @@ function getOrderedColumns<TData extends RowData>(
 
   return orderedIds
     .map((columnId) => columnsById.get(columnId))
-    .filter((column): column is Column<TData, unknown> => column != null)
+    .filter((column): column is Column<ReportFeatures, TData, unknown> => column != null)
 }
 
 function ColumnVisibilityRow<TData extends RowData>({

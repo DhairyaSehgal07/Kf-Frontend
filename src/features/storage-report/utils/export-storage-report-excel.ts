@@ -1,6 +1,7 @@
 import { format } from "date-fns"
 import type ExcelJS from "exceljs"
 import type { Table } from "@tanstack/react-table"
+import type { ReportFeatures } from "@/lib/tanstack-table/report-table-features"
 
 import type { StorageGatePass } from "@/features/storage/api/types"
 import type { StorageQuantityMode } from "@/features/storage-report/components/columns"
@@ -245,7 +246,7 @@ function autoFitColumns(
 }
 
 export type ExportStorageReportOptions = {
-  table: Table<StorageGatePass>
+  table: Table<ReportFeatures, StorageGatePass>
   coldStorageName: string
   quantityMode: StorageQuantityMode
   reportTitle?: string

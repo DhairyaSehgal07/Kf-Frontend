@@ -10,6 +10,7 @@ import {
   formatIncomingWeightKg,
   incomingNetWeightKg,
 } from "@/features/grading/utils/incoming-net-weight"
+import type { GradingFormTableFeatures } from "./table-features"
 
 const STATUS_LABELS: Record<string, string> = {
   NOT_GRADED: "Not graded",
@@ -46,7 +47,7 @@ function createActionsColumn(
     GradingGatePassColumnOptions,
     "gradingGatePassId" | "farmerStorageLinkId"
   >,
-): ColumnDef<GradingSelectIncomingGatePasses> {
+): ColumnDef<GradingFormTableFeatures, GradingSelectIncomingGatePasses> {
   const { gradingGatePassId, farmerStorageLinkId } = options
 
   return {
@@ -67,7 +68,7 @@ function createActionsColumn(
   }
 }
 
-const baseColumns: ColumnDef<GradingSelectIncomingGatePasses>[] = [
+const baseColumns: ColumnDef<GradingFormTableFeatures, GradingSelectIncomingGatePasses>[] = [
   {
     id: "select",
     size: 48,
@@ -205,7 +206,7 @@ const baseColumns: ColumnDef<GradingSelectIncomingGatePasses>[] = [
 
 export function getGradingGatePassColumns(
   options?: GradingGatePassColumnOptions,
-): ColumnDef<GradingSelectIncomingGatePasses>[] {
+): ColumnDef<GradingFormTableFeatures, GradingSelectIncomingGatePasses>[] {
   if (options?.showActions) {
     return [
       ...baseColumns,

@@ -3,6 +3,7 @@ import {
   type ColumnDef,
   flexRender,
   type PaginationState,
+  type RowData,
   type Table as TanStackTable,
 } from "@tanstack/react-table"
 import {
@@ -12,6 +13,10 @@ import {
   ChevronsRight,
   ClipboardList,
 } from "lucide-react"
+import type {
+  ReportColumnMeta,
+  ReportFeatures,
+} from "@/lib/tanstack-table/report-table-features"
 
 import type { DensityState } from "@/lib/tanstack-table/density-feature"
 import {
@@ -93,9 +98,12 @@ const TABLE_GRID_CLASS = cn(
   "[&_tfoot_th:last-child]:border-r-0 [&_tfoot_td:last-child]:border-r-0",
 )
 
-type ColumnMeta = NonNullable<ColumnDef<unknown, unknown>["meta"]>
+type ColumnMeta = ReportColumnMeta
 
-function getColId(col: ColumnDef<unknown>, index: number): string {
+function getColId(
+  col: { id?: string; accessorKey?: string | number | symbol },
+  index: number,
+): string {
   if ("id" in col && col.id) return col.id
   if ("accessorKey" in col && col.accessorKey) return String(col.accessorKey)
   return `col-${index}`
@@ -226,15 +234,15 @@ type ColumnClassEntry = {
   footer: string
 }
 
-interface DataTableProps<TData, TValue> {
-  columns: ColumnDef<TData, TValue>[]
-  table: TanStackTable<TData>
+interface DataTableProps<TData extends RowData, TValue> {
+  columns: ColumnDef<ReportFeatures, TData, TValue>[]
+  table: TanStackTable<ReportFeatures, TData>
   isLoading?: boolean
   paginationState?: PaginationState
   totalRowCount?: number
 }
 
-export function DataTable<TData, TValue>({
+export function DataTable<TData extends RowData, TValue>({
   columns,
   table,
   isLoading = false,
@@ -244,7 +252,7 @@ export function DataTable<TData, TValue>({
   const [isHeaderScrolled, setIsHeaderScrolled] = useState(false)
   const [isFooterElevated, setIsFooterElevated] = useState(false)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
-  const density = table.getState().density
+  const density = table.store.state.density
 
   const handleTableScroll = useCallback(() => {
     const el = scrollContainerRef.current
@@ -259,7 +267,7 @@ export function DataTable<TData, TValue>({
   const rowCount = rows.length
   const totalRowCount =
     totalRowCountProp ?? table.getFilteredRowModel().rows.length
-  const { pageIndex, pageSize } = paginationState ?? table.getState().pagination
+  const { pageIndex, pageSize } = paginationState ?? table.store.state.pagination
   const pageCount = Math.max(Math.ceil(totalRowCount / pageSize), 1)
   const canPreviousPage = pageIndex > 0
   const canNextPage = pageIndex < pageCount - 1
@@ -283,7 +291,7 @@ export function DataTable<TData, TValue>({
     const map = new Map<string, ColumnClassEntry>()
 
     columns.forEach((col, index) => {
-      const columnId = getColId(col as ColumnDef<unknown>, index)
+      const columnId = getColId(col, index)
       const meta = col.meta
       const align = getColumnAlign(meta)
 

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Table as TanStackTable } from '@tanstack/react-table';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
+import type { ReportFeatures } from '@/lib/tanstack-table/report-table-features';
 
 import { Badge } from '@/components/ui/badge';
 import {
@@ -47,7 +48,7 @@ const GradingReportPage = () => {
   const [toDate, setToDate] = useState<Date | undefined>();
   const [searchQuery, setSearchQuery] = useState('');
   const [reportTable, setReportTable] =
-    useState<TanStackTable<GradingGatePassReportRow> | null>(null);
+    useState<TanStackTable<ReportFeatures, GradingGatePassReportRow> | null>(null);
   const [appliedParams, setAppliedParams] = useState<GradingGatePassReportParams>(
     DEFAULT_GRADING_REPORT_PARAMS,
   );
@@ -118,7 +119,7 @@ const GradingReportPage = () => {
     },
     [reportRows],
   );
-  const handleTableReady = useCallback((table: TanStackTable<GradingGatePassReportRow>) => {
+  const handleTableReady = useCallback((table: TanStackTable<ReportFeatures, GradingGatePassReportRow>) => {
     setReportTable((current) => (current === table ? current : table));
   }, []);
 

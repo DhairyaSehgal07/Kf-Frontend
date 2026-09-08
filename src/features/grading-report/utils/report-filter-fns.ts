@@ -1,7 +1,8 @@
-import type { FilterFn, Row } from '@tanstack/react-table';
+import type { Row } from '@tanstack/react-table';
 
 import type { GradingGatePassReportRow } from '@/features/grading-report/api/types';
 import { parseReportNumber } from '@/features/grading-report/utils/report-formatters';
+import type { ReportFeatures, ReportFilterFn } from '@/lib/tanstack-table/report-table-features';
 
 export type SelectedValuesFilterValue = string[];
 export type AdvancedFilterLogic = 'AND' | 'OR';
@@ -63,7 +64,7 @@ export function getReportFilterValueKey(value: unknown): string {
   return String(value);
 }
 
-export const selectedValuesFilterFn: FilterFn<GradingGatePassReportRow> = (
+export const selectedValuesFilterFn: ReportFilterFn<GradingGatePassReportRow> = (
   row,
   columnId,
   filterValue,
@@ -93,13 +94,16 @@ function normalizeText(value: unknown): string {
 }
 
 function getAdvancedFilterRowValue(
-  row: Row<GradingGatePassReportRow>,
+  row: Row<ReportFeatures, GradingGatePassReportRow>,
   columnId: GradingReportColumnId,
 ) {
   return row.getValue(String(columnId));
 }
 
-function evaluateCondition(row: Row<GradingGatePassReportRow>, condition: AdvancedFilterCondition) {
+function evaluateCondition(
+  row: Row<ReportFeatures, GradingGatePassReportRow>,
+  condition: AdvancedFilterCondition,
+) {
   const rawValue = getAdvancedFilterRowValue(row, condition.columnId);
 
   if (condition.operator === 'isEmpty') {
@@ -158,7 +162,7 @@ function evaluateCondition(row: Row<GradingGatePassReportRow>, condition: Advanc
   }
 }
 
-export const advancedReportGlobalFilterFn: FilterFn<GradingGatePassReportRow> = (
+export const advancedReportGlobalFilterFn: ReportFilterFn<GradingGatePassReportRow> = (
   row,
   _columnId,
   filterValue,

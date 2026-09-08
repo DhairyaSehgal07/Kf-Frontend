@@ -1,4 +1,4 @@
-import { type AggregationFn, type ColumnDef } from '@tanstack/react-table';
+import { constructAggregationFn, type ColumnDef } from '@tanstack/react-table';
 import { format, isValid, parseISO } from 'date-fns';
 
 import type {
@@ -13,6 +13,7 @@ import {
   getIncomingGatePassObjects,
   parseReportNumber,
 } from '../utils/report-formatters';
+import type { ReportFeatures } from '@/lib/tanstack-table/report-table-features';
 
 function reportColumnHeader(title: string, unit?: string) {
   return () => (
@@ -46,25 +47,43 @@ function emptyCell() {
   return <span className="text-muted-foreground">-</span>;
 }
 
-const sortText = { sortingFn: 'text' as const, sortUndefined: 'last' as const };
-const sortNumeric = { sortingFn: 'reportNumeric' as const, sortUndefined: 'last' as const };
-const sortDate = { sortingFn: 'reportDate' as const, sortUndefined: 'last' as const };
-const aggregateUnique = { aggregationFn: 'uniqueCount' as const };
-const reportEmptyAggregation: AggregationFn<GradingGatePassReportRow> = () => null;
-const reportSumAggregation: AggregationFn<GradingGatePassReportRow> = (columnId, leafRows) =>
-  leafRows.reduce((sum, row) => sum + (parseReportNumber(row.getValue(columnId)) ?? 0), 0);
-const reportAverageAggregation: AggregationFn<GradingGatePassReportRow> = (columnId, leafRows) => {
-  const values = leafRows
-    .map((row) => parseReportNumber(row.getValue(columnId)))
-    .filter((value): value is number => value != null);
-
-  if (!values.length) return null;
-
-  return values.reduce((sum, value) => sum + value, 0) / values.length;
+const sortText = { sortFn: 'text' as const, sortUndefined: 'last' as const };
+const sortNumeric = { sortFn: 'reportNumeric' as const, sortUndefined: 'last' as const };
+const sortDate = { sortFn: 'reportDate' as const, sortUndefined: 'last' as const };
+const aggregateUnique = {
+  aggregationFn: 'uniqueCount' as const,
+  maxAggregationDepth: Infinity,
 };
-const aggregateSum = { aggregationFn: reportSumAggregation };
-const aggregateAverage = { aggregationFn: reportAverageAggregation };
-const aggregateNone = { aggregationFn: reportEmptyAggregation };
+const reportEmptyAggregation = constructAggregationFn({
+  aggregate: () => null,
+});
+const reportSumAggregation = constructAggregationFn({
+  aggregate: ({ rows, getValue }) =>
+    rows.reduce((sum, row) => sum + (parseReportNumber(getValue(row)) ?? 0), 0),
+});
+const reportAverageAggregation = constructAggregationFn({
+  aggregate: ({ rows, getValue }) => {
+    const values = rows
+      .map((row) => parseReportNumber(getValue(row)))
+      .filter((value): value is number => value != null);
+
+    if (!values.length) return null;
+
+    return values.reduce((sum, value) => sum + value, 0) / values.length;
+  },
+});
+const aggregateSum = {
+  aggregationFn: reportSumAggregation,
+  maxAggregationDepth: Infinity,
+};
+const aggregateAverage = {
+  aggregationFn: reportAverageAggregation,
+  maxAggregationDepth: Infinity,
+};
+const aggregateNone = {
+  aggregationFn: reportEmptyAggregation,
+  maxAggregationDepth: Infinity,
+};
 
 type SizeAggregateValue = {
   quantity: number;
@@ -240,7 +259,7 @@ function renderSizeAggregateValue(value: SizeAggregateValue) {
   );
 }
 
-const baseColumns: ColumnDef<GradingGatePassReportRow>[] = [
+const baseColumns: ColumnDef<ReportFeatures, GradingGatePassReportRow>[] = [
   {
     id: 'farmerName',
     accessorFn: getFarmerName,
@@ -412,7 +431,7 @@ const baseColumns: ColumnDef<GradingGatePassReportRow>[] = [
   },
 ];
 
-const totalBagsColumn: ColumnDef<GradingGatePassReportRow> = {
+const totalBagsColumn: ColumnDef<ReportFeatures, GradingGatePassReportRow> = {
   accessorKey: 'totalBags',
   header: reportColumnHeader('Total', 'bags'),
   cell: integerCell,
@@ -427,7 +446,7 @@ const totalBagsColumn: ColumnDef<GradingGatePassReportRow> = {
   ...sortNumeric,
 };
 
-const summaryColumns: ColumnDef<GradingGatePassReportRow>[] = [
+const summaryColumns: ColumnDef<ReportFeatures, GradingGatePassReportRow>[] = [
   {
     accessorKey: 'incomingNetWeightKg',
     header: reportColumnHeader('Total Incoming Net', 'kg'),
@@ -484,7 +503,7 @@ const summaryColumns: ColumnDef<GradingGatePassReportRow>[] = [
   },
 ];
 
-const remarksColumn: ColumnDef<GradingGatePassReportRow> = {
+const remarksColumn: ColumnDef<ReportFeatures, GradingGatePassReportRow> = {
   accessorKey: 'remarks',
   header: reportColumnHeader('Remarks'),
   meta: { wrap: true, groupStart: true, filterLabel: 'Remarks' },
@@ -494,12 +513,12 @@ const remarksColumn: ColumnDef<GradingGatePassReportRow> = {
 
 export function getGradingReportColumns(
   rows: GradingGatePassReportRow[],
-): ColumnDef<GradingGatePassReportRow>[] {
+): ColumnDef<ReportFeatures, GradingGatePassReportRow>[] {
   const sizes = Array.from(
     new Set(rows.flatMap((row) => row.orderDetails.map((detail) => detail.size))),
   );
 
-  const sizeColumns: ColumnDef<GradingGatePassReportRow>[] = sizes.map((size) => ({
+  const sizeColumns: ColumnDef<ReportFeatures, GradingGatePassReportRow>[] = sizes.map((size) => ({
     id: `size-${size}`,
     accessorFn: (row) => sumOrderDetailSizeQuantity(row, size),
     header: reportColumnHeader(size, 'bags'),
@@ -510,29 +529,34 @@ export function getGradingReportColumns(
       filterLabel: `${size} bags`,
       filterValueFormatter: formatIntegerFilterValue,
     },
-    aggregationFn: (_columnId, leafRows) => {
-      const details = leafRows.flatMap((row) =>
-        row.original.orderDetails.filter((detail) => detail.size === size),
-      );
-      const quantity = details.reduce((sum, detail) => sum + detail.quantity, 0);
-      const weights = details
-        .map((detail) => ({
-          quantity: detail.quantity,
-          weight: parseReportNumber(detail.weightPerBagKg),
-        }))
-        .filter((detail): detail is { quantity: number; weight: number } => detail.weight != null);
-      const weightQuantity = weights.reduce((sum, detail) => sum + detail.quantity, 0);
-      const averageWeightPerBagKg =
-        weights.length && weightQuantity > 0
-          ? weights.reduce((sum, detail) => sum + detail.weight * detail.quantity, 0) /
-            weightQuantity
-          : weights.length
-            ? weights.reduce((sum, detail) => sum + detail.weight, 0) / weights.length
-            : null;
-      const bagTypes = Array.from(new Set(details.map((detail) => detail.bagType).filter(Boolean)));
+    aggregationFn: constructAggregationFn({
+      aggregate: ({ rows }) => {
+        const details = rows.flatMap((row) =>
+          row.original.orderDetails.filter((detail) => detail.size === size),
+        );
+        const quantity = details.reduce((sum, detail) => sum + detail.quantity, 0);
+        const weights = details
+          .map((detail) => ({
+            quantity: detail.quantity,
+            weight: parseReportNumber(detail.weightPerBagKg),
+          }))
+          .filter((detail): detail is { quantity: number; weight: number } => detail.weight != null);
+        const weightQuantity = weights.reduce((sum, detail) => sum + detail.quantity, 0);
+        const averageWeightPerBagKg =
+          weights.length && weightQuantity > 0
+            ? weights.reduce((sum, detail) => sum + detail.weight * detail.quantity, 0) /
+              weightQuantity
+            : weights.length
+              ? weights.reduce((sum, detail) => sum + detail.weight, 0) / weights.length
+              : null;
+        const bagTypes = Array.from(
+          new Set(details.map((detail) => detail.bagType).filter(Boolean)),
+        );
 
-      return { quantity, averageWeightPerBagKg, bagTypes } satisfies SizeAggregateValue;
-    },
+        return { quantity, averageWeightPerBagKg, bagTypes } satisfies SizeAggregateValue;
+      },
+    }),
+    maxAggregationDepth: Infinity,
     ...sortNumeric,
     cell: ({ row, getValue }) => {
       const aggregateValue = getValue();
@@ -557,7 +581,7 @@ export function getGradingReportColumns(
   return [...baseColumns, totalBagsColumn, ...sizeColumns, ...summaryColumns, remarksColumn];
 }
 
-export const columns: ColumnDef<GradingGatePassReportRow>[] = [
+export const columns: ColumnDef<ReportFeatures, GradingGatePassReportRow>[] = [
   ...baseColumns,
   {
     accessorKey: 'orderDetails',

@@ -1,16 +1,20 @@
-import { type Column } from "@tanstack/react-table"
+import {
+  type Column,
+  type RowData,
+} from "@tanstack/react-table"
 import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import type { GradingFormTableFeatures } from "./table-features"
 
-interface DataTableColumnHeaderProps<TData, TValue> {
-  column: Column<TData, TValue>
+interface DataTableColumnHeaderProps<TData extends RowData, TValue> {
+  column: Column<GradingFormTableFeatures, TData, TValue>
   title: string
   className?: string
 }
 
-export function DataTableColumnHeader<TData, TValue>({
+export function DataTableColumnHeader<TData extends RowData, TValue>({
   column,
   title,
   className,

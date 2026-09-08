@@ -1,5 +1,6 @@
 import { format } from "date-fns"
 import type { Table } from "@tanstack/react-table"
+import type { ReportFeatures } from "@/lib/tanstack-table/report-table-features"
 
 import type { StorageGatePass } from "@/features/storage/api/types"
 import type { StorageQuantityMode } from "@/features/storage-report/components/columns"
@@ -28,7 +29,7 @@ export const STORAGE_REPORT_DOWNLOAD_EXCEL_DONE_MESSAGE =
   "kf-storage-report-download-excel-done" as const
 
 export type PreviewStorageReportOptions = {
-  table: Table<StorageGatePass>
+  table: Table<ReportFeatures, StorageGatePass>
   coldStorageName: string
   quantityMode: StorageQuantityMode
   reportTitle?: string
