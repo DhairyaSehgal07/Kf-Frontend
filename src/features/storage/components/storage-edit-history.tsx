@@ -1,17 +1,8 @@
-import { useMemo, useState, type MouseEvent } from "react"
-import { Link } from "@tanstack/react-router"
-import {
-  ArrowLeft,
-  Globe,
-  History,
-  Loader2,
-  MapPin,
-  Monitor,
-  RefreshCw,
-  User,
-} from "lucide-react"
+import { useMemo, useState, type MouseEvent } from 'react';
+import { Link } from '@tanstack/react-router';
+import { ArrowLeft, Globe, History, Loader2, MapPin, Monitor, RefreshCw, User } from 'lucide-react';
 
-import { Button } from "@/components/ui/button"
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardAction,
@@ -19,36 +10,30 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
+} from '@/components/ui/card';
 import {
   Empty,
   EmptyDescription,
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
-} from "@/components/ui/empty"
-import {
-  Item,
-  ItemActions,
-  ItemContent,
-  ItemMedia,
-  ItemTitle,
-} from "@/components/ui/item"
+} from '@/components/ui/empty';
+import { Item, ItemActions, ItemContent, ItemMedia, ItemTitle } from '@/components/ui/item';
 import {
   Pagination,
   PaginationContent,
   PaginationItem,
   PaginationNext,
   PaginationPrevious,
-} from "@/components/ui/pagination"
+} from '@/components/ui/pagination';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { Skeleton } from "@/components/ui/skeleton"
+} from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
   TableBody,
@@ -56,55 +41,51 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
+} from '@/components/ui/table';
 import type {
   StorageGatePassAudit,
   StorageGatePassAuditState,
   StorageGatePassBagSize,
-} from "@/features/storage/api/types"
-import { useStorageGatePassEdits } from "@/features/storage/api/use-storage-gate-pass-edits"
+} from '@/features/storage/api/types';
+import { useStorageGatePassEdits } from '@/features/storage/api/use-storage-gate-pass-edits';
 import {
   formatAuditFieldValue,
   getStorageGatePassAuditChangedFields,
   STORAGE_GATE_PASS_AUDIT_FIELD_LABELS,
-} from "@/features/storage/utils/format-audit-field-value"
-import { cn } from "@/lib/utils"
+} from '@/features/storage/utils/format-audit-field-value';
+import { cn } from '@/lib/utils';
 
-const PAGE_SIZE_OPTIONS = [10, 25, 50] as const
-const DEFAULT_PAGE_SIZE = PAGE_SIZE_OPTIONS[0]
+const PAGE_SIZE_OPTIONS = [10, 25, 50] as const;
+const DEFAULT_PAGE_SIZE = PAGE_SIZE_OPTIONS[0];
 
-type PageSize = (typeof PAGE_SIZE_OPTIONS)[number]
+type PageSize = (typeof PAGE_SIZE_OPTIONS)[number];
 
 function formatAuditTimestamp(iso: string) {
-  const date = new Date(iso)
-  if (Number.isNaN(date.getTime())) return "-"
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return '-';
 
-  return new Intl.DateTimeFormat("en-IN", {
-    weekday: "short",
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(date)
+  return new Intl.DateTimeFormat('en-IN', {
+    weekday: 'short',
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(date);
 }
 
 function formatNumber(value: number) {
-  return new Intl.NumberFormat("en-IN").format(value)
+  return new Intl.NumberFormat('en-IN').format(value);
 }
 
 function formatLocation(slot: StorageGatePassBagSize) {
-  const parts = [slot.chamber, slot.floor, slot.row].filter(Boolean)
-  return parts.length > 0 ? parts.join(" / ") : "-"
+  const parts = [slot.chamber, slot.floor, slot.row].filter(Boolean);
+  return parts.length > 0 ? parts.join(' / ') : '-';
 }
 
-function AuditBagSizesTable({
-  bagSizes,
-}: {
-  bagSizes: readonly StorageGatePassBagSize[]
-}) {
+function AuditBagSizesTable({ bagSizes }: { bagSizes: readonly StorageGatePassBagSize[] }) {
   if (bagSizes.length === 0) {
-    return <span>-</span>
+    return <span>-</span>;
   }
 
   return (
@@ -112,12 +93,8 @@ function AuditBagSizesTable({
       <table className="w-full min-w-[480px] caption-bottom text-sm">
         <thead className="border-b border-border/50 bg-muted/50">
           <tr>
-            <th className="h-10 px-3 text-left text-xs font-medium text-muted-foreground">
-              Size
-            </th>
-            <th className="h-10 px-3 text-left text-xs font-medium text-muted-foreground">
-              Type
-            </th>
+            <th className="h-10 px-3 text-left text-xs font-medium text-muted-foreground">Size</th>
+            <th className="h-10 px-3 text-left text-xs font-medium text-muted-foreground">Type</th>
             <th className="h-10 px-3 text-right text-xs font-medium text-muted-foreground">
               Current
             </th>
@@ -135,12 +112,8 @@ function AuditBagSizesTable({
               key={`${slot.size}-${slot.bagType}-${slot.chamber}-${slot.floor}-${slot.row}-${index}`}
               className="border-b border-border/40 last:border-0"
             >
-              <td className="px-3 py-2.5 font-medium text-foreground">
-                {slot.size}
-              </td>
-              <td className="px-3 py-2.5 text-muted-foreground">
-                {slot.bagType}
-              </td>
+              <td className="px-3 py-2.5 font-medium text-foreground">{slot.size}</td>
+              <td className="px-3 py-2.5 text-muted-foreground">{slot.bagType}</td>
               <td className="px-3 py-2.5 text-right tabular-nums font-medium text-foreground">
                 {formatNumber(slot.currentQuantity)}
               </td>
@@ -158,23 +131,21 @@ function AuditBagSizesTable({
         </tbody>
       </table>
     </div>
-  )
+  );
 }
 
 function AuditFieldValue({
   field,
   value,
 }: {
-  field: keyof StorageGatePassAuditState
-  value: unknown
+  field: keyof StorageGatePassAuditState;
+  value: unknown;
 }) {
-  if (field === "bagSizes" && Array.isArray(value)) {
-    return (
-      <AuditBagSizesTable bagSizes={value as StorageGatePassBagSize[]} />
-    )
+  if (field === 'bagSizes' && Array.isArray(value)) {
+    return <AuditBagSizesTable bagSizes={value as StorageGatePassBagSize[]} />;
   }
 
-  return <>{formatAuditFieldValue(field, value)}</>
+  return <>{formatAuditFieldValue(field, value)}</>;
 }
 
 function StorageEditHistorySkeleton() {
@@ -206,21 +177,21 @@ function StorageEditHistorySkeleton() {
         ))}
       </div>
     </div>
-  )
+  );
 }
 
 function AuditChangeTable({ audit }: { audit: StorageGatePassAudit }) {
   const changedFields = getStorageGatePassAuditChangedFields(
     audit.previousState,
     audit.modifiedState,
-  )
+  );
 
   if (changedFields.length === 0) {
     return (
       <CardContent className="py-3 text-sm text-muted-foreground">
         No field changes recorded.
       </CardContent>
-    )
+    );
   }
 
   return (
@@ -240,42 +211,27 @@ function AuditChangeTable({ audit }: { audit: StorageGatePassAudit }) {
                 {STORAGE_GATE_PASS_AUDIT_FIELD_LABELS[field]}
               </TableCell>
               <TableCell className="whitespace-normal align-top text-muted-foreground">
-                <AuditFieldValue
-                  field={field}
-                  value={audit.previousState[field]}
-                />
+                <AuditFieldValue field={field} value={audit.previousState[field]} />
               </TableCell>
               <TableCell className="whitespace-normal align-top text-foreground">
-                <AuditFieldValue
-                  field={field}
-                  value={audit.modifiedState[field]}
-                />
+                <AuditFieldValue field={field} value={audit.modifiedState[field]} />
               </TableCell>
             </TableRow>
           ))}
         </TableBody>
       </Table>
     </CardContent>
-  )
+  );
 }
 
 function StorageEditAuditCard({ audit }: { audit: StorageGatePassAudit }) {
   return (
     <Card className="gap-0 overflow-hidden py-0 shadow-sm">
       <CardHeader className="border-b border-border/60 bg-muted/10 sm:px-5">
-        <CardTitle className="font-heading text-base font-semibold">
-          Gate pass edit
-        </CardTitle>
-        <CardDescription>
-          {formatAuditTimestamp(audit.createdAt)}
-        </CardDescription>
+        <CardTitle className="font-heading text-base font-semibold">Gate pass edit</CardTitle>
+        <CardDescription>{formatAuditTimestamp(audit.createdAt)}</CardDescription>
         <CardAction>
-          <Button
-            asChild
-            variant="outline"
-            size="sm"
-            className="h-9 shrink-0"
-          >
+          <Button asChild variant="outline" size="sm" className="h-9 shrink-0">
             <Link to="/storage/$id" params={{ id: audit.storageGatePassId }}>
               View gate pass
             </Link>
@@ -287,13 +243,9 @@ function StorageEditAuditCard({ audit }: { audit: StorageGatePassAudit }) {
         <div className="flex items-start gap-2 text-sm">
           <User className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
           <div className="min-w-0">
-            <p className="font-medium text-foreground">
-              {audit.editedById.name}
-            </p>
+            <p className="font-medium text-foreground">{audit.editedById.name}</p>
             {audit.editedById.mobileNumber ? (
-              <p className="text-muted-foreground tabular-nums">
-                {audit.editedById.mobileNumber}
-              </p>
+              <p className="text-muted-foreground tabular-nums">{audit.editedById.mobileNumber}</p>
             ) : null}
           </div>
         </div>
@@ -303,28 +255,18 @@ function StorageEditAuditCard({ audit }: { audit: StorageGatePassAudit }) {
             <Globe className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
             <div className="min-w-0">
               <p className="font-medium text-foreground">IP address</p>
-              <p className="font-mono tabular-nums text-muted-foreground">
-                {audit.ipAddress}
-              </p>
+              <p className="font-mono tabular-nums text-muted-foreground">{audit.ipAddress}</p>
             </div>
           </div>
         ) : null}
 
         {audit.userAgent ? (
-          <div
-            className={cn(
-              "min-w-0 text-sm",
-              audit.ipAddress ? "" : "sm:col-span-2",
-            )}
-          >
+          <div className={cn('min-w-0 text-sm', audit.ipAddress ? '' : 'sm:col-span-2')}>
             <div className="flex items-start gap-2">
               <Monitor className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
               <div className="min-w-0">
                 <p className="font-medium text-foreground">User agent</p>
-                <p
-                  className="truncate text-muted-foreground"
-                  title={audit.userAgent}
-                >
+                <p className="truncate text-muted-foreground" title={audit.userAgent}>
                   {audit.userAgent}
                 </p>
               </div>
@@ -335,12 +277,12 @@ function StorageEditAuditCard({ audit }: { audit: StorageGatePassAudit }) {
 
       <AuditChangeTable audit={audit} />
     </Card>
-  )
+  );
 }
 
 const StorageEditHistory = () => {
-  const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState<PageSize>(DEFAULT_PAGE_SIZE)
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState<PageSize>(DEFAULT_PAGE_SIZE);
 
   const queryParams = useMemo(
     () => ({
@@ -348,38 +290,38 @@ const StorageEditHistory = () => {
       limit: pageSize,
     }),
     [page, pageSize],
-  )
+  );
 
   const { data, isLoading, isError, error, isFetching, refetch } =
-    useStorageGatePassEdits(queryParams)
+    useStorageGatePassEdits(queryParams);
 
-  const audits = data?.audits ?? []
-  const pagination = data?.pagination
-  const totalCount = pagination?.total ?? 0
-  const currentPage = pagination?.page ?? page
-  const totalPages = Math.max(pagination?.totalPages ?? 1, 1)
-  const isOnFirstPage = currentPage <= 1
-  const isOnLastPage = currentPage >= totalPages
+  const audits = data?.audits ?? [];
+  const pagination = data?.pagination;
+  const totalCount = pagination?.total ?? 0;
+  const currentPage = pagination?.page ?? page;
+  const totalPages = Math.max(pagination?.totalPages ?? 1, 1);
+  const isOnFirstPage = currentPage <= 1;
+  const isOnLastPage = currentPage >= totalPages;
 
   const handlePrevPage = (event: MouseEvent<HTMLAnchorElement>) => {
-    event.preventDefault()
-    if (isOnFirstPage || isFetching) return
-    setPage((previous) => Math.max(previous - 1, 1))
-  }
+    event.preventDefault();
+    if (isOnFirstPage || isFetching) return;
+    setPage((previous) => Math.max(previous - 1, 1));
+  };
 
   const handleNextPage = (event: MouseEvent<HTMLAnchorElement>) => {
-    event.preventDefault()
-    if (isOnLastPage || isFetching) return
-    setPage((previous) => previous + 1)
-  }
+    event.preventDefault();
+    if (isOnLastPage || isFetching) return;
+    setPage((previous) => previous + 1);
+  };
 
   const handlePageSizeChange = (value: string) => {
-    setPageSize(Number(value) as PageSize)
-    setPage(1)
-  }
+    setPageSize(Number(value) as PageSize);
+    setPage(1);
+  };
 
   if (isLoading) {
-    return <StorageEditHistorySkeleton />
+    return <StorageEditHistorySkeleton />;
   }
 
   return (
@@ -392,7 +334,7 @@ const StorageEditHistory = () => {
             size="sm"
             className="-ml-2 mb-1 h-9 px-2 text-muted-foreground"
           >
-            <Link to="/daybook" search={{ tab: "storage" }}>
+            <Link to="/daybook" search={{ tab: 'storage' }}>
               <ArrowLeft className="mr-1.5 h-5 w-5 text-primary" />
               Back to daybook
             </Link>
@@ -415,18 +357,13 @@ const StorageEditHistory = () => {
 
         <ItemContent>
           <ItemTitle>
-            {totalCount.toLocaleString("en-IN")} edit
-            {totalCount === 1 ? "" : "s"}
+            {totalCount.toLocaleString('en-IN')} edit
+            {totalCount === 1 ? '' : 's'}
           </ItemTitle>
         </ItemContent>
 
         <ItemActions>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => void refetch()}
-            disabled={isFetching}
-          >
+          <Button variant="outline" size="sm" onClick={() => void refetch()} disabled={isFetching}>
             {isFetching ? (
               <Loader2 className="mr-2 h-5 w-5 animate-spin text-primary" />
             ) : (
@@ -447,7 +384,7 @@ const StorageEditHistory = () => {
             <EmptyDescription>
               {error instanceof Error
                 ? error.message
-                : "Something went wrong while fetching edit history."}
+                : 'Something went wrong while fetching edit history.'}
             </EmptyDescription>
           </EmptyHeader>
           <Button
@@ -473,18 +410,13 @@ const StorageEditHistory = () => {
             </EmptyMedia>
             <EmptyTitle>No edits recorded yet</EmptyTitle>
             <EmptyDescription>
-              Changes to storage gate passes will appear here after they are
-              saved.
+              Changes to storage gate passes will appear here after they are saved.
             </EmptyDescription>
           </EmptyHeader>
         </Empty>
       )}
 
-      <Item
-        variant="outline"
-        size="sm"
-        className="rounded-xl px-4 py-3 sm:px-5 sm:py-4"
-      >
+      <Item variant="outline" size="sm" className="rounded-xl px-4 py-3 sm:px-5 sm:py-4">
         <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Select
@@ -492,10 +424,7 @@ const StorageEditHistory = () => {
               onValueChange={handlePageSizeChange}
               disabled={isFetching}
             >
-              <SelectTrigger
-                className="h-9 w-18 tabular-nums"
-                aria-label="Items per page"
-              >
+              <SelectTrigger className="h-9 w-18 tabular-nums" aria-label="Items per page">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent side="top">
@@ -517,9 +446,7 @@ const StorageEditHistory = () => {
                   onClick={handlePrevPage}
                   aria-disabled={isOnFirstPage || isFetching}
                   className={cn(
-                    isOnFirstPage || isFetching
-                      ? "pointer-events-none opacity-50"
-                      : "",
+                    isOnFirstPage || isFetching ? 'pointer-events-none opacity-50' : '',
                   )}
                 />
               </PaginationItem>
@@ -535,11 +462,7 @@ const StorageEditHistory = () => {
                   href="#"
                   onClick={handleNextPage}
                   aria-disabled={isOnLastPage || isFetching}
-                  className={cn(
-                    isOnLastPage || isFetching
-                      ? "pointer-events-none opacity-50"
-                      : "",
-                  )}
+                  className={cn(isOnLastPage || isFetching ? 'pointer-events-none opacity-50' : '')}
                 />
               </PaginationItem>
             </PaginationContent>
@@ -547,7 +470,7 @@ const StorageEditHistory = () => {
         </div>
       </Item>
     </div>
-  )
-}
+  );
+};
 
-export default StorageEditHistory
+export default StorageEditHistory;

@@ -1,77 +1,61 @@
-import {
-  useMemo,
-  useState,
-  type MouseEvent,
-} from "react"
-import { useNavigate } from "@tanstack/react-router"
-import { useDebounceValue } from "usehooks-ts"
-import {
-  ArrowLeftRight,
-  ArrowUpFromLine,
-  Loader2,
-  RefreshCw,
-  Search,
-} from "lucide-react"
+import { useMemo, useState, type MouseEvent } from 'react';
+import { useNavigate } from '@tanstack/react-router';
+import { useDebounceValue } from 'usehooks-ts';
+import { ArrowLeftRight, ArrowUpFromLine, Loader2, RefreshCw, Search } from 'lucide-react';
 
-import { Button } from "@/components/ui/button"
-import {
-  Item,
-  ItemActions,
-  ItemContent,
-  ItemMedia,
-  ItemTitle,
-} from "@/components/ui/item"
-import { Input } from "@/components/ui/input"
+import { Button } from '@/components/ui/button';
+import { Item, ItemActions, ItemContent, ItemMedia, ItemTitle } from '@/components/ui/item';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from '@/components/ui/select';
 import {
   Pagination,
   PaginationContent,
   PaginationItem,
   PaginationNext,
   PaginationPrevious,
-} from "@/components/ui/pagination"
+} from '@/components/ui/pagination';
 import {
   Empty,
   EmptyDescription,
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
-} from "@/components/ui/empty"
-import { Skeleton } from "@/components/ui/skeleton"
+} from '@/components/ui/empty';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   BookingGatePassCard,
   BookingGatePassCardSkeleton,
-} from "@/components/booking-gate-pass-card"
-import { BookingSummary } from "@/features/booking/components/booking-summary"
-import { useBookingStorageSummary } from "@/features/booking/api/use-booking-storage-summary"
-import { useBookingSummary } from "@/features/booking/api/use-booking-summary"
-import { useBookings } from "@/features/booking/api/use-bookings"
-import { useSearchBooking } from "@/features/booking/api/use-search-booking"
-import type { BookingListParams } from "@/features/booking/api/types"
+} from '@/components/booking-gate-pass-card';
+import { BookingSummary } from '@/features/booking/components/booking-summary';
+import { useBookingStorageSummary } from '@/features/booking/api/use-booking-storage-summary';
+import { useBookingSummary } from '@/features/booking/api/use-booking-summary';
+import { useBookings } from '@/features/booking/api/use-bookings';
+import { useSearchBooking } from '@/features/booking/api/use-search-booking';
+import type { BookingListParams } from '@/features/booking/api/types';
 
-const PAGE_SIZE_OPTIONS = [10, 25, 50, 100] as const
-const DEFAULT_PAGE_SIZE = PAGE_SIZE_OPTIONS[0]
-const SEARCH_DEBOUNCE_MS = 500
+const PAGE_SIZE_OPTIONS = [10, 25, 50, 100] as const;
+const DEFAULT_PAGE_SIZE = PAGE_SIZE_OPTIONS[0];
+const SEARCH_DEBOUNCE_MS = 500;
 
-type PageSize = (typeof PAGE_SIZE_OPTIONS)[number]
-type SortFilter = "newest" | "oldest"
+type PageSize = (typeof PAGE_SIZE_OPTIONS)[number];
+type SortFilter = 'newest' | 'oldest';
 
-function toSortOrder(sort: SortFilter): BookingListParams["sortOrder"] {
-  return sort === "newest" ? "desc" : "asc"
+function toSortOrder(sort: SortFilter): BookingListParams['sortOrder'] {
+  return sort === 'newest' ? 'desc' : 'asc';
 }
 
 function parseGatePassSearchNumber(value: string): number | undefined {
-  const trimmed = value.trim()
-  if (!trimmed || !/^\d+$/.test(trimmed)) return undefined
+  const trimmed = value.trim();
+  if (!trimmed || !/^\d+$/.test(trimmed)) return undefined;
 
-  const parsed = Number(trimmed)
-  return parsed > 0 ? parsed : undefined
+  const parsed = Number(trimmed);
+  return parsed > 0 ? parsed : undefined;
 }
 
 function BookingTabSkeleton() {
@@ -112,11 +96,7 @@ function BookingTabSkeleton() {
         ))}
       </div>
 
-      <Item
-        variant="outline"
-        size="sm"
-        className="rounded-xl px-4 py-3 sm:px-5 sm:py-4"
-      >
+      <Item variant="outline" size="sm" className="rounded-xl px-4 py-3 sm:px-5 sm:py-4">
         <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2">
             <Skeleton className="h-9 w-18 rounded-md" />
@@ -130,27 +110,20 @@ function BookingTabSkeleton() {
         </div>
       </Item>
     </div>
-  )
+  );
 }
 
 const DaybookBookingTab = () => {
-  const navigate = useNavigate()
-  const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState<PageSize>(DEFAULT_PAGE_SIZE)
-  const [sortFilter, setSortFilter] = useState<SortFilter>("newest")
-  const [searchInput, setSearchInput] = useState("")
-  const [debouncedSearch, setDebouncedSearch] = useDebounceValue(
-    "",
-    SEARCH_DEBOUNCE_MS,
-  )
+  const navigate = useNavigate();
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState<PageSize>(DEFAULT_PAGE_SIZE);
+  const [sortFilter, setSortFilter] = useState<SortFilter>('newest');
+  const [searchInput, setSearchInput] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useDebounceValue('', SEARCH_DEBOUNCE_MS);
 
-  const searchNumber = useMemo(
-    () => parseGatePassSearchNumber(debouncedSearch),
-    [debouncedSearch],
-  )
-  const isSearchMode = searchNumber != null
-  const hasInvalidSearchInput =
-    debouncedSearch.trim().length > 0 && searchNumber == null
+  const searchNumber = useMemo(() => parseGatePassSearchNumber(debouncedSearch), [debouncedSearch]);
+  const isSearchMode = searchNumber != null;
+  const hasInvalidSearchInput = debouncedSearch.trim().length > 0 && searchNumber == null;
 
   const listQueryParams = useMemo<BookingListParams>(
     () => ({
@@ -159,95 +132,86 @@ const DaybookBookingTab = () => {
       sortOrder: toSortOrder(sortFilter),
     }),
     [page, pageSize, sortFilter],
-  )
+  );
 
   const listQuery = useBookings(listQueryParams, {
     enabled: !isSearchMode && !hasInvalidSearchInput,
-  })
+  });
   const searchQuery = useSearchBooking(searchNumber ?? 0, {
     enabled: isSearchMode,
-  })
-  const bookingSummaryQuery = useBookingSummary()
-  const bookingStorageSummaryQuery = useBookingStorageSummary()
+  });
+  const bookingSummaryQuery = useBookingSummary();
+  const bookingStorageSummaryQuery = useBookingStorageSummary();
 
-  const activeQuery = isSearchMode ? searchQuery : listQuery
-  const {
-    data,
-    isLoading,
-    isError,
-    error,
-    isFetching,
-    refetch,
-  } = activeQuery
+  const activeQuery = isSearchMode ? searchQuery : listQuery;
+  const { data, isLoading, isError, error, isFetching, refetch } = activeQuery;
 
-  const bookings = hasInvalidSearchInput ? [] : (data?.bookings ?? [])
-  const pagination = hasInvalidSearchInput ? undefined : data?.pagination
-  const totalCount = isSearchMode
-    ? bookings.length
-    : (pagination?.total ?? 0)
-  const currentPage = pagination?.page ?? page
-  const totalPages = Math.max(pagination?.totalPages ?? 1, 1)
+  const bookings = hasInvalidSearchInput ? [] : (data?.bookings ?? []);
+  const pagination = hasInvalidSearchInput ? undefined : data?.pagination;
+  const totalCount = isSearchMode ? bookings.length : (pagination?.total ?? 0);
+  const currentPage = pagination?.page ?? page;
+  const totalPages = Math.max(pagination?.totalPages ?? 1, 1);
 
-  const isOnFirstPage = currentPage <= 1
-  const isOnLastPage = currentPage >= totalPages
-  const isSearching = isSearchMode
-  const showListLoading = !isSearchMode && isLoading
-  const showSearchLoading = isSearchMode && isFetching && !data
+  const isOnFirstPage = currentPage <= 1;
+  const isOnLastPage = currentPage >= totalPages;
+  const isSearching = isSearchMode;
+  const showListLoading = !isSearchMode && isLoading;
+  const showSearchLoading = isSearchMode && isFetching && !data;
 
   const emptyTitle = hasInvalidSearchInput
-    ? "Invalid gate pass number"
+    ? 'Invalid gate pass number'
     : isSearching
-      ? "No booking gate pass found"
-      : "No booking gate passes found"
+      ? 'No booking gate pass found'
+      : 'No booking gate passes found';
   const emptyDescription = hasInvalidSearchInput
-    ? "Enter a valid numeric gate pass number to search."
+    ? 'Enter a valid numeric gate pass number to search.'
     : isSearching
       ? `No gate pass matches #${searchNumber}.`
-      : "There are no booking gate passes available."
+      : 'There are no booking gate passes available.';
 
   const handlePrevPage = (event: MouseEvent<HTMLAnchorElement>) => {
-    event.preventDefault()
-    if (isOnFirstPage || isFetching) return
-    setPage((previous) => Math.max(previous - 1, 1))
-  }
+    event.preventDefault();
+    if (isOnFirstPage || isFetching) return;
+    setPage((previous) => Math.max(previous - 1, 1));
+  };
 
   const handleNextPage = (event: MouseEvent<HTMLAnchorElement>) => {
-    event.preventDefault()
-    if (isOnLastPage || isFetching) return
-    setPage((previous) => previous + 1)
-  }
+    event.preventDefault();
+    if (isOnLastPage || isFetching) return;
+    setPage((previous) => previous + 1);
+  };
 
   const handleAddBooking = () => {
-    navigate({ to: "/booking" })
-  }
+    navigate({ to: '/booking' });
+  };
 
   const handleEditHistory = () => {
-    navigate({to: "/booking/edit-history"})
-  }
+    navigate({ to: '/booking/edit-history' });
+  };
 
   const handleSearchChange = (value: string) => {
-    setSearchInput(value)
-    setDebouncedSearch(value)
-  }
+    setSearchInput(value);
+    setDebouncedSearch(value);
+  };
 
   const handleSortChange = (value: string) => {
-    setSortFilter(value as SortFilter)
-    setPage(1)
-  }
+    setSortFilter(value as SortFilter);
+    setPage(1);
+  };
 
   const handlePageSizeChange = (value: string) => {
-    setPageSize(Number(value) as PageSize)
-    setPage(1)
-  }
+    setPageSize(Number(value) as PageSize);
+    setPage(1);
+  };
 
   const handleRefresh = () => {
-    void refetch()
-    void bookingSummaryQuery.refetch()
-    void bookingStorageSummaryQuery.refetch()
-  }
+    void refetch();
+    void bookingSummaryQuery.refetch();
+    void bookingStorageSummaryQuery.refetch();
+  };
 
   if (showListLoading) {
-    return <BookingTabSkeleton />
+    return <BookingTabSkeleton />;
   }
 
   return (
@@ -264,12 +228,7 @@ const DaybookBookingTab = () => {
         </ItemContent>
 
         <ItemActions>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleRefresh}
-            disabled={isFetching}
-          >
+          <Button variant="outline" size="sm" onClick={handleRefresh} disabled={isFetching}>
             {isFetching ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (
@@ -306,15 +265,16 @@ const DaybookBookingTab = () => {
           </Select>
 
           <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-row sm:shrink-0">
-            <Button onClick={handleEditHistory} variant="secondary" className="min-w-0 px-2.5 sm:px-3">
+            <Button
+              onClick={handleEditHistory}
+              variant="secondary"
+              className="min-w-0 px-2.5 sm:px-3"
+            >
               <span className="truncate sm:hidden">Edit History</span>
               <span className="hidden sm:inline">Booking Edit History</span>
             </Button>
 
-            <Button
-              className="min-w-0 px-2.5 sm:px-3"
-              onClick={handleAddBooking}
-            >
+            <Button className="min-w-0 px-2.5 sm:px-3" onClick={handleAddBooking}>
               <ArrowUpFromLine className="h-4 w-4 shrink-0 sm:mr-2" />
               <span className="truncate">Add Booking</span>
             </Button>
@@ -343,7 +303,7 @@ const DaybookBookingTab = () => {
             <EmptyDescription>
               {error instanceof Error
                 ? error.message
-                : "Something went wrong while fetching booking gate passes."}
+                : 'Something went wrong while fetching booking gate passes.'}
             </EmptyDescription>
           </EmptyHeader>
 
@@ -382,11 +342,7 @@ const DaybookBookingTab = () => {
       )}
 
       {!isSearchMode && !hasInvalidSearchInput ? (
-        <Item
-          variant="outline"
-          size="sm"
-          className="rounded-xl px-4 py-3 sm:px-5 sm:py-4"
-        >
+        <Item variant="outline" size="sm" className="rounded-xl px-4 py-3 sm:px-5 sm:py-4">
           <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Select
@@ -394,10 +350,7 @@ const DaybookBookingTab = () => {
                 onValueChange={handlePageSizeChange}
                 disabled={isFetching}
               >
-                <SelectTrigger
-                  className="h-9 w-18 tabular-nums"
-                  aria-label="Items per page"
-                >
+                <SelectTrigger className="h-9 w-18 tabular-nums" aria-label="Items per page">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent side="top">
@@ -418,11 +371,7 @@ const DaybookBookingTab = () => {
                     href="#"
                     onClick={handlePrevPage}
                     aria-disabled={isOnFirstPage || isFetching}
-                    className={
-                      isOnFirstPage || isFetching
-                        ? "pointer-events-none opacity-50"
-                        : ""
-                    }
+                    className={isOnFirstPage || isFetching ? 'pointer-events-none opacity-50' : ''}
                   />
                 </PaginationItem>
 
@@ -437,11 +386,7 @@ const DaybookBookingTab = () => {
                     href="#"
                     onClick={handleNextPage}
                     aria-disabled={isOnLastPage || isFetching}
-                    className={
-                      isOnLastPage || isFetching
-                        ? "pointer-events-none opacity-50"
-                        : ""
-                    }
+                    className={isOnLastPage || isFetching ? 'pointer-events-none opacity-50' : ''}
                   />
                 </PaginationItem>
               </PaginationContent>
@@ -450,7 +395,7 @@ const DaybookBookingTab = () => {
         </Item>
       ) : null}
     </div>
-  )
-}
+  );
+};
 
-export default DaybookBookingTab
+export default DaybookBookingTab;

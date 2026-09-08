@@ -1,7 +1,7 @@
-import { useMemo } from "react"
-import { MapPin, Phone } from "lucide-react"
+import { useMemo } from 'react';
+import { MapPin, Phone } from 'lucide-react';
 
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
   Card,
   CardAction,
@@ -9,44 +9,34 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
-import { Skeleton } from "@/components/ui/skeleton"
-import type { FarmerStorageLinkGatePassesResult } from "@/features/people/api/gate-pass-types"
-import { cn } from "@/lib/utils"
+} from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
+import type { FarmerStorageLinkGatePassesResult } from '@/features/people/api/gate-pass-types';
+import { cn } from '@/lib/utils';
 
 import {
   buildFarmerProfileStats,
   formatFarmerProfileBagCount,
   type FarmerProfileStat,
-} from "../utils/farmer-profile-stats"
-import { getFarmerInitials } from "../utils/get-farmer-initials"
+} from '../utils/farmer-profile-stats';
+import { getFarmerInitials } from '../utils/get-farmer-initials';
 
 type FarmerProfileHeaderProps = {
-  name: string
-  mobileNumber: string
-  accountNumber: number
-  address: string
-  gatePasses?: FarmerStorageLinkGatePassesResult
-  isLoadingGatePasses?: boolean
-}
+  name: string;
+  mobileNumber: string;
+  accountNumber: number;
+  address: string;
+  gatePasses?: FarmerStorageLinkGatePassesResult;
+  isLoadingGatePasses?: boolean;
+};
 
-function FarmerProfileStatCard({
-  label,
-  value,
-  icon: Icon,
-  iconClassName,
-}: FarmerProfileStat) {
+function FarmerProfileStatCard({ label, value, icon: Icon, iconClassName }: FarmerProfileStat) {
   return (
     <Card size="sm" className="gap-0">
       <CardHeader className="pb-2">
         <CardDescription>{label}</CardDescription>
         <CardAction>
-          <div
-            className={cn(
-              "flex size-9 items-center justify-center rounded-xl",
-              iconClassName,
-            )}
-          >
+          <div className={cn('flex size-9 items-center justify-center rounded-xl', iconClassName)}>
             <Icon className="size-4" aria-hidden />
           </div>
         </CardAction>
@@ -61,7 +51,7 @@ function FarmerProfileStatCard({
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }
 
 function FarmerProfileStatCardSkeleton() {
@@ -81,7 +71,7 @@ function FarmerProfileStatCardSkeleton() {
         <Skeleton className="h-3 w-10" />
       </CardContent>
     </Card>
-  )
+  );
 }
 
 export function FarmerProfileHeader({
@@ -92,7 +82,7 @@ export function FarmerProfileHeader({
   gatePasses,
   isLoadingGatePasses = false,
 }: FarmerProfileHeaderProps) {
-  const stats = useMemo(() => buildFarmerProfileStats(gatePasses), [gatePasses])
+  const stats = useMemo(() => buildFarmerProfileStats(gatePasses), [gatePasses]);
 
   return (
     <Card className="gap-0 overflow-hidden py-0 shadow-sm">
@@ -112,23 +102,17 @@ export function FarmerProfileHeader({
           </CardTitle>
 
           <CardDescription className="mt-1 tabular-nums">
-            Account #{accountNumber.toLocaleString("en-IN")}
+            Account #{accountNumber.toLocaleString('en-IN')}
           </CardDescription>
 
           <div className="mt-3 flex flex-col gap-2.5">
             <p className="flex items-center gap-2 text-sm text-foreground">
-              <Phone
-                className="size-3.5 shrink-0 text-muted-foreground"
-                aria-hidden
-              />
+              <Phone className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
               <span className="tabular-nums">{mobileNumber}</span>
             </p>
 
             <p className="flex items-start gap-2 text-xs leading-relaxed text-muted-foreground">
-              <MapPin
-                className="mt-0.5 size-3.5 shrink-0 text-muted-foreground"
-                aria-hidden
-              />
+              <MapPin className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" aria-hidden />
               <span className="line-clamp-2" title={address}>
                 {address}
               </span>
@@ -143,11 +127,9 @@ export function FarmerProfileHeader({
             ? Array.from({ length: 4 }).map((_, index) => (
                 <FarmerProfileStatCardSkeleton key={index} />
               ))
-            : stats.map((stat) => (
-                <FarmerProfileStatCard key={stat.label} {...stat} />
-              ))}
+            : stats.map((stat) => <FarmerProfileStatCard key={stat.label} {...stat} />)}
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }

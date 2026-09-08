@@ -1,14 +1,14 @@
-import { queryOptions, useQuery, type UseQueryOptions } from "@tanstack/react-query"
+import { queryOptions, useQuery, type UseQueryOptions } from '@tanstack/react-query';
 
-import { getBookingStorageSummary } from "./get-booking-storage-summary"
-import { bookingKeys } from "./query-keys"
-import type { SummaryVariety } from "./summary-types"
+import { getBookingStorageSummary } from './get-booking-storage-summary';
+import { bookingKeys } from './query-keys';
+import type { SummaryVariety } from './summary-types';
 
 export function bookingStorageSummaryQueryOptions() {
   return queryOptions({
     queryKey: bookingKeys.storageSummary(),
     queryFn: getBookingStorageSummary,
-  })
+  });
 }
 
 type UseBookingStorageSummaryOptions = Omit<
@@ -18,14 +18,12 @@ type UseBookingStorageSummaryOptions = Omit<
     SummaryVariety[],
     ReturnType<typeof bookingKeys.storageSummary>
   >,
-  "queryKey" | "queryFn"
->
+  'queryKey' | 'queryFn'
+>;
 
-export function useBookingStorageSummary(
-  options?: UseBookingStorageSummaryOptions,
-) {
+export function useBookingStorageSummary(options?: UseBookingStorageSummaryOptions) {
   return useQuery({
     ...bookingStorageSummaryQueryOptions(),
     ...options,
-  })
+  });
 }

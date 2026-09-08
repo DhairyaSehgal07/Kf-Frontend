@@ -1,9 +1,7 @@
-import type { StorageGatePassByFarmer } from "@/features/storage/api/types"
-import type { StorageGatePass } from "@/features/transfer-stock/types/storage-gate-pass"
+import type { StorageGatePassByFarmer } from '@/features/storage/api/types';
+import type { StorageGatePass } from '@/features/transfer-stock/types/storage-gate-pass';
 
-export function toTransferStorageGatePass(
-  pass: StorageGatePassByFarmer,
-): StorageGatePass {
+export function toTransferStorageGatePass(pass: StorageGatePassByFarmer): StorageGatePass {
   return {
     _id: pass._id,
     farmerStorageLinkId: pass.farmerStorageLinkId,
@@ -22,6 +20,6 @@ export function toTransferStorageGatePass(
       floor: bag.floor,
       row: bag.row,
     })),
-    remarks: "",
-  }
+    remarks: '',
+  };
 }

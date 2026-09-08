@@ -1,15 +1,10 @@
-import apiClient, { getApiErrorMessage } from "@/lib/api-client"
+import apiClient, { getApiErrorMessage } from '@/lib/api-client';
 
-import type {
-  CreateNikasiGatePassBody,
-  CreateNikasiGatePassResponse,
-} from "./types"
+import type { CreateNikasiGatePassBody, CreateNikasiGatePassResponse } from './types';
 
-function assertCreateNikasiGatePassResponse(
-  data: CreateNikasiGatePassResponse,
-): void {
+function assertCreateNikasiGatePassResponse(data: CreateNikasiGatePassResponse): void {
   if (data.success === false) {
-    throw new Error(data.message ?? "Failed to create nikasi gate pass")
+    throw new Error(data.message ?? 'Failed to create nikasi gate pass');
   }
 }
 
@@ -17,18 +12,14 @@ export async function createNikasiGatePass(
   body: CreateNikasiGatePassBody,
 ): Promise<CreateNikasiGatePassResponse> {
   try {
-    const { data } = await apiClient.post<CreateNikasiGatePassResponse>(
-      "/nikasi-gate-pass",
-      body,
-    )
+    const { data } = await apiClient.post<CreateNikasiGatePassResponse>('/nikasi-gate-pass', body);
 
-    assertCreateNikasiGatePassResponse(data)
+    assertCreateNikasiGatePassResponse(data);
 
-    return data
+    return data;
   } catch (error) {
-    throw new Error(
-      getApiErrorMessage(error, "Failed to create nikasi gate pass"),
-      { cause: error },
-    )
+    throw new Error(getApiErrorMessage(error, 'Failed to create nikasi gate pass'), {
+      cause: error,
+    });
   }
 }

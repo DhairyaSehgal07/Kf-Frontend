@@ -1,24 +1,20 @@
-import {
-  Field,
-  FieldError,
-  FieldLabel,
-} from "@/components/ui/field"
+import { Field, FieldError, FieldLabel } from '@/components/ui/field';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { BAG_SIZES } from "@/lib/constants"
-import { cn } from "@/lib/utils"
+} from '@/components/ui/select';
+import { BAG_SIZES } from '@/lib/constants';
+import { cn } from '@/lib/utils';
 
-export type BagSizeSelectValue = (typeof BAG_SIZES)[number] | ""
+export type BagSizeSelectValue = (typeof BAG_SIZES)[number] | '';
 
 type FixedBagSizeLabelProps = {
-  size: string
-  rowIndex: number
-}
+  size: string;
+  rowIndex: number;
+};
 
 /** Default bag-size rows: fixed label, order from BAG_SIZES. */
 export function FixedBagSizeLabel({ size, rowIndex }: FixedBagSizeLabelProps) {
@@ -29,20 +25,20 @@ export function FixedBagSizeLabel({ size, rowIndex }: FixedBagSizeLabelProps) {
     >
       <span className="text-sm font-medium text-foreground">{size}</span>
     </div>
-  )
+  );
 }
 
 type BagSizeSelectFieldProps = {
-  id: string
-  name: string
-  value: string
-  rowIndex: number
-  isInvalid: boolean
-  errors?: Array<{ message?: string } | undefined>
-  labelClassName?: string
-  onBlur: () => void
-  onValueChange: (value: BagSizeSelectValue) => void
-}
+  id: string;
+  name: string;
+  value: string;
+  rowIndex: number;
+  isInvalid: boolean;
+  errors?: Array<{ message?: string } | undefined>;
+  labelClassName?: string;
+  onBlur: () => void;
+  onValueChange: (value: BagSizeSelectValue) => void;
+};
 
 /** Extra quantity rows only: pick which bag size to add. */
 export function BagSizeSelectField({
@@ -52,7 +48,7 @@ export function BagSizeSelectField({
   rowIndex,
   isInvalid,
   errors,
-  labelClassName = "md:sr-only",
+  labelClassName = 'md:sr-only',
   onBlur,
   onValueChange,
 }: BagSizeSelectFieldProps) {
@@ -84,5 +80,5 @@ export function BagSizeSelectField({
       </Select>
       {isInvalid && <FieldError errors={errors} />}
     </Field>
-  )
+  );
 }

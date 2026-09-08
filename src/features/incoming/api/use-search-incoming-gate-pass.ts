@@ -3,18 +3,18 @@ import {
   queryOptions,
   useQuery,
   type UseQueryOptions,
-} from "@tanstack/react-query"
+} from '@tanstack/react-query';
 
-import { incomingGatePassKeys } from "./query-keys"
-import { searchIncomingGatePasses } from "./search-incoming-gate-passes"
-import type { IncomingGatePassListResult } from "./types"
+import { incomingGatePassKeys } from './query-keys';
+import { searchIncomingGatePasses } from './search-incoming-gate-passes';
+import type { IncomingGatePassListResult } from './types';
 
 export function searchIncomingGatePassQueryOptions(number: number) {
   return queryOptions({
     queryKey: incomingGatePassKeys.search(number),
     queryFn: () => searchIncomingGatePasses({ number }),
     placeholderData: keepPreviousData,
-  })
+  });
 }
 
 type UseSearchIncomingGatePassOptions = Omit<
@@ -24,8 +24,8 @@ type UseSearchIncomingGatePassOptions = Omit<
     IncomingGatePassListResult,
     ReturnType<typeof incomingGatePassKeys.search>
   >,
-  "queryKey" | "queryFn" | "placeholderData"
->
+  'queryKey' | 'queryFn' | 'placeholderData'
+>;
 
 export function useSearchIncomingGatePass(
   number: number,
@@ -34,5 +34,5 @@ export function useSearchIncomingGatePass(
   return useQuery({
     ...searchIncomingGatePassQueryOptions(number),
     ...options,
-  })
+  });
 }

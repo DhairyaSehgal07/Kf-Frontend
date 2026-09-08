@@ -1,24 +1,18 @@
-import type { ReactNode } from "react"
-import type { LucideIcon } from "lucide-react"
+import type { ReactNode } from 'react';
+import type { LucideIcon } from 'lucide-react';
 
-import { Badge } from "@/components/ui/badge"
-import {
-  Item,
-  ItemContent,
-  ItemDescription,
-  ItemMedia,
-  ItemTitle,
-} from "@/components/ui/item"
-import { cn } from "@/lib/utils"
+import { Badge } from '@/components/ui/badge';
+import { Item, ItemContent, ItemDescription, ItemMedia, ItemTitle } from '@/components/ui/item';
+import { cn } from '@/lib/utils';
 
-import type { LocationWiseVarietySummaryItem } from "../types/location-wise-storage"
+import type { LocationWiseVarietySummaryItem } from '../types/location-wise-storage';
 
-const bagFormatter = new Intl.NumberFormat("en-IN", {
+const bagFormatter = new Intl.NumberFormat('en-IN', {
   maximumFractionDigits: 0,
-})
+});
 
 function formatBags(value: number) {
-  return bagFormatter.format(value)
+  return bagFormatter.format(value);
 }
 
 export function VarietySummaryBadges({
@@ -26,14 +20,14 @@ export function VarietySummaryBadges({
   varietyColorMap,
   className,
 }: {
-  items: LocationWiseVarietySummaryItem[]
-  varietyColorMap: Map<string, string>
-  className?: string
+  items: LocationWiseVarietySummaryItem[];
+  varietyColorMap: Map<string, string>;
+  className?: string;
 }) {
-  if (items.length === 0) return null
+  if (items.length === 0) return null;
 
   return (
-    <ul className={cn("flex flex-wrap gap-2", className)}>
+    <ul className={cn('flex flex-wrap gap-2', className)}>
       {items.map((item) => (
         <li key={item.variety}>
           <Badge
@@ -43,14 +37,11 @@ export function VarietySummaryBadges({
             <span
               className="size-2 shrink-0 rounded-full"
               style={{
-                backgroundColor:
-                  varietyColorMap.get(item.variety) ?? "var(--chart-1)",
+                backgroundColor: varietyColorMap.get(item.variety) ?? 'var(--chart-1)',
               }}
               aria-hidden
             />
-            <span className="max-w-[8rem] truncate sm:max-w-[10rem]">
-              {item.variety}
-            </span>
+            <span className="max-w-[8rem] truncate sm:max-w-[10rem]">{item.variety}</span>
             <span className="tabular-nums text-muted-foreground">
               {formatBags(item.currentQuantity)}
             </span>
@@ -58,7 +49,7 @@ export function VarietySummaryBadges({
         </li>
       ))}
     </ul>
-  )
+  );
 }
 
 export function LocationSectionStatsLine({
@@ -67,37 +58,35 @@ export function LocationSectionStatsLine({
   includeBags = true,
   className,
 }: {
-  bagCount: number
-  parts: string[]
-  includeBags?: boolean
-  className?: string
+  bagCount: number;
+  parts: string[];
+  includeBags?: boolean;
+  className?: string;
 }) {
-  const segments: string[] = []
+  const segments: string[] = [];
 
   if (includeBags) {
-    segments.push(`${formatBags(bagCount)} bags`)
+    segments.push(`${formatBags(bagCount)} bags`);
   }
 
-  segments.push(...parts)
+  segments.push(...parts);
 
-  if (segments.length === 0) return null
+  if (segments.length === 0) return null;
 
   return (
-    <ItemDescription className={cn("line-clamp-none", className)}>
+    <ItemDescription className={cn('line-clamp-none', className)}>
       {segments.map((segment, index) => (
         <span key={segment}>
-          {index > 0 ? " · " : null}
+          {index > 0 ? ' · ' : null}
           {includeBags && index === 0 ? (
-            <span className="font-medium tabular-nums text-foreground">
-              {segment}
-            </span>
+            <span className="font-medium tabular-nums text-foreground">{segment}</span>
           ) : (
             segment
           )}
         </span>
       ))}
     </ItemDescription>
-  )
+  );
 }
 
 export function LocationSectionTrigger({
@@ -107,37 +96,31 @@ export function LocationSectionTrigger({
   statsLine,
   varietySummary,
   varietyColorMap,
-  layout = "stacked",
+  layout = 'stacked',
 }: {
-  icon: LucideIcon
-  iconWrapClassName: string
-  title: string
-  statsLine: ReactNode
-  varietySummary: LocationWiseVarietySummaryItem[]
-  varietyColorMap: Map<string, string>
-  layout?: "stacked" | "inline"
+  icon: LucideIcon;
+  iconWrapClassName: string;
+  title: string;
+  statsLine: ReactNode;
+  varietySummary: LocationWiseVarietySummaryItem[];
+  varietyColorMap: Map<string, string>;
+  layout?: 'stacked' | 'inline';
 }) {
   const badges = (
     <VarietySummaryBadges
       items={varietySummary}
       varietyColorMap={varietyColorMap}
-      className={layout === "inline" ? "min-w-0 flex-1" : undefined}
+      className={layout === 'inline' ? 'min-w-0 flex-1' : undefined}
     />
-  )
+  );
 
   const iconMedia = (
-    <ItemMedia
-      variant="icon"
-      className={cn(
-        "size-9 rounded-lg [&_svg]:size-4",
-        iconWrapClassName,
-      )}
-    >
+    <ItemMedia variant="icon" className={cn('size-9 rounded-lg [&_svg]:size-4', iconWrapClassName)}>
       <Icon aria-hidden />
     </ItemMedia>
-  )
+  );
 
-  if (layout === "inline") {
+  if (layout === 'inline') {
     return (
       <Item
         variant="default"
@@ -157,7 +140,7 @@ export function LocationSectionTrigger({
           {badges}
         </div>
       </Item>
-    )
+    );
   }
 
   return (
@@ -169,35 +152,31 @@ export function LocationSectionTrigger({
       <div className="flex items-center gap-3">
         {iconMedia}
         <ItemContent className="min-w-0">
-          <ItemTitle className="font-heading text-sm font-semibold sm:text-base">
-            {title}
-          </ItemTitle>
+          <ItemTitle className="font-heading text-sm font-semibold sm:text-base">{title}</ItemTitle>
         </ItemContent>
       </div>
       {statsLine}
       {badges}
     </Item>
-  )
+  );
 }
 
 export function LocationSectionTotal({
   current,
   className,
 }: {
-  current: number
-  className?: string
+  current: number;
+  className?: string;
 }) {
   return (
     <div
       className={cn(
-        "shrink-0 rounded-lg bg-muted/50 px-2.5 py-1 text-right tabular-nums",
+        'shrink-0 rounded-lg bg-muted/50 px-2.5 py-1 text-right tabular-nums',
         className,
       )}
     >
-      <p className="text-sm font-semibold text-foreground sm:text-base">
-        {formatBags(current)}
-      </p>
+      <p className="text-sm font-semibold text-foreground sm:text-base">{formatBags(current)}</p>
       <p className="text-xs text-muted-foreground">bags</p>
     </div>
-  )
+  );
 }

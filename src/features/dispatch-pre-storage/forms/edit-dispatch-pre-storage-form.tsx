@@ -1,7 +1,7 @@
-import { useMemo, useState } from "react"
-import { Loader2, Plus, Trash2, UserPlus } from "lucide-react"
-import { useNavigate, useParams } from "@tanstack/react-router"
-import { toast } from "sonner"
+import { useMemo, useState } from 'react';
+import { Loader2, Plus, Trash2, UserPlus } from 'lucide-react';
+import { useNavigate, useParams } from '@tanstack/react-router';
+import { toast } from 'sonner';
 
 import {
   Card,
@@ -10,8 +10,8 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import {
   Field,
   FieldDescription,
@@ -21,35 +21,29 @@ import {
   FieldLegend,
   FieldSeparator,
   FieldSet,
-} from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
+} from '@/components/ui/field';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { DatePickerInput } from "@/components/date-picker"
-import {
-  BagSizeSelectField,
-  FixedBagSizeLabel,
-} from "@/components/bag-quantity-size-field"
+} from '@/components/ui/select';
+import { DatePickerInput } from '@/components/date-picker';
+import { BagSizeSelectField, FixedBagSizeLabel } from '@/components/bag-quantity-size-field';
 import {
   SearchableOptionCombobox,
   filterAndSortOptions,
   type ComboboxOption,
-} from "@/components/searchable-option-combobox"
-import {
-  DISPATCH_PRE_STORAGE_CATEGORIES,
-  POTATO_VARIETY_OPTIONS,
-} from "@/lib/constants"
-import { useDispatchLedgers } from "@/features/people/api/use-dispatch-ledgers"
-import type { NikasiGatePass } from "@/features/dispatch-pre-storage/api/types"
-import { useNikasiGatePassById } from "@/features/dispatch-pre-storage/api/use-nikasi-gate-pass-by-id"
-import { useUpdateNikasiGatePass } from "@/features/dispatch-pre-storage/api/use-update-nikasi-gate-pass"
-import { DispatchPreStorageSummarySheet } from "@/features/dispatch-pre-storage/forms/dispatch-pre-storage-summary-sheet"
+} from '@/components/searchable-option-combobox';
+import { DISPATCH_PRE_STORAGE_CATEGORIES, POTATO_VARIETY_OPTIONS } from '@/lib/constants';
+import { useDispatchLedgers } from '@/features/people/api/use-dispatch-ledgers';
+import type { NikasiGatePass } from '@/features/dispatch-pre-storage/api/types';
+import { useNikasiGatePassById } from '@/features/dispatch-pre-storage/api/use-nikasi-gate-pass-by-id';
+import { useUpdateNikasiGatePass } from '@/features/dispatch-pre-storage/api/use-update-nikasi-gate-pass';
+import { DispatchPreStorageSummarySheet } from '@/features/dispatch-pre-storage/forms/dispatch-pre-storage-summary-sheet';
 import {
   buildSummaryValues,
   calculateAverageWeightPerBagKg,
@@ -61,22 +55,18 @@ import {
   numericInputProps,
   parseOptionalNumber,
   type DispatchPreStorageBagSizeRow,
-} from "@/features/dispatch-pre-storage/forms/dispatch-pre-storage-form-utils"
-import { isValidRequiredPositiveInt } from "@/features/dispatch-pre-storage/schemas/dispatch-pre-storage-form-schema"
-import { nikasiGatePassToEditFormValues } from "@/features/dispatch-pre-storage/utils/nikasi-gate-pass-to-edit-form-values"
+} from '@/features/dispatch-pre-storage/forms/dispatch-pre-storage-form-utils';
+import { isValidRequiredPositiveInt } from '@/features/dispatch-pre-storage/schemas/dispatch-pre-storage-form-schema';
+import { nikasiGatePassToEditFormValues } from '@/features/dispatch-pre-storage/utils/nikasi-gate-pass-to-edit-form-values';
 
-const CATEGORY_ITEMS: ComboboxOption[] = DISPATCH_PRE_STORAGE_CATEGORIES.map(
-  (value) => ({ id: value, label: value })
-)
+const CATEGORY_ITEMS: ComboboxOption[] = DISPATCH_PRE_STORAGE_CATEGORIES.map((value) => ({
+  id: value,
+  label: value,
+}));
 
 export function EditDispatchPreStorageForm() {
-  const { id } = useParams({ from: "/_authenticated/dispatch-pre-storage/$id" })
-  const {
-    data: gatePass,
-    isLoading,
-    isError,
-    error,
-  } = useNikasiGatePassById(id)
+  const { id } = useParams({ from: '/_authenticated/dispatch-pre-storage/$id' });
+  const { data: gatePass, isLoading, isError, error } = useNikasiGatePassById(id);
 
   if (isLoading) {
     return (
@@ -86,7 +76,7 @@ export function EditDispatchPreStorageForm() {
           Loading nikasi gate pass…
         </CardContent>
       </Card>
-    )
+    );
   }
 
   if (isError) {
@@ -94,44 +84,38 @@ export function EditDispatchPreStorageForm() {
       <Card className="mx-auto w-full max-w-4xl shadow-sm">
         <CardContent className="flex min-h-64 items-center justify-center py-12 text-center">
           <p className="text-sm text-destructive">
-            {error?.message ?? "Failed to load nikasi gate pass."}
+            {error?.message ?? 'Failed to load nikasi gate pass.'}
           </p>
         </CardContent>
       </Card>
-    )
+    );
   }
 
   if (!gatePass) {
     return (
       <Card className="mx-auto w-full max-w-4xl shadow-sm">
         <CardContent className="flex min-h-64 items-center justify-center py-12 text-center">
-          <p className="text-sm text-muted-foreground">
-            Nikasi gate pass not found.
-          </p>
+          <p className="text-sm text-muted-foreground">Nikasi gate pass not found.</p>
         </CardContent>
       </Card>
-    )
+    );
   }
 
-  return <EditDispatchPreStorageFormFields key={gatePass._id} gatePass={gatePass} />
+  return <EditDispatchPreStorageFormFields key={gatePass._id} gatePass={gatePass} />;
 }
 
 type EditDispatchPreStorageFormFieldsProps = {
-  gatePass: NikasiGatePass
-}
+  gatePass: NikasiGatePass;
+};
 
-function EditDispatchPreStorageFormFields({
-  gatePass,
-}: EditDispatchPreStorageFormFieldsProps) {
-  const navigate = useNavigate()
-  const initialValues = useMemo(
-    () => nikasiGatePassToEditFormValues(gatePass),
-    [gatePass],
-  )
+function EditDispatchPreStorageFormFields({ gatePass }: EditDispatchPreStorageFormFieldsProps) {
+  const navigate = useNavigate();
+  const initialValues = useMemo(() => nikasiGatePassToEditFormValues(gatePass), [gatePass]);
 
-  const { data: dispatchLedgersData } = useDispatchLedgers()
-  const { mutateAsync: updateNikasiGatePass, isPending: isSubmitting } =
-    useUpdateNikasiGatePass(gatePass._id)
+  const { data: dispatchLedgersData } = useDispatchLedgers();
+  const { mutateAsync: updateNikasiGatePass, isPending: isSubmitting } = useUpdateNikasiGatePass(
+    gatePass._id,
+  );
 
   const dispatchLedgerOptions = useMemo<ComboboxOption[]>(
     () =>
@@ -140,69 +124,63 @@ function EditDispatchPreStorageFormFields({
         label: ledger.name,
       })),
     [dispatchLedgersData],
-  )
+  );
 
   const [manualGatePassNumber, setManualGatePassNumber] = useState(
     initialValues.manualGatePassNumber,
-  )
-  const [date, setDate] = useState<Date | undefined>(() => new Date(initialValues.date))
-  const [dispatchLedgerId, setDispatchLedgerId] = useState(
-    initialValues.dispatchLedgerId,
-  )
-  const [category, setCategory] = useState(initialValues.category)
-  const [billNumber, setBillNumber] = useState(initialValues.billNumber)
-  const [biltiNo, setBiltiNo] = useState(initialValues.biltiNo)
-  const [billBook, setBillBook] = useState(initialValues.billBook)
-  const [biltiBook, setBiltiBook] = useState(initialValues.biltiBook)
-  const [from, setFrom] = useState(initialValues.from)
-  const [to, setTo] = useState(initialValues.to)
-  const [truckNumber, setTruckNumber] = useState(initialValues.truckNumber)
+  );
+  const [date, setDate] = useState<Date | undefined>(() => new Date(initialValues.date));
+  const [dispatchLedgerId, setDispatchLedgerId] = useState(initialValues.dispatchLedgerId);
+  const [category, setCategory] = useState(initialValues.category);
+  const [billNumber, setBillNumber] = useState(initialValues.billNumber);
+  const [biltiNo, setBiltiNo] = useState(initialValues.biltiNo);
+  const [billBook, setBillBook] = useState(initialValues.billBook);
+  const [biltiBook, setBiltiBook] = useState(initialValues.biltiBook);
+  const [from, setFrom] = useState(initialValues.from);
+  const [to, setTo] = useState(initialValues.to);
+  const [truckNumber, setTruckNumber] = useState(initialValues.truckNumber);
   const [bagSize, setBagSize] = useState<DispatchPreStorageBagSizeRow[]>(
     () => initialValues.bagSize as DispatchPreStorageBagSizeRow[],
-  )
-  const [netWeight, setNetWeight] = useState(initialValues.netWeight)
-  const [remarks, setRemarks] = useState(initialValues.remarks)
+  );
+  const [netWeight, setNetWeight] = useState(initialValues.netWeight);
+  const [remarks, setRemarks] = useState(initialValues.remarks);
 
   const [dispatchLedgerSearch, setDispatchLedgerSearch] = useState(
-    () => gatePass.dispatchLedgerId.name ?? "",
-  )
-  const [dispatchLedgerComboboxOpen, setDispatchLedgerComboboxOpen] =
-    useState(false)
-  const [categorySearch, setCategorySearch] = useState(initialValues.category)
-  const [categoryComboboxOpen, setCategoryComboboxOpen] = useState(false)
-  const [reviewOpen, setReviewOpen] = useState(false)
-  const [billBookTouched, setBillBookTouched] = useState(false)
-  const [biltiBookTouched, setBiltiBookTouched] = useState(false)
+    () => gatePass.dispatchLedgerId.name ?? '',
+  );
+  const [dispatchLedgerComboboxOpen, setDispatchLedgerComboboxOpen] = useState(false);
+  const [categorySearch, setCategorySearch] = useState(initialValues.category);
+  const [categoryComboboxOpen, setCategoryComboboxOpen] = useState(false);
+  const [reviewOpen, setReviewOpen] = useState(false);
+  const [billBookTouched, setBillBookTouched] = useState(false);
+  const [biltiBookTouched, setBiltiBookTouched] = useState(false);
 
   const sortedDispatchLedgers = useMemo(
     () => filterAndSortOptions(dispatchLedgerSearch, dispatchLedgerOptions),
     [dispatchLedgerSearch, dispatchLedgerOptions],
-  )
+  );
   const sortedCategories = useMemo(
     () => filterAndSortOptions(categorySearch, CATEGORY_ITEMS),
     [categorySearch],
-  )
+  );
 
   const totalQuantityIssued = useMemo(
     () =>
       bagSize.reduce((sum, row) => {
-        const parsed = Number(row.quantityIssued)
-        return sum + (Number.isNaN(parsed) ? 0 : parsed)
+        const parsed = Number(row.quantityIssued);
+        return sum + (Number.isNaN(parsed) ? 0 : parsed);
       }, 0),
     [bagSize],
-  )
+  );
 
-  const netWeightKg = useMemo(
-    () => parseOptionalNumber(netWeight),
-    [netWeight],
-  )
+  const netWeightKg = useMemo(() => parseOptionalNumber(netWeight), [netWeight]);
 
   const averageWeightPerBagKg = useMemo(
     () => calculateAverageWeightPerBagKg(netWeightKg, totalQuantityIssued),
     [netWeightKg, totalQuantityIssued],
-  )
+  );
 
-  const displayGatePassNo = String(gatePass.gatePassNo)
+  const displayGatePassNo = String(gatePass.gatePassNo);
 
   const summaryValues = useMemo(
     () =>
@@ -240,95 +218,85 @@ function EditDispatchPreStorageFormFields({
       netWeight,
       remarks,
     ],
-  )
+  );
 
   const dispatchLedgerLabel = useMemo(
-    () =>
-      dispatchLedgerOptions.find((o) => o.id === dispatchLedgerId)?.label ??
-      "—",
+    () => dispatchLedgerOptions.find((o) => o.id === dispatchLedgerId)?.label ?? '—',
     [dispatchLedgerId, dispatchLedgerOptions],
-  )
+  );
 
   const canSubmit = canSubmitSummaryValues(summaryValues, {
     requireGatePassNo: true,
-  })
+  });
 
   const handleOpenReview = () => {
     if (!summaryValues) {
-      toast.error("Pick a date before reviewing.", { position: "bottom-right" })
-      return
+      toast.error('Pick a date before reviewing.', { position: 'bottom-right' });
+      return;
     }
-    setReviewOpen(true)
-  }
+    setReviewOpen(true);
+  };
 
   const handleConfirmSubmit = async (isBooked: boolean) => {
-    if (!canSubmit || !summaryValues) return
+    if (!canSubmit || !summaryValues) return;
 
     try {
       const { message } = await updateNikasiGatePass({
         id: gatePass._id,
         summaryValues,
         isBooked,
-      })
-      toast.success(message ?? "Nikasi gate pass updated.", {
-        position: "bottom-right",
-      })
-      setReviewOpen(false)
-      void navigate({ to: "/dispatch-pre-storage/report" })
+      });
+      toast.success(message ?? 'Nikasi gate pass updated.', {
+        position: 'bottom-right',
+      });
+      setReviewOpen(false);
+      void navigate({ to: '/dispatch-pre-storage/report' });
     } catch (error) {
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Failed to update nikasi gate pass.",
-        { position: "bottom-right" },
-      )
+      toast.error(error instanceof Error ? error.message : 'Failed to update nikasi gate pass.', {
+        position: 'bottom-right',
+      });
     }
-  }
+  };
 
   const resetComboboxState = () => {
-    setDispatchLedgerSearch(gatePass.dispatchLedgerId.name ?? "")
-    setDispatchLedgerComboboxOpen(false)
-    setCategorySearch(initialValues.category)
-    setCategoryComboboxOpen(false)
-  }
+    setDispatchLedgerSearch(gatePass.dispatchLedgerId.name ?? '');
+    setDispatchLedgerComboboxOpen(false);
+    setCategorySearch(initialValues.category);
+    setCategoryComboboxOpen(false);
+  };
 
   const resetForm = () => {
-    setManualGatePassNumber(initialValues.manualGatePassNumber)
-    setDate(new Date(initialValues.date))
-    setDispatchLedgerId(initialValues.dispatchLedgerId)
-    setCategory(initialValues.category)
-    setBillNumber(initialValues.billNumber)
-    setBiltiNo(initialValues.biltiNo)
-    setBillBook(initialValues.billBook)
-    setBiltiBook(initialValues.biltiBook)
-    setFrom(initialValues.from)
-    setTo(initialValues.to)
-    setTruckNumber(initialValues.truckNumber)
-    setBagSize(initialValues.bagSize as DispatchPreStorageBagSizeRow[])
-    setNetWeight(initialValues.netWeight)
-    setRemarks(initialValues.remarks)
-    setBillBookTouched(false)
-    setBiltiBookTouched(false)
-    resetComboboxState()
-  }
+    setManualGatePassNumber(initialValues.manualGatePassNumber);
+    setDate(new Date(initialValues.date));
+    setDispatchLedgerId(initialValues.dispatchLedgerId);
+    setCategory(initialValues.category);
+    setBillNumber(initialValues.billNumber);
+    setBiltiNo(initialValues.biltiNo);
+    setBillBook(initialValues.billBook);
+    setBiltiBook(initialValues.biltiBook);
+    setFrom(initialValues.from);
+    setTo(initialValues.to);
+    setTruckNumber(initialValues.truckNumber);
+    setBagSize(initialValues.bagSize as DispatchPreStorageBagSizeRow[]);
+    setNetWeight(initialValues.netWeight);
+    setRemarks(initialValues.remarks);
+    setBillBookTouched(false);
+    setBiltiBookTouched(false);
+    resetComboboxState();
+  };
 
-  const updateBagSizeRow = (
-    index: number,
-    patch: Partial<DispatchPreStorageBagSizeRow>,
-  ) => {
+  const updateBagSizeRow = (index: number, patch: Partial<DispatchPreStorageBagSizeRow>) => {
     setBagSize((current) =>
-      current.map((row, rowIndex) =>
-        rowIndex === index ? { ...row, ...patch } : row,
-      ),
-    )
-  }
+      current.map((row, rowIndex) => (rowIndex === index ? { ...row, ...patch } : row)),
+    );
+  };
 
   return (
     <>
       <Card className="mx-auto w-full max-w-4xl shadow-sm">
         <CardHeader className="border-b bg-muted/30 pb-6">
           <CardTitle className="font-heading text-xl font-semibold tracking-tight sm:text-2xl">
-            Edit Dispatch (Pre-Storage) Gate Pass{" "}
+            Edit Dispatch (Pre-Storage) Gate Pass{' '}
             <span className="font-mono tabular-nums text-primary sm:text-2xl">
               #{displayGatePassNo}
             </span>
@@ -338,11 +306,7 @@ function EditDispatchPreStorageFormFields({
           </CardDescription>
         </CardHeader>
 
-        <form
-          id="edit-dispatch-pre-storage-form"
-          noValidate
-          onSubmit={(e) => e.preventDefault()}
-        >
+        <form id="edit-dispatch-pre-storage-form" noValidate onSubmit={(e) => e.preventDefault()}>
           <CardContent className="pb-8 pt-8">
             <FieldGroup className="@container/field-group gap-10">
               <FieldSet>
@@ -378,9 +342,7 @@ function EditDispatchPreStorageFormFields({
                   />
 
                   <Field>
-                    <FieldLabel htmlFor="dispatch-pre-storage-category">
-                      Category
-                    </FieldLabel>
+                    <FieldLabel htmlFor="dispatch-pre-storage-category">Category</FieldLabel>
                     <SearchableOptionCombobox
                       id="dispatch-pre-storage-category"
                       name="category"
@@ -455,14 +417,11 @@ function EditDispatchPreStorageFormFields({
                   Route &amp; Vehicle
                 </FieldLegend>
                 <FieldDescription>
-                  Source, destination, vehicle, bill number, and bilti for the
-                  dispatch.
+                  Source, destination, vehicle, bill number, and bilti for the dispatch.
                 </FieldDescription>
                 <FieldGroup className="mt-5 grid grid-cols-1 gap-6 @md/field-group:grid-cols-3">
                   <Field>
-                    <FieldLabel htmlFor="dispatch-pre-storage-from">
-                      From
-                    </FieldLabel>
+                    <FieldLabel htmlFor="dispatch-pre-storage-from">From</FieldLabel>
                     <Input
                       id="dispatch-pre-storage-from"
                       name="from"
@@ -474,9 +433,7 @@ function EditDispatchPreStorageFormFields({
                   </Field>
 
                   <Field>
-                    <FieldLabel htmlFor="dispatch-pre-storage-to">
-                      To
-                    </FieldLabel>
+                    <FieldLabel htmlFor="dispatch-pre-storage-to">To</FieldLabel>
                     <Input
                       id="dispatch-pre-storage-to"
                       name="to"
@@ -495,9 +452,7 @@ function EditDispatchPreStorageFormFields({
                       id="dispatch-pre-storage-truck-number"
                       name="truckNumber"
                       value={truckNumber}
-                      onChange={(e) =>
-                        setTruckNumber(e.target.value.toUpperCase())
-                      }
+                      onChange={(e) => setTruckNumber(e.target.value.toUpperCase())}
                       placeholder="e.g. PB10AB1234"
                       autoComplete="off"
                       className="uppercase"
@@ -505,9 +460,7 @@ function EditDispatchPreStorageFormFields({
                   </Field>
 
                   <Field>
-                    <FieldLabel htmlFor="dispatch-pre-storage-bill-number">
-                      Bill Number
-                    </FieldLabel>
+                    <FieldLabel htmlFor="dispatch-pre-storage-bill-number">Bill Number</FieldLabel>
                     <Input
                       {...numericInputProps}
                       id="dispatch-pre-storage-bill-number"
@@ -521,9 +474,7 @@ function EditDispatchPreStorageFormFields({
                   </Field>
 
                   <Field>
-                    <FieldLabel htmlFor="dispatch-pre-storage-bilti-no">
-                      Bilti No.
-                    </FieldLabel>
+                    <FieldLabel htmlFor="dispatch-pre-storage-bilti-no">Bilti No.</FieldLabel>
                     <Input
                       {...numericInputProps}
                       id="dispatch-pre-storage-bilti-no"
@@ -537,9 +488,7 @@ function EditDispatchPreStorageFormFields({
                   </Field>
 
                   <Field data-invalid={billBookTouched && !isValidRequiredPositiveInt(billBook)}>
-                    <FieldLabel htmlFor="dispatch-pre-storage-bill-book">
-                      Bill book
-                    </FieldLabel>
+                    <FieldLabel htmlFor="dispatch-pre-storage-bill-book">Bill book</FieldLabel>
                     <Input
                       {...numericInputProps}
                       id="dispatch-pre-storage-bill-book"
@@ -553,16 +502,12 @@ function EditDispatchPreStorageFormFields({
                       className="tabular-nums"
                     />
                     {billBookTouched && !isValidRequiredPositiveInt(billBook) ? (
-                      <FieldError>
-                        Must be a whole number greater than zero.
-                      </FieldError>
+                      <FieldError>Must be a whole number greater than zero.</FieldError>
                     ) : null}
                   </Field>
 
                   <Field data-invalid={biltiBookTouched && !isValidRequiredPositiveInt(biltiBook)}>
-                    <FieldLabel htmlFor="dispatch-pre-storage-bilti-book">
-                      Bilti book
-                    </FieldLabel>
+                    <FieldLabel htmlFor="dispatch-pre-storage-bilti-book">Bilti book</FieldLabel>
                     <Input
                       {...numericInputProps}
                       id="dispatch-pre-storage-bilti-book"
@@ -576,9 +521,7 @@ function EditDispatchPreStorageFormFields({
                       className="tabular-nums"
                     />
                     {biltiBookTouched && !isValidRequiredPositiveInt(biltiBook) ? (
-                      <FieldError>
-                        Must be a whole number greater than zero.
-                      </FieldError>
+                      <FieldError>Must be a whole number greater than zero.</FieldError>
                     ) : null}
                   </Field>
                 </FieldGroup>
@@ -591,16 +534,13 @@ function EditDispatchPreStorageFormFields({
                   Bag Lines
                 </FieldLegend>
                 <FieldDescription>
-                  Enter variety and quantity issued for each bag size. Use Add
-                  more for an extra size line. Rows with zero quantity are
-                  ignored on submit.
+                  Enter variety and quantity issued for each bag size. Use Add more for an extra
+                  size line. Rows with zero quantity are ignored on submit.
                 </FieldDescription>
 
                 <div className="mt-5 rounded-lg border border-border">
                   <div className="hidden border-b border-border bg-muted/50 px-3 py-2.5 lg:grid lg:grid-cols-12 lg:gap-2">
-                    <div className="col-span-3 text-sm font-medium text-muted-foreground">
-                      Size
-                    </div>
+                    <div className="col-span-3 text-sm font-medium text-muted-foreground">Size</div>
                     <div className="col-span-4 text-sm font-medium text-muted-foreground">
                       Variety
                     </div>
@@ -626,15 +566,10 @@ function EditDispatchPreStorageFormFields({
                               labelClassName="lg:sr-only"
                               isInvalid={false}
                               onBlur={() => {}}
-                              onValueChange={(value) =>
-                                updateBagSizeRow(index, { size: value })
-                              }
+                              onValueChange={(value) => updateBagSizeRow(index, { size: value })}
                             />
                           ) : (
-                            <FixedBagSizeLabel
-                              size={row.size}
-                              rowIndex={index}
-                            />
+                            <FixedBagSizeLabel size={row.size} rowIndex={index} />
                           )}
                         </div>
 
@@ -648,9 +583,7 @@ function EditDispatchPreStorageFormFields({
                             </FieldLabel>
                             <Select
                               value={row.variety || undefined}
-                              onValueChange={(value) =>
-                                updateBagSizeRow(index, { variety: value })
-                              }
+                              onValueChange={(value) => updateBagSizeRow(index, { variety: value })}
                             >
                               <SelectTrigger
                                 id={`dispatch-pre-storage-bag-size-${index}-variety`}
@@ -704,9 +637,7 @@ function EditDispatchPreStorageFormFields({
                               aria-label={`Remove bag size row ${index + 1}`}
                               onClick={() =>
                                 setBagSize((current) =>
-                                  current.filter(
-                                    (_, rowIndex) => rowIndex !== index,
-                                  ),
+                                  current.filter((_, rowIndex) => rowIndex !== index),
                                 )
                               }
                             >
@@ -723,12 +654,7 @@ function EditDispatchPreStorageFormFields({
                       type="button"
                       variant="outline"
                       className="h-11"
-                      onClick={() =>
-                        setBagSize((current) => [
-                          ...current,
-                          createEmptyBagSizeRow(),
-                        ])
-                      }
+                      onClick={() => setBagSize((current) => [...current, createEmptyBagSizeRow()])}
                     >
                       <Plus className="mr-2 size-4" aria-hidden />
                       Add more
@@ -752,14 +678,12 @@ function EditDispatchPreStorageFormFields({
                   Weight &amp; Remarks
                 </FieldLegend>
                 <FieldDescription>
-                  Net weight and remarks. Average weight per bag is calculated
-                  from net weight divided by total bags issued.
+                  Net weight and remarks. Average weight per bag is calculated from net weight
+                  divided by total bags issued.
                 </FieldDescription>
                 <FieldGroup className="mt-5 grid grid-cols-1 gap-6 @md/field-group:grid-cols-2">
                   <Field>
-                    <FieldLabel htmlFor="dispatch-pre-storage-net-weight">
-                      Net Weight
-                    </FieldLabel>
+                    <FieldLabel htmlFor="dispatch-pre-storage-net-weight">Net Weight</FieldLabel>
                     <Input
                       {...numericInputProps}
                       id="dispatch-pre-storage-net-weight"
@@ -782,11 +706,11 @@ function EditDispatchPreStorageFormFields({
                       name="averageWeightPerBag"
                       value={
                         totalQuantityIssued > 0 && netWeightKg > 0
-                          ? averageWeightPerBagKg.toLocaleString("en-IN", {
+                          ? averageWeightPerBagKg.toLocaleString('en-IN', {
                               minimumFractionDigits: 2,
                               maximumFractionDigits: 2,
                             })
-                          : ""
+                          : ''
                       }
                       readOnly
                       tabIndex={-1}
@@ -799,9 +723,7 @@ function EditDispatchPreStorageFormFields({
                   </Field>
 
                   <Field className="@md/field-group:col-span-2">
-                    <FieldLabel htmlFor="dispatch-pre-storage-remarks">
-                      Remarks
-                    </FieldLabel>
+                    <FieldLabel htmlFor="dispatch-pre-storage-remarks">Remarks</FieldLabel>
                     <Textarea
                       id="dispatch-pre-storage-remarks"
                       name="remarks"
@@ -815,25 +737,19 @@ function EditDispatchPreStorageFormFields({
 
                 <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
                   <div className="rounded-lg border border-border bg-muted/30 px-4 py-3">
-                    <div className="text-sm font-medium text-muted-foreground">
-                      Quantity issued
-                    </div>
+                    <div className="text-sm font-medium text-muted-foreground">Quantity issued</div>
                     <div className="mt-1 font-heading text-xl font-semibold tabular-nums text-foreground">
-                      {totalQuantityIssued.toLocaleString("en-IN")}
+                      {totalQuantityIssued.toLocaleString('en-IN')}
                     </div>
                   </div>
                   <div className="rounded-lg border border-border bg-muted/30 px-4 py-3">
-                    <div className="text-sm font-medium text-muted-foreground">
-                      Net weight
-                    </div>
+                    <div className="text-sm font-medium text-muted-foreground">Net weight</div>
                     <div className="mt-1 font-heading text-xl font-semibold tabular-nums text-foreground">
                       {formatOptionalNumber(netWeight)} kg
                     </div>
                   </div>
                   <div className="rounded-lg border border-border bg-muted/30 px-4 py-3">
-                    <div className="text-sm font-medium text-muted-foreground">
-                      Avg. per bag
-                    </div>
+                    <div className="text-sm font-medium text-muted-foreground">Avg. per bag</div>
                     <div className="mt-1 font-heading text-xl font-semibold tabular-nums text-foreground">
                       {formatWeightKg(averageWeightPerBagKg)}
                     </div>
@@ -848,7 +764,7 @@ function EditDispatchPreStorageFormFields({
               Reset changes
             </Button>
             <Button type="button" onClick={handleOpenReview} disabled={isSubmitting}>
-              {isSubmitting ? "Saving…" : "Review"}
+              {isSubmitting ? 'Saving…' : 'Review'}
             </Button>
           </CardFooter>
         </form>
@@ -865,5 +781,5 @@ function EditDispatchPreStorageFormFields({
         isSubmitting={isSubmitting}
       />
     </>
-  )
+  );
 }

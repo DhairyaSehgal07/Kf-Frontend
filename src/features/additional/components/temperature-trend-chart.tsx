@@ -1,19 +1,7 @@
-import { useMemo } from 'react'
-import {
-  CartesianGrid,
-  Line,
-  LineChart,
-  XAxis,
-  YAxis,
-} from 'recharts'
+import { useMemo } from 'react';
+import { CartesianGrid, Line, LineChart, XAxis, YAxis } from 'recharts';
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   ChartContainer,
   ChartLegend,
@@ -21,85 +9,82 @@ import {
   ChartTooltip,
   ChartTooltipContent,
   type ChartConfig,
-} from '@/components/ui/chart'
+} from '@/components/ui/chart';
 
 export type TemperatureChartPoint = {
-  label: string
-  values: Record<string, number>
-}
+  label: string;
+  values: Record<string, number>;
+};
 
 type TemperatureTrendChartProps = {
-  chamberIds: readonly string[]
-  data: TemperatureChartPoint[]
-}
+  chamberIds: readonly string[];
+  data: TemperatureChartPoint[];
+};
 
-const CHART_COLOR_COUNT = 8
+const CHART_COLOR_COUNT = 8;
 
 function getChamberChartColor(index: number): string {
-  return `var(--chart-${(index % CHART_COLOR_COUNT) + 1})`
+  return `var(--chart-${(index % CHART_COLOR_COUNT) + 1})`;
 }
 
 function toChamberChartKey(index: number): string {
-  return `chamber${index}`
+  return `chamber${index}`;
 }
 
 const temperatureFormatter = new Intl.NumberFormat('en-IN', {
   minimumFractionDigits: 1,
   maximumFractionDigits: 1,
-})
+});
 
 function formatTemperature(value: number) {
-  return `${temperatureFormatter.format(value)}°F`
+  return `${temperatureFormatter.format(value)}°F`;
 }
 
-export function TemperatureTrendChart({
-  chamberIds,
-  data,
-}: TemperatureTrendChartProps) {
+export function TemperatureTrendChart({ chamberIds, data }: TemperatureTrendChartProps) {
   const { chartData, chartConfig } = useMemo(() => {
-    const config: ChartConfig = {}
+    const config: ChartConfig = {};
 
     for (const [index, chamberId] of chamberIds.entries()) {
-      const chartKey = toChamberChartKey(index)
+      const chartKey = toChamberChartKey(index);
       config[chartKey] = {
         label: `Chamber ${chamberId}`,
         color: getChamberChartColor(index),
-      }
+      };
     }
 
     const points = data.map((point) => {
       const row: Record<string, string | number | null> = {
         axisLabel: point.label,
-      }
+      };
 
       for (const [index, chamberId] of chamberIds.entries()) {
-        const chartKey = toChamberChartKey(index)
-        row[chartKey] = point.values[chamberId] ?? null
+        const chartKey = toChamberChartKey(index);
+        row[chartKey] = point.values[chamberId] ?? null;
       }
 
-      return row
-    })
+      return row;
+    });
 
-    return { chartData: points, chartConfig: config }
-  }, [chamberIds, data])
+    return { chartData: points, chartConfig: config };
+  }, [chamberIds, data]);
 
   const yDomain = useMemo(() => {
     const allValues = data.flatMap((point) =>
       chamberIds
         .map((chamberId) => point.values[chamberId])
         .filter((value): value is number => value != null),
-    )
+    );
 
     if (allValues.length === 0) {
-      return [30, 50] as const
+      return [30, 50] as const;
     }
 
-    const min = Math.min(...allValues, 30)
-    const max = Math.max(...allValues, 50)
-    const padding = Math.max((max - min) * 0.08, 0.5)
+    const min = Math.min(...allValues, 30);
+    const max = Math.max(...allValues, 50);
+    const padding = Math.max((max - min) * 0.08, 0.5);
 
-    return [min - padding, max + padding] as const
-  }, [chamberIds, data])
+    return [min - padding, max + padding] as const;
+  }, [chamberIds, data]);
 
   return (
     <Card className="rounded-xl shadow-sm">
@@ -109,8 +94,8 @@ export function TemperatureTrendChart({
             Temperature trend
           </CardTitle>
           <CardDescription>
-            Each colored line is one chamber. Hover a point to see the exact
-            reading; the vertical axis shows temperature in °F.
+            Each colored line is one chamber. Hover a point to see the exact reading; the vertical
+            axis shows temperature in °F.
           </CardDescription>
         </div>
       </CardHeader>
@@ -148,9 +133,7 @@ export function TemperatureTrendChart({
                 axisLine={false}
                 tickMargin={8}
                 width={48}
-                tickFormatter={(value) =>
-                  temperatureFormatter.format(Number(value))
-                }
+                tickFormatter={(value) => temperatureFormatter.format(Number(value))}
                 label={{
                   value: '°F',
                   angle: -90,
@@ -162,13 +145,10 @@ export function TemperatureTrendChart({
               <ChartTooltip
                 content={
                   <ChartTooltipContent
-                    labelFormatter={(_, payload) =>
-                      String(payload?.[0]?.payload?.axisLabel ?? '')
-                    }
+                    labelFormatter={(_, payload) => String(payload?.[0]?.payload?.axisLabel ?? '')}
                     formatter={(value, name) => {
-                      const chartKey = String(name)
-                      const chamberLabel =
-                        chartConfig[chartKey]?.label ?? chartKey
+                      const chartKey = String(name);
+                      const chamberLabel = chartConfig[chartKey]?.label ?? chartKey;
 
                       return (
                         <>
@@ -179,24 +159,20 @@ export function TemperatureTrendChart({
                             }}
                           />
                           <div className="flex flex-1 items-center justify-between gap-4 leading-none">
-                            <span className="text-muted-foreground">
-                              {chamberLabel}
-                            </span>
+                            <span className="text-muted-foreground">{chamberLabel}</span>
                             <span className="tabular-nums font-medium text-foreground">
                               {formatTemperature(Number(value))}
                             </span>
                           </div>
                         </>
-                      )
+                      );
                     }}
                   />
                 }
               />
-              <ChartLegend
-                content={<ChartLegendContent className="flex-wrap gap-x-4 gap-y-2" />}
-              />
+              <ChartLegend content={<ChartLegendContent className="flex-wrap gap-x-4 gap-y-2" />} />
               {chamberIds.map((chamberId, index) => {
-                const chartKey = toChamberChartKey(index)
+                const chartKey = toChamberChartKey(index);
 
                 return (
                   <Line
@@ -222,12 +198,12 @@ export function TemperatureTrendChart({
                       r: 5,
                     }}
                   />
-                )
+                );
               })}
             </LineChart>
           </ChartContainer>
         )}
       </CardContent>
     </Card>
-  )
+  );
 }

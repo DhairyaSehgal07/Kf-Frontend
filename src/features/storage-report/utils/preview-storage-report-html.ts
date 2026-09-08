@@ -1,10 +1,10 @@
-import { format } from "date-fns"
-import type { Table } from "@tanstack/react-table"
-import type { ReportFeatures } from "@/lib/tanstack-table/report-table-features"
+import { format } from 'date-fns';
+import type { Table } from '@tanstack/react-table';
+import type { ReportFeatures } from '@/lib/tanstack-table/report-table-features';
 
-import type { StorageGatePass } from "@/features/storage/api/types"
-import type { StorageQuantityMode } from "@/features/storage-report/components/columns"
-import { buildStorageReportSummaries } from "@/features/storage-report/utils/build-storage-report-summaries"
+import type { StorageGatePass } from '@/features/storage/api/types';
+import type { StorageQuantityMode } from '@/features/storage-report/components/columns';
+import { buildStorageReportSummaries } from '@/features/storage-report/utils/build-storage-report-summaries';
 import {
   buildFilterSummaryLines,
   collectExportRows,
@@ -15,39 +15,38 @@ import {
   getFilteredLeafRowCount,
   getFooterExportValue,
   isSummableExportColumn,
-} from "@/features/storage-report/utils/export-cell-value"
+} from '@/features/storage-report/utils/export-cell-value';
 import {
   buildSummaryPreviewStyles,
   buildSummarySectionsHtml,
-} from "@/features/storage-report/utils/render-storage-report-summary-html"
-import { COLDOP_BRANDING, EXPORT_THEME_CSS } from "@/lib/export-report-theme"
+} from '@/features/storage-report/utils/render-storage-report-summary-html';
+import { COLDOP_BRANDING, EXPORT_THEME_CSS } from '@/lib/export-report-theme';
 
-export const STORAGE_REPORT_DOWNLOAD_EXCEL_MESSAGE =
-  "kf-storage-report-download-excel" as const
+export const STORAGE_REPORT_DOWNLOAD_EXCEL_MESSAGE = 'kf-storage-report-download-excel' as const;
 
 export const STORAGE_REPORT_DOWNLOAD_EXCEL_DONE_MESSAGE =
-  "kf-storage-report-download-excel-done" as const
+  'kf-storage-report-download-excel-done' as const;
 
 export type PreviewStorageReportOptions = {
-  table: Table<ReportFeatures, StorageGatePass>
-  coldStorageName: string
-  quantityMode: StorageQuantityMode
-  reportTitle?: string
-  dateFrom?: string
-  dateTo?: string
-  generatedAt?: Date
-}
+  table: Table<ReportFeatures, StorageGatePass>;
+  coldStorageName: string;
+  quantityMode: StorageQuantityMode;
+  reportTitle?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  generatedAt?: Date;
+};
 
 function escapeHtml(value: string): string {
   return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }
 
 function buildPreviewStyles(): string {
-  const theme = EXPORT_THEME_CSS
+  const theme = EXPORT_THEME_CSS;
 
   return `
     :root {
@@ -171,98 +170,90 @@ function buildPreviewStyles(): string {
       .toolbar { display: none; }
       thead th { position: static; }
     }
-  `
+  `;
 }
 
 export function buildStorageReportPreviewHtml({
   table,
   coldStorageName,
   quantityMode,
-  reportTitle = "Storage Report",
+  reportTitle = 'Storage Report',
   dateFrom,
   dateTo,
   generatedAt = new Date(),
 }: PreviewStorageReportOptions): string {
-  const visibleColumns = table.getVisibleLeafColumns()
-  const exportRows = collectExportRows(table)
-  const filteredLeafCount = getFilteredLeafRowCount(table)
-  const filterSummaryLines = buildFilterSummaryLines(table, quantityMode)
-  const filteredRows = table.getFilteredRowModel().rows
+  const visibleColumns = table.getVisibleLeafColumns();
+  const exportRows = collectExportRows(table);
+  const filteredLeafCount = getFilteredLeafRowCount(table);
+  const filterSummaryLines = buildFilterSummaryLines(table, quantityMode);
+  const filteredRows = table.getFilteredRowModel().rows;
 
   const metadataText = [
-    `Generated: ${format(generatedAt, "do MMM yyyy, h:mm a")}`,
+    `Generated: ${format(generatedAt, 'do MMM yyyy, h:mm a')}`,
     `Period: ${formatDateRangeLabel(dateFrom, dateTo)}`,
-    `${filteredLeafCount.toLocaleString("en-IN")} ${
-      filteredLeafCount === 1 ? "entry" : "entries"
-    }`,
-  ].join("  |  ")
+    `${filteredLeafCount.toLocaleString('en-IN')} ${filteredLeafCount === 1 ? 'entry' : 'entries'}`,
+  ].join('  |  ');
 
   const filterText =
-    filterSummaryLines.length > 0
-      ? filterSummaryLines.join("\n")
-      : "Filters: none applied"
+    filterSummaryLines.length > 0 ? filterSummaryLines.join('\n') : 'Filters: none applied';
 
-  const summaries = buildStorageReportSummaries(table, quantityMode)
-  const summarySectionsHtml = buildSummarySectionsHtml(summaries)
+  const summaries = buildStorageReportSummaries(table, quantityMode);
+  const summarySectionsHtml = buildSummarySectionsHtml(summaries);
 
   const headerCells = visibleColumns
     .map((column) => {
-      const isNumeric = column.columnDef.meta?.align === "right"
-      const label = escapeHtml(getColumnExportLabel(column))
-      return `<th class="${isNumeric ? "numeric" : ""}">${label}</th>`
+      const isNumeric = column.columnDef.meta?.align === 'right';
+      const label = escapeHtml(getColumnExportLabel(column));
+      return `<th class="${isNumeric ? 'numeric' : ''}">${label}</th>`;
     })
-    .join("")
+    .join('');
 
   const bodyRows = exportRows
     .map((row) => {
-      const isGroupRow = row.getIsGrouped()
-      const rowClass = isGroupRow ? "group-row" : ""
+      const isGroupRow = row.getIsGrouped();
+      const rowClass = isGroupRow ? 'group-row' : '';
 
       const cells = visibleColumns
         .map((column) => {
-          const isNumeric = column.columnDef.meta?.align === "right"
-          const exportCell = getExportCellForRow(row, column, quantityMode)
-          const display = exportCellValueToDisplay(exportCell)
+          const isNumeric = column.columnDef.meta?.align === 'right';
+          const exportCell = getExportCellForRow(row, column, quantityMode);
+          const display = exportCellValueToDisplay(exportCell);
           const classNames = [
-            isNumeric ? "numeric" : "",
-            exportCell.kind === "empty" ? "empty" : "",
+            isNumeric ? 'numeric' : '',
+            exportCell.kind === 'empty' ? 'empty' : '',
           ]
             .filter(Boolean)
-            .join(" ")
+            .join(' ');
 
-          return `<td class="${classNames}">${escapeHtml(display)}</td>`
+          return `<td class="${classNames}">${escapeHtml(display)}</td>`;
         })
-        .join("")
+        .join('');
 
-      return `<tr class="${rowClass}">${cells}</tr>`
+      return `<tr class="${rowClass}">${cells}</tr>`;
     })
-    .join("")
+    .join('');
 
   const footerCells = visibleColumns
     .map((column, columnIndex) => {
-      const columnId = column.id
-      const isNumeric = column.columnDef.meta?.align === "right"
-      const className = isNumeric ? "numeric" : ""
+      const columnId = column.id;
+      const isNumeric = column.columnDef.meta?.align === 'right';
+      const className = isNumeric ? 'numeric' : '';
 
       if (columnIndex === 0) {
-        return `<th scope="row">Total</th>`
+        return `<th scope="row">Total</th>`;
       }
 
       if (isSummableExportColumn(columnId)) {
-        const exportCell = getFooterExportValue(
-          columnId,
-          filteredRows,
-          quantityMode,
-        )
-        const display = exportCellValueToDisplay(exportCell)
-        return `<td class="${className}">${escapeHtml(display)}</td>`
+        const exportCell = getFooterExportValue(columnId, filteredRows, quantityMode);
+        const display = exportCellValueToDisplay(exportCell);
+        return `<td class="${className}">${escapeHtml(display)}</td>`;
       }
 
-      return `<td class="${className}"></td>`
+      return `<td class="${className}"></td>`;
     })
-    .join("")
+    .join('');
 
-  const pageTitle = escapeHtml(`${reportTitle} — ${coldStorageName}`)
+  const pageTitle = escapeHtml(`${reportTitle} — ${coldStorageName}`);
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -277,7 +268,7 @@ export function buildStorageReportPreviewHtml({
       <h1>${escapeHtml(coldStorageName)}</h1>
       <h2>${escapeHtml(reportTitle)}</h2>
       <p class="meta">${escapeHtml(metadataText)}</p>
-      <p class="filters">${escapeHtml(filterText).replace(/\n/g, "<br />")}</p>
+      <p class="filters">${escapeHtml(filterText).replace(/\n/g, '<br />')}</p>
       <p class="branding">${escapeHtml(COLDOP_BRANDING.label)}<strong>${escapeHtml(COLDOP_BRANDING.name)}</strong></p>
     </header>
     <div class="toolbar">
@@ -336,24 +327,20 @@ export function buildStorageReportPreviewHtml({
     </div>
     ${summarySectionsHtml}
   </body>
-</html>`
+</html>`;
 }
 
-export function openStorageReportPreview(
-  options: PreviewStorageReportOptions,
-): Window {
-  const html = buildStorageReportPreviewHtml(options)
-  const blob = new Blob([html], { type: "text/html;charset=utf-8" })
-  const url = URL.createObjectURL(blob)
-  const previewWindow = window.open(url, "_blank")
+export function openStorageReportPreview(options: PreviewStorageReportOptions): Window {
+  const html = buildStorageReportPreviewHtml(options);
+  const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const previewWindow = window.open(url, '_blank');
 
   if (!previewWindow) {
-    URL.revokeObjectURL(url)
-    throw new Error(
-      "Pop-up blocked. Allow pop-ups for this site to preview the report.",
-    )
+    URL.revokeObjectURL(url);
+    throw new Error('Pop-up blocked. Allow pop-ups for this site to preview the report.');
   }
 
-  window.setTimeout(() => URL.revokeObjectURL(url), 60_000)
-  return previewWindow
+  window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+  return previewWindow;
 }

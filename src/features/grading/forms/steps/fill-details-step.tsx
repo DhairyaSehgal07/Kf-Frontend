@@ -1,5 +1,5 @@
-import { useMemo } from "react"
-import { DatePickerInput } from "@/components/date-picker"
+import { useMemo } from 'react';
+import { DatePickerInput } from '@/components/date-picker';
 import {
   Field,
   FieldDescription,
@@ -9,122 +9,98 @@ import {
   FieldLegend,
   FieldSeparator,
   FieldSet,
-} from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
-import {
-  BagSizeSelectField,
-  FixedBagSizeLabel,
-} from "@/components/bag-quantity-size-field"
+} from '@/components/ui/field';
+import { Input } from '@/components/ui/input';
+import { BagSizeSelectField, FixedBagSizeLabel } from '@/components/bag-quantity-size-field';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { Button } from "@/components/ui/button"
-import { Textarea } from "@/components/ui/textarea"
-import { IncomingGatePassesSummaryCard } from "@/features/grading/components/incoming-gate-passes-summary-card"
-import { resolveSelectedIncomingGatePasses } from "@/features/grading/utils/resolve-selected-incoming-gate-passes"
-import type { GradingFormApi } from "@/features/grading/forms/use-grading-form"
-import { useIncomingGatePassesByFarmer } from "@/features/incoming/api/use-incoming-gate-passes-by-farmer"
+} from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { IncomingGatePassesSummaryCard } from '@/features/grading/components/incoming-gate-passes-summary-card';
+import { resolveSelectedIncomingGatePasses } from '@/features/grading/utils/resolve-selected-incoming-gate-passes';
+import type { GradingFormApi } from '@/features/grading/forms/use-grading-form';
+import { useIncomingGatePassesByFarmer } from '@/features/incoming/api/use-incoming-gate-passes-by-farmer';
 import {
   createDefaultQuantities,
   createEmptyQuantityRow,
   gradingTotalWeightKg,
-} from "@/features/grading/schemas/grading-fill-details-schema"
-import { BAG_TYPES } from "@/lib/constants"
-import { Plus, Trash2 } from "lucide-react"
-import type { GradingSelectIncomingGatePasses } from "@/features/grading/types"
+} from '@/features/grading/schemas/grading-fill-details-schema';
+import { BAG_TYPES } from '@/lib/constants';
+import { Plus, Trash2 } from 'lucide-react';
+import type { GradingSelectIncomingGatePasses } from '@/features/grading/types';
 
 function isFieldInvalid(meta: { isTouched: boolean; isValid: boolean }) {
-  return meta.isTouched && !meta.isValid
+  return meta.isTouched && !meta.isValid;
 }
 
 function parseOptionalNonNegativeNumber(value: string): number | undefined {
-  if (value === "") return undefined
-  const parsed = Number(value)
-  return Number.isNaN(parsed) ? undefined : parsed
+  if (value === '') return undefined;
+  const parsed = Number(value);
+  return Number.isNaN(parsed) ? undefined : parsed;
 }
 
 const numericInputProps = {
-  type: "number" as const,
+  type: 'number' as const,
   min: 0,
   onWheel: (e: React.WheelEvent<HTMLInputElement>) => e.currentTarget.blur(),
-}
+};
 
 type FillDetailsStepProps = {
-  form: GradingFormApi
-  linkedGatePasses?: GradingSelectIncomingGatePasses[]
-}
+  form: GradingFormApi;
+  linkedGatePasses?: GradingSelectIncomingGatePasses[];
+};
 
 type SelectedGatePassesSummaryProps = {
-  farmerStorageLinkId: string
-  selectedIncomingGatePassIds: string[]
-  linkedGatePasses?: GradingSelectIncomingGatePasses[]
-}
+  farmerStorageLinkId: string;
+  selectedIncomingGatePassIds: string[];
+  linkedGatePasses?: GradingSelectIncomingGatePasses[];
+};
 
 function SelectedGatePassesSummary({
   farmerStorageLinkId,
   selectedIncomingGatePassIds,
   linkedGatePasses = [],
 }: SelectedGatePassesSummaryProps) {
-  const { data: gatePassResult } =
-    useIncomingGatePassesByFarmer(farmerStorageLinkId)
+  const { data: gatePassResult } = useIncomingGatePassesByFarmer(farmerStorageLinkId);
 
   const selectedGatePasses = useMemo(
     () =>
-      resolveSelectedIncomingGatePasses(
-        selectedIncomingGatePassIds,
-        [...(gatePassResult?.incomingGatePasses ?? []), ...linkedGatePasses],
-      ),
-    [
-      gatePassResult?.incomingGatePasses,
-      linkedGatePasses,
-      selectedIncomingGatePassIds,
-    ],
-  )
+      resolveSelectedIncomingGatePasses(selectedIncomingGatePassIds, [
+        ...(gatePassResult?.incomingGatePasses ?? []),
+        ...linkedGatePasses,
+      ]),
+    [gatePassResult?.incomingGatePasses, linkedGatePasses, selectedIncomingGatePassIds],
+  );
 
-  return (
-    <IncomingGatePassesSummaryCard
-      className="mt-4"
-      gatePasses={selectedGatePasses}
-    />
-  )
+  return <IncomingGatePassesSummaryCard className="mt-4" gatePasses={selectedGatePasses} />;
 }
 
-export function FillDetailsStep({
-  form,
-  linkedGatePasses,
-}: FillDetailsStepProps) {
+export function FillDetailsStep({ form, linkedGatePasses }: FillDetailsStepProps) {
   return (
     <FieldGroup className="@container/field-group gap-10">
       <FieldSet>
-        <FieldLegend className="text-lg font-semibold">
-          General Information
-        </FieldLegend>
-        <FieldDescription>
-          Basic details regarding the transport and timing.
-        </FieldDescription>
+        <FieldLegend className="text-lg font-semibold">General Information</FieldLegend>
+        <FieldDescription>Basic details regarding the transport and timing.</FieldDescription>
         <FieldGroup className="mt-5 grid grid-cols-1 gap-6 @md/field-group:grid-cols-2">
           <form.Field name="manualGatePassNumber">
             {(field) => {
-              const isInvalid = isFieldInvalid(field.state.meta)
+              const isInvalid = isFieldInvalid(field.state.meta);
               return (
                 <Field data-invalid={isInvalid}>
-                  <FieldLabel htmlFor={field.name}>
-                    Manual Gate Pass No.
-                  </FieldLabel>
+                  <FieldLabel htmlFor={field.name}>Manual Gate Pass No.</FieldLabel>
                   <Input
                     {...numericInputProps}
                     id={field.name}
                     name={field.name}
-                    value={field.state.value ?? ""}
+                    value={field.state.value ?? ''}
                     onBlur={field.handleBlur}
                     onChange={(e) =>
-                      field.handleChange(
-                        parseOptionalNonNegativeNumber(e.target.value)
-                      )
+                      field.handleChange(parseOptionalNonNegativeNumber(e.target.value))
                     }
                     aria-invalid={isInvalid}
                     placeholder="e.g. 1024 (optional)"
@@ -132,39 +108,29 @@ export function FillDetailsStep({
                   <FieldDescription>
                     Leave blank if no manual slip number was issued.
                   </FieldDescription>
-                  {isInvalid && (
-                    <FieldError errors={field.state.meta.errors} />
-                  )}
+                  {isInvalid && <FieldError errors={field.state.meta.errors} />}
                 </Field>
-              )
+              );
             }}
           </form.Field>
 
           <form.Field name="date">
             {(field) => {
-              const isInvalid = isFieldInvalid(field.state.meta)
+              const isInvalid = isFieldInvalid(field.state.meta);
               return (
                 <Field data-invalid={isInvalid}>
                   <DatePickerInput
                     id={field.name}
                     label="Date"
-                    value={
-                      field.state.value
-                        ? new Date(field.state.value)
-                        : undefined
-                    }
-                    onChange={(date) =>
-                      field.handleChange(date ? date.toISOString() : "")
-                    }
+                    value={field.state.value ? new Date(field.state.value) : undefined}
+                    onChange={(date) => field.handleChange(date ? date.toISOString() : '')}
                     onBlur={field.handleBlur}
                     aria-invalid={isInvalid}
                     placeholder="Pick a date"
                   />
-                  {isInvalid && (
-                    <FieldError errors={field.state.meta.errors} />
-                  )}
+                  {isInvalid && <FieldError errors={field.state.meta.errors} />}
                 </Field>
-              )
+              );
             }}
           </form.Field>
         </FieldGroup>
@@ -173,13 +139,10 @@ export function FillDetailsStep({
       <FieldSeparator />
 
       <FieldSet>
-        <FieldLegend className="font-heading text-lg font-semibold">
-          Enter Quantities
-        </FieldLegend>
+        <FieldLegend className="font-heading text-lg font-semibold">Enter Quantities</FieldLegend>
         <FieldDescription>
-          Enter bag counts by size. Use Add more for another row with the same
-          size but a different bag type or weight. Rows with zero or empty
-          quantity are ignored on submit.
+          Enter bag counts by size. Use Add more for another row with the same size but a different
+          bag type or weight. Rows with zero or empty quantity are ignored on submit.
         </FieldDescription>
 
         <form.Subscribe
@@ -187,10 +150,7 @@ export function FillDetailsStep({
             farmerStorageLinkId: state.values.farmerStorageLinkId,
             selectedIncomingGatePassIds: state.values.selectedIncomingGatePassIds,
           })}
-          children={({
-            farmerStorageLinkId,
-            selectedIncomingGatePassIds,
-          }) => (
+          children={({ farmerStorageLinkId, selectedIncomingGatePassIds }) => (
             <SelectedGatePassesSummary
               farmerStorageLinkId={farmerStorageLinkId}
               selectedIncomingGatePassIds={selectedIncomingGatePassIds}
@@ -201,15 +161,9 @@ export function FillDetailsStep({
 
         <div className="mt-5 rounded-lg border border-border">
           <div className="hidden border-b border-border bg-muted/50 px-3 py-2.5 md:grid md:grid-cols-12 md:gap-3">
-            <div className="col-span-3 text-sm font-medium text-muted-foreground">
-              Size
-            </div>
-            <div className="col-span-2 text-sm font-medium text-muted-foreground">
-              Qty
-            </div>
-            <div className="col-span-3 text-sm font-medium text-muted-foreground">
-              Bag type
-            </div>
+            <div className="col-span-3 text-sm font-medium text-muted-foreground">Size</div>
+            <div className="col-span-2 text-sm font-medium text-muted-foreground">Qty</div>
+            <div className="col-span-3 text-sm font-medium text-muted-foreground">Bag type</div>
             <div className="col-span-3 text-right text-sm font-medium text-muted-foreground">
               wt (kg)/bag
             </div>
@@ -249,17 +203,11 @@ export function FillDetailsStep({
                       <div className="md:col-span-2">
                         <form.Field name={`quantities[${index}].qty`}>
                           {(subField) => {
-                            const isInvalid = isFieldInvalid(
-                              subField.state.meta
-                            )
-                            const sizeLabel =
-                              row.size || `row ${index + 1}`
+                            const isInvalid = isFieldInvalid(subField.state.meta);
+                            const sizeLabel = row.size || `row ${index + 1}`;
                             return (
                               <Field data-invalid={isInvalid}>
-                                <FieldLabel
-                                  htmlFor={subField.name}
-                                  className="md:sr-only"
-                                >
+                                <FieldLabel htmlFor={subField.name} className="md:sr-only">
                                   Qty ({sizeLabel})
                                 </FieldLabel>
                                 <Input
@@ -268,25 +216,19 @@ export function FillDetailsStep({
                                   name={subField.name}
                                   inputMode="numeric"
                                   placeholder="Qty"
-                                  value={subField.state.value ?? ""}
+                                  value={subField.state.value ?? ''}
                                   onBlur={subField.handleBlur}
                                   onChange={(e) =>
                                     subField.handleChange(
-                                      parseOptionalNonNegativeNumber(
-                                        e.target.value
-                                      )
+                                      parseOptionalNonNegativeNumber(e.target.value),
                                     )
                                   }
                                   aria-invalid={isInvalid}
                                   className="tabular-nums"
                                 />
-                                {isInvalid && (
-                                  <FieldError
-                                    errors={subField.state.meta.errors}
-                                  />
-                                )}
+                                {isInvalid && <FieldError errors={subField.state.meta.errors} />}
                               </Field>
-                            )
+                            );
                           }}
                         </form.Field>
                       </div>
@@ -294,17 +236,11 @@ export function FillDetailsStep({
                       <div className="md:col-span-3">
                         <form.Field name={`quantities[${index}].bagType`}>
                           {(subField) => {
-                            const isInvalid = isFieldInvalid(
-                              subField.state.meta
-                            )
-                            const sizeLabel =
-                              row.size || `row ${index + 1}`
+                            const isInvalid = isFieldInvalid(subField.state.meta);
+                            const sizeLabel = row.size || `row ${index + 1}`;
                             return (
                               <Field data-invalid={isInvalid}>
-                                <FieldLabel
-                                  htmlFor={subField.name}
-                                  className="md:sr-only"
-                                >
+                                <FieldLabel htmlFor={subField.name} className="md:sr-only">
                                   Bag type ({sizeLabel})
                                 </FieldLabel>
                                 <Select
@@ -321,22 +257,15 @@ export function FillDetailsStep({
                                   </SelectTrigger>
                                   <SelectContent>
                                     {BAG_TYPES.map((bagType) => (
-                                      <SelectItem
-                                        key={bagType}
-                                        value={bagType}
-                                      >
+                                      <SelectItem key={bagType} value={bagType}>
                                         {bagType}
                                       </SelectItem>
                                     ))}
                                   </SelectContent>
                                 </Select>
-                                {isInvalid && (
-                                  <FieldError
-                                    errors={subField.state.meta.errors}
-                                  />
-                                )}
+                                {isInvalid && <FieldError errors={subField.state.meta.errors} />}
                               </Field>
-                            )
+                            );
                           }}
                         </form.Field>
                       </div>
@@ -345,17 +274,11 @@ export function FillDetailsStep({
                         <div className="min-w-0 flex-1">
                           <form.Field name={`quantities[${index}].weight`}>
                             {(subField) => {
-                              const isInvalid = isFieldInvalid(
-                                subField.state.meta
-                              )
-                              const sizeLabel =
-                                row.size || `row ${index + 1}`
+                              const isInvalid = isFieldInvalid(subField.state.meta);
+                              const sizeLabel = row.size || `row ${index + 1}`;
                               return (
                                 <Field data-invalid={isInvalid}>
-                                  <FieldLabel
-                                    htmlFor={subField.name}
-                                    className="md:sr-only"
-                                  >
+                                  <FieldLabel htmlFor={subField.name} className="md:sr-only">
                                     Weight kg per bag ({sizeLabel})
                                   </FieldLabel>
                                   <Input
@@ -365,25 +288,19 @@ export function FillDetailsStep({
                                     inputMode="decimal"
                                     step="0.01"
                                     placeholder="kg/bag"
-                                    value={subField.state.value ?? ""}
+                                    value={subField.state.value ?? ''}
                                     onBlur={subField.handleBlur}
                                     onChange={(e) =>
                                       subField.handleChange(
-                                        parseOptionalNonNegativeNumber(
-                                          e.target.value
-                                        )
+                                        parseOptionalNonNegativeNumber(e.target.value),
                                       )
                                     }
                                     aria-invalid={isInvalid}
                                     className="tabular-nums md:text-right"
                                   />
-                                  {isInvalid && (
-                                    <FieldError
-                                      errors={subField.state.meta.errors}
-                                    />
-                                  )}
+                                  {isInvalid && <FieldError errors={subField.state.meta.errors} />}
                                 </Field>
-                              )
+                              );
                             }}
                           </form.Field>
                         </div>
@@ -425,9 +342,7 @@ export function FillDetailsStep({
                     type="button"
                     variant="outline"
                     className="h-11"
-                    onClick={() =>
-                      field.pushValue(createEmptyQuantityRow())
-                    }
+                    onClick={() => field.pushValue(createEmptyQuantityRow())}
                   >
                     <Plus className="mr-2 size-4" aria-hidden />
                     Add more
@@ -436,12 +351,7 @@ export function FillDetailsStep({
                     type="button"
                     variant="outline"
                     className="h-11"
-                    onClick={() =>
-                      form.setFieldValue(
-                        "quantities",
-                        createDefaultQuantities()
-                      )
-                    }
+                    onClick={() => form.setFieldValue('quantities', createDefaultQuantities())}
                   >
                     Clear quantities
                   </Button>
@@ -458,30 +368,23 @@ export function FillDetailsStep({
         <form.Subscribe
           selector={(state) => state.values.quantities}
           children={(quantities) => {
-            const totalBags = quantities.reduce(
-              (sum, row) => sum + (row.qty ?? 0),
-              0
-            )
-            const totalWeightKg = gradingTotalWeightKg(quantities)
-            const weightFormatter = new Intl.NumberFormat("en-IN", {
+            const totalBags = quantities.reduce((sum, row) => sum + (row.qty ?? 0), 0);
+            const totalWeightKg = gradingTotalWeightKg(quantities);
+            const weightFormatter = new Intl.NumberFormat('en-IN', {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
-            })
+            });
 
             return (
               <div className="mt-4 flex flex-col gap-3">
                 <div className="flex items-center justify-between rounded-lg border border-border bg-muted/30 px-4 py-3 sm:px-6 sm:py-4">
-                  <span className="text-sm font-semibold text-foreground">
-                    Total bags
-                  </span>
+                  <span className="text-sm font-semibold text-foreground">Total bags</span>
                   <span className="font-heading text-xl font-semibold tabular-nums text-foreground">
                     {totalBags}
                   </span>
                 </div>
                 <div className="flex items-center justify-between rounded-lg border border-border bg-muted/30 px-4 py-3 sm:px-6 sm:py-4">
-                  <span className="text-sm font-semibold text-foreground">
-                    Total weight
-                  </span>
+                  <span className="text-sm font-semibold text-foreground">Total weight</span>
                   <span className="font-heading text-xl font-semibold tabular-nums text-foreground">
                     {weightFormatter.format(totalWeightKg)}
                     <span className="ml-1.5 text-base font-sans font-medium text-muted-foreground">
@@ -490,7 +393,7 @@ export function FillDetailsStep({
                   </span>
                 </div>
               </div>
-            )
+            );
           }}
         />
       </FieldSet>
@@ -498,13 +401,11 @@ export function FillDetailsStep({
       <FieldSeparator />
 
       <FieldSet>
-        <FieldLegend className="text-lg font-semibold">
-          Additional Notes
-        </FieldLegend>
+        <FieldLegend className="text-lg font-semibold">Additional Notes</FieldLegend>
         <FieldGroup className="mt-5">
           <form.Field name="remarks">
             {(field) => {
-              const isInvalid = isFieldInvalid(field.state.meta)
+              const isInvalid = isFieldInvalid(field.state.meta);
               return (
                 <Field data-invalid={isInvalid}>
                   <FieldLabel htmlFor={field.name} className="sr-only">
@@ -520,15 +421,13 @@ export function FillDetailsStep({
                     placeholder="Add any additional comments or observations (Optional)"
                     className="min-h-[120px] resize-y"
                   />
-                  {isInvalid && (
-                    <FieldError errors={field.state.meta.errors} />
-                  )}
+                  {isInvalid && <FieldError errors={field.state.meta.errors} />}
                 </Field>
-              )
+              );
             }}
           </form.Field>
         </FieldGroup>
       </FieldSet>
     </FieldGroup>
-  )
+  );
 }

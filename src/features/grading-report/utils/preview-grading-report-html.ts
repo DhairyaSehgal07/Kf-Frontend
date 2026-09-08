@@ -17,8 +17,7 @@ import {
 } from '@/features/grading-report/utils/export-cell-value';
 import { COLDOP_BRANDING, EXPORT_THEME_CSS } from '@/lib/export-report-theme';
 
-export const GRADING_REPORT_DOWNLOAD_EXCEL_MESSAGE =
-  'kf-grading-report-download-excel' as const;
+export const GRADING_REPORT_DOWNLOAD_EXCEL_MESSAGE = 'kf-grading-report-download-excel' as const;
 
 export const GRADING_REPORT_DOWNLOAD_EXCEL_DONE_MESSAGE =
   'kf-grading-report-download-excel-done' as const;
@@ -178,7 +177,9 @@ function buildPreviewStyles(): string {
 }
 
 function renderCellHtml(
-  column: ReturnType<Table<ReportFeatures, GradingGatePassReportRow>['getVisibleLeafColumns']>[number],
+  column: ReturnType<
+    Table<ReportFeatures, GradingGatePassReportRow>['getVisibleLeafColumns']
+  >[number],
   exportCell: ReturnType<typeof getExportCellForLine>,
   options?: { incoming?: boolean; rowSpan?: number },
 ): string {
@@ -214,15 +215,11 @@ export function buildGradingReportPreviewHtml({
   const metadataText = [
     `Generated: ${format(generatedAt, 'do MMM yyyy, h:mm a')}`,
     `Period: ${formatDateRangeLabel(fromDate, toDate)}`,
-    `${filteredLeafCount.toLocaleString('en-IN')} ${
-      filteredLeafCount === 1 ? 'entry' : 'entries'
-    }`,
+    `${filteredLeafCount.toLocaleString('en-IN')} ${filteredLeafCount === 1 ? 'entry' : 'entries'}`,
   ].join('  |  ');
 
   const filterText =
-    filterSummaryLines.length > 0
-      ? filterSummaryLines.join('\n')
-      : 'Filters: none applied';
+    filterSummaryLines.length > 0 ? filterSummaryLines.join('\n') : 'Filters: none applied';
 
   const headerCells = visibleColumns
     .map((column) => {

@@ -1,7 +1,7 @@
-import { Link } from "@tanstack/react-router"
-import { MapPin, Phone, User } from "lucide-react"
+import { Link } from '@tanstack/react-router';
+import { MapPin, Phone, User } from 'lucide-react';
 
-import { Badge } from "@/components/ui/badge"
+import { Badge } from '@/components/ui/badge';
 import {
   Card,
   CardAction,
@@ -9,18 +9,18 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
-import { Skeleton } from "@/components/ui/skeleton"
-import { cn } from "@/lib/utils"
+} from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
 
-import type { FarmerStorageLink } from "../types"
+import type { FarmerStorageLink } from '../types';
 
 type PeopleCardProps = {
-  link: FarmerStorageLink
-}
+  link: FarmerStorageLink;
+};
 
 export function PeopleCard({ link }: PeopleCardProps) {
-  const farmer = link.farmerId
+  const farmer = link.farmerId;
 
   return (
     <Link
@@ -31,11 +31,11 @@ export function PeopleCard({ link }: PeopleCardProps) {
         mobileNumber: farmer.mobileNumber,
         accountNumber: link.accountNumber,
         address: farmer.address,
-        tab: "incoming",
+        tab: 'incoming',
       }}
       className="block min-w-0 rounded-4xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
     >
-      <Card size="sm" className={cn("card-hover gap-0")}>
+      <Card size="sm" className={cn('card-hover gap-0')}>
         <CardHeader className="pb-2">
           <CardTitle className="truncate" title={farmer.name}>
             {farmer.name}
@@ -50,18 +50,12 @@ export function PeopleCard({ link }: PeopleCardProps) {
 
         <CardContent className="flex flex-col gap-2.5">
           <p className="flex items-center gap-2 text-sm text-foreground">
-            <Phone
-              className="size-3.5 shrink-0 text-muted-foreground"
-              aria-hidden
-            />
+            <Phone className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
             <span className="tabular-nums">{farmer.mobileNumber}</span>
           </p>
 
           <p className="flex items-start gap-2 text-xs leading-relaxed text-muted-foreground">
-            <MapPin
-              className="mt-0.5 size-3.5 shrink-0 text-muted-foreground"
-              aria-hidden
-            />
+            <MapPin className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" aria-hidden />
             <span className="line-clamp-2" title={farmer.address}>
               {farmer.address}
             </span>
@@ -70,26 +64,26 @@ export function PeopleCard({ link }: PeopleCardProps) {
           <Badge
             variant="outline"
             className={cn(
-              "w-fit font-normal",
+              'w-fit font-normal',
               link.isActive
-                ? "border-primary/30 bg-primary/10 text-primary"
-                : "bg-muted/50 text-muted-foreground",
+                ? 'border-primary/30 bg-primary/10 text-primary'
+                : 'bg-muted/50 text-muted-foreground',
             )}
           >
-            {link.isActive ? "Active" : "Inactive"}
+            {link.isActive ? 'Active' : 'Inactive'}
           </Badge>
         </CardContent>
       </Card>
     </Link>
-  )
+  );
 }
 
 function PeopleAvatarIcon() {
   return (
     <div
       className={cn(
-        "flex size-9 items-center justify-center rounded-xl bg-primary/10",
-        "transition-colors duration-200 group-hover/card:bg-primary/15",
+        'flex size-9 items-center justify-center rounded-xl bg-primary/10',
+        'transition-colors duration-200 group-hover/card:bg-primary/15',
       )}
     >
       <User
@@ -97,7 +91,7 @@ function PeopleAvatarIcon() {
         aria-hidden
       />
     </div>
-  )
+  );
 }
 
 export function PeopleCardSkeleton() {
@@ -113,5 +107,5 @@ export function PeopleCardSkeleton() {
         <Skeleton className="h-5 w-16 rounded-full" />
       </CardContent>
     </Card>
-  )
+  );
 }

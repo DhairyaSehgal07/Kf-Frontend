@@ -1,16 +1,8 @@
-import { useMemo, useState, type MouseEvent } from "react"
-import { Link } from "@tanstack/react-router"
-import {
-  ArrowLeft,
-  Globe,
-  History,
-  Loader2,
-  Monitor,
-  RefreshCw,
-  User,
-} from "lucide-react"
+import { useMemo, useState, type MouseEvent } from 'react';
+import { Link } from '@tanstack/react-router';
+import { ArrowLeft, Globe, History, Loader2, Monitor, RefreshCw, User } from 'lucide-react';
 
-import { Button } from "@/components/ui/button"
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardAction,
@@ -18,36 +10,30 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
+} from '@/components/ui/card';
 import {
   Empty,
   EmptyDescription,
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
-} from "@/components/ui/empty"
-import {
-  Item,
-  ItemActions,
-  ItemContent,
-  ItemMedia,
-  ItemTitle,
-} from "@/components/ui/item"
+} from '@/components/ui/empty';
+import { Item, ItemActions, ItemContent, ItemMedia, ItemTitle } from '@/components/ui/item';
 import {
   Pagination,
   PaginationContent,
   PaginationItem,
   PaginationNext,
   PaginationPrevious,
-} from "@/components/ui/pagination"
+} from '@/components/ui/pagination';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { Skeleton } from "@/components/ui/skeleton"
+} from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
   TableBody,
@@ -55,33 +41,33 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
-import type { GradingGatePassAudit } from "@/features/grading/api/types"
-import { useGradingGatePassEdits } from "@/features/grading/api/use-grading-gate-pass-edits"
+} from '@/components/ui/table';
+import type { GradingGatePassAudit } from '@/features/grading/api/types';
+import { useGradingGatePassEdits } from '@/features/grading/api/use-grading-gate-pass-edits';
 import {
   formatAuditFieldValue,
   getGradingGatePassAuditChangedFields,
   GRADING_GATE_PASS_AUDIT_FIELD_LABELS,
-} from "@/features/grading/utils/format-audit-field-value"
-import { cn } from "@/lib/utils"
+} from '@/features/grading/utils/format-audit-field-value';
+import { cn } from '@/lib/utils';
 
-const PAGE_SIZE_OPTIONS = [10, 25, 50] as const
-const DEFAULT_PAGE_SIZE = PAGE_SIZE_OPTIONS[0]
+const PAGE_SIZE_OPTIONS = [10, 25, 50] as const;
+const DEFAULT_PAGE_SIZE = PAGE_SIZE_OPTIONS[0];
 
-type PageSize = (typeof PAGE_SIZE_OPTIONS)[number]
+type PageSize = (typeof PAGE_SIZE_OPTIONS)[number];
 
 function formatAuditTimestamp(iso: string) {
-  const date = new Date(iso)
-  if (Number.isNaN(date.getTime())) return "—"
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return '—';
 
-  return new Intl.DateTimeFormat("en-IN", {
-    weekday: "short",
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(date)
+  return new Intl.DateTimeFormat('en-IN', {
+    weekday: 'short',
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(date);
 }
 
 function GradingEditHistorySkeleton() {
@@ -113,21 +99,21 @@ function GradingEditHistorySkeleton() {
         ))}
       </div>
     </div>
-  )
+  );
 }
 
 function AuditChangeTable({ audit }: { audit: GradingGatePassAudit }) {
   const changedFields = getGradingGatePassAuditChangedFields(
     audit.previousState,
     audit.modifiedState,
-  )
+  );
 
   if (changedFields.length === 0) {
     return (
       <CardContent className="py-3 text-sm text-muted-foreground">
         No field changes recorded.
       </CardContent>
-    )
+    );
   }
 
   return (
@@ -157,26 +143,17 @@ function AuditChangeTable({ audit }: { audit: GradingGatePassAudit }) {
         </TableBody>
       </Table>
     </CardContent>
-  )
+  );
 }
 
 function GradingEditAuditCard({ audit }: { audit: GradingGatePassAudit }) {
   return (
     <Card className="gap-0 overflow-hidden py-0 shadow-sm">
       <CardHeader className="border-b border-border/60 bg-muted/10 sm:px-5">
-        <CardTitle className="font-heading text-base font-semibold">
-          Gate pass edit
-        </CardTitle>
-        <CardDescription>
-          {formatAuditTimestamp(audit.createdAt)}
-        </CardDescription>
+        <CardTitle className="font-heading text-base font-semibold">Gate pass edit</CardTitle>
+        <CardDescription>{formatAuditTimestamp(audit.createdAt)}</CardDescription>
         <CardAction>
-          <Button
-            asChild
-            variant="outline"
-            size="sm"
-            className="h-9 shrink-0"
-          >
+          <Button asChild variant="outline" size="sm" className="h-9 shrink-0">
             <Link to="/grading/$id" params={{ id: audit.gradingGatePassId }}>
               View gate pass
             </Link>
@@ -188,13 +165,9 @@ function GradingEditAuditCard({ audit }: { audit: GradingGatePassAudit }) {
         <div className="flex items-start gap-2 text-sm">
           <User className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
           <div className="min-w-0">
-            <p className="font-medium text-foreground">
-              {audit.editedById.name}
-            </p>
+            <p className="font-medium text-foreground">{audit.editedById.name}</p>
             {audit.editedById.mobileNumber ? (
-              <p className="text-muted-foreground tabular-nums">
-                {audit.editedById.mobileNumber}
-              </p>
+              <p className="text-muted-foreground tabular-nums">{audit.editedById.mobileNumber}</p>
             ) : null}
           </div>
         </div>
@@ -204,28 +177,18 @@ function GradingEditAuditCard({ audit }: { audit: GradingGatePassAudit }) {
             <Globe className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
             <div className="min-w-0">
               <p className="font-medium text-foreground">IP address</p>
-              <p className="font-mono tabular-nums text-muted-foreground">
-                {audit.ipAddress}
-              </p>
+              <p className="font-mono tabular-nums text-muted-foreground">{audit.ipAddress}</p>
             </div>
           </div>
         ) : null}
 
         {audit.userAgent ? (
-          <div
-            className={cn(
-              "min-w-0 text-sm",
-              audit.ipAddress ? "" : "sm:col-span-2",
-            )}
-          >
+          <div className={cn('min-w-0 text-sm', audit.ipAddress ? '' : 'sm:col-span-2')}>
             <div className="flex items-start gap-2">
               <Monitor className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
               <div className="min-w-0">
                 <p className="font-medium text-foreground">User agent</p>
-                <p
-                  className="truncate text-muted-foreground"
-                  title={audit.userAgent}
-                >
+                <p className="truncate text-muted-foreground" title={audit.userAgent}>
                   {audit.userAgent}
                 </p>
               </div>
@@ -236,12 +199,12 @@ function GradingEditAuditCard({ audit }: { audit: GradingGatePassAudit }) {
 
       <AuditChangeTable audit={audit} />
     </Card>
-  )
+  );
 }
 
 const GradingEditHistoryPage = () => {
-  const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState<PageSize>(DEFAULT_PAGE_SIZE)
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState<PageSize>(DEFAULT_PAGE_SIZE);
 
   const queryParams = useMemo(
     () => ({
@@ -249,38 +212,38 @@ const GradingEditHistoryPage = () => {
       limit: pageSize,
     }),
     [page, pageSize],
-  )
+  );
 
   const { data, isLoading, isError, error, isFetching, refetch } =
-    useGradingGatePassEdits(queryParams)
+    useGradingGatePassEdits(queryParams);
 
-  const audits = data?.audits ?? []
-  const pagination = data?.pagination
-  const totalCount = pagination?.total ?? 0
-  const currentPage = pagination?.page ?? page
-  const totalPages = Math.max(pagination?.totalPages ?? 1, 1)
-  const isOnFirstPage = currentPage <= 1
-  const isOnLastPage = currentPage >= totalPages
+  const audits = data?.audits ?? [];
+  const pagination = data?.pagination;
+  const totalCount = pagination?.total ?? 0;
+  const currentPage = pagination?.page ?? page;
+  const totalPages = Math.max(pagination?.totalPages ?? 1, 1);
+  const isOnFirstPage = currentPage <= 1;
+  const isOnLastPage = currentPage >= totalPages;
 
   const handlePrevPage = (event: MouseEvent<HTMLAnchorElement>) => {
-    event.preventDefault()
-    if (isOnFirstPage || isFetching) return
-    setPage((previous) => Math.max(previous - 1, 1))
-  }
+    event.preventDefault();
+    if (isOnFirstPage || isFetching) return;
+    setPage((previous) => Math.max(previous - 1, 1));
+  };
 
   const handleNextPage = (event: MouseEvent<HTMLAnchorElement>) => {
-    event.preventDefault()
-    if (isOnLastPage || isFetching) return
-    setPage((previous) => previous + 1)
-  }
+    event.preventDefault();
+    if (isOnLastPage || isFetching) return;
+    setPage((previous) => previous + 1);
+  };
 
   const handlePageSizeChange = (value: string) => {
-    setPageSize(Number(value) as PageSize)
-    setPage(1)
-  }
+    setPageSize(Number(value) as PageSize);
+    setPage(1);
+  };
 
   if (isLoading) {
-    return <GradingEditHistorySkeleton />
+    return <GradingEditHistorySkeleton />;
   }
 
   return (
@@ -293,7 +256,7 @@ const GradingEditHistoryPage = () => {
             size="sm"
             className="-ml-2 mb-1 h-9 px-2 text-muted-foreground"
           >
-            <Link to="/daybook" search={{ tab: "grading" }}>
+            <Link to="/daybook" search={{ tab: 'grading' }}>
               <ArrowLeft className="mr-1.5 h-5 w-5 text-primary" />
               Back to daybook
             </Link>
@@ -316,18 +279,13 @@ const GradingEditHistoryPage = () => {
 
         <ItemContent>
           <ItemTitle>
-            {totalCount.toLocaleString("en-IN")} edit
-            {totalCount === 1 ? "" : "s"}
+            {totalCount.toLocaleString('en-IN')} edit
+            {totalCount === 1 ? '' : 's'}
           </ItemTitle>
         </ItemContent>
 
         <ItemActions>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => void refetch()}
-            disabled={isFetching}
-          >
+          <Button variant="outline" size="sm" onClick={() => void refetch()} disabled={isFetching}>
             {isFetching ? (
               <Loader2 className="mr-2 h-5 w-5 animate-spin text-primary" />
             ) : (
@@ -348,7 +306,7 @@ const GradingEditHistoryPage = () => {
             <EmptyDescription>
               {error instanceof Error
                 ? error.message
-                : "Something went wrong while fetching edit history."}
+                : 'Something went wrong while fetching edit history.'}
             </EmptyDescription>
           </EmptyHeader>
           <Button
@@ -374,18 +332,13 @@ const GradingEditHistoryPage = () => {
             </EmptyMedia>
             <EmptyTitle>No edits recorded yet</EmptyTitle>
             <EmptyDescription>
-              Changes to grading gate passes will appear here after they are
-              saved.
+              Changes to grading gate passes will appear here after they are saved.
             </EmptyDescription>
           </EmptyHeader>
         </Empty>
       )}
 
-      <Item
-        variant="outline"
-        size="sm"
-        className="rounded-xl px-4 py-3 sm:px-5 sm:py-4"
-      >
+      <Item variant="outline" size="sm" className="rounded-xl px-4 py-3 sm:px-5 sm:py-4">
         <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Select
@@ -393,10 +346,7 @@ const GradingEditHistoryPage = () => {
               onValueChange={handlePageSizeChange}
               disabled={isFetching}
             >
-              <SelectTrigger
-                className="h-9 w-18 tabular-nums"
-                aria-label="Items per page"
-              >
+              <SelectTrigger className="h-9 w-18 tabular-nums" aria-label="Items per page">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent side="top">
@@ -418,9 +368,7 @@ const GradingEditHistoryPage = () => {
                   onClick={handlePrevPage}
                   aria-disabled={isOnFirstPage || isFetching}
                   className={cn(
-                    isOnFirstPage || isFetching
-                      ? "pointer-events-none opacity-50"
-                      : "",
+                    isOnFirstPage || isFetching ? 'pointer-events-none opacity-50' : '',
                   )}
                 />
               </PaginationItem>
@@ -436,11 +384,7 @@ const GradingEditHistoryPage = () => {
                   href="#"
                   onClick={handleNextPage}
                   aria-disabled={isOnLastPage || isFetching}
-                  className={cn(
-                    isOnLastPage || isFetching
-                      ? "pointer-events-none opacity-50"
-                      : "",
-                  )}
+                  className={cn(isOnLastPage || isFetching ? 'pointer-events-none opacity-50' : '')}
                 />
               </PaginationItem>
             </PaginationContent>
@@ -448,7 +392,7 @@ const GradingEditHistoryPage = () => {
         </div>
       </Item>
     </div>
-  )
-}
+  );
+};
 
-export default GradingEditHistoryPage
+export default GradingEditHistoryPage;

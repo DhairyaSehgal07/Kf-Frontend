@@ -22,22 +22,22 @@ import {
   type SortFn,
   sortFn_text,
   tableFeatures,
-} from "@tanstack/react-table"
+} from '@tanstack/react-table';
 
-import { densityPlugin } from "@/lib/tanstack-table/density-feature"
+import { densityPlugin } from '@/lib/tanstack-table/density-feature';
 
 type ReportFilterFns = {
-  selectedValues: FilterFn<any, any>
-}
+  selectedValues: FilterFn<any, any>;
+};
 
 type ReportSortFns = {
-  reportNumeric: SortFn<any, any>
-  reportDate: SortFn<any, any>
-}
+  reportNumeric: SortFn<any, any>;
+  reportDate: SortFn<any, any>;
+};
 
 export function createReportTableFeatures(options: {
-  filterFns: ReportFilterFns
-  sortFns: ReportSortFns
+  filterFns: ReportFilterFns;
+  sortFns: ReportSortFns;
 }) {
   return tableFeatures({
     densityPlugin,
@@ -67,21 +67,21 @@ export function createReportTableFeatures(options: {
     aggregationFns: {
       uniqueCount: aggregationFn_uniqueCount,
     },
-  })
+  });
 }
 
-export type ReportFeatures = ReturnType<typeof createReportTableFeatures>
+export type ReportFeatures = ReturnType<typeof createReportTableFeatures>;
 
-export type ReportFilterFn<TData extends RowData> = FilterFn<ReportFeatures, TData>
-export type ReportSortFn<TData extends RowData> = SortFn<ReportFeatures, TData>
+export type ReportFilterFn<TData extends RowData> = FilterFn<ReportFeatures, TData>;
+export type ReportSortFn<TData extends RowData> = SortFn<ReportFeatures, TData>;
 
 export type ReportColumnMeta = {
-  align?: "left" | "right"
-  wrap?: boolean
-  numeric?: boolean
-  mono?: boolean
-  groupStart?: boolean
-  emphasize?: boolean
-  filterLabel?: string
-  filterValueFormatter?: (value: unknown) => string
-}
+  align?: 'left' | 'right';
+  wrap?: boolean;
+  numeric?: boolean;
+  mono?: boolean;
+  groupStart?: boolean;
+  emphasize?: boolean;
+  filterLabel?: string;
+  filterValueFormatter?: (value: unknown) => string;
+};

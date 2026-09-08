@@ -1,11 +1,11 @@
-import apiClient, { getApiErrorMessage } from "@/lib/api-client"
-import { getHttpStatusFromError } from "@/lib/http-error"
+import apiClient, { getApiErrorMessage } from '@/lib/api-client';
+import { getHttpStatusFromError } from '@/lib/http-error';
 
 import type {
   GetIncomingGatePassEditsResponse,
   IncomingGatePassEditsListParams,
   IncomingGatePassEditsListResult,
-} from "./types"
+} from './types';
 
 const EMPTY_RESULT: IncomingGatePassEditsListResult = {
   audits: [],
@@ -15,17 +15,17 @@ const EMPTY_RESULT: IncomingGatePassEditsListResult = {
     total: 0,
     totalPages: 0,
   },
-}
+};
 
 export function buildIncomingGatePassEditsParams(
   params: IncomingGatePassEditsListParams,
 ): Record<string, number> {
-  const query: Record<string, number> = {}
+  const query: Record<string, number> = {};
 
-  if (params.page != null) query.page = params.page
-  if (params.limit != null) query.limit = params.limit
+  if (params.page != null) query.page = params.page;
+  if (params.limit != null) query.limit = params.limit;
 
-  return query
+  return query;
 }
 
 export async function getIncomingGatePassEdits(
@@ -33,15 +33,15 @@ export async function getIncomingGatePassEdits(
 ): Promise<IncomingGatePassEditsListResult> {
   try {
     const { data } = await apiClient.get<GetIncomingGatePassEditsResponse>(
-      "/incoming-gate-pass/edits",
+      '/incoming-gate-pass/edits',
       { params: buildIncomingGatePassEditsParams(params) },
-    )
+    );
 
     if (!data.success) {
-      throw new Error(data.message ?? "Failed to load incoming gate pass edits")
+      throw new Error(data.message ?? 'Failed to load incoming gate pass edits');
     }
 
-    return data.data
+    return data.data;
   } catch (error) {
     if (getHttpStatusFromError(error) === 404) {
       return {
@@ -50,12 +50,11 @@ export async function getIncomingGatePassEdits(
           ...EMPTY_RESULT.pagination,
           limit: params.limit ?? EMPTY_RESULT.pagination.limit,
         },
-      }
+      };
     }
 
-    throw new Error(
-      getApiErrorMessage(error, "Failed to load incoming gate pass edits"),
-      { cause: error },
-    )
+    throw new Error(getApiErrorMessage(error, 'Failed to load incoming gate pass edits'), {
+      cause: error,
+    });
   }
 }

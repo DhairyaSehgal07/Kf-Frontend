@@ -4,7 +4,7 @@ import { routeTree } from './routeTree.gen';
 
 export const router = createRouter({
   routeTree,
-  scrollToTopSelectors: ["[data-main-scroll]"],
+  scrollToTopSelectors: ['[data-main-scroll]'],
   context: {
     queryClient,
     auth: {

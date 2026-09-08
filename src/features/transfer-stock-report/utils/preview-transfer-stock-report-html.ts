@@ -1,8 +1,8 @@
-import { format } from "date-fns"
-import type { Table } from "@tanstack/react-table"
-import type { ReportFeatures } from "@/lib/tanstack-table/report-table-features"
+import { format } from 'date-fns';
+import type { Table } from '@tanstack/react-table';
+import type { ReportFeatures } from '@/lib/tanstack-table/report-table-features';
 
-import type { TransferStockReportRow } from "@/features/transfer-stock-report/api/types"
+import type { TransferStockReportRow } from '@/features/transfer-stock-report/api/types';
 import {
   buildFilterSummaryLines,
   collectExportRows,
@@ -11,53 +11,47 @@ import {
   getExportCellForRow,
   getFilteredLeafRowCount,
   isSummableExportColumn,
-} from "@/features/transfer-stock-report/utils/export-cell-value"
+} from '@/features/transfer-stock-report/utils/export-cell-value';
 import {
   formatIndianIntegerTotal,
   sumReportNumericColumn,
-} from "@/features/transfer-stock-report/utils/report-formatters"
-import {
-  COLDOP_BRANDING,
-  EXPORT_THEME_CSS,
-} from "@/lib/export-report-theme"
+} from '@/features/transfer-stock-report/utils/report-formatters';
+import { COLDOP_BRANDING, EXPORT_THEME_CSS } from '@/lib/export-report-theme';
 
 export const TRANSFER_STOCK_REPORT_DOWNLOAD_EXCEL_MESSAGE =
-  "kf-transfer-stock-report-download-excel" as const
+  'kf-transfer-stock-report-download-excel' as const;
 
 export const TRANSFER_STOCK_REPORT_DOWNLOAD_EXCEL_DONE_MESSAGE =
-  "kf-transfer-stock-report-download-excel-done" as const
+  'kf-transfer-stock-report-download-excel-done' as const;
 
 export type PreviewTransferStockReportOptions = {
-  table: Table<ReportFeatures, TransferStockReportRow>
-  coldStorageName: string
-  reportTitle?: string
-  fromDate?: Date
-  toDate?: Date
-  generatedAt?: Date
-}
+  table: Table<ReportFeatures, TransferStockReportRow>;
+  coldStorageName: string;
+  reportTitle?: string;
+  fromDate?: Date;
+  toDate?: Date;
+  generatedAt?: Date;
+};
 
-function formatDateRangeLabel(
-  fromDate: Date | undefined,
-  toDate: Date | undefined,
-): string {
+function formatDateRangeLabel(fromDate: Date | undefined, toDate: Date | undefined): string {
   if (fromDate && toDate) {
-    return `${format(fromDate, "do MMM yyyy")} – ${format(toDate, "do MMM yyyy")}`
+    return `${format(fromDate, 'do MMM yyyy')} – ${format(toDate, 'do MMM yyyy')}`;
   }
-  if (fromDate) return `From ${format(fromDate, "do MMM yyyy")}`
-  if (toDate) return `Until ${format(toDate, "do MMM yyyy")}`
-  return "All dates"
+  if (fromDate) return `From ${format(fromDate, 'do MMM yyyy')}`;
+  if (toDate) return `Until ${format(toDate, 'do MMM yyyy')}`;
+  return 'All dates';
 }
 
 function escapeHtml(value: string): string {
   return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }
 
 function buildPreviewStyles(): string {
-  const theme = EXPORT_THEME_CSS
+  const theme = EXPORT_THEME_CSS;
 
   return `
     :root {
@@ -179,93 +173,89 @@ function buildPreviewStyles(): string {
       .toolbar { display: none; }
       thead th { position: static; }
     }
-  `
+  `;
 }
 
 export function buildTransferStockReportPreviewHtml({
   table,
   coldStorageName,
-  reportTitle = "Transfer Stock Gate Passes",
+  reportTitle = 'Transfer Stock Gate Passes',
   fromDate,
   toDate,
   generatedAt = new Date(),
 }: PreviewTransferStockReportOptions): string {
-  const visibleColumns = table.getVisibleLeafColumns()
-  const exportRows = collectExportRows(table)
-  const filteredLeafCount = getFilteredLeafRowCount(table)
-  const filterSummaryLines = buildFilterSummaryLines(table)
-  const filteredRows = table.getFilteredRowModel().rows
+  const visibleColumns = table.getVisibleLeafColumns();
+  const exportRows = collectExportRows(table);
+  const filteredLeafCount = getFilteredLeafRowCount(table);
+  const filterSummaryLines = buildFilterSummaryLines(table);
+  const filteredRows = table.getFilteredRowModel().rows;
 
   const metadataText = [
-    `Generated: ${format(generatedAt, "do MMM yyyy, h:mm a")}`,
+    `Generated: ${format(generatedAt, 'do MMM yyyy, h:mm a')}`,
     `Period: ${formatDateRangeLabel(fromDate, toDate)}`,
-    `${filteredLeafCount.toLocaleString("en-IN")} ${
-      filteredLeafCount === 1 ? "entry" : "entries"
-    }`,
-  ].join("  |  ")
+    `${filteredLeafCount.toLocaleString('en-IN')} ${filteredLeafCount === 1 ? 'entry' : 'entries'}`,
+  ].join('  |  ');
 
   const filterText =
-    filterSummaryLines.length > 0
-      ? filterSummaryLines.join("\n")
-      : "Filters: none applied"
+    filterSummaryLines.length > 0 ? filterSummaryLines.join('\n') : 'Filters: none applied';
 
   const headerCells = visibleColumns
     .map((column) => {
-      const isNumeric = column.columnDef.meta?.align === "right"
-      const label = escapeHtml(getColumnExportLabel(column))
-      return `<th class="${isNumeric ? "numeric" : ""}">${label}</th>`
+      const isNumeric = column.columnDef.meta?.align === 'right';
+      const label = escapeHtml(getColumnExportLabel(column));
+      return `<th class="${isNumeric ? 'numeric' : ''}">${label}</th>`;
     })
-    .join("")
+    .join('');
 
   const bodyRows = exportRows
     .map((row) => {
-      const isGroupRow = row.getIsGrouped()
-      const rowClass = isGroupRow ? "group-row" : ""
+      const isGroupRow = row.getIsGrouped();
+      const rowClass = isGroupRow ? 'group-row' : '';
 
       const cells = visibleColumns
         .map((column) => {
-          const isNumeric = column.columnDef.meta?.align === "right"
-          const exportCell = getExportCellForRow(row, column)
-          const display = exportCellValueToDisplay(exportCell)
+          const isNumeric = column.columnDef.meta?.align === 'right';
+          const exportCell = getExportCellForRow(row, column);
+          const display = exportCellValueToDisplay(exportCell);
           const classNames = [
-            isNumeric ? "numeric" : "",
-            exportCell.kind === "empty" ? "empty" : "",
+            isNumeric ? 'numeric' : '',
+            exportCell.kind === 'empty' ? 'empty' : '',
           ]
             .filter(Boolean)
-            .join(" ")
+            .join(' ');
 
-          return `<td class="${classNames}">${escapeHtml(display)}</td>`
+          return `<td class="${classNames}">${escapeHtml(display)}</td>`;
         })
-        .join("")
+        .join('');
 
-      return `<tr class="${rowClass}">${cells}</tr>`
+      return `<tr class="${rowClass}">${cells}</tr>`;
     })
-    .join("")
+    .join('');
 
   const footerCells = visibleColumns
     .map((column, columnIndex) => {
-      const columnId = column.id
-      const isNumeric = column.columnDef.meta?.align === "right"
-      const className = isNumeric ? "numeric" : ""
+      const columnId = column.id;
+      const isNumeric = column.columnDef.meta?.align === 'right';
+      const className = isNumeric ? 'numeric' : '';
 
       if (columnIndex === 0) {
-        return `<th scope="row">Total</th>`
+        return `<th scope="row">Total</th>`;
       }
 
       if (isSummableExportColumn(columnId)) {
         const total = sumReportNumericColumn(
           filteredRows,
           columnId as keyof TransferStockReportRow,
-        )
-        const formatted = formatIndianIntegerTotal(total)
-        return `<td class="${className}">${escapeHtml(formatted)}</td>`
+        );
+        const formatted = formatIndianIntegerTotal(total);
+        return `<td class="${className}">${escapeHtml(formatted)}</td>`;
       }
 
-      return `<td class="${className}"></td>`
+      return `<td class="${className}"></td>`;
     })
-    .join("")
+    .join('');
 
-  const pageTitle = escapeHtml(`${reportTitle} — ${coldStorageName}`)
+  const pageTitle = escapeHtml(`${reportTitle} — ${coldStorageName}`);
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -280,7 +270,7 @@ export function buildTransferStockReportPreviewHtml({
       <h1>${escapeHtml(coldStorageName)}</h1>
       <h2>${escapeHtml(reportTitle)}</h2>
       <p class="meta">${escapeHtml(metadataText)}</p>
-      <p class="filters">${escapeHtml(filterText).replace(/\n/g, "<br />")}</p>
+      <p class="filters">${escapeHtml(filterText).replace(/\n/g, '<br />')}</p>
       <p class="branding">${escapeHtml(COLDOP_BRANDING.label)}<strong>${escapeHtml(COLDOP_BRANDING.name)}</strong></p>
     </header>
     <div class="toolbar">
@@ -338,24 +328,20 @@ export function buildTransferStockReportPreviewHtml({
       </table>
     </div>
   </body>
-</html>`
+</html>`;
 }
 
-export function openTransferStockReportPreview(
-  options: PreviewTransferStockReportOptions,
-): Window {
-  const html = buildTransferStockReportPreviewHtml(options)
-  const blob = new Blob([html], { type: "text/html;charset=utf-8" })
-  const url = URL.createObjectURL(blob)
-  const previewWindow = window.open(url, "_blank")
+export function openTransferStockReportPreview(options: PreviewTransferStockReportOptions): Window {
+  const html = buildTransferStockReportPreviewHtml(options);
+  const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const previewWindow = window.open(url, '_blank');
 
   if (!previewWindow) {
-    URL.revokeObjectURL(url)
-    throw new Error(
-      "Pop-up blocked. Allow pop-ups for this site to preview the report.",
-    )
+    URL.revokeObjectURL(url);
+    throw new Error('Pop-up blocked. Allow pop-ups for this site to preview the report.');
   }
 
-  window.setTimeout(() => URL.revokeObjectURL(url), 60_000)
-  return previewWindow
+  window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+  return previewWindow;
 }

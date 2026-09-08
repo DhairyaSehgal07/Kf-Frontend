@@ -19,7 +19,9 @@ interface ActiveGroupRowProps<TData extends RowData> {
   onRemove: (columnId: string) => void;
 }
 
-function getColumnLabel<TData extends RowData>(column: Column<ReportFeatures, TData, unknown>): string {
+function getColumnLabel<TData extends RowData>(
+  column: Column<ReportFeatures, TData, unknown>,
+): string {
   return column.columnDef.meta?.filterLabel ?? column.id;
 }
 

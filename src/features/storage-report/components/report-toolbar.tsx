@@ -1,31 +1,31 @@
-import type { Table } from "@tanstack/react-table"
-import { Eye, FileSpreadsheet, Loader2, RefreshCw, Search } from "lucide-react"
-import type { ReportFeatures } from "@/lib/tanstack-table/report-table-features"
+import type { Table } from '@tanstack/react-table';
+import { Eye, FileSpreadsheet, Loader2, RefreshCw, Search } from 'lucide-react';
+import type { ReportFeatures } from '@/lib/tanstack-table/report-table-features';
 
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import type { StorageGatePass } from "@/features/storage/api/types"
-import { cn } from "@/lib/utils"
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import type { StorageGatePass } from '@/features/storage/api/types';
+import { cn } from '@/lib/utils';
 
-import { ViewFiltersSheet } from "./view-filters"
+import { ViewFiltersSheet } from './view-filters';
 
 export interface ReportToolbarProps {
-  table: Table<ReportFeatures, StorageGatePass> | null
-  dateFrom: string
-  dateTo: string
-  onDateFromChange: (value: string) => void
-  onDateToChange: (value: string) => void
-  onApply: () => void
-  onReset: () => void
-  onRefresh: () => void
-  searchQuery: string
-  onSearchChange: (value: string) => void
-  isLoading?: boolean
-  isRefreshing?: boolean
-  isExporting?: boolean
-  onPreview?: () => void
-  onExportExcel?: () => void
-  className?: string
+  table: Table<ReportFeatures, StorageGatePass> | null;
+  dateFrom: string;
+  dateTo: string;
+  onDateFromChange: (value: string) => void;
+  onDateToChange: (value: string) => void;
+  onApply: () => void;
+  onReset: () => void;
+  onRefresh: () => void;
+  searchQuery: string;
+  onSearchChange: (value: string) => void;
+  isLoading?: boolean;
+  isRefreshing?: boolean;
+  isExporting?: boolean;
+  onPreview?: () => void;
+  onExportExcel?: () => void;
+  className?: string;
 }
 
 export function ReportToolbar({
@@ -47,16 +47,11 @@ export function ReportToolbar({
   className,
 }: ReportToolbarProps) {
   return (
-    <div
-      className={cn(
-        "overflow-x-auto px-4 py-3 sm:px-6 sm:py-4",
-        className,
-      )}
-    >
+    <div className={cn('overflow-x-auto px-4 py-3 sm:px-6 sm:py-4', className)}>
       <div
         className={cn(
-          "flex min-w-min flex-col gap-3 sm:gap-4",
-          "lg:min-w-0 lg:flex-row lg:flex-nowrap lg:items-end lg:gap-3",
+          'flex min-w-min flex-col gap-3 sm:gap-4',
+          'lg:min-w-0 lg:flex-row lg:flex-nowrap lg:items-end lg:gap-3',
         )}
       >
         <div className="flex min-w-0 shrink-0 flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end sm:gap-3 lg:gap-3">
@@ -83,12 +78,7 @@ export function ReportToolbar({
           </label>
 
           <div className="grid grid-cols-2 gap-2 sm:flex sm:shrink-0">
-            <Button
-              type="button"
-              className="min-w-0"
-              disabled={isRefreshing}
-              onClick={onApply}
-            >
+            <Button type="button" className="min-w-0" disabled={isRefreshing} onClick={onApply}>
               Apply
             </Button>
             <Button
@@ -146,9 +136,7 @@ export function ReportToolbar({
             ) : (
               <FileSpreadsheet className="size-4 shrink-0" aria-hidden />
             )}
-            <span className="truncate">
-              {isExporting ? "Exporting…" : "Excel"}
-            </span>
+            <span className="truncate">{isExporting ? 'Exporting…' : 'Excel'}</span>
           </Button>
 
           <Button
@@ -160,13 +148,10 @@ export function ReportToolbar({
             disabled={isRefreshing}
             onClick={onRefresh}
           >
-            <RefreshCw
-              className={cn("size-4", isRefreshing && "animate-spin")}
-              aria-hidden
-            />
+            <RefreshCw className={cn('size-4', isRefreshing && 'animate-spin')} aria-hidden />
           </Button>
         </div>
       </div>
     </div>
-  )
+  );
 }

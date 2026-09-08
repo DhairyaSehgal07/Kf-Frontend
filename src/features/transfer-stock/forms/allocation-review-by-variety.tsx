@@ -1,12 +1,12 @@
-import { Package } from "lucide-react"
-import type { TransferStockItem } from "@/features/transfer-stock/types/storage-gate-pass"
-import { groupItemsByVariety } from "@/features/transfer-stock/utils/gate-pass-matrix-utils"
-import { cn } from "@/lib/utils"
+import { Package } from 'lucide-react';
+import type { TransferStockItem } from '@/features/transfer-stock/types/storage-gate-pass';
+import { groupItemsByVariety } from '@/features/transfer-stock/utils/gate-pass-matrix-utils';
+import { cn } from '@/lib/utils';
 
 type AllocationReviewByVarietyProps = {
-  items: TransferStockItem[]
-  className?: string
-}
+  items: TransferStockItem[];
+  className?: string;
+};
 
 function AllocationTable({ items }: { items: TransferStockItem[] }) {
   return (
@@ -15,12 +15,8 @@ function AllocationTable({ items }: { items: TransferStockItem[] }) {
         <tr className="text-left">
           <th className="h-9 px-3 font-medium text-muted-foreground">Voucher</th>
           <th className="h-9 px-3 font-medium text-muted-foreground">Size</th>
-          <th className="h-9 px-3 font-medium text-muted-foreground">
-            Location
-          </th>
-          <th className="h-9 px-3 text-right font-medium text-muted-foreground">
-            Qty
-          </th>
+          <th className="h-9 px-3 font-medium text-muted-foreground">Location</th>
+          <th className="h-9 px-3 text-right font-medium text-muted-foreground">Qty</th>
         </tr>
       </thead>
       <tbody>
@@ -29,45 +25,36 @@ function AllocationTable({ items }: { items: TransferStockItem[] }) {
             key={`${item.storageGatePassId}-${item.bagSize}-${item.bagIndex}-${index}`}
             className="border-b border-border/40 last:border-0"
           >
-            <td className="px-3 py-2.5 font-mono text-sm tabular-nums">
-              #{item.gatePassNo}
-            </td>
+            <td className="px-3 py-2.5 font-mono text-sm tabular-nums">#{item.gatePassNo}</td>
             <td className="px-3 py-2.5 font-medium">{item.bagSize}</td>
             <td className="px-3 py-2.5 text-xs text-muted-foreground">
-              Ch {item.location.chamber} · F {item.location.floor} · R{" "}
-              {item.location.row}
+              Ch {item.location.chamber} · F {item.location.floor} · R {item.location.row}
             </td>
             <td className="px-3 py-2.5 text-right font-medium tabular-nums">
-              {item.quantity.toLocaleString("en-IN")}
+              {item.quantity.toLocaleString('en-IN')}
             </td>
           </tr>
         ))}
       </tbody>
     </table>
-  )
+  );
 }
 
-export function AllocationReviewByVariety({
-  items,
-  className,
-}: AllocationReviewByVarietyProps) {
-  const groups = groupItemsByVariety(items)
+export function AllocationReviewByVariety({ items, className }: AllocationReviewByVarietyProps) {
+  const groups = groupItemsByVariety(items);
 
   if (groups.length === 0) {
     return (
       <div className="rounded-xl border border-dashed border-border/50 bg-muted/15 px-4 py-6 text-center">
         <p className="text-sm text-muted-foreground">No allocations selected.</p>
       </div>
-    )
+    );
   }
 
   return (
-    <div className={cn("space-y-4", className)}>
+    <div className={cn('space-y-4', className)}>
       {groups.map((group) => {
-        const subtotal = group.items.reduce(
-          (sum, item) => sum + item.quantity,
-          0,
-        )
+        const subtotal = group.items.reduce((sum, item) => sum + item.quantity, 0);
 
         return (
           <div
@@ -87,16 +74,15 @@ export function AllocationReviewByVariety({
                 </span>
               </div>
               <span className="shrink-0 text-xs font-medium text-muted-foreground tabular-nums">
-                {subtotal.toLocaleString("en-IN")}{" "}
-                <span className="font-normal">bags</span>
+                {subtotal.toLocaleString('en-IN')} <span className="font-normal">bags</span>
               </span>
             </div>
             <div className="overflow-x-auto">
               <AllocationTable items={group.items} />
             </div>
           </div>
-        )
+        );
       })}
     </div>
-  )
+  );
 }

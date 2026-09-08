@@ -1,52 +1,36 @@
-import type {
-  Column,
-  GroupingState,
-  RowData,
-  Table,
-} from "@tanstack/react-table"
-import {
-  ArrowDown,
-  ArrowUp,
-  Layers3,
-  ListTree,
-  Plus,
-  X,
-} from "lucide-react"
-import type { ReportFeatures } from "@/lib/tanstack-table/report-table-features"
+import type { Column, GroupingState, RowData, Table } from '@tanstack/react-table';
+import { ArrowDown, ArrowUp, Layers3, ListTree, Plus, X } from 'lucide-react';
+import type { ReportFeatures } from '@/lib/tanstack-table/report-table-features';
 
-import { Button } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 interface GroupingTabProps<TData extends RowData> {
-  table: Table<ReportFeatures, TData>
-  draftGrouping: GroupingState
-  onDraftGroupingChange: (grouping: GroupingState) => void
+  table: Table<ReportFeatures, TData>;
+  draftGrouping: GroupingState;
+  onDraftGroupingChange: (grouping: GroupingState) => void;
 }
 
 interface ActiveGroupRowProps<TData extends RowData> {
-  column: Column<ReportFeatures, TData, unknown>
-  index: number
-  total: number
-  onMove: (fromIndex: number, toIndex: number) => void
-  onRemove: (columnId: string) => void
+  column: Column<ReportFeatures, TData, unknown>;
+  index: number;
+  total: number;
+  onMove: (fromIndex: number, toIndex: number) => void;
+  onRemove: (columnId: string) => void;
 }
 
 function getColumnLabel<TData extends RowData>(
   column: Column<ReportFeatures, TData, unknown>,
 ): string {
-  return column.columnDef.meta?.filterLabel ?? column.id
+  return column.columnDef.meta?.filterLabel ?? column.id;
 }
 
-function moveGroup(
-  grouping: GroupingState,
-  fromIndex: number,
-  toIndex: number,
-): GroupingState {
-  const next = [...grouping]
-  const [removed] = next.splice(fromIndex, 1)
-  if (!removed) return grouping
-  next.splice(toIndex, 0, removed)
-  return next
+function moveGroup(grouping: GroupingState, fromIndex: number, toIndex: number): GroupingState {
+  const next = [...grouping];
+  const [removed] = next.splice(fromIndex, 1);
+  if (!removed) return grouping;
+  next.splice(toIndex, 0, removed);
+  return next;
 }
 
 function ActiveGroupRow<TData extends RowData>({
@@ -56,7 +40,7 @@ function ActiveGroupRow<TData extends RowData>({
   onMove,
   onRemove,
 }: ActiveGroupRowProps<TData>) {
-  const columnLabel = getColumnLabel(column)
+  const columnLabel = getColumnLabel(column);
 
   return (
     <div className="flex min-h-12 items-center gap-3 rounded-xl border border-border bg-card px-3 py-2 text-sm">
@@ -67,9 +51,7 @@ function ActiveGroupRow<TData extends RowData>({
         <p className="truncate text-sm font-semibold text-foreground" title={columnLabel}>
           {columnLabel}
         </p>
-        <p className="text-xs text-muted-foreground">
-          Group priority {index + 1}
-        </p>
+        <p className="text-xs text-muted-foreground">Group priority {index + 1}</p>
       </div>
       <div className="flex shrink-0 items-center gap-1">
         <Button
@@ -103,7 +85,7 @@ function ActiveGroupRow<TData extends RowData>({
         </Button>
       </div>
     </div>
-  )
+  );
 }
 
 const GroupingTab = <TData extends RowData>({
@@ -111,30 +93,24 @@ const GroupingTab = <TData extends RowData>({
   draftGrouping,
   onDraftGroupingChange,
 }: GroupingTabProps<TData>) => {
-  const groupableColumns = table
-    .getAllLeafColumns()
-    .filter((column) => column.getCanGroup())
-  const columnsById = new Map(groupableColumns.map((column) => [column.id, column]))
+  const groupableColumns = table.getAllLeafColumns().filter((column) => column.getCanGroup());
+  const columnsById = new Map(groupableColumns.map((column) => [column.id, column]));
   const activeColumns = draftGrouping
     .map((columnId) => columnsById.get(columnId))
-    .filter((column): column is Column<ReportFeatures, TData, unknown> => column != null)
-  const availableColumns = groupableColumns.filter(
-    (column) => !draftGrouping.includes(column.id),
-  )
+    .filter((column): column is Column<ReportFeatures, TData, unknown> => column != null);
+  const availableColumns = groupableColumns.filter((column) => !draftGrouping.includes(column.id));
 
   const handleAddGroup = (columnId: string) => {
-    onDraftGroupingChange([...draftGrouping, columnId])
-  }
+    onDraftGroupingChange([...draftGrouping, columnId]);
+  };
 
   const handleRemoveGroup = (columnId: string) => {
-    onDraftGroupingChange(
-      draftGrouping.filter((groupedColumnId) => groupedColumnId !== columnId),
-    )
-  }
+    onDraftGroupingChange(draftGrouping.filter((groupedColumnId) => groupedColumnId !== columnId));
+  };
 
   const handleMoveGroup = (fromIndex: number, toIndex: number) => {
-    onDraftGroupingChange(moveGroup(draftGrouping, fromIndex, toIndex))
-  }
+    onDraftGroupingChange(moveGroup(draftGrouping, fromIndex, toIndex));
+  };
 
   return (
     <div className="space-y-5 pt-4">
@@ -173,9 +149,7 @@ const GroupingTab = <TData extends RowData>({
             <span className="flex size-12 items-center justify-center rounded-xl text-muted-foreground">
               <ListTree className="size-9" aria-hidden />
             </span>
-            <p className="mt-3 text-sm font-semibold text-foreground">
-              No groups yet
-            </p>
+            <p className="mt-3 text-sm font-semibold text-foreground">No groups yet</p>
             <p className="mt-1 text-sm text-muted-foreground">
               Add columns from below to group rows together.
             </p>
@@ -189,14 +163,14 @@ const GroupingTab = <TData extends RowData>({
             Available columns
           </p>
           <span className="text-xs tabular-nums text-muted-foreground">
-            {availableColumns.length.toLocaleString("en-IN")} available
+            {availableColumns.length.toLocaleString('en-IN')} available
           </span>
         </div>
 
         <div className="space-y-2">
           {availableColumns.length > 0 ? (
             availableColumns.map((column) => {
-              const columnLabel = getColumnLabel(column)
+              const columnLabel = getColumnLabel(column);
 
               return (
                 <div
@@ -205,8 +179,8 @@ const GroupingTab = <TData extends RowData>({
                 >
                   <Layers3
                     className={cn(
-                      "size-4 shrink-0 text-muted-foreground",
-                      column.getIsVisible() && "text-primary",
+                      'size-4 shrink-0 text-muted-foreground',
+                      column.getIsVisible() && 'text-primary',
                     )}
                     aria-hidden
                   />
@@ -227,13 +201,11 @@ const GroupingTab = <TData extends RowData>({
                     Add
                   </Button>
                 </div>
-              )
+              );
             })
           ) : (
             <div className="rounded-xl border border-dashed border-border bg-muted/10 px-4 py-6 text-center">
-              <p className="text-sm font-medium text-foreground">
-                All columns are grouped
-              </p>
+              <p className="text-sm font-medium text-foreground">All columns are grouped</p>
               <p className="mt-1 text-sm text-muted-foreground">
                 Remove an active group to make it available again.
               </p>
@@ -242,7 +214,7 @@ const GroupingTab = <TData extends RowData>({
         </div>
       </section>
     </div>
-  )
-}
+  );
+};
 
-export default GroupingTab
+export default GroupingTab;

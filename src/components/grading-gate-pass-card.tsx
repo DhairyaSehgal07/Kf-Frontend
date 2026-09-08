@@ -1,5 +1,5 @@
-import { useState } from "react"
-import { useNavigate } from "@tanstack/react-router"
+import { useState } from 'react';
+import { useNavigate } from '@tanstack/react-router';
 import {
   Card,
   CardContent,
@@ -7,10 +7,10 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
 import {
   ChevronDown,
   ChevronUp,
@@ -25,162 +25,148 @@ import {
   Truck,
   User,
   type LucideIcon,
-} from "lucide-react"
-import { cn } from "@/lib/utils"
-import { Skeleton } from "@/components/ui/skeleton"
-import { JUTE_BAG_WEIGHT, LENO_BAG_WEIGHT, type BagType } from "@/lib/constants"
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { Skeleton } from '@/components/ui/skeleton';
+import { JUTE_BAG_WEIGHT, LENO_BAG_WEIGHT, type BagType } from '@/lib/constants';
 import type {
   GradingGatePass,
   GradingGatePassIncomingRef,
   GradingGatePassFarmerStorageLink,
   GradingOrderDetail,
-} from "@/features/grading/api/types"
+} from '@/features/grading/api/types';
 
 interface InfoBlockProps {
-  label: string
-  value: string | number
-  icon?: LucideIcon
-  valueClassName?: string
+  label: string;
+  value: string | number;
+  icon?: LucideIcon;
+  valueClassName?: string;
 }
 
-const InfoBlock = ({
-  label,
-  value,
-  icon: Icon,
-  valueClassName,
-}: InfoBlockProps) => (
+const InfoBlock = ({ label, value, icon: Icon, valueClassName }: InfoBlockProps) => (
   <div className="space-y-1.5">
     <span className="flex items-center gap-1.5 text-[11px] font-medium tracking-wider text-muted-foreground uppercase">
       {Icon && <Icon className="h-3.5 w-3.5" />}
       {label}
     </span>
-    <p className={cn("text-sm font-semibold text-foreground", valueClassName)}>
-      {value}
-    </p>
+    <p className={cn('text-sm font-semibold text-foreground', valueClassName)}>{value}</p>
   </div>
-)
+);
 
 function formatDateTime(value: string) {
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return "—"
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '—';
 
-  return new Intl.DateTimeFormat("en-IN", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(date)
+  return new Intl.DateTimeFormat('en-IN', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(date);
 }
 
 function formatKg(value: number) {
-  return new Intl.NumberFormat("en-IN", {
+  return new Intl.NumberFormat('en-IN', {
     minimumFractionDigits: 0,
     maximumFractionDigits: 2,
-  }).format(value)
+  }).format(value);
 }
 
 export function gradingTotalBags(orderDetails: readonly GradingOrderDetail[]) {
-  return orderDetails.reduce((sum, row) => sum + row.quantity, 0)
+  return orderDetails.reduce((sum, row) => sum + row.quantity, 0);
 }
 
 export function gradingTotalWeightKg(orderDetails: readonly GradingOrderDetail[]) {
-  return orderDetails.reduce(
-    (sum, row) => sum + row.quantity * row.weightPerBagKg,
-    0,
-  )
+  return orderDetails.reduce((sum, row) => sum + row.quantity * row.weightPerBagKg, 0);
 }
 
 function getBagWeightKg(bagType: BagType) {
-  return bagType === "LENO" ? LENO_BAG_WEIGHT : JUTE_BAG_WEIGHT
+  return bagType === 'LENO' ? LENO_BAG_WEIGHT : JUTE_BAG_WEIGHT;
 }
 
 function getIncomingRefWeights(incoming: GradingGatePassIncomingRef) {
   return {
-    grossWeightKg:
-      incoming.grossWeightKg ?? incoming.weightSlip?.grossWeightKg ?? 0,
+    grossWeightKg: incoming.grossWeightKg ?? incoming.weightSlip?.grossWeightKg ?? 0,
     tareWeightKg: incoming.tareWeightKg ?? incoming.weightSlip?.tareWeightKg ?? 0,
-  }
+  };
 }
 
 function incomingNetProductKg(incoming: GradingGatePassIncomingRef) {
-  const { grossWeightKg, tareWeightKg } = getIncomingRefWeights(incoming)
-  const netKg = grossWeightKg - tareWeightKg
-  return netKg - incoming.bagsReceived * JUTE_BAG_WEIGHT
+  const { grossWeightKg, tareWeightKg } = getIncomingRefWeights(incoming);
+  const netKg = grossWeightKg - tareWeightKg;
+  return netKg - incoming.bagsReceived * JUTE_BAG_WEIGHT;
 }
 
 function gradingRowBagWeightKg(row: GradingOrderDetail) {
-  return row.quantity * getBagWeightKg(row.bagType)
+  return row.quantity * getBagWeightKg(row.bagType);
 }
 
 function gradingRowNetProductKg(row: GradingOrderDetail) {
-  return row.quantity * (row.weightPerBagKg - getBagWeightKg(row.bagType))
+  return row.quantity * (row.weightPerBagKg - getBagWeightKg(row.bagType));
 }
 
 function gradingTotalBagWeightKg(orderDetails: readonly GradingOrderDetail[]) {
-  return orderDetails.reduce((sum, row) => sum + gradingRowBagWeightKg(row), 0)
+  return orderDetails.reduce((sum, row) => sum + gradingRowBagWeightKg(row), 0);
 }
 
 function gradingTotalNetProductKg(orderDetails: readonly GradingOrderDetail[]) {
-  return orderDetails.reduce((sum, row) => sum + gradingRowNetProductKg(row), 0)
+  return orderDetails.reduce((sum, row) => sum + gradingRowNetProductKg(row), 0);
 }
 
 function isPopulatedFarmerStorageLink(
-  value: GradingGatePass["farmerStorageLinkId"],
+  value: GradingGatePass['farmerStorageLinkId'],
 ): value is GradingGatePassFarmerStorageLink {
-  return typeof value !== "string"
+  return typeof value !== 'string';
 }
 
 interface GradingGatePassCardProps {
-  data: GradingGatePass
-  canUpdate?: boolean
+  data: GradingGatePass;
+  canUpdate?: boolean;
 }
 
 export function GradingGatePassCard({
   data: gatePass,
   canUpdate = true,
 }: GradingGatePassCardProps) {
-  const navigate = useNavigate()
-  const [isExpanded, setIsExpanded] = useState(false)
+  const navigate = useNavigate();
+  const [isExpanded, setIsExpanded] = useState(false);
 
-  const farmerStorageLink = isPopulatedFarmerStorageLink(
-    gatePass.farmerStorageLinkId,
-  )
+  const farmerStorageLink = isPopulatedFarmerStorageLink(gatePass.farmerStorageLinkId)
     ? gatePass.farmerStorageLinkId
-    : undefined
-  const farmer = farmerStorageLink?.farmerId
-  const totalBags = gradingTotalBags(gatePass.orderDetails)
-  const totalWeightKg = gradingTotalNetProductKg(gatePass.orderDetails)
-  const totalGradingBagWeightKg = gradingTotalBagWeightKg(gatePass.orderDetails)
+    : undefined;
+  const farmer = farmerStorageLink?.farmerId;
+  const totalBags = gradingTotalBags(gatePass.orderDetails);
+  const totalWeightKg = gradingTotalNetProductKg(gatePass.orderDetails);
+  const totalGradingBagWeightKg = gradingTotalBagWeightKg(gatePass.orderDetails);
   const incomingGrossKg = gatePass.incomingGatePassIds.reduce((sum, incoming) => {
-    const { grossWeightKg } = getIncomingRefWeights(incoming)
-    return sum + grossWeightKg
-  }, 0)
+    const { grossWeightKg } = getIncomingRefWeights(incoming);
+    return sum + grossWeightKg;
+  }, 0);
   const incomingTareKg = gatePass.incomingGatePassIds.reduce((sum, incoming) => {
-    const { tareWeightKg } = getIncomingRefWeights(incoming)
-    return sum + tareWeightKg
-  }, 0)
-  const incomingWeighbridgeNetKg = incomingGrossKg - incomingTareKg
+    const { tareWeightKg } = getIncomingRefWeights(incoming);
+    return sum + tareWeightKg;
+  }, 0);
+  const incomingWeighbridgeNetKg = incomingGrossKg - incomingTareKg;
   const incomingNetKg = gatePass.incomingGatePassIds.reduce(
     (sum, incoming) => sum + incomingNetProductKg(incoming),
     0,
-  )
+  );
   const incomingBags = gatePass.incomingGatePassIds.reduce(
     (sum, incoming) => sum + incoming.bagsReceived,
     0,
-  )
-  const gradingWastageKg = incomingNetKg - totalWeightKg
-  const gradingWastagePercent =
-    incomingNetKg > 0 ? (gradingWastageKg / incomingNetKg) * 100 : 0
-  const incomingCount = gatePass.incomingGatePassIds.length
+  );
+  const gradingWastageKg = incomingNetKg - totalWeightKg;
+  const gradingWastagePercent = incomingNetKg > 0 ? (gradingWastageKg / incomingNetKg) * 100 : 0;
+  const incomingCount = gatePass.incomingGatePassIds.length;
 
   const handleEditClick = () => {
-    if (!canUpdate) return
+    if (!canUpdate) return;
     navigate({
-      to: "/grading/$id",
+      to: '/grading/$id',
       params: { id: gatePass._id },
-    })
-  }
+    });
+  };
 
   return (
     <Card className="card-hover overflow-hidden border-border/60">
@@ -189,10 +175,8 @@ export function GradingGatePassCard({
           <div className="flex items-center gap-3">
             <CardTitle className="flex items-center gap-2 text-lg">
               <span className="h-2 w-2 rounded-full bg-primary" />
-              GGP{" "}
-              <span className="font-mono tabular-nums text-primary">
-                #{gatePass.gatePassNo}
-              </span>
+              GGP{' '}
+              <span className="font-mono tabular-nums text-primary">#{gatePass.gatePassNo}</span>
             </CardTitle>
             {gatePass.manualGatePassNumber != null && (
               <Badge
@@ -203,9 +187,7 @@ export function GradingGatePassCard({
               </Badge>
             )}
           </div>
-          <CardDescription className="text-xs">
-            {formatDateTime(gatePass.date)}
-          </CardDescription>
+          <CardDescription className="text-xs">{formatDateTime(gatePass.date)}</CardDescription>
         </div>
 
         <div className="flex flex-wrap items-center justify-end gap-2">
@@ -216,11 +198,8 @@ export function GradingGatePassCard({
           >
             {gatePass.variety}
           </Badge>
-          <Badge
-            variant="outline"
-            className="bg-background text-[11px] tabular-nums"
-          >
-            {totalBags.toLocaleString("en-IN")} Bags
+          <Badge variant="outline" className="bg-background text-[11px] tabular-nums">
+            {totalBags.toLocaleString('en-IN')} Bags
           </Badge>
           <Badge variant="secondary" className="text-[11px] tabular-nums">
             {incomingCount} incoming
@@ -230,10 +209,10 @@ export function GradingGatePassCard({
 
       <CardContent className="pt-5">
         <div className="grid grid-cols-2 gap-6 sm:grid-cols-4">
-          <InfoBlock label="Farmer" value={farmer?.name ?? "—"} icon={User} />
+          <InfoBlock label="Farmer" value={farmer?.name ?? '—'} icon={User} />
           <InfoBlock
             label="Account"
-            value={farmerStorageLink?.accountNumber ?? "—"}
+            value={farmerStorageLink?.accountNumber ?? '—'}
             valueClassName="tabular-nums"
           />
           <InfoBlock label="Variety" value={gatePass.variety} icon={Sprout} />
@@ -284,12 +263,10 @@ export function GradingGatePassCard({
                       </thead>
                       <tbody>
                         {gatePass.incomingGatePassIds.map((incoming) => {
-                          const { grossWeightKg, tareWeightKg } =
-                            getIncomingRefWeights(incoming)
-                          const netKg = grossWeightKg - tareWeightKg
-                          const bardanaKg =
-                            incoming.bagsReceived * JUTE_BAG_WEIGHT
-                          const netProductKg = incomingNetProductKg(incoming)
+                          const { grossWeightKg, tareWeightKg } = getIncomingRefWeights(incoming);
+                          const netKg = grossWeightKg - tareWeightKg;
+                          const bardanaKg = incoming.bagsReceived * JUTE_BAG_WEIGHT;
+                          const netProductKg = incomingNetProductKg(incoming);
 
                           return (
                             <tr
@@ -305,7 +282,7 @@ export function GradingGatePassCard({
                                 )}
                               </td>
                               <td className="px-3 py-2.5 text-right text-sm tabular-nums">
-                                {incoming.bagsReceived.toLocaleString("en-IN")}
+                                {incoming.bagsReceived.toLocaleString('en-IN')}
                               </td>
                               <td className="px-3 py-2.5 text-right text-sm tabular-nums">
                                 {formatKg(grossWeightKg)}
@@ -323,14 +300,14 @@ export function GradingGatePassCard({
                                 {formatKg(netProductKg)}
                               </td>
                             </tr>
-                          )
+                          );
                         })}
                       </tbody>
                       <tfoot className="border-t border-border/60 bg-primary/5">
                         <tr className="font-semibold text-primary">
                           <td className="px-3 py-2.5 text-sm">Totals</td>
                           <td className="px-3 py-2.5 text-right text-sm tabular-nums">
-                            {incomingBags.toLocaleString("en-IN")}
+                            {incomingBags.toLocaleString('en-IN')}
                           </td>
                           <td className="px-3 py-2.5 text-right text-sm tabular-nums">
                             {formatKg(incomingGrossKg)}
@@ -392,27 +369,21 @@ export function GradingGatePassCard({
                       </thead>
                       <tbody>
                         {gatePass.orderDetails.map((row, index) => {
-                          const bagWeightKg = getBagWeightKg(row.bagType)
-                          const rowBagWeightKg = gradingRowBagWeightKg(row)
-                          const rowNetProductKg = gradingRowNetProductKg(row)
+                          const bagWeightKg = getBagWeightKg(row.bagType);
+                          const rowBagWeightKg = gradingRowBagWeightKg(row);
+                          const rowNetProductKg = gradingRowNetProductKg(row);
                           const rowWeightPercent =
-                            totalWeightKg > 0
-                              ? (rowNetProductKg / totalWeightKg) * 100
-                              : 0
+                            totalWeightKg > 0 ? (rowNetProductKg / totalWeightKg) * 100 : 0;
 
                           return (
                             <tr
                               key={`${row.size}-${index}`}
                               className="border-b border-border/40 last:border-0"
                             >
-                              <td className="px-3 py-2.5 font-medium">
-                                {row.size}
-                              </td>
-                              <td className="px-3 py-2.5 text-muted-foreground">
-                                {row.bagType}
-                              </td>
+                              <td className="px-3 py-2.5 font-medium">{row.size}</td>
+                              <td className="px-3 py-2.5 text-muted-foreground">{row.bagType}</td>
                               <td className="px-3 py-2.5 text-right tabular-nums">
-                                {row.quantity.toLocaleString("en-IN")}
+                                {row.quantity.toLocaleString('en-IN')}
                               </td>
                               <td className="px-3 py-2.5 text-right tabular-nums">
                                 {formatKg(row.weightPerBagKg)}
@@ -430,7 +401,7 @@ export function GradingGatePassCard({
                                 {formatKg(rowWeightPercent)}%
                               </td>
                             </tr>
-                          )
+                          );
                         })}
                       </tbody>
                       <tfoot className="border-t border-border/60 bg-primary/5">
@@ -438,7 +409,7 @@ export function GradingGatePassCard({
                           <td className="px-3 py-2.5 text-sm">Totals</td>
                           <td />
                           <td className="px-3 py-2.5 text-right text-sm tabular-nums">
-                            {totalBags.toLocaleString("en-IN")}
+                            {totalBags.toLocaleString('en-IN')}
                           </td>
                           <td />
                           <td />
@@ -450,9 +421,7 @@ export function GradingGatePassCard({
                           </td>
                           <td className="px-3 py-2.5 text-right text-sm tabular-nums">
                             {formatKg(
-                              incomingNetKg > 0
-                                ? (totalWeightKg / incomingNetKg) * 100
-                                : 0,
+                              incomingNetKg > 0 ? (totalWeightKg / incomingNetKg) * 100 : 0,
                             )}
                             %
                           </td>
@@ -482,9 +451,9 @@ export function GradingGatePassCard({
                         value={`${formatKg(gradingWastageKg)} kg`}
                         icon={TriangleAlert}
                         valueClassName={cn(
-                          "tabular-nums",
-                          gradingWastageKg > 0 && "text-destructive",
-                          gradingWastageKg <= 0 && "text-primary",
+                          'tabular-nums',
+                          gradingWastageKg > 0 && 'text-destructive',
+                          gradingWastageKg <= 0 && 'text-primary',
                         )}
                       />
                       <p className="mt-2 text-xs text-muted-foreground">
@@ -502,9 +471,7 @@ export function GradingGatePassCard({
                     </h4>
                     <div className="rounded-xl border border-border/50 bg-muted/20 p-4">
                       <p className="text-sm italic text-muted-foreground">
-                        {gatePass.remarks
-                          ? `"${gatePass.remarks}"`
-                          : "No remarks provided."}
+                        {gatePass.remarks ? `"${gatePass.remarks}"` : 'No remarks provided.'}
                       </p>
                     </div>
                   </div>
@@ -566,7 +533,7 @@ export function GradingGatePassCard({
         </div>
       </CardFooter>
     </Card>
-  )
+  );
 }
 
 export function GradingGatePassCardSkeleton() {
@@ -604,5 +571,5 @@ export function GradingGatePassCardSkeleton() {
         </div>
       </CardFooter>
     </Card>
-  )
+  );
 }

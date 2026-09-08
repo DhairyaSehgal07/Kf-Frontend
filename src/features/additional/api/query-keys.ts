@@ -4,4 +4,4 @@ export const temperatureKeys = {
   list: () => [...temperatureKeys.lists()] as const,
   create: () => [...temperatureKeys.all, 'create'] as const,
   update: () => [...temperatureKeys.all, 'update'] as const,
-}
+};

@@ -1,19 +1,16 @@
-import { useForm } from "@tanstack/react-form"
+import { useForm } from '@tanstack/react-form';
 
 import {
   gradingFormSchema,
   type GradingFormValues,
-} from "@/features/grading/schemas/grading-form-schema"
-import {
-  defaultGradingSubmitMeta,
-  type GradingSubmitMeta,
-} from "@/features/grading/types"
+} from '@/features/grading/schemas/grading-form-schema';
+import { defaultGradingSubmitMeta, type GradingSubmitMeta } from '@/features/grading/types';
 
 type UseGradingFormOptions = {
-  defaultValues: GradingFormValues
-  onOpenReview?: () => void
-  onSubmitParsed?: (values: GradingFormValues) => Promise<void>
-}
+  defaultValues: GradingFormValues;
+  onOpenReview?: () => void;
+  onSubmitParsed?: (values: GradingFormValues) => Promise<void>;
+};
 
 export function useGradingForm(options: UseGradingFormOptions) {
   return useForm({
@@ -24,16 +21,16 @@ export function useGradingForm(options: UseGradingFormOptions) {
     },
     onSubmitMeta: defaultGradingSubmitMeta,
     onSubmit: async ({ value, meta }) => {
-      const parsed = gradingFormSchema.parse(value)
+      const parsed = gradingFormSchema.parse(value);
 
-      if ((meta as GradingSubmitMeta).submitAction === "review") {
-        options.onOpenReview?.()
-        return
+      if ((meta as GradingSubmitMeta).submitAction === 'review') {
+        options.onOpenReview?.();
+        return;
       }
 
-      await options.onSubmitParsed?.(parsed)
+      await options.onSubmitParsed?.(parsed);
     },
-  })
+  });
 }
 
-export type GradingFormApi = ReturnType<typeof useGradingForm>
+export type GradingFormApi = ReturnType<typeof useGradingForm>;

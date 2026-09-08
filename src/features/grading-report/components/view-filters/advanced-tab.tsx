@@ -65,13 +65,17 @@ function getDefaultOperator(column: Column<ReportFeatures, GradingGatePassReport
   return isAdvancedNumericColumn(column.id) ? 'greaterThan' : 'contains';
 }
 
-function getOperatorOptions(column: Column<ReportFeatures, GradingGatePassReportRow, unknown> | undefined) {
+function getOperatorOptions(
+  column: Column<ReportFeatures, GradingGatePassReportRow, unknown> | undefined,
+) {
   return column && isAdvancedNumericColumn(column.id)
     ? NUMERIC_OPERATOR_OPTIONS
     : STRING_OPERATOR_OPTIONS;
 }
 
-function getColumnValueOptions(column: Column<ReportFeatures, GradingGatePassReportRow, unknown> | undefined) {
+function getColumnValueOptions(
+  column: Column<ReportFeatures, GradingGatePassReportRow, unknown> | undefined,
+) {
   if (!column) return [];
 
   return Array.from(column.getFacetedUniqueValues().keys())
@@ -100,11 +104,7 @@ function isValueRequired(operator: AdvancedFilterOperator) {
   return OPERATOR_OPTIONS.find((option) => option.value === operator)?.requiresValue;
 }
 
-const AdvancedTab = ({
-  table,
-  draftGlobalFilter,
-  onDraftGlobalFilterChange,
-}: AdvancedTabProps) => {
+const AdvancedTab = ({ table, draftGlobalFilter, onDraftGlobalFilterChange }: AdvancedTabProps) => {
   const columns = table.getAllLeafColumns();
   const columnsById = new Map(columns.map((column) => [column.id, column]));
   const conditions = draftGlobalFilter.conditions;

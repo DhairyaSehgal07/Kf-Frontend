@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vite';
 import react, { reactCompilerPreset } from '@vitejs/plugin-react';
 import babel from '@rolldown/plugin-babel';
-import tailwindcss from '@tailwindcss/vite'
+import tailwindcss from '@tailwindcss/vite';
 import { tanstackRouter } from '@tanstack/router-plugin/vite';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -23,7 +23,7 @@ export default defineConfig({
       generatedRouteTree: './src/routeTree.gen.ts',
     }),
     react(),
-     tailwindcss(),
+    tailwindcss(),
     babel({ presets: [reactCompilerPreset()] }),
   ],
   build: {
@@ -85,6 +85,6 @@ export default defineConfig({
     },
   },
   server: {
-    port:3000
-  }
+    port: 3000,
+  },
 });

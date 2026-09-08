@@ -1,4 +1,4 @@
-import type { ReactNode } from "react"
+import type { ReactNode } from 'react';
 import {
   ArrowLeft,
   Calendar,
@@ -11,9 +11,9 @@ import {
   User2,
   Weight,
   type LucideIcon,
-} from "lucide-react"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
+} from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
   Sheet,
   SheetContent,
@@ -21,52 +21,52 @@ import {
   SheetFooter,
   SheetHeader,
   SheetTitle,
-} from "@/components/ui/sheet"
-import { JUTE_BAG_WEIGHT } from "@/lib/constants"
-import { cn } from "@/lib/utils"
+} from '@/components/ui/sheet';
+import { JUTE_BAG_WEIGHT } from '@/lib/constants';
+import { cn } from '@/lib/utils';
 
 export type IncomingSummaryValues = {
-  manualGatePassNumber?: number
-  truckNumber: string
-  farmerStorageLinkId: string
-  variety: string
-  category: string
-  stage: string
-  date: string
-  bagsReceived: number
+  manualGatePassNumber?: number;
+  truckNumber: string;
+  farmerStorageLinkId: string;
+  variety: string;
+  category: string;
+  stage: string;
+  date: string;
+  bagsReceived: number;
   weightSlip: {
-    slipNumber: string
-    grossWeightKg: number
-    tareWeightKg: number
-  }
-  remarks: string
-}
+    slipNumber: string;
+    grossWeightKg: number;
+    tareWeightKg: number;
+  };
+  remarks: string;
+};
 
 type IncomingSummarySheetProps = {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  values: IncomingSummaryValues | null
-  farmerLabel: string
-  onBack: () => void
-  onSubmit: () => void
-  canSubmit: boolean
-  isSubmitting: boolean
-}
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  values: IncomingSummaryValues | null;
+  farmerLabel: string;
+  onBack: () => void;
+  onSubmit: () => void;
+  canSubmit: boolean;
+  isSubmitting: boolean;
+};
 
 function formatReviewDate(iso: string) {
-  if (!iso) return "—"
-  const date = new Date(iso)
-  if (Number.isNaN(date.getTime())) return "—"
-  return new Intl.DateTimeFormat("en-IN", {
-    weekday: "short",
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  }).format(date)
+  if (!iso) return '—';
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return '—';
+  return new Intl.DateTimeFormat('en-IN', {
+    weekday: 'short',
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  }).format(date);
 }
 
 function formatKg(value: number) {
-  return `${value.toLocaleString("en-IN")} kg`
+  return `${value.toLocaleString('en-IN')} kg`;
 }
 
 /** A single label → value row used in the detail list */
@@ -76,10 +76,10 @@ function DetailRow({
   icon: Icon,
   valueClassName,
 }: {
-  label: string
-  value: ReactNode
-  icon?: LucideIcon
-  valueClassName?: string
+  label: string;
+  value: ReactNode;
+  icon?: LucideIcon;
+  valueClassName?: string;
 }) {
   return (
     <div className="flex items-start justify-between gap-4 py-2.5">
@@ -87,26 +87,15 @@ function DetailRow({
         {Icon && <Icon className="size-3.5 shrink-0" />}
         {label}
       </span>
-      <span
-        className={cn(
-          "text-sm font-medium text-right text-foreground",
-          valueClassName
-        )}
-      >
-        {value ?? "—"}
+      <span className={cn('text-sm font-medium text-right text-foreground', valueClassName)}>
+        {value ?? '—'}
       </span>
     </div>
-  )
+  );
 }
 
 /** Thin section title with primary-tinted icon */
-function SectionLabel({
-  icon: Icon,
-  children,
-}: {
-  icon: LucideIcon
-  children: ReactNode
-}) {
+function SectionLabel({ icon: Icon, children }: { icon: LucideIcon; children: ReactNode }) {
   return (
     <div className="flex items-center gap-2 mb-1">
       <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
@@ -116,27 +105,21 @@ function SectionLabel({
         {children}
       </span>
     </div>
-  )
+  );
 }
 
 /** Card wrapper — thin border, very subtle background */
-function Card({
-  children,
-  className,
-}: {
-  children: ReactNode
-  className?: string
-}) {
+function Card({ children, className }: { children: ReactNode; className?: string }) {
   return (
     <div
       className={cn(
-        "rounded-xl border border-border/50 bg-card divide-y divide-border/40 px-4",
-        className
+        'rounded-xl border border-border/50 bg-card divide-y divide-border/40 px-4',
+        className,
       )}
     >
       {children}
     </div>
-  )
+  );
 }
 
 function WeightCard({
@@ -145,34 +128,30 @@ function WeightCard({
   tareWeightKg,
   bagsReceived,
 }: {
-  slipNumber: string
-  grossWeightKg: number
-  tareWeightKg: number
-  bagsReceived: number
+  slipNumber: string;
+  grossWeightKg: number;
+  tareWeightKg: number;
+  bagsReceived: number;
 }) {
-  const netWeightKg = grossWeightKg - tareWeightKg
-  const bardanaKg = bagsReceived * JUTE_BAG_WEIGHT
-  const netProductKg = netWeightKg - bardanaKg
+  const netWeightKg = grossWeightKg - tareWeightKg;
+  const bardanaKg = bagsReceived * JUTE_BAG_WEIGHT;
+  const netProductKg = netWeightKg - bardanaKg;
 
   return (
     <Card>
       {/* slip number header */}
       <div className="flex items-center justify-between py-2.5">
         <span className="text-xs text-muted-foreground">Slip no.</span>
-        <span className="font-mono text-xs font-medium text-foreground">
-          #{slipNumber}
-        </span>
+        <span className="font-mono text-xs font-medium text-foreground">#{slipNumber}</span>
       </div>
       <div className="flex items-center justify-between py-2.5">
         <span className="text-xs text-muted-foreground">Gross weight</span>
-        <span className="text-sm font-medium tabular-nums">
-          {formatKg(grossWeightKg)}
-        </span>
+        <span className="text-sm font-medium tabular-nums">{formatKg(grossWeightKg)}</span>
       </div>
       <div className="flex items-center justify-between py-2.5">
         <span className="text-xs text-muted-foreground">Tare weight</span>
         <span className="text-sm tabular-nums text-muted-foreground">
-          −&thinsp;{tareWeightKg.toLocaleString("en-IN")} kg
+          −&thinsp;{tareWeightKg.toLocaleString('en-IN')} kg
         </span>
       </div>
       {/* net — slightly elevated */}
@@ -184,31 +163,28 @@ function WeightCard({
       </div>
       <div className="flex items-center justify-between py-2.5">
         <span className="text-xs text-muted-foreground">
-          Bardana ({bagsReceived.toLocaleString("en-IN")} bags ×{" "}
-          {JUTE_BAG_WEIGHT}kg)
+          Bardana ({bagsReceived.toLocaleString('en-IN')} bags × {JUTE_BAG_WEIGHT}kg)
         </span>
         <span className="text-sm font-medium tabular-nums text-destructive">
-          −&thinsp;{bardanaKg.toLocaleString("en-IN")} kg
+          −&thinsp;{bardanaKg.toLocaleString('en-IN')} kg
         </span>
       </div>
       <div className="flex items-center justify-between py-3">
-        <span className="text-sm font-semibold text-foreground">
-          Final weight
-        </span>
+        <span className="text-sm font-semibold text-foreground">Final weight</span>
         <span className="text-base font-bold tabular-nums text-primary">
           {formatKg(netProductKg)}
         </span>
       </div>
     </Card>
-  )
+  );
 }
 
 function IncomingReviewSummary({
   values,
   farmerLabel,
 }: {
-  values: IncomingSummaryValues
-  farmerLabel: string
+  values: IncomingSummaryValues;
+  farmerLabel: string;
 }) {
   return (
     <div className="space-y-7">
@@ -230,15 +206,12 @@ function IncomingReviewSummary({
         </div>
         <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
           {values.manualGatePassNumber != null && (
-            <Badge
-              variant="outline"
-              className="font-mono text-[10px] h-5 px-1.5"
-            >
+            <Badge variant="outline" className="font-mono text-[10px] h-5 px-1.5">
               #{values.manualGatePassNumber}
             </Badge>
           )}
           <Badge variant="secondary" className="text-[11px] h-5 px-2">
-            {values.bagsReceived.toLocaleString("en-IN")} bags
+            {values.bagsReceived.toLocaleString('en-IN')} bags
           </Badge>
         </div>
       </div>
@@ -247,11 +220,7 @@ function IncomingReviewSummary({
       <div className="space-y-2">
         <SectionLabel icon={User2}>Farmer</SectionLabel>
         <Card>
-          <DetailRow
-            label="Linked account"
-            value={farmerLabel}
-            icon={User2}
-          />
+          <DetailRow label="Linked account" value={farmerLabel} icon={User2} />
         </Card>
       </div>
 
@@ -264,7 +233,7 @@ function IncomingReviewSummary({
           <DetailRow label="Stage" value={values.stage} />
           <DetailRow
             label="Bags received"
-            value={values.bagsReceived.toLocaleString("en-IN")}
+            value={values.bagsReceived.toLocaleString('en-IN')}
             valueClassName="font-semibold"
           />
         </Card>
@@ -293,7 +262,7 @@ function IncomingReviewSummary({
         </div>
       ) : null}
     </div>
-  )
+  );
 }
 
 export function IncomingSummarySheet({
@@ -364,7 +333,7 @@ export function IncomingSummarySheet({
             onClick={onSubmit}
           >
             {isSubmitting ? (
-              "Submitting…"
+              'Submitting…'
             ) : (
               <>
                 <CheckCircle2 className="size-3.5" />
@@ -375,5 +344,5 @@ export function IncomingSummarySheet({
         </SheetFooter>
       </SheetContent>
     </Sheet>
-  )
+  );
 }

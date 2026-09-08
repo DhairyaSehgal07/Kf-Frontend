@@ -1,39 +1,36 @@
-import { useMemo, useState } from "react"
-import { BookOpen, Loader2, Plus, RefreshCw, Search } from "lucide-react"
+import { useMemo, useState } from 'react';
+import { BookOpen, Loader2, Plus, RefreshCw, Search } from 'lucide-react';
 
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from '@/components/ui/select';
 import {
   Empty,
   EmptyDescription,
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
-} from "@/components/ui/empty"
+} from '@/components/ui/empty';
 
-import { useDispatchLedgers } from "../api/use-dispatch-ledgers"
-import type { DispatchLedger } from "../types"
-import { AddDispatchLedgerDialog } from "./add-dispatch-ledger-dialog"
-import {
-  DispatchLedgerCard,
-  DispatchLedgerCardSkeleton,
-} from "./dispatch-ledger-card"
+import { useDispatchLedgers } from '../api/use-dispatch-ledgers';
+import type { DispatchLedger } from '../types';
+import { AddDispatchLedgerDialog } from './add-dispatch-ledger-dialog';
+import { DispatchLedgerCard, DispatchLedgerCardSkeleton } from './dispatch-ledger-card';
 
-type SortOrder = "newest" | "oldest"
+type SortOrder = 'newest' | 'oldest';
 
 function getDispatchLedgerCreatedAt(ledger: DispatchLedger): number {
-  const createdAt = ledger.createdAt
-  if (!createdAt) return 0
+  const createdAt = ledger.createdAt;
+  if (!createdAt) return 0;
 
-  const timestamp = new Date(createdAt).getTime()
-  return Number.isNaN(timestamp) ? 0 : timestamp
+  const timestamp = new Date(createdAt).getTime();
+  return Number.isNaN(timestamp) ? 0 : timestamp;
 }
 
 function filterAndSortDispatchLedgers(
@@ -41,29 +38,29 @@ function filterAndSortDispatchLedgers(
   search: string,
   sortOrder: SortOrder,
 ): DispatchLedger[] {
-  const normalizedSearch = search.trim().toLowerCase()
+  const normalizedSearch = search.trim().toLowerCase();
 
   const filtered = normalizedSearch
     ? ledgers.filter((ledger) => {
-        const mobileNumber = ledger.mobileNumber ?? ""
+        const mobileNumber = ledger.mobileNumber ?? '';
         return (
           ledger.name.toLowerCase().includes(normalizedSearch) ||
           ledger.address.toLowerCase().includes(normalizedSearch) ||
           mobileNumber.includes(normalizedSearch)
-        )
+        );
       })
-    : ledgers
+    : ledgers;
 
   return [...filtered].sort((a, b) => {
-    const diff = getDispatchLedgerCreatedAt(b) - getDispatchLedgerCreatedAt(a)
-    return sortOrder === "newest" ? diff : -diff
-  })
+    const diff = getDispatchLedgerCreatedAt(b) - getDispatchLedgerCreatedAt(a);
+    return sortOrder === 'newest' ? diff : -diff;
+  });
 }
 
 export function DispatchLedgerPartiesPanel() {
-  const [search, setSearch] = useState("")
-  const [sortOrder, setSortOrder] = useState<SortOrder>("newest")
-  const [addDispatchLedgerOpen, setAddDispatchLedgerOpen] = useState(false)
+  const [search, setSearch] = useState('');
+  const [sortOrder, setSortOrder] = useState<SortOrder>('newest');
+  const [addDispatchLedgerOpen, setAddDispatchLedgerOpen] = useState(false);
 
   const {
     data: dispatchLedgers = [],
@@ -72,14 +69,14 @@ export function DispatchLedgerPartiesPanel() {
     error,
     isFetching,
     refetch,
-  } = useDispatchLedgers()
+  } = useDispatchLedgers();
 
   const visibleDispatchLedgers = useMemo(
     () => filterAndSortDispatchLedgers(dispatchLedgers, search, sortOrder),
     [dispatchLedgers, search, sortOrder],
-  )
+  );
 
-  const hasSearch = search.trim().length > 0
+  const hasSearch = search.trim().length > 0;
 
   if (isLoading) {
     return (
@@ -93,7 +90,7 @@ export function DispatchLedgerPartiesPanel() {
           ))}
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -110,10 +107,7 @@ export function DispatchLedgerPartiesPanel() {
         </div>
 
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <Select
-            value={sortOrder}
-            onValueChange={(value) => setSortOrder(value as SortOrder)}
-          >
+          <Select value={sortOrder} onValueChange={(value) => setSortOrder(value as SortOrder)}>
             <SelectTrigger className="w-full min-w-0 sm:w-[150px]">
               <SelectValue placeholder="Sort by" />
             </SelectTrigger>
@@ -155,7 +149,7 @@ export function DispatchLedgerPartiesPanel() {
             <EmptyDescription>
               {error instanceof Error
                 ? error.message
-                : "Something went wrong while fetching dispatch parties."}
+                : 'Something went wrong while fetching dispatch parties.'}
             </EmptyDescription>
           </EmptyHeader>
           <Button
@@ -174,12 +168,12 @@ export function DispatchLedgerPartiesPanel() {
               <BookOpen />
             </EmptyMedia>
             <EmptyTitle>
-              {hasSearch ? "No matching dispatch parties" : "No dispatch parties yet"}
+              {hasSearch ? 'No matching dispatch parties' : 'No dispatch parties yet'}
             </EmptyTitle>
             <EmptyDescription>
               {hasSearch
-                ? "Try a different name, address, or mobile number."
-                : "Add dispatch parties used on nikasi gate passes."}
+                ? 'Try a different name, address, or mobile number.'
+                : 'Add dispatch parties used on nikasi gate passes.'}
             </EmptyDescription>
           </EmptyHeader>
         </Empty>
@@ -196,8 +190,8 @@ export function DispatchLedgerPartiesPanel() {
         onOpenChange={setAddDispatchLedgerOpen}
       />
     </div>
-  )
+  );
 }
 
 // Local skeleton import to avoid circular deps
-import { Skeleton } from "@/components/ui/skeleton"
+import { Skeleton } from '@/components/ui/skeleton';

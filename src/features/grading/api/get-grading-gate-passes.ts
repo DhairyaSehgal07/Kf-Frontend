@@ -1,11 +1,11 @@
-import apiClient, { getApiErrorMessage } from "@/lib/api-client"
-import { getHttpStatusFromError } from "@/lib/http-error"
+import apiClient, { getApiErrorMessage } from '@/lib/api-client';
+import { getHttpStatusFromError } from '@/lib/http-error';
 
 import type {
   GetGradingGatePassesResponse,
   GradingGatePassListParams,
   GradingGatePassListResult,
-} from "./types"
+} from './types';
 
 const EMPTY_RESULT: GradingGatePassListResult = {
   gradingGatePasses: [],
@@ -15,34 +15,33 @@ const EMPTY_RESULT: GradingGatePassListResult = {
     total: 0,
     totalPages: 0,
   },
-}
+};
 
 export function buildGradingGatePassListParams(
   params: GradingGatePassListParams,
 ): Record<string, string | number> {
-  const query: Record<string, string | number> = {}
+  const query: Record<string, string | number> = {};
 
-  if (params.page != null) query.page = params.page
-  if (params.limit != null) query.limit = params.limit
-  if (params.sortOrder) query.sortOrder = params.sortOrder
+  if (params.page != null) query.page = params.page;
+  if (params.limit != null) query.limit = params.limit;
+  if (params.sortOrder) query.sortOrder = params.sortOrder;
 
-  return query
+  return query;
 }
 
 export async function getGradingGatePasses(
   params: GradingGatePassListParams = {},
 ): Promise<GradingGatePassListResult> {
   try {
-    const { data } = await apiClient.get<GetGradingGatePassesResponse>(
-      "/grading-gate-pass/",
-      { params: buildGradingGatePassListParams(params) },
-    )
+    const { data } = await apiClient.get<GetGradingGatePassesResponse>('/grading-gate-pass/', {
+      params: buildGradingGatePassListParams(params),
+    });
 
     if (!data.success) {
-      throw new Error(data.message ?? "Failed to load grading gate passes")
+      throw new Error(data.message ?? 'Failed to load grading gate passes');
     }
 
-    return data.data
+    return data.data;
   } catch (error) {
     if (getHttpStatusFromError(error) === 404) {
       return {
@@ -51,12 +50,11 @@ export async function getGradingGatePasses(
           ...EMPTY_RESULT.pagination,
           limit: params.limit ?? EMPTY_RESULT.pagination.limit,
         },
-      }
+      };
     }
 
-    throw new Error(
-      getApiErrorMessage(error, "Failed to load grading gate passes"),
-      { cause: error },
-    )
+    throw new Error(getApiErrorMessage(error, 'Failed to load grading gate passes'), {
+      cause: error,
+    });
   }
 }

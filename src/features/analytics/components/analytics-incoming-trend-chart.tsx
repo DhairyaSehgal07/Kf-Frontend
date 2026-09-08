@@ -1,30 +1,11 @@
-import { useMemo, useState } from "react"
-import type { UseQueryResult } from "@tanstack/react-query"
-import { format, isValid, parseISO } from "date-fns"
-import {
-  AlertCircle,
-  Calendar,
-  ChevronDown,
-  ChevronUp,
-  RefreshCw,
-  TrendingUp,
-} from "lucide-react"
-import {
-  CartesianGrid,
-  Line,
-  LineChart,
-  XAxis,
-  YAxis,
-} from "recharts"
+import { useMemo, useState } from 'react';
+import type { UseQueryResult } from '@tanstack/react-query';
+import { format, isValid, parseISO } from 'date-fns';
+import { AlertCircle, Calendar, ChevronDown, ChevronUp, RefreshCw, TrendingUp } from 'lucide-react';
+import { CartesianGrid, Line, LineChart, XAxis, YAxis } from 'recharts';
 
-import { Button } from "@/components/ui/button"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   ChartContainer,
   ChartLegend,
@@ -32,8 +13,8 @@ import {
   ChartTooltip,
   ChartTooltipContent,
   type ChartConfig,
-} from "@/components/ui/chart"
-import { Skeleton } from "@/components/ui/skeleton"
+} from '@/components/ui/chart';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
   TableBody,
@@ -42,152 +23,139 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { cn } from "@/lib/utils"
+} from '@/components/ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { cn } from '@/lib/utils';
 
 import type {
   DailyMonthlyTrendData,
   DailyTrendChartSeries,
   MonthlyTrendChartSeries,
-} from "../api/get-daily-monthly-trend"
-import { getAnalyticsChartColor } from "../lib/chart-palette"
+} from '../api/get-daily-monthly-trend';
+import { getAnalyticsChartColor } from '../lib/chart-palette';
 
-const bagFormatter = new Intl.NumberFormat("en-IN", {
+const bagFormatter = new Intl.NumberFormat('en-IN', {
   maximumFractionDigits: 0,
-})
+});
 
-type TrendTab = "daily" | "monthly"
+type TrendTab = 'daily' | 'monthly';
 
 type PivotRow = {
-  key: string
-  label: string
-  perSeries: Record<string, number>
-  total: number
-}
+  key: string;
+  label: string;
+  perSeries: Record<string, number>;
+  total: number;
+};
 
 function formatTableDate(isoDate: string): string {
-  const parsed = parseISO(isoDate)
+  const parsed = parseISO(isoDate);
   if (!isValid(parsed)) {
-    const fallback = new Date(isoDate)
-    if (!isValid(fallback)) return isoDate
-    return format(fallback, "dd MMM yyyy")
+    const fallback = new Date(isoDate);
+    if (!isValid(fallback)) return isoDate;
+    return format(fallback, 'dd MMM yyyy');
   }
-  return format(parsed, "dd MMM yyyy")
+  return format(parsed, 'dd MMM yyyy');
 }
 
 function formatChartAxisDate(isoDate: string): string {
-  const parsed = parseISO(isoDate)
-  if (!isValid(parsed)) return "—"
-  return format(parsed, "d MMM")
+  const parsed = parseISO(isoDate);
+  if (!isValid(parsed)) return '—';
+  return format(parsed, 'd MMM');
 }
 
 function toSeriesChartKey(index: number): string {
-  return `series${index}`
+  return `series${index}`;
 }
 
 function getDataPoints<T>(points: T[] | undefined): T[] {
-  return Array.isArray(points) ? points : []
+  return Array.isArray(points) ? points : [];
 }
 
 function buildDailyRows(series: DailyTrendChartSeries[]): PivotRow[] {
-  const allDates = new Set<string>()
+  const allDates = new Set<string>();
   for (const item of series) {
     for (const point of getDataPoints(item.dataPoints)) {
-      allDates.add(point.date)
+      allDates.add(point.date);
     }
   }
 
   return [...allDates].sort().map((date) => {
-    const perSeries: Record<string, number> = {}
-    let total = 0
+    const perSeries: Record<string, number> = {};
+    let total = 0;
     for (const item of series) {
-      const match = getDataPoints(item.dataPoints).find(
-        (point) => point.date === date,
-      )
-      const bags = Number(match?.bags ?? 0)
-      perSeries[item.location] = bags
-      total += bags
+      const match = getDataPoints(item.dataPoints).find((point) => point.date === date);
+      const bags = Number(match?.bags ?? 0);
+      perSeries[item.location] = bags;
+      total += bags;
     }
-    return { key: date, label: formatTableDate(date), perSeries, total }
-  })
+    return { key: date, label: formatTableDate(date), perSeries, total };
+  });
 }
 
 function buildMonthlyRows(series: MonthlyTrendChartSeries[]): PivotRow[] {
-  const monthMap = new Map<string, { monthLabel: string }>()
+  const monthMap = new Map<string, { monthLabel: string }>();
   for (const item of series) {
     for (const point of getDataPoints(item.dataPoints)) {
       if (!monthMap.has(point.month)) {
-        monthMap.set(point.month, { monthLabel: point.monthLabel })
+        monthMap.set(point.month, { monthLabel: point.monthLabel });
       }
     }
   }
 
   return [...monthMap.keys()].sort().map((month) => {
-    const perSeries: Record<string, number> = {}
-    let total = 0
-    const monthLabel = monthMap.get(month)?.monthLabel ?? month
+    const perSeries: Record<string, number> = {};
+    let total = 0;
+    const monthLabel = monthMap.get(month)?.monthLabel ?? month;
     for (const item of series) {
-      const match = getDataPoints(item.dataPoints).find(
-        (point) => point.month === month,
-      )
-      const bags = Number(match?.bags ?? 0)
-      perSeries[item.location] = bags
-      total += bags
+      const match = getDataPoints(item.dataPoints).find((point) => point.month === month);
+      const bags = Number(match?.bags ?? 0);
+      perSeries[item.location] = bags;
+      total += bags;
     }
-    return { key: month, label: monthLabel, perSeries, total }
-  })
+    return { key: month, label: monthLabel, perSeries, total };
+  });
 }
 
 function buildTotals(rows: PivotRow[], seriesKeys: string[]) {
-  const perSeries: Record<string, number> = {}
+  const perSeries: Record<string, number> = {};
   for (const key of seriesKeys) {
-    perSeries[key] = rows.reduce(
-      (sum, row) => sum + Number(row.perSeries[key] ?? 0),
-      0,
-    )
+    perSeries[key] = rows.reduce((sum, row) => sum + Number(row.perSeries[key] ?? 0), 0);
   }
-  const grandTotal = rows.reduce((sum, row) => sum + row.total, 0)
-  return { perSeries, grandTotal }
+  const grandTotal = rows.reduce((sum, row) => sum + row.total, 0);
+  return { perSeries, grandTotal };
 }
 
 export function AnalyticsIncomingTrendChart({
   query,
 }: {
-  query: UseQueryResult<DailyMonthlyTrendData, Error>
+  query: UseQueryResult<DailyMonthlyTrendData, Error>;
 }) {
-  const [tab, setTab] = useState<TrendTab>("daily")
-  const [showChart, setShowChart] = useState(false)
-  const { data, error, isError, isLoading, isFetching, refetch } = query
+  const [tab, setTab] = useState<TrendTab>('daily');
+  const [showChart, setShowChart] = useState(false);
+  const { data, error, isError, isLoading, isFetching, refetch } = query;
 
-  const dailySeries = data?.daily.chartData ?? []
-  const monthlySeries = data?.monthly.chartData ?? []
+  const dailySeries = data?.daily.chartData ?? [];
+  const monthlySeries = data?.monthly.chartData ?? [];
 
-  const dailyLocations = useMemo(
-    () => dailySeries.map((series) => series.location),
-    [dailySeries],
-  )
+  const dailyLocations = useMemo(() => dailySeries.map((series) => series.location), [dailySeries]);
 
   const monthlyLocations = useMemo(
     () => monthlySeries.map((series) => series.location),
     [monthlySeries],
-  )
+  );
 
-  const dailyRows = useMemo(() => buildDailyRows(dailySeries), [dailySeries])
-  const monthlyRows = useMemo(
-    () => buildMonthlyRows(monthlySeries),
-    [monthlySeries],
-  )
+  const dailyRows = useMemo(() => buildDailyRows(dailySeries), [dailySeries]);
+  const monthlyRows = useMemo(() => buildMonthlyRows(monthlySeries), [monthlySeries]);
 
   const dailyTotals = useMemo(
     () => buildTotals(dailyRows, dailyLocations),
     [dailyRows, dailyLocations],
-  )
+  );
 
   const monthlyTotals = useMemo(
     () => buildTotals(monthlyRows, monthlyLocations),
     [monthlyRows, monthlyLocations],
-  )
+  );
 
   if (isLoading) {
     return (
@@ -203,7 +171,7 @@ export function AnalyticsIncomingTrendChart({
           <Skeleton className="h-10 w-full" />
         </CardContent>
       </Card>
-    )
+    );
   }
 
   if (isError && data === undefined) {
@@ -225,15 +193,12 @@ export function AnalyticsIncomingTrendChart({
             disabled={isFetching}
             className="w-full sm:w-auto"
           >
-            <RefreshCw
-              className={cn("mr-2 size-4", isFetching && "animate-spin")}
-              aria-hidden
-            />
+            <RefreshCw className={cn('mr-2 size-4', isFetching && 'animate-spin')} aria-hidden />
             Retry
           </Button>
         </CardContent>
       </Card>
-    )
+    );
   }
 
   return (
@@ -243,17 +208,11 @@ export function AnalyticsIncomingTrendChart({
           <TrendingUp className="size-5 text-primary" aria-hidden />
           Incoming daily breakdown
         </CardTitle>
-        <CardDescription>
-          Bags received over time (daily and monthly)
-        </CardDescription>
+        <CardDescription>Bags received over time (daily and monthly)</CardDescription>
       </CardHeader>
 
       <CardContent>
-        <Tabs
-          value={tab}
-          onValueChange={(value) => setTab(value as TrendTab)}
-          className="w-full"
-        >
+        <Tabs value={tab} onValueChange={(value) => setTab(value as TrendTab)} className="w-full">
           <TabsList className="mb-4 grid w-full max-w-xs grid-cols-2">
             <TabsTrigger value="daily">Daily</TabsTrigger>
             <TabsTrigger value="monthly">Monthly</TabsTrigger>
@@ -289,7 +248,7 @@ export function AnalyticsIncomingTrendChart({
         </Tabs>
       </CardContent>
     </Card>
-  )
+  );
 }
 
 function TrendBreakdownPanel({
@@ -304,23 +263,19 @@ function TrendBreakdownPanel({
   tickFormatter,
   labelFormatter,
 }: {
-  rows: PivotRow[]
-  seriesKeys: string[]
-  totals: { perSeries: Record<string, number>; grandTotal: number }
-  firstColumnLabel: string
-  activityLabel: string
-  showChart: boolean
-  onToggleChart: () => void
-  xDataKey: "key" | "label"
-  tickFormatter?: (value: string | number) => string
-  labelFormatter?: (value: string | number) => string
+  rows: PivotRow[];
+  seriesKeys: string[];
+  totals: { perSeries: Record<string, number>; grandTotal: number };
+  firstColumnLabel: string;
+  activityLabel: string;
+  showChart: boolean;
+  onToggleChart: () => void;
+  xDataKey: 'key' | 'label';
+  tickFormatter?: (value: string | number) => string;
+  labelFormatter?: (value: string | number) => string;
 }) {
   if (rows.length === 0) {
-    return (
-      <p className="text-sm text-muted-foreground">
-        No data for the selected date range.
-      </p>
-    )
+    return <p className="text-sm text-muted-foreground">No data for the selected date range.</p>;
   }
 
   return (
@@ -344,9 +299,7 @@ function TrendBreakdownPanel({
                     className="h-10 px-3 text-right font-medium whitespace-nowrap text-muted-foreground"
                     title={seriesKey}
                   >
-                    <span className="block max-w-[10rem] truncate sm:max-w-none">
-                      {seriesKey}
-                    </span>
+                    <span className="block max-w-[10rem] truncate sm:max-w-none">{seriesKey}</span>
                   </TableHead>
                 ))}
                 <TableHead className="h-10 px-3 text-right font-medium whitespace-nowrap text-muted-foreground">
@@ -379,9 +332,7 @@ function TrendBreakdownPanel({
             </TableBody>
             <TableFooter>
               <TableRow className="border-t border-border bg-muted/30 hover:bg-muted/30">
-                <TableCell className="px-3 py-2.5 font-medium text-foreground">
-                  Bag total
-                </TableCell>
+                <TableCell className="px-3 py-2.5 font-medium text-foreground">Bag total</TableCell>
                 {seriesKeys.map((seriesKey) => (
                   <TableCell
                     key={`total-${seriesKey}`}
@@ -413,7 +364,7 @@ function TrendBreakdownPanel({
           ) : (
             <ChevronDown className="mr-2 size-4" aria-hidden />
           )}
-          {showChart ? "Hide trend chart" : "Show trend chart"}
+          {showChart ? 'Hide trend chart' : 'Show trend chart'}
         </Button>
 
         {showChart ? (
@@ -427,7 +378,7 @@ function TrendBreakdownPanel({
         ) : null}
       </div>
     </div>
-  )
+  );
 }
 
 function TrendMultiLineChart({
@@ -437,30 +388,30 @@ function TrendMultiLineChart({
   tickFormatter,
   labelFormatter,
 }: {
-  rows: PivotRow[]
-  seriesKeys: string[]
-  xDataKey: "key" | "label"
-  tickFormatter?: (value: string | number) => string
-  labelFormatter?: (value: string | number) => string
+  rows: PivotRow[];
+  seriesKeys: string[];
+  xDataKey: 'key' | 'label';
+  tickFormatter?: (value: string | number) => string;
+  labelFormatter?: (value: string | number) => string;
 }) {
   const { chartData, chartConfig } = useMemo(() => {
-    const config: ChartConfig = {}
+    const config: ChartConfig = {};
     const data = rows.map((row) => {
       const point: Record<string, string | number> = {
-        axisLabel: xDataKey === "key" ? row.key : row.label,
-      }
+        axisLabel: xDataKey === 'key' ? row.key : row.label,
+      };
       seriesKeys.forEach((seriesKey, index) => {
-        const chartKey = toSeriesChartKey(index)
+        const chartKey = toSeriesChartKey(index);
         config[chartKey] = {
           label: seriesKey,
           color: getAnalyticsChartColor(index),
-        }
-        point[chartKey] = Number(row.perSeries[seriesKey] ?? 0)
-      })
-      return point
-    })
-    return { chartData: data, chartConfig: config }
-  }, [rows, seriesKeys, xDataKey])
+        };
+        point[chartKey] = Number(row.perSeries[seriesKey] ?? 0);
+      });
+      return point;
+    });
+    return { chartData: data, chartConfig: config };
+  }, [rows, seriesKeys, xDataKey]);
 
   return (
     <ChartContainer
@@ -491,9 +442,7 @@ function TrendMultiLineChart({
           content={
             <ChartTooltipContent
               labelFormatter={
-                labelFormatter
-                  ? (value) => labelFormatter(String(value))
-                  : (value) => String(value)
+                labelFormatter ? (value) => labelFormatter(String(value)) : (value) => String(value)
               }
               formatter={(value) => (
                 <span className="tabular-nums font-medium text-foreground">
@@ -505,7 +454,7 @@ function TrendMultiLineChart({
         />
         <ChartLegend content={<ChartLegendContent />} />
         {seriesKeys.map((_, index) => {
-          const chartKey = toSeriesChartKey(index)
+          const chartKey = toSeriesChartKey(index);
           return (
             <Line
               key={chartKey}
@@ -516,21 +465,21 @@ function TrendMultiLineChart({
               strokeLinecap="round"
               strokeLinejoin="round"
               dot={{
-                fill: "var(--background)",
+                fill: 'var(--background)',
                 stroke: `var(--color-${chartKey})`,
                 strokeWidth: 2,
                 r: 4,
               }}
               activeDot={{
                 fill: `var(--color-${chartKey})`,
-                stroke: "var(--background)",
+                stroke: 'var(--background)',
                 strokeWidth: 2,
                 r: 6,
               }}
             />
-          )
+          );
         })}
       </LineChart>
     </ChartContainer>
-  )
+  );
 }

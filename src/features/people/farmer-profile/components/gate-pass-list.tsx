@@ -1,4 +1,4 @@
-import type { ReactNode } from "react"
+import type { ReactNode } from 'react';
 
 import {
   Empty,
@@ -6,16 +6,16 @@ import {
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
-} from "@/components/ui/empty"
-import type { LucideIcon } from "lucide-react"
+} from '@/components/ui/empty';
+import type { LucideIcon } from 'lucide-react';
 
 type GatePassListProps = {
-  items: unknown[]
-  emptyTitle: string
-  emptyDescription: string
-  emptyIcon: LucideIcon
-  renderItem: (item: never) => ReactNode
-}
+  items: unknown[];
+  emptyTitle: string;
+  emptyDescription: string;
+  emptyIcon: LucideIcon;
+  renderItem: (item: never) => ReactNode;
+};
 
 export function GatePassList({
   items,
@@ -35,7 +35,7 @@ export function GatePassList({
           <EmptyDescription>{emptyDescription}</EmptyDescription>
         </EmptyHeader>
       </Empty>
-    )
+    );
   }
 
   return (
@@ -44,14 +44,14 @@ export function GatePassList({
         <div key={getGatePassId(item, index)}>{renderItem(item as never)}</div>
       ))}
     </div>
-  )
+  );
 }
 
 function getGatePassId(item: unknown, index: number) {
-  if (typeof item === "object" && item != null && "_id" in item) {
-    const id = (item as { _id?: string })._id
-    if (typeof id === "string" && id.length > 0) return id
+  if (typeof item === 'object' && item != null && '_id' in item) {
+    const id = (item as { _id?: string })._id;
+    if (typeof id === 'string' && id.length > 0) return id;
   }
 
-  return String(index)
+  return String(index);
 }

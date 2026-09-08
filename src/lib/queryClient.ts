@@ -50,8 +50,7 @@ export const queryClient = new QueryClient({
       refetchOnMount: true,
 
       // Exponential back-off: 1 s → 2 s → 4 s (capped at 30 s). Skip 4xx.
-      retry: (failureCount, error) =>
-        shouldRetryRequest(failureCount, error, isProduction ? 3 : 1),
+      retry: (failureCount, error) => shouldRetryRequest(failureCount, error, isProduction ? 3 : 1),
       retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 30_000),
 
       // Prevents the query from being treated as failed while retrying.

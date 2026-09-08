@@ -1,5 +1,5 @@
-import { useMemo, type ReactNode } from "react"
-import type { UseQueryResult } from "@tanstack/react-query"
+import { useMemo, type ReactNode } from 'react';
+import type { UseQueryResult } from '@tanstack/react-query';
 import {
   AlertCircle,
   ChevronRight,
@@ -9,22 +9,12 @@ import {
   RefreshCw,
   Rows3,
   type LucideIcon,
-} from "lucide-react"
+} from 'lucide-react';
 
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible"
-import { Button } from "@/components/ui/button"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-import { Skeleton } from "@/components/ui/skeleton"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
   TableBody,
@@ -32,16 +22,13 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
-import type { GetStorageGatePassReportResponse } from "@/features/storage-report/api/types"
-import type { StorageGatePass } from "@/features/storage/api/types"
-import { cn } from "@/lib/utils"
+} from '@/components/ui/table';
+import type { GetStorageGatePassReportResponse } from '@/features/storage-report/api/types';
+import type { StorageGatePass } from '@/features/storage/api/types';
+import { cn } from '@/lib/utils';
 
-import {
-  buildVarietyColorMap,
-  collectVarietiesFromTree,
-} from "../lib/location-variety-colors"
-import { buildLocationWiseStorageTree } from "../lib/location-wise-storage-utils"
+import { buildVarietyColorMap, collectVarietiesFromTree } from '../lib/location-variety-colors';
+import { buildLocationWiseStorageTree } from '../lib/location-wise-storage-utils';
 import type {
   LocationWiseChamberNode,
   LocationWiseFarmerEntry,
@@ -50,74 +37,72 @@ import type {
   LocationWiseStorageTree,
   LocationWiseVarietyNode,
   LocationWiseVarietySummaryItem,
-} from "../types/location-wise-storage"
+} from '../types/location-wise-storage';
 
 import {
   LocationSectionStatsLine,
   LocationSectionTotal,
   LocationSectionTrigger,
-} from "./location-variety-summary"
+} from './location-variety-summary';
 
-const bagFormatter = new Intl.NumberFormat("en-IN", {
+const bagFormatter = new Intl.NumberFormat('en-IN', {
   maximumFractionDigits: 0,
-})
+});
 
 function formatBags(value: number) {
-  return bagFormatter.format(value)
+  return bagFormatter.format(value);
 }
 
 function formatQuantityPair(current: number, initial: number) {
-  return `${formatBags(current)} / ${formatBags(initial)}`
+  return `${formatBags(current)} / ${formatBags(initial)}`;
 }
 
-type LocationLevel = "chamber" | "floor" | "row" | "variety"
+type LocationLevel = 'chamber' | 'floor' | 'row' | 'variety';
 
 const levelStyles: Record<
   LocationLevel,
   {
-    list: string
-    item: string
-    trigger: string
-    content: string
-    iconWrap: string
-    layout: "stacked" | "inline"
+    list: string;
+    item: string;
+    trigger: string;
+    content: string;
+    iconWrap: string;
+    layout: 'stacked' | 'inline';
   }
 > = {
   chamber: {
-    list: "flex flex-col gap-3",
-    item: "overflow-hidden rounded-2xl border border-border/80 bg-card shadow-sm ring-1 ring-foreground/5",
-    trigger:
-      "px-4 py-4 hover:bg-muted/30 data-[state=open]:bg-muted/20 sm:px-5",
-    content:
-      "border-t border-border/60 bg-muted/10 px-3 py-4 sm:px-4",
-    iconWrap: "bg-primary/10 text-primary",
-    layout: "stacked",
+    list: 'flex flex-col gap-3',
+    item: 'overflow-hidden rounded-2xl border border-border/80 bg-card shadow-sm ring-1 ring-foreground/5',
+    trigger: 'px-4 py-4 hover:bg-muted/30 data-[state=open]:bg-muted/20 sm:px-5',
+    content: 'border-t border-border/60 bg-muted/10 px-3 py-4 sm:px-4',
+    iconWrap: 'bg-primary/10 text-primary',
+    layout: 'stacked',
   },
   floor: {
-    list: "flex flex-col gap-2 border-l-2 border-primary/15 pl-3 sm:pl-4",
-    item: "overflow-hidden rounded-xl border border-border/70 bg-background",
-    trigger: "px-3 py-3.5 hover:bg-muted/30 sm:px-4",
-    content: "border-t border-border/60 bg-muted/15 px-3 pb-3 pt-0 sm:px-4",
-    iconWrap: "bg-muted/80 text-foreground",
-    layout: "inline",
+    list: 'flex flex-col gap-2 border-l-2 border-primary/15 pl-3 sm:pl-4',
+    item: 'overflow-hidden rounded-xl border border-border/70 bg-background',
+    trigger: 'px-3 py-3.5 hover:bg-muted/30 sm:px-4',
+    content: 'border-t border-border/60 bg-muted/15 px-3 pb-3 pt-0 sm:px-4',
+    iconWrap: 'bg-muted/80 text-foreground',
+    layout: 'inline',
   },
   row: {
-    list: "flex flex-col gap-2 border-l border-border pl-3",
-    item: "overflow-hidden rounded-lg border border-border/60 bg-background",
-    trigger: "px-3 py-3 hover:bg-muted/25",
-    content: "border-t border-border/50 bg-muted/10 px-3 pb-3",
-    iconWrap: "bg-muted text-muted-foreground",
-    layout: "stacked",
+    list: 'flex flex-col gap-2 border-l border-border pl-3',
+    item: 'overflow-hidden rounded-lg border border-border/60 bg-background',
+    trigger: 'px-3 py-3 hover:bg-muted/25',
+    content: 'border-t border-border/50 bg-muted/10 px-3 pb-3',
+    iconWrap: 'bg-muted text-muted-foreground',
+    layout: 'stacked',
   },
   variety: {
-    list: "flex flex-col gap-2",
-    item: "overflow-hidden rounded-lg border border-border/50 bg-background",
-    trigger: "px-3 py-3 hover:bg-muted/20",
-    content: "border-t border-border/50 bg-background p-3",
-    iconWrap: "bg-primary/10 text-primary",
-    layout: "stacked",
+    list: 'flex flex-col gap-2',
+    item: 'overflow-hidden rounded-lg border border-border/50 bg-background',
+    trigger: 'px-3 py-3 hover:bg-muted/20',
+    content: 'border-t border-border/50 bg-background p-3',
+    iconWrap: 'bg-primary/10 text-primary',
+    layout: 'stacked',
   },
-}
+};
 
 function LocationCollapsibleSection({
   level,
@@ -130,24 +115,24 @@ function LocationCollapsibleSection({
   includeBagsInStatsLine = false,
   children,
 }: {
-  level: LocationLevel
-  title: string
-  statsParts: string[]
-  varietySummary: LocationWiseVarietySummaryItem[]
-  varietyColorMap: Map<string, string>
-  current: number
-  icon: LucideIcon
-  includeBagsInStatsLine?: boolean
-  children: ReactNode
+  level: LocationLevel;
+  title: string;
+  statsParts: string[];
+  varietySummary: LocationWiseVarietySummaryItem[];
+  varietyColorMap: Map<string, string>;
+  current: number;
+  icon: LucideIcon;
+  includeBagsInStatsLine?: boolean;
+  children: ReactNode;
 }) {
-  const styles = levelStyles[level]
+  const styles = levelStyles[level];
 
   return (
-    <Collapsible className={cn("group", styles.item)}>
+    <Collapsible className={cn('group', styles.item)}>
       <CollapsibleTrigger
         className={cn(
           styles.trigger,
-          "flex w-full cursor-pointer items-start gap-3 text-left text-sm font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring/30",
+          'flex w-full cursor-pointer items-start gap-3 text-left text-sm font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring/30',
         )}
       >
         <LocationSectionTrigger
@@ -173,11 +158,11 @@ function LocationCollapsibleSection({
           />
         </div>
       </CollapsibleTrigger>
-      <CollapsibleContent className={cn(styles.content, "overflow-visible")}>
+      <CollapsibleContent className={cn(styles.content, 'overflow-visible')}>
         {children}
       </CollapsibleContent>
     </Collapsible>
-  )
+  );
 }
 
 function FarmerEntriesTable({ entries }: { entries: LocationWiseFarmerEntry[] }) {
@@ -186,9 +171,7 @@ function FarmerEntriesTable({ entries }: { entries: LocationWiseFarmerEntry[] })
       <Table>
         <TableHeader>
           <TableRow className="border-b border-border bg-muted/50 hover:bg-muted/50">
-            <TableHead className="h-10 px-3 font-medium text-muted-foreground">
-              Farmer
-            </TableHead>
+            <TableHead className="h-10 px-3 font-medium text-muted-foreground">Farmer</TableHead>
             <TableHead className="h-10 px-3 text-right font-medium text-muted-foreground">
               Account no.
             </TableHead>
@@ -213,9 +196,7 @@ function FarmerEntriesTable({ entries }: { entries: LocationWiseFarmerEntry[] })
                 >
                   {entry.farmerName}
                 </span>
-                <span className="text-xs text-muted-foreground">
-                  Gate pass #{entry.gatePassNo}
-                </span>
+                <span className="text-xs text-muted-foreground">Gate pass #{entry.gatePassNo}</span>
               </TableCell>
               <TableCell className="px-3 py-2.5 text-right text-sm tabular-nums text-foreground">
                 {entry.farmerAccountNumber}
@@ -232,17 +213,17 @@ function FarmerEntriesTable({ entries }: { entries: LocationWiseFarmerEntry[] })
         </TableBody>
       </Table>
     </div>
-  )
+  );
 }
 
 function VarietyList({
   varieties,
   varietyColorMap,
 }: {
-  varieties: LocationWiseVarietyNode[]
-  varietyColorMap: Map<string, string>
+  varieties: LocationWiseVarietyNode[];
+  varietyColorMap: Map<string, string>;
 }) {
-  if (varieties.length === 0) return null
+  if (varieties.length === 0) return null;
 
   return (
     <div className={levelStyles.variety.list}>
@@ -253,7 +234,7 @@ function VarietyList({
           icon={Package}
           title={varietyNode.variety}
           statsParts={[
-            `${varietyNode.entries.length} gate pass line${varietyNode.entries.length === 1 ? "" : "s"}`,
+            `${varietyNode.entries.length} gate pass line${varietyNode.entries.length === 1 ? '' : 's'}`,
           ]}
           includeBagsInStatsLine
           varietySummary={[
@@ -270,17 +251,17 @@ function VarietyList({
         </LocationCollapsibleSection>
       ))}
     </div>
-  )
+  );
 }
 
 function RowList({
   rows,
   varietyColorMap,
 }: {
-  rows: LocationWiseRowNode[]
-  varietyColorMap: Map<string, string>
+  rows: LocationWiseRowNode[];
+  varietyColorMap: Map<string, string>;
 }) {
-  if (rows.length === 0) return null
+  if (rows.length === 0) return null;
 
   return (
     <div className={levelStyles.row.list}>
@@ -290,31 +271,26 @@ function RowList({
           level="row"
           icon={Rows3}
           title={`Row ${rowNode.row}`}
-          statsParts={[
-            `${rowNode.varietyCount} variet${rowNode.varietyCount === 1 ? "y" : "ies"}`,
-          ]}
+          statsParts={[`${rowNode.varietyCount} variet${rowNode.varietyCount === 1 ? 'y' : 'ies'}`]}
           varietySummary={rowNode.varietySummary}
           varietyColorMap={varietyColorMap}
           current={rowNode.totalCurrentQuantity}
         >
-          <VarietyList
-            varieties={rowNode.varieties}
-            varietyColorMap={varietyColorMap}
-          />
+          <VarietyList varieties={rowNode.varieties} varietyColorMap={varietyColorMap} />
         </LocationCollapsibleSection>
       ))}
     </div>
-  )
+  );
 }
 
 function FloorList({
   floors,
   varietyColorMap,
 }: {
-  floors: LocationWiseFloorNode[]
-  varietyColorMap: Map<string, string>
+  floors: LocationWiseFloorNode[];
+  varietyColorMap: Map<string, string>;
 }) {
-  if (floors.length === 0) return null
+  if (floors.length === 0) return null;
 
   return (
     <div className={levelStyles.floor.list}>
@@ -325,8 +301,8 @@ function FloorList({
           icon={Layers}
           title={`Floor ${floorNode.floor}`}
           statsParts={[
-            `${floorNode.rows.length} row${floorNode.rows.length === 1 ? "" : "s"}`,
-            `${floorNode.varietyCount} variet${floorNode.varietyCount === 1 ? "y" : "ies"}`,
+            `${floorNode.rows.length} row${floorNode.rows.length === 1 ? '' : 's'}`,
+            `${floorNode.varietyCount} variet${floorNode.varietyCount === 1 ? 'y' : 'ies'}`,
           ]}
           varietySummary={floorNode.varietySummary}
           varietyColorMap={varietyColorMap}
@@ -336,34 +312,30 @@ function FloorList({
         </LocationCollapsibleSection>
       ))}
     </div>
-  )
+  );
 }
 
 function ChamberList({
   chambers,
   varietyColorMap,
 }: {
-  chambers: LocationWiseChamberNode[]
-  varietyColorMap: Map<string, string>
+  chambers: LocationWiseChamberNode[];
+  varietyColorMap: Map<string, string>;
 }) {
   if (chambers.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-border bg-muted/20 px-6 py-14 text-center">
-        <div
-          className="flex size-12 items-center justify-center rounded-full bg-muted"
-          aria-hidden
-        >
+        <div className="flex size-12 items-center justify-center rounded-full bg-muted" aria-hidden>
           <MapPin className="size-6 text-muted-foreground" />
         </div>
         <div className="space-y-1">
           <p className="text-sm font-medium text-foreground">No location data</p>
           <p className="max-w-sm text-sm leading-relaxed text-muted-foreground">
-            Gate passes in this date range do not have chamber, floor, or row
-            assignments yet.
+            Gate passes in this date range do not have chamber, floor, or row assignments yet.
           </p>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -375,22 +347,19 @@ function ChamberList({
           icon={MapPin}
           title={`Chamber ${chamberNode.chamber}`}
           statsParts={[
-            `${chamberNode.floors.length} floor${chamberNode.floors.length === 1 ? "" : "s"}`,
-            `${chamberNode.varietyCount} variet${chamberNode.varietyCount === 1 ? "y" : "ies"}`,
+            `${chamberNode.floors.length} floor${chamberNode.floors.length === 1 ? '' : 's'}`,
+            `${chamberNode.varietyCount} variet${chamberNode.varietyCount === 1 ? 'y' : 'ies'}`,
           ]}
           varietySummary={chamberNode.varietySummary}
           varietyColorMap={varietyColorMap}
           current={chamberNode.totalCurrentQuantity}
           includeBagsInStatsLine
         >
-          <FloorList
-            floors={chamberNode.floors}
-            varietyColorMap={varietyColorMap}
-          />
+          <FloorList floors={chamberNode.floors} varietyColorMap={varietyColorMap} />
         </LocationCollapsibleSection>
       ))}
     </div>
-  )
+  );
 }
 
 function LocationWiseStorageSkeleton() {
@@ -412,7 +381,7 @@ function LocationWiseStorageSkeleton() {
         <Skeleton className="h-18 w-full rounded-2xl" />
       </CardContent>
     </Card>
-  )
+  );
 }
 
 function LocationWiseStorageError({
@@ -420,9 +389,9 @@ function LocationWiseStorageError({
   onRetry,
   isRetrying,
 }: {
-  message: string
-  onRetry: () => void
-  isRetrying: boolean
+  message: string;
+  onRetry: () => void;
+  isRetrying: boolean;
 }) {
   return (
     <Card className="border-destructive/30 bg-destructive/5">
@@ -442,26 +411,19 @@ function LocationWiseStorageError({
           disabled={isRetrying}
           className="w-full sm:w-auto"
         >
-          <RefreshCw
-            className={cn("mr-2 size-4", isRetrying && "animate-spin")}
-            aria-hidden
-          />
+          <RefreshCw className={cn('mr-2 size-4', isRetrying && 'animate-spin')} aria-hidden />
           Retry
         </Button>
       </CardContent>
     </Card>
-  )
+  );
 }
 
-export function LocationWiseStorageAnalytics({
-  tree,
-}: {
-  tree: LocationWiseStorageTree
-}) {
+export function LocationWiseStorageAnalytics({ tree }: { tree: LocationWiseStorageTree }) {
   const varietyColorMap = useMemo(() => {
-    const varieties = collectVarietiesFromTree(tree)
-    return buildVarietyColorMap(varieties)
-  }, [tree])
+    const varieties = collectVarietiesFromTree(tree);
+    return buildVarietyColorMap(varieties);
+  }, [tree]);
 
   return (
     <Card className="min-w-0">
@@ -472,16 +434,14 @@ export function LocationWiseStorageAnalytics({
             Location-wise storage
           </CardTitle>
           <CardDescription className="leading-relaxed">
-            Expand a chamber to drill down by floor, row, and variety. Each level
-            shows a variety-wise bag summary.
+            Expand a chamber to drill down by floor, row, and variety. Each level shows a
+            variety-wise bag summary.
           </CardDescription>
         </div>
         <dl className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
           <div className="flex items-baseline gap-2">
             <dt className="text-muted-foreground">Chambers</dt>
-            <dd className="font-medium tabular-nums text-foreground">
-              {tree.chambers.length}
-            </dd>
+            <dd className="font-medium tabular-nums text-foreground">{tree.chambers.length}</dd>
           </div>
           <div className="hidden h-4 w-px bg-border sm:block" aria-hidden />
           <div className="flex items-baseline gap-2">
@@ -496,48 +456,41 @@ export function LocationWiseStorageAnalytics({
         <ChamberList chambers={tree.chambers} varietyColorMap={varietyColorMap} />
       </CardContent>
     </Card>
-  )
+  );
 }
 
 export function LocationWiseStorageAnalyticsFromPasses({
   storageGatePasses,
 }: {
-  storageGatePasses: StorageGatePass[]
+  storageGatePasses: StorageGatePass[];
 }) {
-  const tree = useMemo(
-    () => buildLocationWiseStorageTree(storageGatePasses),
-    [storageGatePasses],
-  )
+  const tree = useMemo(() => buildLocationWiseStorageTree(storageGatePasses), [storageGatePasses]);
 
-  return <LocationWiseStorageAnalytics tree={tree} />
+  return <LocationWiseStorageAnalytics tree={tree} />;
 }
 
 export function LocationWiseStorageAnalyticsCard({
   query,
 }: {
-  query: UseQueryResult<GetStorageGatePassReportResponse, Error>
+  query: UseQueryResult<GetStorageGatePassReportResponse, Error>;
 }) {
-  const { data, error, isError, isLoading, isFetching, refetch } = query
+  const { data, error, isError, isLoading, isFetching, refetch } = query;
 
   if (isLoading) {
-    return <LocationWiseStorageSkeleton />
+    return <LocationWiseStorageSkeleton />;
   }
 
   if (isError && data === undefined) {
     return (
       <LocationWiseStorageError
-        message={
-          error instanceof Error
-            ? error.message
-            : "Failed to load storage gate pass report"
-        }
+        message={error instanceof Error ? error.message : 'Failed to load storage gate pass report'}
         onRetry={() => void refetch()}
         isRetrying={isFetching}
       />
-    )
+    );
   }
 
-  const passes = data?.data.storageGatePasses ?? []
+  const passes = data?.data.storageGatePasses ?? [];
 
-  return <LocationWiseStorageAnalyticsFromPasses storageGatePasses={passes} />
+  return <LocationWiseStorageAnalyticsFromPasses storageGatePasses={passes} />;
 }

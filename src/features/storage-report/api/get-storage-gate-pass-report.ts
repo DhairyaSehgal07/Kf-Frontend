@@ -1,19 +1,16 @@
-import apiClient, { getApiErrorMessage } from "@/lib/api-client"
+import apiClient, { getApiErrorMessage } from '@/lib/api-client';
 
-import type {
-  GetStorageGatePassReportResponse,
-  StorageGatePassReportParams,
-} from "./types"
+import type { GetStorageGatePassReportResponse, StorageGatePassReportParams } from './types';
 
 export function buildStorageGatePassReportParams(
   params: StorageGatePassReportParams,
 ): Record<string, string> {
-  const query: Record<string, string> = {}
+  const query: Record<string, string> = {};
 
-  if (params.dateFrom) query.dateFrom = params.dateFrom
-  if (params.dateTo) query.dateTo = params.dateTo
+  if (params.dateFrom) query.dateFrom = params.dateFrom;
+  if (params.dateTo) query.dateTo = params.dateTo;
 
-  return query
+  return query;
 }
 
 export async function getStorageGatePassReport(
@@ -21,19 +18,16 @@ export async function getStorageGatePassReport(
 ): Promise<GetStorageGatePassReportResponse> {
   try {
     const { data } = await apiClient.get<GetStorageGatePassReportResponse>(
-      "/storage-gate-pass/report",
+      '/storage-gate-pass/report',
       { params: buildStorageGatePassReportParams(params) },
-    )
+    );
 
     if (!data.success) {
-      throw new Error(data.message ?? "Failed to load storage report")
+      throw new Error(data.message ?? 'Failed to load storage report');
     }
 
-    return data
+    return data;
   } catch (error) {
-    throw new Error(
-      getApiErrorMessage(error, "Failed to load storage report"),
-      { cause: error },
-    )
+    throw new Error(getApiErrorMessage(error, 'Failed to load storage report'), { cause: error });
   }
 }

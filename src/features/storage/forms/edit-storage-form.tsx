@@ -47,11 +47,7 @@ import {
   type ComboboxOption,
 } from '@/components/searchable-option-combobox';
 import { storageFormSchema } from '@/features/storage/schemas/storage-form-schema';
-import {
-  INCOMING_STAGES,
-  POTATO_VARIETY_OPTIONS,
-  STORAGE_CATEGORIES,
-} from '@/lib/constants';
+import { INCOMING_STAGES, POTATO_VARIETY_OPTIONS, STORAGE_CATEGORIES } from '@/lib/constants';
 
 const CATEGORY_ITEMS = STORAGE_CATEGORIES.map((value) => ({
   id: value,
@@ -237,10 +233,9 @@ function EditStorageFormFields({ gatePass }: EditStorageFormFieldsProps) {
         });
         setReviewOpen(false);
       } catch (error) {
-        toast.error(
-          error instanceof Error ? error.message : 'Failed to update storage gate pass',
-          { position: 'bottom-right' },
-        );
+        toast.error(error instanceof Error ? error.message : 'Failed to update storage gate pass', {
+          position: 'bottom-right',
+        });
       }
     },
   });

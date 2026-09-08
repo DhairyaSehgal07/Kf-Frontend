@@ -1,13 +1,13 @@
-import type * as z from "zod"
+import type * as z from 'zod';
 
-import { bookingFormSchema } from "@/features/booking/schemas/booking-form-schema"
+import { bookingFormSchema } from '@/features/booking/schemas/booking-form-schema';
 
 export type BookingSubmitMeta = {
-  submitAction: "review" | "submit"
-}
+  submitAction: 'review' | 'submit';
+};
 
 export const defaultSubmitMeta: BookingSubmitMeta = {
-  submitAction: "review",
-}
+  submitAction: 'review',
+};
 
-export type BookingFormValues = z.infer<typeof bookingFormSchema>
+export type BookingFormValues = z.infer<typeof bookingFormSchema>;

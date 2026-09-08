@@ -39,7 +39,9 @@ interface ColumnVisibilityRowProps<TData extends RowData> {
   onVisibilityChange: (columnId: string, visible: boolean) => void;
 }
 
-function getColumnLabel<TData extends RowData>(column: Column<ReportFeatures, TData, unknown>): string {
+function getColumnLabel<TData extends RowData>(
+  column: Column<ReportFeatures, TData, unknown>,
+): string {
   return column.columnDef.meta?.filterLabel ?? column.id;
 }
 
@@ -57,7 +59,9 @@ function getOrderedColumns<TData extends RowData>(
   const columnsById = new Map(columns.map((column) => [column.id, column]));
   const orderedIds = [
     ...draftColumnOrder.filter((columnId) => columnsById.has(columnId)),
-    ...columns.map((column) => column.id).filter((columnId) => !draftColumnOrder.includes(columnId)),
+    ...columns
+      .map((column) => column.id)
+      .filter((columnId) => !draftColumnOrder.includes(columnId)),
   ];
 
   return orderedIds
@@ -143,12 +147,10 @@ const ColumnsTab = <TData extends RowData>({
   ).length;
   const hiddenColumnCount = orderedColumns.length - visibleColumnCount;
   const columnIds = allColumns.map((column) => column.id);
-  const [hasSavedDefault, setHasSavedDefault] = useState(() =>
-    hasStoredGradingReportColumnState(),
+  const [hasSavedDefault, setHasSavedDefault] = useState(() => hasStoredGradingReportColumnState());
+  const [preferenceStatus, setPreferenceStatus] = useState<'idle' | 'saved' | 'cleared' | 'error'>(
+    'idle',
   );
-  const [preferenceStatus, setPreferenceStatus] = useState<
-    'idle' | 'saved' | 'cleared' | 'error'
-  >('idle');
 
   const handleVisibilityChange = (columnId: string, visible: boolean) => {
     const nextVisibility = { ...draftColumnVisibility };

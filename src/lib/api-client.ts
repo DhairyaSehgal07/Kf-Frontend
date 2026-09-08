@@ -52,10 +52,7 @@ type ApiErrorBody = {
   error?: { message?: string };
 };
 
-export function getApiErrorMessage(
-  error: unknown,
-  fallback = 'Something went wrong',
-): string {
+export function getApiErrorMessage(error: unknown, fallback = 'Something went wrong'): string {
   if (isAxiosError(error)) {
     const data = error.response?.data as ApiErrorBody | undefined;
     if (typeof data?.error?.message === 'string') return data.error.message;

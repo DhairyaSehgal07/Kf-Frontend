@@ -1,73 +1,71 @@
-import type { StorageGatePass } from "@/features/storage/api/types"
-import type { ReportFilterFn } from "@/lib/tanstack-table/report-table-features"
+import type { StorageGatePass } from '@/features/storage/api/types';
+import type { ReportFilterFn } from '@/lib/tanstack-table/report-table-features';
 
-export type SelectedValuesFilterValue = string[]
-export type AdvancedFilterLogic = "AND" | "OR"
+export type SelectedValuesFilterValue = string[];
+export type AdvancedFilterLogic = 'AND' | 'OR';
 export type AdvancedFilterOperator =
-  | "contains"
-  | "notContains"
-  | "equals"
-  | "notEquals"
-  | "startsWith"
-  | "endsWith"
-  | "greaterThan"
-  | "greaterThanOrEqual"
-  | "lessThan"
-  | "lessThanOrEqual"
-  | "isEmpty"
-  | "isNotEmpty"
+  | 'contains'
+  | 'notContains'
+  | 'equals'
+  | 'notEquals'
+  | 'startsWith'
+  | 'endsWith'
+  | 'greaterThan'
+  | 'greaterThanOrEqual'
+  | 'lessThan'
+  | 'lessThanOrEqual'
+  | 'isEmpty'
+  | 'isNotEmpty';
 
 export type StorageReportColumnId =
   | keyof StorageGatePass
-  | "name"
-  | "address"
-  | "accountNumber"
-  | "createdBy"
-  | `size-${string}`
+  | 'name'
+  | 'address'
+  | 'accountNumber'
+  | 'createdBy'
+  | `size-${string}`;
 
 export type AdvancedFilterCondition = {
-  id: string
-  columnId: StorageReportColumnId
-  operator: AdvancedFilterOperator
-  value: string
-}
+  id: string;
+  columnId: StorageReportColumnId;
+  operator: AdvancedFilterOperator;
+  value: string;
+};
 
 export type AdvancedReportGlobalFilter = {
-  logic: AdvancedFilterLogic
-  conditions: AdvancedFilterCondition[]
-}
+  logic: AdvancedFilterLogic;
+  conditions: AdvancedFilterCondition[];
+};
 
 const ADVANCED_NUMERIC_COLUMN_IDS = new Set<StorageReportColumnId>([
-  "accountNumber",
-  "gatePassNo",
-  "manualGatePassNumber",
-  "totalBags",
-])
+  'accountNumber',
+  'gatePassNo',
+  'manualGatePassNumber',
+  'totalBags',
+]);
 
-export function isAdvancedNumericColumn(
-  columnId: string,
-): columnId is StorageReportColumnId {
+export function isAdvancedNumericColumn(columnId: string): columnId is StorageReportColumnId {
   return (
     ADVANCED_NUMERIC_COLUMN_IDS.has(columnId as StorageReportColumnId) ||
-    columnId.startsWith("size-")
-  )
+    columnId.startsWith('size-')
+  );
 }
 
 export function getReportFilterValueKey(value: unknown): string {
-  if (value == null) return ""
-  return String(value)
+  if (value == null) return '';
+  return String(value);
 }
 
 function parseReportNumber(value: unknown): number | null {
-  if (typeof value === "number") {
-    return Number.isFinite(value) ? value : null
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : null;
   }
 
-  if (value == null || value === "") return null
+  if (value == null || value === '') return null;
 
-  const parsed = Number(String(value).replaceAll(",", "").trim())
+  const parsed = Number(String(value).replaceAll(',', '').trim());
 
-  return Number.isFinite(parsed) ? parsed : null
+  return Number.isFinite(parsed) ? parsed : null;
 }
 
 export const selectedValuesFilterFn: ReportFilterFn<StorageGatePass> = (
@@ -75,95 +73,95 @@ export const selectedValuesFilterFn: ReportFilterFn<StorageGatePass> = (
   columnId,
   filterValue,
 ) => {
-  if (!Array.isArray(filterValue)) return true
+  if (!Array.isArray(filterValue)) return true;
 
-  const selectedValues = new Set(filterValue.map(String))
-  const rowValueKey = getReportFilterValueKey(row.getValue(columnId))
+  const selectedValues = new Set(filterValue.map(String));
+  const rowValueKey = getReportFilterValueKey(row.getValue(columnId));
 
-  return selectedValues.has(rowValueKey)
-}
+  return selectedValues.has(rowValueKey);
+};
 
-selectedValuesFilterFn.autoRemove = (filterValue) => filterValue == null
+selectedValuesFilterFn.autoRemove = (filterValue) => filterValue == null;
 
-function isAdvancedReportGlobalFilter(
-  value: unknown,
-): value is AdvancedReportGlobalFilter {
+function isAdvancedReportGlobalFilter(value: unknown): value is AdvancedReportGlobalFilter {
   return (
-    typeof value === "object" &&
+    typeof value === 'object' &&
     value != null &&
-    "logic" in value &&
-    "conditions" in value &&
+    'logic' in value &&
+    'conditions' in value &&
     Array.isArray((value as AdvancedReportGlobalFilter).conditions)
-  )
+  );
 }
 
 function normalizeText(value: unknown): string {
-  return String(value ?? "").trim().toLowerCase()
+  return String(value ?? '')
+    .trim()
+    .toLowerCase();
 }
 
 function evaluateCondition(
   row: Parameters<ReportFilterFn<StorageGatePass>>[0],
   condition: AdvancedFilterCondition,
 ) {
-  const rawValue = row.getValue(String(condition.columnId))
+  const rawValue = row.getValue(String(condition.columnId));
 
-  if (condition.operator === "isEmpty") {
-    return rawValue == null || String(rawValue).trim().length === 0
+  if (condition.operator === 'isEmpty') {
+    return rawValue == null || String(rawValue).trim().length === 0;
   }
 
-  if (condition.operator === "isNotEmpty") {
-    return rawValue != null && String(rawValue).trim().length > 0
+  if (condition.operator === 'isNotEmpty') {
+    return rawValue != null && String(rawValue).trim().length > 0;
   }
 
-  const filterValue = condition.value.trim()
-  if (filterValue.length === 0) return true
+  const filterValue = condition.value.trim();
+  if (filterValue.length === 0) return true;
 
-  const rowText = normalizeText(rawValue)
-  const filterText = normalizeText(filterValue)
-  const isNumericCondition = isAdvancedNumericColumn(String(condition.columnId))
+  const rowText = normalizeText(rawValue);
+  const filterText = normalizeText(filterValue);
+  const isNumericCondition = isAdvancedNumericColumn(String(condition.columnId));
 
   if (
     isNumericCondition &&
-    (condition.operator === "equals" || condition.operator === "notEquals")
+    (condition.operator === 'equals' || condition.operator === 'notEquals')
   ) {
-    const rowNumber = parseReportNumber(rawValue)
-    const filterNumber = parseReportNumber(filterValue)
-    if (rowNumber == null || filterNumber == null) return false
-    return condition.operator === "equals"
+    const rowNumber = parseReportNumber(rawValue);
+    const filterNumber = parseReportNumber(filterValue);
+    if (rowNumber == null || filterNumber == null) return false;
+    return condition.operator === 'equals'
       ? rowNumber === filterNumber
-      : rowNumber !== filterNumber
+      : rowNumber !== filterNumber;
   }
 
   switch (condition.operator) {
-    case "contains":
-      return rowText.includes(filterText)
-    case "notContains":
-      return !rowText.includes(filterText)
-    case "equals":
-      return rowText === filterText
-    case "notEquals":
-      return rowText !== filterText
-    case "startsWith":
-      return rowText.startsWith(filterText)
-    case "endsWith":
-      return rowText.endsWith(filterText)
-    case "greaterThan":
-    case "greaterThanOrEqual":
-    case "lessThan":
-    case "lessThanOrEqual": {
-      const rowNumber = parseReportNumber(rawValue)
-      const filterNumber = parseReportNumber(filterValue)
-      if (rowNumber == null || filterNumber == null) return false
+    case 'contains':
+      return rowText.includes(filterText);
+    case 'notContains':
+      return !rowText.includes(filterText);
+    case 'equals':
+      return rowText === filterText;
+    case 'notEquals':
+      return rowText !== filterText;
+    case 'startsWith':
+      return rowText.startsWith(filterText);
+    case 'endsWith':
+      return rowText.endsWith(filterText);
+    case 'greaterThan':
+    case 'greaterThanOrEqual':
+    case 'lessThan':
+    case 'lessThanOrEqual': {
+      const rowNumber = parseReportNumber(rawValue);
+      const filterNumber = parseReportNumber(filterValue);
+      if (rowNumber == null || filterNumber == null) return false;
 
-      if (condition.operator === "greaterThan") return rowNumber > filterNumber
-      if (condition.operator === "greaterThanOrEqual") {
-        return rowNumber >= filterNumber
+      if (condition.operator === 'greaterThan') return rowNumber > filterNumber;
+      if (condition.operator === 'greaterThanOrEqual') {
+        return rowNumber >= filterNumber;
       }
-      if (condition.operator === "lessThan") return rowNumber < filterNumber
-      return rowNumber <= filterNumber
+      if (condition.operator === 'lessThan') return rowNumber < filterNumber;
+      return rowNumber <= filterNumber;
     }
     default:
-      return true
+      return true;
   }
 }
 
@@ -172,28 +170,28 @@ export const advancedReportGlobalFilterFn: ReportFilterFn<StorageGatePass> = (
   _columnId,
   filterValue,
 ) => {
-  if (!isAdvancedReportGlobalFilter(filterValue)) return true
+  if (!isAdvancedReportGlobalFilter(filterValue)) return true;
 
   const activeConditions = filterValue.conditions.filter((condition) => {
-    if (condition.operator === "isEmpty" || condition.operator === "isNotEmpty") {
-      return true
+    if (condition.operator === 'isEmpty' || condition.operator === 'isNotEmpty') {
+      return true;
     }
 
-    return condition.value.trim().length > 0
-  })
+    return condition.value.trim().length > 0;
+  });
 
-  if (activeConditions.length === 0) return true
+  if (activeConditions.length === 0) return true;
 
-  return filterValue.logic === "AND"
+  return filterValue.logic === 'AND'
     ? activeConditions.every((condition) => evaluateCondition(row, condition))
-    : activeConditions.some((condition) => evaluateCondition(row, condition))
-}
+    : activeConditions.some((condition) => evaluateCondition(row, condition));
+};
 
 advancedReportGlobalFilterFn.autoRemove = (filterValue) =>
   !isAdvancedReportGlobalFilter(filterValue) ||
   filterValue.conditions.every(
     (condition) =>
-      condition.operator !== "isEmpty" &&
-      condition.operator !== "isNotEmpty" &&
+      condition.operator !== 'isEmpty' &&
+      condition.operator !== 'isNotEmpty' &&
       condition.value.trim().length === 0,
-  )
+  );

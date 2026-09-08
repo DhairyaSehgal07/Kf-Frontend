@@ -62,10 +62,7 @@ import {
   getStoredGradingReportColumnState,
 } from '@/features/grading-report/utils/report-column-preferences';
 import { gradingReportTableFeatures } from '@/features/grading-report/table-features';
-import type {
-  ReportColumnMeta,
-  ReportFeatures,
-} from '@/lib/tanstack-table/report-table-features';
+import type { ReportColumnMeta, ReportFeatures } from '@/lib/tanstack-table/report-table-features';
 import { cn } from '@/lib/utils';
 
 const INCOMING_GATE_PASS_COLUMN_IDS = new Set([
@@ -253,12 +250,7 @@ function getFooterClassName(meta: ColumnMeta | undefined) {
   );
 }
 
-export function DataTable({
-  columns,
-  data,
-  isLoading = false,
-  onTableReady,
-}: DataTableProps) {
+export function DataTable({ columns, data, isLoading = false, onTableReady }: DataTableProps) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [grouping, setGrouping] = useState<GroupingState>([]);
@@ -273,11 +265,15 @@ export function DataTable({
     manualGatePassSearch: '',
   });
   const [columnVisibility, setColumnVisibility] = useState<ColumnVisibilityState>(() => {
-    const columnIds = getGradingReportColumnIds(columns as ColumnDef<ReportFeatures, Record<string, unknown>>[]);
+    const columnIds = getGradingReportColumnIds(
+      columns as ColumnDef<ReportFeatures, Record<string, unknown>>[],
+    );
     return getStoredGradingReportColumnState(columnIds).columnVisibility;
   });
   const [columnOrder, setColumnOrder] = useState<ColumnOrderState>(() => {
-    const columnIds = getGradingReportColumnIds(columns as ColumnDef<ReportFeatures, Record<string, unknown>>[]);
+    const columnIds = getGradingReportColumnIds(
+      columns as ColumnDef<ReportFeatures, Record<string, unknown>>[],
+    );
     return getStoredGradingReportColumnState(columnIds).columnOrder;
   });
   const [isHeaderScrolled, setIsHeaderScrolled] = useState(false);

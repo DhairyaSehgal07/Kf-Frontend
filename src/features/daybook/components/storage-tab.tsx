@@ -1,6 +1,6 @@
-import { useMemo, type MouseEvent } from "react"
-import { getRouteApi } from "@tanstack/react-router"
-import { useNavigate } from "@tanstack/react-router"
+import { useMemo, type MouseEvent } from 'react';
+import { getRouteApi } from '@tanstack/react-router';
+import { useNavigate } from '@tanstack/react-router';
 import {
   ArrowRightFromLine,
   ArrowRightLeft,
@@ -9,84 +9,75 @@ import {
   RefreshCw,
   Scale,
   Search,
-} from "lucide-react"
+} from 'lucide-react';
 
-import { Button } from "@/components/ui/button"
-import {
-  Item,
-  ItemActions,
-  ItemContent,
-  ItemMedia,
-  ItemTitle,
-} from "@/components/ui/item"
-import { Input } from "@/components/ui/input"
+import { Button } from '@/components/ui/button';
+import { Item, ItemActions, ItemContent, ItemMedia, ItemTitle } from '@/components/ui/item';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from '@/components/ui/select';
 import {
   Pagination,
   PaginationContent,
   PaginationItem,
   PaginationNext,
   PaginationPrevious,
-} from "@/components/ui/pagination"
+} from '@/components/ui/pagination';
 import {
   Empty,
   EmptyDescription,
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
-} from "@/components/ui/empty"
+} from '@/components/ui/empty';
 import {
   StorageGatePassCard,
   StorageGatePassCardSkeleton,
-} from "@/components/storage-gate-pass-card"
-import { Skeleton } from "@/components/ui/skeleton"
-import { useDaybook } from "@/features/daybook/api/use-daybook"
-import type { DaybookQueryParams } from "@/features/daybook/api/types"
+} from '@/components/storage-gate-pass-card';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useDaybook } from '@/features/daybook/api/use-daybook';
+import type { DaybookQueryParams } from '@/features/daybook/api/types';
 import {
   DaybookOutgoingGatePassCard,
   DaybookOutgoingGatePassCardSkeleton,
-} from "@/features/daybook/components/daybook-outgoing-gate-pass-card"
+} from '@/features/daybook/components/daybook-outgoing-gate-pass-card';
 import {
   paginationRangeLabel,
   storagePaginationToDaybook,
-} from "@/features/daybook/utils/daybook-display"
-import { daybookStorageEntryToGatePass } from "@/features/daybook/utils/daybook-storage-adapter"
+} from '@/features/daybook/utils/daybook-display';
+import { daybookStorageEntryToGatePass } from '@/features/daybook/utils/daybook-storage-adapter';
 import {
   isOutgoingEntry,
   isRenderableDaybookEntry,
   isStorageEntry,
-} from "@/features/daybook/utils/daybook-type-guards"
-import { useStorageGatePasses } from "@/features/storage/api/use-storage-gate-passes"
-import type { StorageGatePassListParams } from "@/features/storage/api/types"
-import { nikasiAccent } from "@/features/dispatch-pre-storage/constants/nikasi-accent"
-import type {
-  DaybookListType,
-  DaybookSortBy,
-} from "@/features/daybook/search"
-import { preserveScroll } from "@/lib/preserve-scroll"
-import { cn } from "@/lib/utils"
+} from '@/features/daybook/utils/daybook-type-guards';
+import { useStorageGatePasses } from '@/features/storage/api/use-storage-gate-passes';
+import type { StorageGatePassListParams } from '@/features/storage/api/types';
+import { nikasiAccent } from '@/features/dispatch-pre-storage/constants/nikasi-accent';
+import type { DaybookListType, DaybookSortBy } from '@/features/daybook/search';
+import { preserveScroll } from '@/lib/preserve-scroll';
+import { cn } from '@/lib/utils';
 
-const daybookRouteApi = getRouteApi("/_authenticated/daybook")
+const daybookRouteApi = getRouteApi('/_authenticated/daybook');
 
-const PAGE_SIZE_OPTIONS = [10, 25, 50, 100] as const
-const DEFAULT_PAGE_SIZE = PAGE_SIZE_OPTIONS[0]
+const PAGE_SIZE_OPTIONS = [10, 25, 50, 100] as const;
+const DEFAULT_PAGE_SIZE = PAGE_SIZE_OPTIONS[0];
 
-type PageSize = (typeof PAGE_SIZE_OPTIONS)[number]
+type PageSize = (typeof PAGE_SIZE_OPTIONS)[number];
 
-type SortFilter = "newest" | "oldest"
+type SortFilter = 'newest' | 'oldest';
 
 function toSortBy(sort: SortFilter): DaybookSortBy {
-  return sort === "newest" ? "latest" : "oldest"
+  return sort === 'newest' ? 'latest' : 'oldest';
 }
 
 function fromSortBy(sortBy: DaybookSortBy): SortFilter {
-  return sortBy === "latest" ? "newest" : "oldest"
+  return sortBy === 'latest' ? 'newest' : 'oldest';
 }
 
 function StorageTabSkeleton() {
@@ -130,11 +121,7 @@ function StorageTabSkeleton() {
         <StorageGatePassCardSkeleton />
       </div>
 
-      <Item
-        variant="outline"
-        size="sm"
-        className="rounded-xl px-4 py-3 sm:px-5 sm:py-4"
-      >
+      <Item variant="outline" size="sm" className="rounded-xl px-4 py-3 sm:px-5 sm:py-4">
         <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2">
             <Skeleton className="h-9 w-18 rounded-md" />
@@ -148,19 +135,19 @@ function StorageTabSkeleton() {
         </div>
       </Item>
     </div>
-  )
+  );
 }
 
 const DaybookStorageTab = () => {
-  const navigate = useNavigate()
-  const routeNavigate = daybookRouteApi.useNavigate()
-  const search = daybookRouteApi.useSearch()
+  const navigate = useNavigate();
+  const routeNavigate = daybookRouteApi.useNavigate();
+  const search = daybookRouteApi.useSearch();
 
-  const type: DaybookListType = search.type ?? "all"
-  const sortBy: DaybookSortBy = search.sortBy ?? "latest"
-  const page = search.page ?? 1
-  const pageSize = (search.limit ?? DEFAULT_PAGE_SIZE) as PageSize
-  const sortFilter = fromSortBy(sortBy)
+  const type: DaybookListType = search.type ?? 'all';
+  const sortBy: DaybookSortBy = search.sortBy ?? 'latest';
+  const page = search.page ?? 1;
+  const pageSize = (search.limit ?? DEFAULT_PAGE_SIZE) as PageSize;
+  const sortFilter = fromSortBy(sortBy);
 
   const queryParams = useMemo<DaybookQueryParams>(
     () => ({
@@ -170,138 +157,127 @@ const DaybookStorageTab = () => {
       limit: pageSize,
     }),
     [type, sortBy, page, pageSize],
-  )
+  );
 
   const storageListParams = useMemo<StorageGatePassListParams>(
     () => ({
       page,
       limit: pageSize,
-      sortOrder: sortFilter === "newest" ? "desc" : "asc",
+      sortOrder: sortFilter === 'newest' ? 'desc' : 'asc',
     }),
     [page, pageSize, sortFilter],
-  )
+  );
 
-  const daybookQuery = useDaybook(queryParams)
-  const isLegacyDaybook = daybookQuery.data?.format === "legacy"
-  const useStorageFeed = isLegacyDaybook && type !== "outgoing"
+  const daybookQuery = useDaybook(queryParams);
+  const isLegacyDaybook = daybookQuery.data?.format === 'legacy';
+  const useStorageFeed = isLegacyDaybook && type !== 'outgoing';
 
   const storageQuery = useStorageGatePasses(storageListParams, {
     enabled: useStorageFeed && !daybookQuery.isLoading,
-  })
+  });
 
-  const isLoading =
-    daybookQuery.isLoading || (useStorageFeed && storageQuery.isLoading)
-  const isError = useStorageFeed ? storageQuery.isError : daybookQuery.isError
-  const error = useStorageFeed ? storageQuery.error : daybookQuery.error
-  const isFetching = useStorageFeed
-    ? storageQuery.isFetching
-    : daybookQuery.isFetching
+  const isLoading = daybookQuery.isLoading || (useStorageFeed && storageQuery.isLoading);
+  const isError = useStorageFeed ? storageQuery.isError : daybookQuery.isError;
+  const error = useStorageFeed ? storageQuery.error : daybookQuery.error;
+  const isFetching = useStorageFeed ? storageQuery.isFetching : daybookQuery.isFetching;
 
   const refetch = () => {
     if (useStorageFeed) {
-      return storageQuery.refetch()
+      return storageQuery.refetch();
     }
 
-    return daybookQuery.refetch()
-  }
+    return daybookQuery.refetch();
+  };
 
-  const daybookEntries = Array.isArray(daybookQuery.data?.entries)
-    ? daybookQuery.data.entries
-    : []
-  const renderableEntries = daybookEntries.filter(isRenderableDaybookEntry)
+  const daybookEntries = Array.isArray(daybookQuery.data?.entries) ? daybookQuery.data.entries : [];
+  const renderableEntries = daybookEntries.filter(isRenderableDaybookEntry);
   const hasUnsupportedEntries =
-    !useStorageFeed &&
-    daybookEntries.length > 0 &&
-    renderableEntries.length === 0
-  const storageGatePasses = storageQuery.data?.storageGatePasses ?? []
+    !useStorageFeed && daybookEntries.length > 0 && renderableEntries.length === 0;
+  const storageGatePasses = storageQuery.data?.storageGatePasses ?? [];
 
   const pagination = useStorageFeed
     ? storageQuery.data?.pagination
       ? storagePaginationToDaybook(storageQuery.data.pagination)
       : undefined
-    : daybookQuery.data?.pagination
+    : daybookQuery.data?.pagination;
 
   const totalCount = useStorageFeed
     ? (pagination?.totalItems ?? 0)
-    : isLegacyDaybook && type === "outgoing"
+    : isLegacyDaybook && type === 'outgoing'
       ? 0
-      : (pagination?.totalItems ?? 0)
-  const currentPage = pagination?.currentPage ?? page
-  const totalPages = Math.max(pagination?.totalPages ?? 1, 1)
-  const isOnFirstPage = pagination
-    ? !pagination.hasPreviousPage
-    : currentPage <= 1
-  const isOnLastPage = pagination
-    ? !pagination.hasNextPage
-    : currentPage >= totalPages
+      : (pagination?.totalItems ?? 0);
+  const currentPage = pagination?.currentPage ?? page;
+  const totalPages = Math.max(pagination?.totalPages ?? 1, 1);
+  const isOnFirstPage = pagination ? !pagination.hasPreviousPage : currentPage <= 1;
+  const isOnLastPage = pagination ? !pagination.hasNextPage : currentPage >= totalPages;
 
   const updateFilters = (
     patch: Partial<{
-      type: DaybookListType
-      sortBy: DaybookSortBy
-      page: number
-      limit: PageSize
+      type: DaybookListType;
+      sortBy: DaybookSortBy;
+      page: number;
+      limit: PageSize;
     }>,
   ) => {
     routeNavigate({
       search: (previous) => ({
         ...previous,
-        tab: "storage",
+        tab: 'storage',
         ...patch,
       }),
       ...preserveScroll,
-    })
-  }
+    });
+  };
 
   const handlePrevPage = (event: MouseEvent<HTMLAnchorElement>) => {
-    event.preventDefault()
-    if (isOnFirstPage || isFetching) return
+    event.preventDefault();
+    if (isOnFirstPage || isFetching) return;
 
-    const previousPage = pagination?.previousPage ?? Math.max(currentPage - 1, 1)
-    updateFilters({ page: previousPage })
-  }
+    const previousPage = pagination?.previousPage ?? Math.max(currentPage - 1, 1);
+    updateFilters({ page: previousPage });
+  };
 
   const handleNextPage = (event: MouseEvent<HTMLAnchorElement>) => {
-    event.preventDefault()
-    if (isOnLastPage || isFetching) return
+    event.preventDefault();
+    if (isOnLastPage || isFetching) return;
 
-    const nextPage = pagination?.nextPage ?? currentPage + 1
-    updateFilters({ page: nextPage })
-  }
+    const nextPage = pagination?.nextPage ?? currentPage + 1;
+    updateFilters({ page: nextPage });
+  };
 
   const handleAddStorage = () => {
-    navigate({ to: "/storage" })
-  }
+    navigate({ to: '/storage' });
+  };
 
   const handleAddOutgoing = () => {
-    navigate({ to: "/outgoing" })
-  }
+    navigate({ to: '/outgoing' });
+  };
 
   const handleEditHistory = () => {
-    navigate({ to: "/storage/edit-history" })
-  }
+    navigate({ to: '/storage/edit-history' });
+  };
 
   const handleTransferStock = () => {
-    navigate({ to: "/transfer" })
-  }
+    navigate({ to: '/transfer' });
+  };
 
   const handleTypeChange = (value: string) => {
-    updateFilters({ type: value as DaybookListType, page: 1 })
-  }
+    updateFilters({ type: value as DaybookListType, page: 1 });
+  };
 
   const handleSortChange = (value: string) => {
-    updateFilters({ sortBy: toSortBy(value as SortFilter), page: 1 })
-  }
+    updateFilters({ sortBy: toSortBy(value as SortFilter), page: 1 });
+  };
 
   const handlePageSizeChange = (value: string) => {
     updateFilters({
       limit: Number(value) as PageSize,
       page: 1,
-    })
-  }
+    });
+  };
 
   if (isLoading) {
-    return <StorageTabSkeleton />
+    return <StorageTabSkeleton />;
   }
 
   return (
@@ -314,18 +290,11 @@ const DaybookStorageTab = () => {
         </ItemMedia>
 
         <ItemContent>
-          <ItemTitle>
-            {totalCount.toLocaleString("en-IN")} gate passes
-          </ItemTitle>
+          <ItemTitle>{totalCount.toLocaleString('en-IN')} gate passes</ItemTitle>
         </ItemContent>
 
         <ItemActions>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => void refetch()}
-            disabled={isFetching}
-          >
+          <Button variant="outline" size="sm" onClick={() => void refetch()} disabled={isFetching}>
             {isFetching ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (
@@ -395,10 +364,7 @@ const DaybookStorageTab = () => {
               <span className="hidden sm:inline">Storage Edit History</span>
             </Button>
 
-            <Button
-              className="min-w-0 px-2.5 sm:px-3"
-              onClick={handleAddStorage}
-            >
+            <Button className="min-w-0 px-2.5 sm:px-3" onClick={handleAddStorage}>
               <ArrowUpFromLine className="h-4 w-4 shrink-0 sm:mr-2" />
               <span className="truncate">Add Storage</span>
             </Button>
@@ -406,9 +372,9 @@ const DaybookStorageTab = () => {
             <Button
               variant="outline"
               className={cn(
-                "min-w-0 px-2.5 sm:px-3 transition-colors",
+                'min-w-0 px-2.5 sm:px-3 transition-colors',
                 nikasiAccent.emphasis,
-                "border-rose-200 bg-rose-50 hover:bg-rose-100 dark:border-rose-900/60 dark:bg-rose-950/50 dark:hover:bg-rose-950/70",
+                'border-rose-200 bg-rose-50 hover:bg-rose-100 dark:border-rose-900/60 dark:bg-rose-950/50 dark:hover:bg-rose-950/70',
               )}
               onClick={handleAddOutgoing}
             >
@@ -431,7 +397,7 @@ const DaybookStorageTab = () => {
             <EmptyDescription>
               {error instanceof Error
                 ? error.message
-                : "Something went wrong while fetching gate passes."}
+                : 'Something went wrong while fetching gate passes.'}
             </EmptyDescription>
           </EmptyHeader>
 
@@ -459,14 +425,13 @@ const DaybookStorageTab = () => {
             <EmptyTitle>Daybook response format mismatch</EmptyTitle>
 
             <EmptyDescription>
-              The server returned {totalCount.toLocaleString("en-IN")} entries,
-              but none match the storage/outgoing daybook format. Ensure the
-              production backend is on v1.23.0 or newer and redeployed with the
-              frontend.
+              The server returned {totalCount.toLocaleString('en-IN')} entries, but none match the
+              storage/outgoing daybook format. Ensure the production backend is on v1.23.0 or newer
+              and redeployed with the frontend.
             </EmptyDescription>
           </EmptyHeader>
         </Empty>
-      ) : isLegacyDaybook && type === "outgoing" ? (
+      ) : isLegacyDaybook && type === 'outgoing' ? (
         <Empty className="rounded-xl border bg-muted/10">
           <EmptyHeader>
             <EmptyMedia variant="icon">
@@ -476,8 +441,8 @@ const DaybookStorageTab = () => {
             <EmptyTitle>Outgoing list unavailable</EmptyTitle>
 
             <EmptyDescription>
-              Outgoing gate passes in the daybook require backend v1.23.0 or
-              newer. Redeploy the backend to view outgoing deliveries here.
+              Outgoing gate passes in the daybook require backend v1.23.0 or newer. Redeploy the
+              backend to view outgoing deliveries here.
             </EmptyDescription>
           </EmptyHeader>
         </Empty>
@@ -491,10 +456,7 @@ const DaybookStorageTab = () => {
         <div className="space-y-6">
           {renderableEntries.map((entry) =>
             isStorageEntry(entry) ? (
-              <StorageGatePassCard
-                key={entry._id}
-                data={daybookStorageEntryToGatePass(entry)}
-              />
+              <StorageGatePassCard key={entry._id} data={daybookStorageEntryToGatePass(entry)} />
             ) : isOutgoingEntry(entry) ? (
               <DaybookOutgoingGatePassCard key={entry._id} data={entry} />
             ) : null,
@@ -510,18 +472,13 @@ const DaybookStorageTab = () => {
             <EmptyTitle>No gate passes yet</EmptyTitle>
 
             <EmptyDescription>
-              Storage receipts and outgoing deliveries will appear here once
-              recorded.
+              Storage receipts and outgoing deliveries will appear here once recorded.
             </EmptyDescription>
           </EmptyHeader>
         </Empty>
       )}
 
-      <Item
-        variant="outline"
-        size="sm"
-        className="rounded-xl px-4 py-3 sm:px-5 sm:py-4"
-      >
+      <Item variant="outline" size="sm" className="rounded-xl px-4 py-3 sm:px-5 sm:py-4">
         <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -530,10 +487,7 @@ const DaybookStorageTab = () => {
                 onValueChange={handlePageSizeChange}
                 disabled={isFetching}
               >
-                <SelectTrigger
-                  className="h-9 w-18 tabular-nums"
-                  aria-label="Items per page"
-                >
+                <SelectTrigger className="h-9 w-18 tabular-nums" aria-label="Items per page">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent side="top">
@@ -560,11 +514,7 @@ const DaybookStorageTab = () => {
                   href="#"
                   onClick={handlePrevPage}
                   aria-disabled={isOnFirstPage || isFetching}
-                  className={
-                    isOnFirstPage || isFetching
-                      ? "pointer-events-none opacity-50"
-                      : ""
-                  }
+                  className={isOnFirstPage || isFetching ? 'pointer-events-none opacity-50' : ''}
                 />
               </PaginationItem>
 
@@ -579,11 +529,7 @@ const DaybookStorageTab = () => {
                   href="#"
                   onClick={handleNextPage}
                   aria-disabled={isOnLastPage || isFetching}
-                  className={
-                    isOnLastPage || isFetching
-                      ? "pointer-events-none opacity-50"
-                      : ""
-                  }
+                  className={isOnLastPage || isFetching ? 'pointer-events-none opacity-50' : ''}
                 />
               </PaginationItem>
             </PaginationContent>
@@ -591,7 +537,7 @@ const DaybookStorageTab = () => {
         </div>
       </Item>
     </div>
-  )
-}
+  );
+};
 
-export default DaybookStorageTab
+export default DaybookStorageTab;

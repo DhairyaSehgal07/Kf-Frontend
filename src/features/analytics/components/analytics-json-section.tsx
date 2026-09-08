@@ -1,16 +1,10 @@
-import type { UseQueryResult } from "@tanstack/react-query"
-import { AlertCircle, RefreshCw } from "lucide-react"
+import type { UseQueryResult } from '@tanstack/react-query';
+import { AlertCircle, RefreshCw } from 'lucide-react';
 
-import { Button } from "@/components/ui/button"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-import { Skeleton } from "@/components/ui/skeleton"
-import { cn } from "@/lib/utils"
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
 
 function AnalyticsJsonSkeleton() {
   return (
@@ -23,7 +17,7 @@ function AnalyticsJsonSkeleton() {
         <Skeleton className="h-48 w-full rounded-lg" />
       </CardContent>
     </Card>
-  )
+  );
 }
 
 function AnalyticsJsonError({
@@ -32,10 +26,10 @@ function AnalyticsJsonError({
   onRetry,
   isRetrying,
 }: {
-  title: string
-  message: string
-  onRetry: () => void
-  isRetrying: boolean
+  title: string;
+  message: string;
+  onRetry: () => void;
+  isRetrying: boolean;
 }) {
   return (
     <Card className="border-destructive/30 bg-destructive/5">
@@ -56,15 +50,12 @@ function AnalyticsJsonError({
           disabled={isRetrying}
           className="w-full sm:w-auto"
         >
-          <RefreshCw
-            className={cn("mr-2 size-4", isRetrying && "animate-spin")}
-            aria-hidden
-          />
+          <RefreshCw className={cn('mr-2 size-4', isRetrying && 'animate-spin')} aria-hidden />
           Retry
         </Button>
       </CardContent>
     </Card>
-  )
+  );
 }
 
 export function AnalyticsJsonSection({
@@ -74,16 +65,16 @@ export function AnalyticsJsonSection({
   query,
   data: displayData,
 }: {
-  title: string
-  description: string
-  errorTitle: string
-  query: UseQueryResult<unknown, Error>
-  data?: unknown
+  title: string;
+  description: string;
+  errorTitle: string;
+  query: UseQueryResult<unknown, Error>;
+  data?: unknown;
 }) {
-  const { data, error, isError, isLoading, isFetching, refetch } = query
+  const { data, error, isError, isLoading, isFetching, refetch } = query;
 
   if (isLoading) {
-    return <AnalyticsJsonSkeleton />
+    return <AnalyticsJsonSkeleton />;
   }
 
   if (isError && data === undefined) {
@@ -94,15 +85,13 @@ export function AnalyticsJsonSection({
         onRetry={() => void refetch()}
         isRetrying={isFetching}
       />
-    )
+    );
   }
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="font-heading text-base font-semibold">
-          {title}
-        </CardTitle>
+        <CardTitle className="font-heading text-base font-semibold">{title}</CardTitle>
         <CardDescription>{description}</CardDescription>
       </CardHeader>
 
@@ -112,5 +101,5 @@ export function AnalyticsJsonSection({
         </pre>
       </CardContent>
     </Card>
-  )
+  );
 }

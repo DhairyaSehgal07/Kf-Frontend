@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react"
+import { useMemo, useState } from 'react';
 import {
   Ban,
   ChevronDown,
@@ -12,8 +12,8 @@ import {
   Truck,
   User,
   type LucideIcon,
-} from "lucide-react"
-import { toast } from "sonner"
+} from 'lucide-react';
+import { toast } from 'sonner';
 
 import {
   AlertDialog,
@@ -23,7 +23,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
+} from '@/components/ui/alert-dialog';
 import {
   Card,
   CardContent,
@@ -31,66 +31,55 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
-import { Skeleton } from "@/components/ui/skeleton"
-import { Textarea } from "@/components/ui/textarea"
-import type { DaybookOutgoingEntry } from "@/features/daybook/api/types"
-import { EditOutgoingGatePassSheet } from "@/features/outgoing/forms/edit-outgoing-form"
-import { useCancelOutgoingGatePass } from "@/features/outgoing/api/use-cancel-outgoing-gate-pass"
-import { nikasiAccent } from "@/features/dispatch-pre-storage/constants/nikasi-accent"
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Textarea } from '@/components/ui/textarea';
+import type { DaybookOutgoingEntry } from '@/features/daybook/api/types';
+import { EditOutgoingGatePassSheet } from '@/features/outgoing/forms/edit-outgoing-form';
+import { useCancelOutgoingGatePass } from '@/features/outgoing/api/use-cancel-outgoing-gate-pass';
+import { nikasiAccent } from '@/features/dispatch-pre-storage/constants/nikasi-accent';
 import {
   buildOutgoingBreakdownRows,
   formatDaybookDateTime,
   sumOutgoingBreakdownTotals,
   totalIssuedBags,
-} from "@/features/daybook/utils/daybook-display"
-import { cn } from "@/lib/utils"
+} from '@/features/daybook/utils/daybook-display';
+import { cn } from '@/lib/utils';
 
 interface InfoBlockProps {
-  label: string
-  value: string | number
-  icon?: LucideIcon
-  valueClassName?: string
+  label: string;
+  value: string | number;
+  icon?: LucideIcon;
+  valueClassName?: string;
 }
 
 function formatOptionalInt(value: number | undefined): string {
-  return value != null ? value.toLocaleString("en-IN") : "—"
+  return value != null ? value.toLocaleString('en-IN') : '—';
 }
 
-const InfoBlock = ({
-  label,
-  value,
-  icon: Icon,
-  valueClassName,
-}: InfoBlockProps) => (
+const InfoBlock = ({ label, value, icon: Icon, valueClassName }: InfoBlockProps) => (
   <div className="space-y-1.5">
     <span className="flex items-center gap-1.5 text-xs font-medium tracking-wider text-muted-foreground uppercase">
       {Icon && <Icon className="h-3.5 w-3.5" />}
       {label}
     </span>
-    <p className={cn("text-sm font-semibold text-foreground", valueClassName)}>
-      {value}
-    </p>
+    <p className={cn('text-sm font-semibold text-foreground', valueClassName)}>{value}</p>
   </div>
-)
+);
 
-function OutgoingDetailedBreakdown({
-  gatePass,
-}: {
-  gatePass: DaybookOutgoingEntry
-}) {
-  const rows = useMemo(() => buildOutgoingBreakdownRows(gatePass), [gatePass])
-  const totals = useMemo(() => sumOutgoingBreakdownTotals(rows), [rows])
+function OutgoingDetailedBreakdown({ gatePass }: { gatePass: DaybookOutgoingEntry }) {
+  const rows = useMemo(() => buildOutgoingBreakdownRows(gatePass), [gatePass]);
+  const totals = useMemo(() => sumOutgoingBreakdownTotals(rows), [rows]);
 
   if (rows.length === 0) {
     return (
       <p className="text-sm text-muted-foreground">
         No order lines recorded for this outgoing pass.
       </p>
-    )
+    );
   }
 
   return (
@@ -102,27 +91,13 @@ function OutgoingDetailedBreakdown({
         <table className="w-full min-w-[640px] caption-bottom text-sm">
           <thead className="border-b border-border/50 bg-muted/50">
             <tr>
-              <th className="h-10 px-3 text-left font-medium text-muted-foreground">
-                Type
-              </th>
-              <th className="h-10 px-3 text-left font-medium text-muted-foreground">
-                Variety
-              </th>
-              <th className="h-10 px-3 text-left font-medium text-muted-foreground">
-                Location
-              </th>
-              <th className="h-10 px-3 text-left font-medium text-muted-foreground">
-                Ref
-              </th>
-              <th className="h-10 px-3 text-right font-medium text-muted-foreground">
-                Avail
-              </th>
-              <th className="h-10 px-3 text-right font-medium text-muted-foreground">
-                Issued
-              </th>
-              <th className="h-10 px-3 text-right font-medium text-muted-foreground">
-                Rem
-              </th>
+              <th className="h-10 px-3 text-left font-medium text-muted-foreground">Type</th>
+              <th className="h-10 px-3 text-left font-medium text-muted-foreground">Variety</th>
+              <th className="h-10 px-3 text-left font-medium text-muted-foreground">Location</th>
+              <th className="h-10 px-3 text-left font-medium text-muted-foreground">Ref</th>
+              <th className="h-10 px-3 text-right font-medium text-muted-foreground">Avail</th>
+              <th className="h-10 px-3 text-right font-medium text-muted-foreground">Issued</th>
+              <th className="h-10 px-3 text-right font-medium text-muted-foreground">Rem</th>
             </tr>
           </thead>
           <tbody>
@@ -131,121 +106,109 @@ function OutgoingDetailedBreakdown({
                 key={`${row.type}-${row.location}-${index}`}
                 className="border-b border-border/40 transition-colors last:border-0 hover:bg-muted/30"
               >
-                <td className="px-3 py-2.5 font-medium text-foreground">
-                  {row.type}
-                </td>
+                <td className="px-3 py-2.5 font-medium text-foreground">{row.type}</td>
                 <td className="px-3 py-2.5 text-foreground">{row.variety}</td>
-                <td className="px-3 py-2.5 font-mono text-sm text-foreground">
-                  {row.location}
-                </td>
+                <td className="px-3 py-2.5 font-mono text-sm text-foreground">{row.location}</td>
                 <td className="px-3 py-2.5">
                   {row.refGatePassNo != null ? (
                     <span className="inline-flex items-center gap-1.5 font-mono text-sm tabular-nums text-foreground">
-                      <span className="h-2 w-2 shrink-0 rounded-full bg-primary" />
-                      #{row.refGatePassNo}
+                      <span className="h-2 w-2 shrink-0 rounded-full bg-primary" />#
+                      {row.refGatePassNo}
                     </span>
                   ) : (
-                    "—"
+                    '—'
                   )}
                 </td>
                 <td className="px-3 py-2.5 text-right font-medium tabular-nums text-foreground">
-                  {row.avail.toLocaleString("en-IN")}
+                  {row.avail.toLocaleString('en-IN')}
                 </td>
                 <td className="px-3 py-2.5 text-right font-medium tabular-nums text-destructive">
-                  {row.issued.toLocaleString("en-IN")}
+                  {row.issued.toLocaleString('en-IN')}
                 </td>
                 <td className="px-3 py-2.5 text-right font-medium tabular-nums text-primary">
-                  {row.rem.toLocaleString("en-IN")}
+                  {row.rem.toLocaleString('en-IN')}
                 </td>
               </tr>
             ))}
           </tbody>
           <tfoot className="border-t border-border/50 bg-muted/30">
             <tr>
-              <td
-                colSpan={4}
-                className="px-3 py-2.5 text-sm font-semibold text-destructive"
-              >
+              <td colSpan={4} className="px-3 py-2.5 text-sm font-semibold text-destructive">
                 Total
               </td>
               <td className="px-3 py-2.5 text-right text-sm font-semibold tabular-nums text-destructive">
-                {totals.avail.toLocaleString("en-IN")}
+                {totals.avail.toLocaleString('en-IN')}
               </td>
               <td className="px-3 py-2.5 text-right text-sm font-semibold tabular-nums text-destructive">
-                {totals.issued.toLocaleString("en-IN")}
+                {totals.issued.toLocaleString('en-IN')}
               </td>
               <td className="px-3 py-2.5 text-right text-sm font-semibold tabular-nums text-primary">
-                {totals.rem.toLocaleString("en-IN")}
+                {totals.rem.toLocaleString('en-IN')}
               </td>
             </tr>
           </tfoot>
         </table>
       </div>
     </div>
-  )
+  );
 }
 
 interface DaybookOutgoingGatePassCardProps {
-  data: DaybookOutgoingEntry
+  data: DaybookOutgoingEntry;
 }
 
-export function DaybookOutgoingGatePassCard({
-  data: gatePass,
-}: DaybookOutgoingGatePassCardProps) {
-  const [isExpanded, setIsExpanded] = useState(false)
-  const [editOpen, setEditOpen] = useState(false)
-  const [cancelOpen, setCancelOpen] = useState(false)
-  const [remarks, setRemarks] = useState("")
-  const [remarksError, setRemarksError] = useState<string | null>(null)
+export function DaybookOutgoingGatePassCard({ data: gatePass }: DaybookOutgoingGatePassCardProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [cancelOpen, setCancelOpen] = useState(false);
+  const [remarks, setRemarks] = useState('');
+  const [remarksError, setRemarksError] = useState<string | null>(null);
 
   const { mutateAsync: cancelOutgoingGatePass, isPending: isCancelling } =
-    useCancelOutgoingGatePass()
+    useCancelOutgoingGatePass();
 
-  const farmer = gatePass.farmerStorageLinkId.farmerId
-  const farmerStorageLink = gatePass.farmerStorageLinkId
-  const issuedBags = totalIssuedBags(gatePass)
-  const createdBy = gatePass.createdBy?.name ?? "—"
+  const farmer = gatePass.farmerStorageLinkId.farmerId;
+  const farmerStorageLink = gatePass.farmerStorageLinkId;
+  const issuedBags = totalIssuedBags(gatePass);
+  const createdBy = gatePass.createdBy?.name ?? '—';
 
   const handleCancelOpenChange = (open: boolean) => {
-    if (isCancelling) return
+    if (isCancelling) return;
 
-    setCancelOpen(open)
+    setCancelOpen(open);
 
     if (!open) {
-      setRemarks("")
-      setRemarksError(null)
+      setRemarks('');
+      setRemarksError(null);
     }
-  }
+  };
 
   const handleConfirmCancel = async () => {
-    const trimmedRemarks = remarks.trim()
+    const trimmedRemarks = remarks.trim();
 
     if (!trimmedRemarks) {
-      setRemarksError("Cancellation remarks are required")
-      return
+      setRemarksError('Cancellation remarks are required');
+      return;
     }
 
-    setRemarksError(null)
+    setRemarksError(null);
 
     try {
       const { message } = await cancelOutgoingGatePass({
         id: gatePass._id,
         cancellationRemarks: trimmedRemarks,
-      })
+      });
 
-      toast.success(message ?? "Outgoing gate pass cancelled successfully.", {
-        position: "bottom-right",
-      })
-      handleCancelOpenChange(false)
+      toast.success(message ?? 'Outgoing gate pass cancelled successfully.', {
+        position: 'bottom-right',
+      });
+      handleCancelOpenChange(false);
     } catch (error) {
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Failed to cancel outgoing gate pass",
-        { position: "bottom-right" },
-      )
+      toast.error(error instanceof Error ? error.message : 'Failed to cancel outgoing gate pass', {
+        position: 'bottom-right',
+      });
     }
-  }
+  };
 
   return (
     <Card className="card-hover overflow-hidden border-border/60">
@@ -253,14 +216,9 @@ export function DaybookOutgoingGatePassCard({
         <div className="space-y-1.5">
           <div className="flex flex-wrap items-center gap-3">
             <CardTitle className="flex items-center gap-2 text-lg">
-              <span className={cn("h-2 w-2 rounded-full", nikasiAccent.dot)} />
-              OGP{" "}
-              <span
-                className={cn(
-                  "font-mono tabular-nums",
-                  nikasiAccent.emphasis,
-                )}
-              >
+              <span className={cn('h-2 w-2 rounded-full', nikasiAccent.dot)} />
+              OGP{' '}
+              <span className={cn('font-mono tabular-nums', nikasiAccent.emphasis)}>
                 #{gatePass.gatePassNo}
               </span>
             </CardTitle>
@@ -279,32 +237,18 @@ export function DaybookOutgoingGatePassCard({
         </div>
 
         <div className="flex flex-wrap items-center justify-end gap-2">
-          <Badge
-            variant="outline"
-            className="bg-background text-xs"
-            title={gatePass.variety}
-          >
+          <Badge variant="outline" className="bg-background text-xs" title={gatePass.variety}>
             {gatePass.variety}
           </Badge>
           {gatePass.category?.trim() ? (
-            <Badge
-              variant="outline"
-              className="bg-background text-xs"
-              title={gatePass.category}
-            >
+            <Badge variant="outline" className="bg-background text-xs" title={gatePass.category}>
               {gatePass.category}
             </Badge>
           ) : null}
-          <Badge
-            variant="outline"
-            className="bg-background text-xs tabular-nums"
-          >
-            {issuedBags.toLocaleString("en-IN")} Bags issued
+          <Badge variant="outline" className="bg-background text-xs tabular-nums">
+            {issuedBags.toLocaleString('en-IN')} Bags issued
           </Badge>
-          <Badge
-            variant="outline"
-            className={cn("text-xs", nikasiAccent.booked)}
-          >
+          <Badge variant="outline" className={cn('text-xs', nikasiAccent.booked)}>
             Active
           </Badge>
         </div>
@@ -312,18 +256,14 @@ export function DaybookOutgoingGatePassCard({
 
       <CardContent className="pt-5">
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          <InfoBlock label="Farmer" value={farmer.name ?? "—"} icon={User} />
+          <InfoBlock label="Farmer" value={farmer.name ?? '—'} icon={User} />
           <InfoBlock
             label="Account"
-            value={farmerStorageLink.accountNumber ?? "—"}
+            value={farmerStorageLink.accountNumber ?? '—'}
             valueClassName="tabular-nums"
           />
-          <InfoBlock
-            label="From"
-            value={gatePass.from || "—"}
-            icon={Truck}
-          />
-          <InfoBlock label="To" value={gatePass.to || "—"} />
+          <InfoBlock label="From" value={gatePass.from || '—'} icon={Truck} />
+          <InfoBlock label="To" value={gatePass.to || '—'} />
         </div>
 
         <div className="mt-6 grid grid-cols-2 gap-6 sm:grid-cols-4">
@@ -359,56 +299,43 @@ export function DaybookOutgoingGatePassCard({
               <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                 <div>
                   <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
-                    <User className={cn("h-4 w-4", nikasiAccent.icon)} />
+                    <User className={cn('h-4 w-4', nikasiAccent.icon)} />
                     Farmer information
                   </h4>
                   <div className="grid grid-cols-2 gap-4 rounded-xl border border-border/50 bg-muted/20 p-4">
-                    <InfoBlock label="Name" value={farmer.name ?? "—"} />
-                    <InfoBlock
-                      label="Mobile"
-                      value={farmer.mobileNumber ?? "—"}
-                    />
+                    <InfoBlock label="Name" value={farmer.name ?? '—'} />
+                    <InfoBlock label="Mobile" value={farmer.mobileNumber ?? '—'} />
                     <div className="col-span-2">
-                      <InfoBlock
-                        label="Address"
-                        value={farmer.address ?? "—"}
-                      />
+                      <InfoBlock label="Address" value={farmer.address ?? '—'} />
                     </div>
                   </div>
                 </div>
 
                 <div>
                   <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
-                    <Truck className={cn("h-4 w-4", nikasiAccent.icon)} />
+                    <Truck className={cn('h-4 w-4', nikasiAccent.icon)} />
                     Route &amp; vehicle
                   </h4>
                   <div className="grid grid-cols-2 gap-4 rounded-xl border border-border/50 bg-muted/20 p-4">
-                    <InfoBlock label="From" value={gatePass.from || "—"} />
-                    <InfoBlock label="To" value={gatePass.to || "—"} />
+                    <InfoBlock label="From" value={gatePass.from || '—'} />
+                    <InfoBlock label="To" value={gatePass.to || '—'} />
                     <InfoBlock
                       label="Truck"
-                      value={gatePass.truckNumber || "—"}
+                      value={gatePass.truckNumber || '—'}
                       valueClassName="font-mono uppercase"
                     />
-                    <InfoBlock
-                      label="Variety"
-                      value={gatePass.variety}
-                      icon={Sprout}
-                    />
+                    <InfoBlock label="Variety" value={gatePass.variety} icon={Sprout} />
                   </div>
                 </div>
               </div>
 
               <div>
                 <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
-                  <Receipt className={cn("h-4 w-4", nikasiAccent.icon)} />
+                  <Receipt className={cn('h-4 w-4', nikasiAccent.icon)} />
                   Billing &amp; bilti
                 </h4>
                 <div className="grid grid-cols-2 gap-4 rounded-xl border border-border/50 bg-muted/20 p-4 sm:grid-cols-3 lg:grid-cols-5">
-                  <InfoBlock
-                    label="Category"
-                    value={gatePass.category?.trim() || "—"}
-                  />
+                  <InfoBlock label="Category" value={gatePass.category?.trim() || '—'} />
                   <InfoBlock
                     label="Bill no."
                     value={formatOptionalInt(gatePass.billNumber)}
@@ -435,7 +362,7 @@ export function DaybookOutgoingGatePassCard({
               {gatePass.remarks?.trim() ? (
                 <div>
                   <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
-                    <FileText className={cn("h-4 w-4", nikasiAccent.icon)} />
+                    <FileText className={cn('h-4 w-4', nikasiAccent.icon)} />
                     Remarks
                   </h4>
                   <div className="rounded-xl border border-border/50 bg-muted/20 p-4">
@@ -501,21 +428,15 @@ export function DaybookOutgoingGatePassCard({
         </div>
       </CardFooter>
 
-      <EditOutgoingGatePassSheet
-        open={editOpen}
-        onOpenChange={setEditOpen}
-        gatePass={gatePass}
-      />
+      <EditOutgoingGatePassSheet open={editOpen} onOpenChange={setEditOpen} gatePass={gatePass} />
 
       <AlertDialog open={cancelOpen} onOpenChange={handleCancelOpenChange}>
         <AlertDialogContent className="sm:max-w-lg">
           <AlertDialogHeader className="sm:text-left">
-            <AlertDialogTitle>
-              Mark OGP #{gatePass.gatePassNo} as null?
-            </AlertDialogTitle>
+            <AlertDialogTitle>Mark OGP #{gatePass.gatePassNo} as null?</AlertDialogTitle>
             <AlertDialogDescription>
-              Stock on linked storage gate passes will be restored. This pass
-              will be removed from the daybook.
+              Stock on linked storage gate passes will be restored. This pass will be removed from
+              the daybook.
             </AlertDialogDescription>
           </AlertDialogHeader>
 
@@ -530,38 +451,32 @@ export function DaybookOutgoingGatePassCard({
               id={`cancel-remarks-${gatePass._id}`}
               value={remarks}
               onChange={(event) => {
-                setRemarks(event.target.value)
-                if (remarksError) setRemarksError(null)
+                setRemarks(event.target.value);
+                if (remarksError) setRemarksError(null);
               }}
               placeholder="e.g. Issued in error — wrong truck and quantity"
               className="min-h-[88px] resize-y text-base"
               aria-invalid={remarksError != null}
               disabled={isCancelling}
             />
-            {remarksError ? (
-              <p className="text-sm text-destructive">{remarksError}</p>
-            ) : null}
+            {remarksError ? <p className="text-sm text-destructive">{remarksError}</p> : null}
           </div>
 
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isCancelling}>
-              Keep active
-            </AlertDialogCancel>
+            <AlertDialogCancel disabled={isCancelling}>Keep active</AlertDialogCancel>
             <Button
               variant="destructive"
               disabled={!remarks.trim() || isCancelling}
               onClick={() => void handleConfirmCancel()}
             >
-              {isCancelling ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : null}
+              {isCancelling ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               Mark as null
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </Card>
-  )
+  );
 }
 
 export function DaybookOutgoingGatePassCardSkeleton() {
@@ -607,5 +522,5 @@ export function DaybookOutgoingGatePassCardSkeleton() {
         </div>
       </CardFooter>
     </Card>
-  )
+  );
 }

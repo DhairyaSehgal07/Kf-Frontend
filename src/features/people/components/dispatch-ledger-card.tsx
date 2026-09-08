@@ -1,4 +1,4 @@
-import { BookOpen, CalendarClock, MapPin, Phone } from "lucide-react"
+import { BookOpen, CalendarClock, MapPin, Phone } from 'lucide-react';
 
 import {
   Card,
@@ -7,34 +7,34 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
-import { Skeleton } from "@/components/ui/skeleton"
-import { cn } from "@/lib/utils"
+} from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
 
-import type { DispatchLedger } from "../types"
+import type { DispatchLedger } from '../types';
 
 type DispatchLedgerCardProps = {
-  ledger: DispatchLedger
-}
+  ledger: DispatchLedger;
+};
 
-const dateFormatter = new Intl.DateTimeFormat("en-IN", {
-  day: "2-digit",
-  month: "short",
-  year: "numeric",
-})
+const dateFormatter = new Intl.DateTimeFormat('en-IN', {
+  day: '2-digit',
+  month: 'short',
+  year: 'numeric',
+});
 
 function formatCreatedAt(createdAt?: string) {
-  if (!createdAt) return "Date not available"
+  if (!createdAt) return 'Date not available';
 
-  const date = new Date(createdAt)
-  if (Number.isNaN(date.getTime())) return "Date not available"
+  const date = new Date(createdAt);
+  if (Number.isNaN(date.getTime())) return 'Date not available';
 
-  return `Added ${dateFormatter.format(date)}`
+  return `Added ${dateFormatter.format(date)}`;
 }
 
 export function DispatchLedgerCard({ ledger }: DispatchLedgerCardProps) {
   return (
-    <Card size="sm" className={cn("card-hover gap-0")}>
+    <Card size="sm" className={cn('card-hover gap-0')}>
       <CardHeader className="pb-2">
         <CardTitle className="truncate" title={ledger.name}>
           {ledger.name}
@@ -51,10 +51,7 @@ export function DispatchLedgerCard({ ledger }: DispatchLedgerCardProps) {
       <CardContent className="flex flex-col gap-2.5">
         {ledger.mobileNumber ? (
           <p className="flex items-center gap-2 text-sm text-foreground">
-            <Phone
-              className="size-3.5 shrink-0 text-muted-foreground"
-              aria-hidden
-            />
+            <Phone className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
             <span className="tabular-nums">{ledger.mobileNumber}</span>
           </p>
         ) : (
@@ -65,25 +62,22 @@ export function DispatchLedgerCard({ ledger }: DispatchLedgerCardProps) {
         )}
 
         <p className="flex items-start gap-2 text-xs leading-relaxed text-muted-foreground">
-          <MapPin
-            className="mt-0.5 size-3.5 shrink-0 text-muted-foreground"
-            aria-hidden
-          />
+          <MapPin className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" aria-hidden />
           <span className="line-clamp-2" title={ledger.address}>
             {ledger.address}
           </span>
         </p>
       </CardContent>
     </Card>
-  )
+  );
 }
 
 function DispatchLedgerIcon() {
   return (
     <div
       className={cn(
-        "flex size-9 items-center justify-center rounded-xl bg-primary/10",
-        "transition-colors duration-200 group-hover/card:bg-primary/15",
+        'flex size-9 items-center justify-center rounded-xl bg-primary/10',
+        'transition-colors duration-200 group-hover/card:bg-primary/15',
       )}
     >
       <BookOpen
@@ -91,7 +85,7 @@ function DispatchLedgerIcon() {
         aria-hidden
       />
     </div>
-  )
+  );
 }
 
 export function DispatchLedgerCardSkeleton() {
@@ -106,5 +100,5 @@ export function DispatchLedgerCardSkeleton() {
         <Skeleton className="h-8 w-full" />
       </CardContent>
     </Card>
-  )
+  );
 }

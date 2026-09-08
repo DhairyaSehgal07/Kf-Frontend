@@ -90,7 +90,9 @@ function isAdvancedReportGlobalFilter(value: unknown): value is AdvancedReportGl
 }
 
 function normalizeText(value: unknown): string {
-  return String(value ?? '').trim().toLowerCase();
+  return String(value ?? '')
+    .trim()
+    .toLowerCase();
 }
 
 function getAdvancedFilterRowValue(
@@ -128,7 +130,9 @@ function evaluateCondition(
     const rowNumber = parseReportNumber(rawValue);
     const filterNumber = parseReportNumber(filterValue);
     if (rowNumber == null || filterNumber == null) return false;
-    return condition.operator === 'equals' ? rowNumber === filterNumber : rowNumber !== filterNumber;
+    return condition.operator === 'equals'
+      ? rowNumber === filterNumber
+      : rowNumber !== filterNumber;
   }
 
   switch (condition.operator) {

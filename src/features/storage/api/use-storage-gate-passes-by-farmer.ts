@@ -3,18 +3,15 @@ import {
   queryOptions,
   useQuery,
   type UseQueryOptions,
-} from "@tanstack/react-query"
+} from '@tanstack/react-query';
 
-import { getStorageGatePassesByFarmer } from "./get-storage-gate-passes-by-farmer"
-import { storageGatePassKeys } from "./query-keys"
-import type {
-  StorageGatePassesByFarmerParams,
-  StorageGatePassesByFarmerResult,
-} from "./types"
+import { getStorageGatePassesByFarmer } from './get-storage-gate-passes-by-farmer';
+import { storageGatePassKeys } from './query-keys';
+import type { StorageGatePassesByFarmerParams, StorageGatePassesByFarmerResult } from './types';
 
 const DEFAULT_PARAMS: StorageGatePassesByFarmerParams = {
-  sortOrder: "desc",
-}
+  sortOrder: 'desc',
+};
 
 export function storageGatePassesByFarmerQueryOptions(
   farmerStorageLinkId: string,
@@ -25,7 +22,7 @@ export function storageGatePassesByFarmerQueryOptions(
     queryFn: () => getStorageGatePassesByFarmer(farmerStorageLinkId, params),
     placeholderData: keepPreviousData,
     enabled: farmerStorageLinkId.trim().length > 0,
-  })
+  });
 }
 
 type UseStorageGatePassesByFarmerOptions = Omit<
@@ -35,8 +32,8 @@ type UseStorageGatePassesByFarmerOptions = Omit<
     StorageGatePassesByFarmerResult,
     ReturnType<typeof storageGatePassKeys.byFarmer>
   >,
-  "queryKey" | "queryFn" | "placeholderData"
->
+  'queryKey' | 'queryFn' | 'placeholderData'
+>;
 
 export function useStorageGatePassesByFarmer(
   farmerStorageLinkId: string,
@@ -46,5 +43,5 @@ export function useStorageGatePassesByFarmer(
   return useQuery({
     ...storageGatePassesByFarmerQueryOptions(farmerStorageLinkId, params),
     ...options,
-  })
+  });
 }

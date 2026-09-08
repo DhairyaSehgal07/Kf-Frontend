@@ -1,9 +1,7 @@
-import type { DaybookStorageEntry } from "@/features/daybook/api/types"
-import type { StorageGatePass } from "@/features/storage/api/types"
+import type { DaybookStorageEntry } from '@/features/daybook/api/types';
+import type { StorageGatePass } from '@/features/storage/api/types';
 
-export function daybookStorageEntryToGatePass(
-  entry: DaybookStorageEntry,
-): StorageGatePass {
+export function daybookStorageEntryToGatePass(entry: DaybookStorageEntry): StorageGatePass {
   return {
     _id: entry._id,
     gatePassNo: entry.gatePassNo,
@@ -17,5 +15,5 @@ export function daybookStorageEntryToGatePass(
     farmerStorageLinkId: entry.farmerStorageLinkId,
     createdBy: entry.createdBy,
     createdAt: entry.createdAt,
-  }
+  };
 }

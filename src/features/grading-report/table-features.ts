@@ -1,9 +1,9 @@
-import { createReportTableFeatures } from "@/lib/tanstack-table/report-table-features"
-import { selectedValuesFilterFn } from "@/features/grading-report/utils/report-filter-fns"
+import { createReportTableFeatures } from '@/lib/tanstack-table/report-table-features';
+import { selectedValuesFilterFn } from '@/features/grading-report/utils/report-filter-fns';
 import {
   reportDateSortingFn,
   reportNumericSortingFn,
-} from "@/features/grading-report/utils/report-sorting-fns"
+} from '@/features/grading-report/utils/report-sorting-fns';
 
 export const gradingReportTableFeatures = createReportTableFeatures({
   filterFns: {
@@ -13,4 +13,4 @@ export const gradingReportTableFeatures = createReportTableFeatures({
     reportNumeric: reportNumericSortingFn,
     reportDate: reportDateSortingFn,
   },
-})
+});

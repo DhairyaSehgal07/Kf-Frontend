@@ -37,7 +37,9 @@ function renderTotalValue(
         options?.emphasize && 'font-bold',
       )}
     >
-      {options?.average ? <span className="text-muted-foreground mr-1 font-medium">Avg</span> : null}
+      {options?.average ? (
+        <span className="text-muted-foreground mr-1 font-medium">Avg</span>
+      ) : null}
       {formatTotalValue(value, format)}
       {options?.suffix ? (
         <span className="text-muted-foreground font-medium">{options.suffix}</span>
@@ -84,7 +86,10 @@ export function getGradingReportFooterContent(
   rows: readonly Row<ReportFeatures, GradingGatePassReportRow>[],
 ) {
   if (columnId.startsWith('size-')) {
-    return renderTotalValue(sumOrderDetailSizeQuantity(rows, columnId.replace(/^size-/, '')), 'integer');
+    return renderTotalValue(
+      sumOrderDetailSizeQuantity(rows, columnId.replace(/^size-/, '')),
+      'integer',
+    );
   }
 
   switch (columnId) {

@@ -1,14 +1,14 @@
-import { create } from "zustand"
-import { persist } from "zustand/middleware"
-import type { AuthUser, ColdStorage } from "../types"
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
+import type { AuthUser, ColdStorage } from '../types';
 
 interface AuthState {
-  user: AuthUser | null
-  accessToken: string | null
-  setAuth: (user: AuthUser, token: string) => void
-  clearAuth: () => void
-  isAuthenticated: () => boolean
-  getColdStorage: () => ColdStorage | null
+  user: AuthUser | null;
+  accessToken: string | null;
+  setAuth: (user: AuthUser, token: string) => void;
+  clearAuth: () => void;
+  isAuthenticated: () => boolean;
+  getColdStorage: () => ColdStorage | null;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -23,7 +23,7 @@ export const useAuthStore = create<AuthState>()(
       getColdStorage: () => get().user?.coldStorageId ?? null,
     }),
     {
-      name: "auth-storage", // persists to localStorage
-    }
-  )
-)
+      name: 'auth-storage', // persists to localStorage
+    },
+  ),
+);

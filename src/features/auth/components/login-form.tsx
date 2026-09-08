@@ -12,21 +12,13 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import {
-  Field,
-  FieldDescription,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-} from '@/components/ui/field';
+import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { env } from '@/lib/env';
 import { useLogin } from '../api/use-login';
 
 const formSchema = z.object({
-  mobileNumber: z
-    .string()
-    .regex(/^[6-9]\d{9}$/, 'Enter a valid Indian mobile number'),
+  mobileNumber: z.string().regex(/^[6-9]\d{9}$/, 'Enter a valid Indian mobile number'),
   password: z.string().min(6, 'Password must be at least 6 characters long'),
 });
 
@@ -47,10 +39,9 @@ export function LoginForm() {
         const { message } = await login(value);
         toast.success(message, { position: 'bottom-right' });
       } catch (error) {
-        toast.error(
-          error instanceof Error ? error.message : 'Login failed',
-          { position: 'bottom-right' },
-        );
+        toast.error(error instanceof Error ? error.message : 'Login failed', {
+          position: 'bottom-right',
+        });
       }
     },
   });
@@ -59,9 +50,7 @@ export function LoginForm() {
     <div className="flex min-h-screen w-full items-center justify-center bg-background px-4 py-8">
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle className="text-2xl font-semibold tracking-tight">
-            Account Access
-          </CardTitle>
+          <CardTitle className="text-2xl font-semibold tracking-tight">Account Access</CardTitle>
           <CardDescription>
             Sign in to {env.appName} with your mobile number and password.
           </CardDescription>
@@ -80,9 +69,7 @@ export function LoginForm() {
               <form.Field name="mobileNumber">
                 {(field) => (
                   <Field>
-                    <FieldLabel htmlFor={field.name}>
-                      Mobile Number
-                    </FieldLabel>
+                    <FieldLabel htmlFor={field.name}>Mobile Number</FieldLabel>
                     <Input
                       id={field.name}
                       name={field.name}
@@ -96,14 +83,10 @@ export function LoginForm() {
                       autoComplete="tel"
                     />
                     {field.state.meta.errors.length === 0 && (
-                       <FieldDescription>
-                         Enter your 10-digit Indian mobile number.
-                       </FieldDescription>
+                      <FieldDescription>Enter your 10-digit Indian mobile number.</FieldDescription>
                     )}
                     {field.state.meta.errors.length > 0 && (
-                      <FieldError>
-                        {field.state.meta.errors[0]?.message}
-                      </FieldError>
+                      <FieldError>{field.state.meta.errors[0]?.message}</FieldError>
                     )}
                   </Field>
                 )}
@@ -113,9 +96,7 @@ export function LoginForm() {
                 {(field) => (
                   <Field>
                     <div className="flex items-center justify-between">
-                      <FieldLabel htmlFor={field.name}>
-                        Password
-                      </FieldLabel>
+                      <FieldLabel htmlFor={field.name}>Password</FieldLabel>
                       <a
                         href="/forgot-password"
                         className="text-sm font-medium text-primary hover:underline"
@@ -142,17 +123,17 @@ export function LoginForm() {
                         size="icon"
                         className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent text-muted-foreground"
                         onClick={() => setShowPassword((prev) => !prev)}
-                        aria-label={
-                          showPassword ? 'Hide password' : 'Show password'
-                        }
+                        aria-label={showPassword ? 'Hide password' : 'Show password'}
                       >
-                        {showPassword ? <EyeOffIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
+                        {showPassword ? (
+                          <EyeOffIcon className="h-4 w-4" />
+                        ) : (
+                          <EyeIcon className="h-4 w-4" />
+                        )}
                       </Button>
                     </div>
                     {field.state.meta.errors.length > 0 && (
-                      <FieldError>
-                        {field.state.meta.errors[0]?.message}
-                      </FieldError>
+                      <FieldError>{field.state.meta.errors[0]?.message}</FieldError>
                     )}
                   </Field>
                 )}
@@ -162,11 +143,7 @@ export function LoginForm() {
             <div className="pt-2">
               <form.Subscribe selector={(state) => state.canSubmit}>
                 {(canSubmit) => (
-                  <Button
-                    type="submit"
-                    disabled={!canSubmit || isPending}
-                    className="w-full"
-                  >
+                  <Button type="submit" disabled={!canSubmit || isPending} className="w-full">
                     {isPending ? (
                       'Authenticating…'
                     ) : (
@@ -185,10 +162,7 @@ export function LoginForm() {
         <CardFooter className="flex justify-center">
           <p className="text-sm text-muted-foreground">
             Don&apos;t have an account?{' '}
-            <a
-              href="/register"
-              className="font-medium text-primary hover:underline"
-            >
+            <a href="/register" className="font-medium text-primary hover:underline">
               Sign up
             </a>
           </p>

@@ -5,8 +5,7 @@ import { AuthenticatedLayout } from './_authenticated/-layout';
 export const Route = createFileRoute('/_authenticated')({
   beforeLoad: ({ context, location }) => {
     const isAuthenticated =
-      context.auth.isAuthenticated ||
-      useAuthStore.getState().isAuthenticated();
+      context.auth.isAuthenticated || useAuthStore.getState().isAuthenticated();
 
     if (!isAuthenticated) {
       throw redirect({

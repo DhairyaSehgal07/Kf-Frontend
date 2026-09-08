@@ -1,12 +1,6 @@
-import { Link } from '@tanstack/react-router'
-import { ArrowRight, Thermometer } from 'lucide-react'
-import {
-  Card,
-  CardAction,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
+import { Link } from '@tanstack/react-router';
+import { ArrowRight, Thermometer } from 'lucide-react';
+import { Card, CardAction, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 export function AdditionalPage() {
   return (
@@ -31,12 +25,8 @@ export function AdditionalPage() {
               <div className="mb-2 flex size-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
                 <Thermometer className="size-5" aria-hidden="true" />
               </div>
-              <CardTitle className="text-base font-semibold text-foreground">
-                Temperature
-              </CardTitle>
-              <CardDescription>
-                Record and review chamber temperature readings.
-              </CardDescription>
+              <CardTitle className="text-base font-semibold text-foreground">Temperature</CardTitle>
+              <CardDescription>Record and review chamber temperature readings.</CardDescription>
               <CardAction>
                 <ArrowRight
                   className="size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5"
@@ -48,5 +38,5 @@ export function AdditionalPage() {
         </Link>
       </div>
     </main>
-  )
+  );
 }

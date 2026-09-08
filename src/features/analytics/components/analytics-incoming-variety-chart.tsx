@@ -1,64 +1,51 @@
-import { useMemo } from "react"
-import type { UseQueryResult } from "@tanstack/react-query"
-import { AlertCircle, PieChart as PieChartIcon, RefreshCw } from "lucide-react"
-import { Cell, Pie, PieChart } from "recharts"
+import { useMemo } from 'react';
+import type { UseQueryResult } from '@tanstack/react-query';
+import { AlertCircle, PieChart as PieChartIcon, RefreshCw } from 'lucide-react';
+import { Cell, Pie, PieChart } from 'recharts';
 
-import { Button } from "@/components/ui/button"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart"
-import { Skeleton } from "@/components/ui/skeleton"
-import { cn } from "@/lib/utils"
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
 
-import type { VarietyDistributionData } from "../api/get-variety-distribution"
-import {
-  buildAnalyticsChartConfig,
-  getAnalyticsChartColor,
-} from "../lib/chart-palette"
+import type { VarietyDistributionData } from '../api/get-variety-distribution';
+import { buildAnalyticsChartConfig, getAnalyticsChartColor } from '../lib/chart-palette';
 
-const bagFormatter = new Intl.NumberFormat("en-IN", {
+const bagFormatter = new Intl.NumberFormat('en-IN', {
   maximumFractionDigits: 0,
-})
+});
 
 type VarietySlice = {
-  name: string
-  value: number
-  fill: string
-  percentage: number
-}
+  name: string;
+  value: number;
+  fill: string;
+  percentage: number;
+};
 
 export function AnalyticsIncomingVarietyChart({
   query,
 }: {
-  query: UseQueryResult<VarietyDistributionData, Error>
+  query: UseQueryResult<VarietyDistributionData, Error>;
 }) {
-  const { data, error, isError, isLoading, isFetching, refetch } = query
+  const { data, error, isError, isLoading, isFetching, refetch } = query;
 
   const { pieData, chartConfig } = useMemo(() => {
-    const raw = data?.chartData ?? []
-    const total = raw.reduce((sum, item) => sum + item.value, 0)
+    const raw = data?.chartData ?? [];
+    const total = raw.reduce((sum, item) => sum + item.value, 0);
     const slices: VarietySlice[] = raw.map((item, index) => ({
       name: item.name,
       value: item.value,
       fill: getAnalyticsChartColor(index),
       percentage: total > 0 ? (item.value / total) * 100 : 0,
-    }))
+    }));
 
     const chartConfig = buildAnalyticsChartConfig(
       slices.map((slice) => ({ key: slice.name, label: slice.name })),
-    )
+    );
 
-    return { pieData: slices, chartConfig }
-  }, [data?.chartData])
+    return { pieData: slices, chartConfig };
+  }, [data?.chartData]);
 
   if (isLoading) {
     return (
@@ -71,7 +58,7 @@ export function AnalyticsIncomingVarietyChart({
           <Skeleton className="min-h-[220px] w-full rounded-lg sm:min-h-[280px]" />
         </CardContent>
       </Card>
-    )
+    );
   }
 
   if (isError && data === undefined) {
@@ -93,15 +80,12 @@ export function AnalyticsIncomingVarietyChart({
             disabled={isFetching}
             className="w-full sm:w-auto"
           >
-            <RefreshCw
-              className={cn("mr-2 size-4", isFetching && "animate-spin")}
-              aria-hidden
-            />
+            <RefreshCw className={cn('mr-2 size-4', isFetching && 'animate-spin')} aria-hidden />
             Retry
           </Button>
         </CardContent>
       </Card>
-    )
+    );
   }
 
   return (
@@ -132,9 +116,7 @@ export function AnalyticsIncomingVarietyChart({
                   content={
                     <ChartTooltipContent
                       nameKey="name"
-                      formatter={(value) =>
-                        `${bagFormatter.format(Number(value))} bags`
-                      }
+                      formatter={(value) => `${bagFormatter.format(Number(value))} bags`}
                     />
                   }
                 />
@@ -148,10 +130,8 @@ export function AnalyticsIncomingVarietyChart({
                   outerRadius="82%"
                   paddingAngle={2}
                   cornerRadius={4}
-                  label={({ name, percent }) =>
-                    `${name}: ${((percent ?? 0) * 100).toFixed(1)}%`
-                  }
-                  labelLine={{ stroke: "var(--border)", strokeWidth: 1 }}
+                  label={({ name, percent }) => `${name}: ${((percent ?? 0) * 100).toFixed(1)}%`}
+                  labelLine={{ stroke: 'var(--border)', strokeWidth: 1 }}
                 >
                   {pieData.map((entry) => (
                     <Cell
@@ -175,10 +155,9 @@ export function AnalyticsIncomingVarietyChart({
                   />
                   <span className="min-w-0 text-foreground">
                     <span className="font-medium">{item.name}</span>
-                    {": "}
+                    {': '}
                     <span className="tabular-nums">
-                      {bagFormatter.format(item.value)} bags (
-                      {item.percentage.toFixed(1)}%)
+                      {bagFormatter.format(item.value)} bags ({item.percentage.toFixed(1)}%)
                     </span>
                   </span>
                 </li>
@@ -188,5 +167,5 @@ export function AnalyticsIncomingVarietyChart({
         )}
       </CardContent>
     </Card>
-  )
+  );
 }

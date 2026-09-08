@@ -11,8 +11,7 @@ export const Route = createFileRoute('/')({
   validateSearch: loginSearchSchema,
   beforeLoad: ({ context, search }) => {
     const isAuthenticated =
-      context.auth.isAuthenticated ||
-      useAuthStore.getState().isAuthenticated();
+      context.auth.isAuthenticated || useAuthStore.getState().isAuthenticated();
 
     if (!isAuthenticated) return;
 

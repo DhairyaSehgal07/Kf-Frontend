@@ -44,10 +44,7 @@ const WEIGHT_COLUMNS = new Set<string>([
 
 const PERCENTAGE_COLUMNS = new Set(['wastagePercentage']);
 
-const SUMMABLE_INTEGER_COLUMNS = new Set([
-  'incomingBagsReceived',
-  'totalBags',
-]);
+const SUMMABLE_INTEGER_COLUMNS = new Set(['incomingBagsReceived', 'totalBags']);
 
 const SUMMABLE_WEIGHT_COLUMNS = new Set([
   'incomingGatePassNetWeightKg',
@@ -125,9 +122,7 @@ function formatDisplayValue(
   return String(value);
 }
 
-function formatOrderDetailText(
-  detail: GradingGatePassReportRow['orderDetails'][number],
-): string {
+function formatOrderDetailText(detail: GradingGatePassReportRow['orderDetails'][number]): string {
   return `${detail.quantity.toLocaleString('en-IN')} bags - ${detail.bagType} (${detail.weightPerBagKg.toLocaleString(
     'en-IN',
     { maximumFractionDigits: 3 },
@@ -154,13 +149,9 @@ function getIncomingGatePassValue(
         : { kind: 'number', value: parsed, format: 'integer' };
     }
     case 'incomingStage':
-      return gatePass.stage
-        ? { kind: 'text', value: gatePass.stage }
-        : { kind: 'empty' };
+      return gatePass.stage ? { kind: 'text', value: gatePass.stage } : { kind: 'empty' };
     case 'incomingCategory':
-      return gatePass.category
-        ? { kind: 'text', value: gatePass.category }
-        : { kind: 'empty' };
+      return gatePass.category ? { kind: 'text', value: gatePass.category } : { kind: 'empty' };
     case 'incomingGatePassNetWeightKg': {
       const parsed = parseReportNumber(gatePass.netWeightKg);
       return parsed == null
@@ -211,9 +202,7 @@ export function formatExportCellValue(
 
   if (WEIGHT_COLUMNS.has(columnId)) {
     const parsed = parseReportNumber(rawValue);
-    return parsed == null
-      ? { kind: 'empty' }
-      : { kind: 'number', value: parsed, format: 'weight' };
+    return parsed == null ? { kind: 'empty' } : { kind: 'number', value: parsed, format: 'weight' };
   }
 
   if (PERCENTAGE_COLUMNS.has(columnId)) {
@@ -325,7 +314,9 @@ export function collectGradingExportLines(
   return lines;
 }
 
-export function getFilteredLeafRowCount(table: Table<ReportFeatures, GradingGatePassReportRow>): number {
+export function getFilteredLeafRowCount(
+  table: Table<ReportFeatures, GradingGatePassReportRow>,
+): number {
   return table.getFilteredRowModel().flatRows.length;
 }
 
@@ -347,7 +338,9 @@ function formatConditionLabel(
   return `${columnLabel} ${operatorLabel} "${value}"`;
 }
 
-function formatColumnFilterSummary(table: Table<ReportFeatures, GradingGatePassReportRow>): string[] {
+function formatColumnFilterSummary(
+  table: Table<ReportFeatures, GradingGatePassReportRow>,
+): string[] {
   const summaries: string[] = [];
 
   for (const filter of table.store.state.columnFilters) {
@@ -398,7 +391,9 @@ function formatAdvancedFilterSummary(
   return summaries;
 }
 
-function formatGroupingSummary(table: Table<ReportFeatures, GradingGatePassReportRow>): string | null {
+function formatGroupingSummary(
+  table: Table<ReportFeatures, GradingGatePassReportRow>,
+): string | null {
   const grouping = table.store.state.grouping;
   if (grouping.length === 0) return null;
 
@@ -412,7 +407,9 @@ function formatGroupingSummary(table: Table<ReportFeatures, GradingGatePassRepor
   return `Grouped by: ${labels}`;
 }
 
-function formatSortingSummary(table: Table<ReportFeatures, GradingGatePassReportRow>): string | null {
+function formatSortingSummary(
+  table: Table<ReportFeatures, GradingGatePassReportRow>,
+): string | null {
   const sorting = table.store.state.sorting;
   if (sorting.length === 0) return null;
 
@@ -427,14 +424,14 @@ function formatSortingSummary(table: Table<ReportFeatures, GradingGatePassReport
   return `Sorted by: ${labels}`;
 }
 
-export function buildFilterSummaryLines(table: Table<ReportFeatures, GradingGatePassReportRow>): string[] {
+export function buildFilterSummaryLines(
+  table: Table<ReportFeatures, GradingGatePassReportRow>,
+): string[] {
   const globalFilter = table.store.state.globalFilter;
 
   const lines = [
     ...formatColumnFilterSummary(table),
-    ...(typeof globalFilter === 'object' &&
-    globalFilter != null &&
-    'conditions' in globalFilter
+    ...(typeof globalFilter === 'object' && globalFilter != null && 'conditions' in globalFilter
       ? formatAdvancedFilterSummary(table, globalFilter as AdvancedReportGlobalFilter)
       : []),
   ];

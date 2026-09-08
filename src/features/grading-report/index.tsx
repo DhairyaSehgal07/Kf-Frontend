@@ -47,8 +47,10 @@ const GradingReportPage = () => {
   const [fromDate, setFromDate] = useState<Date | undefined>();
   const [toDate, setToDate] = useState<Date | undefined>();
   const [searchQuery, setSearchQuery] = useState('');
-  const [reportTable, setReportTable] =
-    useState<TanStackTable<ReportFeatures, GradingGatePassReportRow> | null>(null);
+  const [reportTable, setReportTable] = useState<TanStackTable<
+    ReportFeatures,
+    GradingGatePassReportRow
+  > | null>(null);
   const [appliedParams, setAppliedParams] = useState<GradingGatePassReportParams>(
     DEFAULT_GRADING_REPORT_PARAMS,
   );
@@ -81,47 +83,47 @@ const GradingReportPage = () => {
   );
   const tableColumns = useMemo(() => getGradingReportColumns(reportRows), [reportRows]);
   const rowCount = reportRows.length;
-  const reportTotals = useMemo(
-    () => {
-      const wastageValues: number[] = [];
-      const wastagePercentageValues: number[] = [];
-      const totals = reportRows.reduce(
-        (totals, gatePass) => {
-          gatePass.orderDetails.forEach((detail) => {
-            totals.gradingBags += detail.quantity;
-          });
+  const reportTotals = useMemo(() => {
+    const wastageValues: number[] = [];
+    const wastagePercentageValues: number[] = [];
+    const totals = reportRows.reduce(
+      (totals, gatePass) => {
+        gatePass.orderDetails.forEach((detail) => {
+          totals.gradingBags += detail.quantity;
+        });
 
-          getIncomingGatePassObjects(gatePass).forEach((incomingGatePass) => {
-            totals.incomingBags += parseReportNumber(incomingGatePass.bagsReceived) ?? 0;
-          });
+        getIncomingGatePassObjects(gatePass).forEach((incomingGatePass) => {
+          totals.incomingBags += parseReportNumber(incomingGatePass.bagsReceived) ?? 0;
+        });
 
-          totals.incomingNetWeight += parseReportNumber(gatePass.incomingNetWeightKg) ?? 0;
-          totals.gradingNetWeight += parseReportNumber(gatePass.netWeightKg) ?? 0;
+        totals.incomingNetWeight += parseReportNumber(gatePass.incomingNetWeightKg) ?? 0;
+        totals.gradingNetWeight += parseReportNumber(gatePass.netWeightKg) ?? 0;
 
-          wastageValues.push(parseReportNumber(gatePass.wastageKg) ?? 0);
-          wastagePercentageValues.push(parseReportNumber(gatePass.wastagePercentage) ?? 0);
+        wastageValues.push(parseReportNumber(gatePass.wastageKg) ?? 0);
+        wastagePercentageValues.push(parseReportNumber(gatePass.wastagePercentage) ?? 0);
 
-          return totals;
-        },
-        {
-          incomingBags: 0,
-          incomingNetWeight: 0,
-          gradingBags: 0,
-          gradingNetWeight: 0,
-        },
-      );
+        return totals;
+      },
+      {
+        incomingBags: 0,
+        incomingNetWeight: 0,
+        gradingBags: 0,
+        gradingNetWeight: 0,
+      },
+    );
 
-      return {
-        ...totals,
-        averageWastageKg: average(wastageValues),
-        averageWastagePercentage: average(wastagePercentageValues),
-      };
+    return {
+      ...totals,
+      averageWastageKg: average(wastageValues),
+      averageWastagePercentage: average(wastagePercentageValues),
+    };
+  }, [reportRows]);
+  const handleTableReady = useCallback(
+    (table: TanStackTable<ReportFeatures, GradingGatePassReportRow>) => {
+      setReportTable((current) => (current === table ? current : table));
     },
-    [reportRows],
+    [],
   );
-  const handleTableReady = useCallback((table: TanStackTable<ReportFeatures, GradingGatePassReportRow>) => {
-    setReportTable((current) => (current === table ? current : table));
-  }, []);
 
   const filteredRowCount = reportTable?.getFilteredRowModel().rows.length ?? rowCount;
 
@@ -148,9 +150,7 @@ const GradingReportPage = () => {
     setIsExporting(true);
 
     try {
-      const { exportGradingReportToExcel } = await import(
-        './utils/export-grading-report-excel'
-      );
+      const { exportGradingReportToExcel } = await import('./utils/export-grading-report-excel');
       await exportGradingReportToExcel({
         table: reportTable,
         coldStorageName: coldStorageName ?? 'Cold Storage',
@@ -163,9 +163,7 @@ const GradingReportPage = () => {
       });
     } catch (exportError) {
       toast.error(
-        exportError instanceof Error
-          ? exportError.message
-          : 'Failed to export report to Excel',
+        exportError instanceof Error ? exportError.message : 'Failed to export report to Excel',
         { position: 'bottom-right' },
       );
     } finally {
@@ -213,9 +211,7 @@ const GradingReportPage = () => {
       });
     } catch (previewError) {
       toast.error(
-        previewError instanceof Error
-          ? previewError.message
-          : 'Failed to open report preview',
+        previewError instanceof Error ? previewError.message : 'Failed to open report preview',
         { position: 'bottom-right' },
       );
     }

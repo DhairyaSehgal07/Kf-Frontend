@@ -1,14 +1,9 @@
-import { useState } from "react"
-import { MapPin, Package2 } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import {
-  Field,
-  FieldDescription,
-  FieldError,
-  FieldLabel,
-} from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
+import { useState } from 'react';
+import { MapPin, Package2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Field, FieldDescription, FieldError, FieldLabel } from '@/components/ui/field';
+import { Input } from '@/components/ui/input';
 import {
   Sheet,
   SheetContent,
@@ -16,48 +11,45 @@ import {
   SheetFooter,
   SheetHeader,
   SheetTitle,
-} from "@/components/ui/sheet"
-import type { StorageGatePass } from "@/features/transfer-stock/types/storage-gate-pass"
-import type { BagSlotDetail } from "@/features/transfer-stock/utils/gate-pass-matrix-utils"
-import { formatLocationShort } from "@/features/transfer-stock/utils/gate-pass-matrix-utils"
+} from '@/components/ui/sheet';
+import type { StorageGatePass } from '@/features/transfer-stock/types/storage-gate-pass';
+import type { BagSlotDetail } from '@/features/transfer-stock/utils/gate-pass-matrix-utils';
+import { formatLocationShort } from '@/features/transfer-stock/utils/gate-pass-matrix-utils';
 
 export type AllocationSheetTarget = {
-  pass: StorageGatePass
-  sizeName: string
-  slot: BagSlotDetail
-  allocationKey: string
-  currentQuantity: number
-}
+  pass: StorageGatePass;
+  sizeName: string;
+  slot: BagSlotDetail;
+  allocationKey: string;
+  currentQuantity: number;
+};
 
 type TransferAllocationSheetProps = {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  target: AllocationSheetTarget | null
-  initialQuantity: number
-  onApply: (key: string, quantity: number) => void
-  onClear: (key: string) => void
-}
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  target: AllocationSheetTarget | null;
+  initialQuantity: number;
+  onApply: (key: string, quantity: number) => void;
+  onClear: (key: string) => void;
+};
 
-function validateTransferQuantity(
-  value: string,
-  maxAvailable: number
-): string | null {
-  const trimmed = value.trim()
-  if (trimmed === "") {
-    return "Enter a quantity."
+function validateTransferQuantity(value: string, maxAvailable: number): string | null {
+  const trimmed = value.trim();
+  if (trimmed === '') {
+    return 'Enter a quantity.';
   }
 
-  const parsed = Number.parseInt(trimmed, 10)
+  const parsed = Number.parseInt(trimmed, 10);
   if (Number.isNaN(parsed) || !Number.isFinite(parsed)) {
-    return "Enter a valid quantity."
+    return 'Enter a valid quantity.';
   }
   if (parsed < 1) {
-    return "Quantity must be at least 1."
+    return 'Quantity must be at least 1.';
   }
   if (parsed > maxAvailable) {
-    return `Quantity cannot exceed ${maxAvailable.toLocaleString("en-IN")} available bags.`
+    return `Quantity cannot exceed ${maxAvailable.toLocaleString('en-IN')} available bags.`;
   }
-  return null
+  return null;
 }
 
 export function TransferAllocationSheet({
@@ -108,7 +100,7 @@ export function TransferAllocationSheet({
         ) : null}
       </SheetContent>
     </Sheet>
-  )
+  );
 }
 
 function AllocationSheetBody({
@@ -118,41 +110,41 @@ function AllocationSheetBody({
   onClear,
   onClose,
 }: {
-  target: AllocationSheetTarget
-  initialQuantity: number
-  onApply: (key: string, quantity: number) => void
-  onClear: (key: string) => void
-  onClose: () => void
+  target: AllocationSheetTarget;
+  initialQuantity: number;
+  onApply: (key: string, quantity: number) => void;
+  onClear: (key: string) => void;
+  onClose: () => void;
 }) {
   const [quantityInput, setQuantityInput] = useState(() =>
-    initialQuantity > 0 ? String(initialQuantity) : ""
-  )
-  const [quantityError, setQuantityError] = useState<string | null>(null)
+    initialQuantity > 0 ? String(initialQuantity) : '',
+  );
+  const [quantityError, setQuantityError] = useState<string | null>(null);
 
-  const maxAvailable = target.slot.currentQuantity
+  const maxAvailable = target.slot.currentQuantity;
 
   const handleQuantityChange = (value: string) => {
-    setQuantityInput(value)
+    setQuantityInput(value);
     if (quantityError) {
-      setQuantityError(validateTransferQuantity(value, maxAvailable))
+      setQuantityError(validateTransferQuantity(value, maxAvailable));
     }
-  }
+  };
 
   const handleApply = () => {
-    const error = validateTransferQuantity(quantityInput, target.slot.currentQuantity)
+    const error = validateTransferQuantity(quantityInput, target.slot.currentQuantity);
     if (error) {
-      setQuantityError(error)
-      return
+      setQuantityError(error);
+      return;
     }
-    const parsed = Number.parseInt(quantityInput.trim(), 10)
-    onApply(target.allocationKey, parsed)
-    onClose()
-  }
+    const parsed = Number.parseInt(quantityInput.trim(), 10);
+    onApply(target.allocationKey, parsed);
+    onClose();
+  };
 
   const handleClear = () => {
-    onClear(target.allocationKey)
-    onClose()
-  }
+    onClear(target.allocationKey);
+    onClose();
+  };
 
   return (
     <>
@@ -162,25 +154,21 @@ function AllocationSheetBody({
             <div className="flex items-center gap-2 text-sm font-medium">
               <Package2 className="size-4 text-primary shrink-0" />
               <span>
-                Gate pass{" "}
-                <span className="font-mono tabular-nums">
-                  #{target.pass.gatePassNo}
-                </span>
+                Gate pass <span className="font-mono tabular-nums">#{target.pass.gatePassNo}</span>
               </span>
             </div>
             <p className="text-sm text-foreground">{target.pass.variety}</p>
             <p className="text-sm text-muted-foreground">
-              Size:{" "}
-              <span className="font-medium text-foreground">{target.sizeName}</span>
+              Size: <span className="font-medium text-foreground">{target.sizeName}</span>
             </p>
             <p className="flex items-start gap-1.5 text-xs text-muted-foreground">
               <MapPin className="size-3.5 shrink-0 mt-0.5" />
               {formatLocationShort(target.slot)}
             </p>
             <p className="text-sm tabular-nums">
-              Available:{" "}
+              Available:{' '}
               <span className="font-medium text-foreground">
-                {target.slot.currentQuantity.toLocaleString("en-IN")} bags
+                {target.slot.currentQuantity.toLocaleString('en-IN')} bags
               </span>
             </p>
           </CardContent>
@@ -199,9 +187,9 @@ function AllocationSheetBody({
             aria-invalid={quantityError ? true : undefined}
             className="h-11 text-base tabular-nums"
             onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault()
-                handleApply()
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                handleApply();
               }
             }}
           />
@@ -209,8 +197,7 @@ function AllocationSheetBody({
             <FieldError>{quantityError}</FieldError>
           ) : (
             <FieldDescription>
-              Enter a value from 1 to{" "}
-              {target.slot.currentQuantity.toLocaleString("en-IN")}.
+              Enter a value from 1 to {target.slot.currentQuantity.toLocaleString('en-IN')}.
             </FieldDescription>
           )}
         </Field>
@@ -221,12 +208,7 @@ function AllocationSheetBody({
           Cancel
         </Button>
         {initialQuantity > 0 ? (
-          <Button
-            type="button"
-            variant="destructive"
-            className="h-11"
-            onClick={handleClear}
-          >
+          <Button type="button" variant="destructive" className="h-11" onClick={handleClear}>
             Clear
           </Button>
         ) : null}
@@ -235,5 +217,5 @@ function AllocationSheetBody({
         </Button>
       </SheetFooter>
     </>
-  )
+  );
 }

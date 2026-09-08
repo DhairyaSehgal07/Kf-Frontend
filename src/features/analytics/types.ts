@@ -1,4 +1,4 @@
 export type AnalyticsDateParams = {
-  dateFrom?: string
-  dateTo?: string
-}
+  dateFrom?: string;
+  dateTo?: string;
+};

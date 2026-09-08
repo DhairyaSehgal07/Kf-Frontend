@@ -1,103 +1,98 @@
-import type { Column, Table } from "@tanstack/react-table"
-import { Plus, RotateCcw, X } from "lucide-react"
-import type { ReportFeatures } from "@/lib/tanstack-table/report-table-features"
+import type { Column, Table } from '@tanstack/react-table';
+import { Plus, RotateCcw, X } from 'lucide-react';
+import type { ReportFeatures } from '@/lib/tanstack-table/report-table-features';
 
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import type { StorageGatePass } from "@/features/storage/api/types"
+} from '@/components/ui/select';
+import type { StorageGatePass } from '@/features/storage/api/types';
 import type {
   AdvancedFilterCondition,
   AdvancedFilterOperator,
   AdvancedReportGlobalFilter,
   StorageReportColumnId,
-} from "@/features/storage-report/utils/report-filter-fns"
-import { isAdvancedNumericColumn } from "@/features/storage-report/utils/report-filter-fns"
-import { cn } from "@/lib/utils"
+} from '@/features/storage-report/utils/report-filter-fns';
+import { isAdvancedNumericColumn } from '@/features/storage-report/utils/report-filter-fns';
+import { cn } from '@/lib/utils';
 
 interface AdvancedTabProps {
-  table: Table<ReportFeatures, StorageGatePass>
-  draftGlobalFilter: AdvancedReportGlobalFilter
-  onDraftGlobalFilterChange: (filter: AdvancedReportGlobalFilter) => void
+  table: Table<ReportFeatures, StorageGatePass>;
+  draftGlobalFilter: AdvancedReportGlobalFilter;
+  onDraftGlobalFilterChange: (filter: AdvancedReportGlobalFilter) => void;
 }
 
 type OperatorOption = {
-  value: AdvancedFilterOperator
-  label: string
-  requiresValue?: boolean
-}
+  value: AdvancedFilterOperator;
+  label: string;
+  requiresValue?: boolean;
+};
 
 const STRING_OPERATOR_OPTIONS: OperatorOption[] = [
-  { value: "contains", label: "contains", requiresValue: true },
-  { value: "notContains", label: "does not contain", requiresValue: true },
-  { value: "equals", label: "equals", requiresValue: true },
-  { value: "notEquals", label: "does not equal", requiresValue: true },
-  { value: "startsWith", label: "starts with", requiresValue: true },
-  { value: "endsWith", label: "ends with", requiresValue: true },
-  { value: "isEmpty", label: "is blank" },
-  { value: "isNotEmpty", label: "is not blank" },
-]
+  { value: 'contains', label: 'contains', requiresValue: true },
+  { value: 'notContains', label: 'does not contain', requiresValue: true },
+  { value: 'equals', label: 'equals', requiresValue: true },
+  { value: 'notEquals', label: 'does not equal', requiresValue: true },
+  { value: 'startsWith', label: 'starts with', requiresValue: true },
+  { value: 'endsWith', label: 'ends with', requiresValue: true },
+  { value: 'isEmpty', label: 'is blank' },
+  { value: 'isNotEmpty', label: 'is not blank' },
+];
 
 const NUMERIC_OPERATOR_OPTIONS: OperatorOption[] = [
-  { value: "equals", label: "=", requiresValue: true },
-  { value: "notEquals", label: "!=", requiresValue: true },
-  { value: "greaterThan", label: ">", requiresValue: true },
+  { value: 'equals', label: '=', requiresValue: true },
+  { value: 'notEquals', label: '!=', requiresValue: true },
+  { value: 'greaterThan', label: '>', requiresValue: true },
   {
-    value: "greaterThanOrEqual",
-    label: ">=",
+    value: 'greaterThanOrEqual',
+    label: '>=',
     requiresValue: true,
   },
-  { value: "lessThan", label: "<", requiresValue: true },
+  { value: 'lessThan', label: '<', requiresValue: true },
   {
-    value: "lessThanOrEqual",
-    label: "<=",
+    value: 'lessThanOrEqual',
+    label: '<=',
     requiresValue: true,
   },
-  { value: "isEmpty", label: "is blank" },
-  { value: "isNotEmpty", label: "is not blank" },
-]
+  { value: 'isEmpty', label: 'is blank' },
+  { value: 'isNotEmpty', label: 'is not blank' },
+];
 
-const OPERATOR_OPTIONS = [
-  ...STRING_OPERATOR_OPTIONS,
-  ...NUMERIC_OPERATOR_OPTIONS,
-]
+const OPERATOR_OPTIONS = [...STRING_OPERATOR_OPTIONS, ...NUMERIC_OPERATOR_OPTIONS];
 
 function getColumnLabel(column: Column<ReportFeatures, StorageGatePass, unknown>) {
-  return column.columnDef.meta?.filterLabel ?? column.id
+  return column.columnDef.meta?.filterLabel ?? column.id;
 }
 
 function getDefaultOperator(column: Column<ReportFeatures, StorageGatePass, unknown>) {
-  return isAdvancedNumericColumn(column.id) ? "greaterThan" : "contains"
+  return isAdvancedNumericColumn(column.id) ? 'greaterThan' : 'contains';
 }
 
-function getOperatorOptions(
-  column: Column<ReportFeatures, StorageGatePass, unknown> | undefined,
-) {
+function getOperatorOptions(column: Column<ReportFeatures, StorageGatePass, unknown> | undefined) {
   return column && isAdvancedNumericColumn(column.id)
     ? NUMERIC_OPERATOR_OPTIONS
-    : STRING_OPERATOR_OPTIONS
+    : STRING_OPERATOR_OPTIONS;
 }
 
 function getColumnValueOptions(
   column: Column<ReportFeatures, StorageGatePass, unknown> | undefined,
 ) {
-  if (!column) return []
+  if (!column) return [];
 
   return Array.from(column.getFacetedUniqueValues().keys())
-    .map((value) => String(value ?? "").trim())
+    .map((value) => String(value ?? '').trim())
     .filter((value) => value.length > 0)
     .sort((a, b) =>
-      a.localeCompare(b, "en-IN", {
+      a.localeCompare(b, 'en-IN', {
         numeric: true,
-        sensitivity: "base",
+        sensitivity: 'base',
       }),
-    )
+    );
 }
 
 function createCondition(
@@ -107,77 +102,67 @@ function createCondition(
     id: `condition-${Date.now()}-${Math.random().toString(36).slice(2)}`,
     columnId: column.id as StorageReportColumnId,
     operator: getDefaultOperator(column),
-    value: "",
-  }
+    value: '',
+  };
 }
 
 function isValueRequired(operator: AdvancedFilterOperator) {
-  return OPERATOR_OPTIONS.find((option) => option.value === operator)
-    ?.requiresValue
+  return OPERATOR_OPTIONS.find((option) => option.value === operator)?.requiresValue;
 }
 
-const AdvancedTab = ({
-  table,
-  draftGlobalFilter,
-  onDraftGlobalFilterChange,
-}: AdvancedTabProps) => {
-  const columns = table.getAllLeafColumns()
-  const columnsById = new Map(columns.map((column) => [column.id, column]))
-  const conditions = draftGlobalFilter.conditions
-  const firstColumn = columns[0]
+const AdvancedTab = ({ table, draftGlobalFilter, onDraftGlobalFilterChange }: AdvancedTabProps) => {
+  const columns = table.getAllLeafColumns();
+  const columnsById = new Map(columns.map((column) => [column.id, column]));
+  const conditions = draftGlobalFilter.conditions;
+  const firstColumn = columns[0];
 
   const updateFilter = (next: Partial<AdvancedReportGlobalFilter>) => {
     onDraftGlobalFilterChange({
       ...draftGlobalFilter,
       ...next,
-    })
-  }
+    });
+  };
 
-  const updateCondition = (
-    conditionId: string,
-    patch: Partial<AdvancedFilterCondition>,
-  ) => {
+  const updateCondition = (conditionId: string, patch: Partial<AdvancedFilterCondition>) => {
     updateFilter({
       conditions: conditions.map((condition) =>
         condition.id === conditionId ? { ...condition, ...patch } : condition,
       ),
-    })
-  }
+    });
+  };
 
   const handleAddCondition = () => {
-    if (!firstColumn) return
-    updateFilter({ conditions: [...conditions, createCondition(firstColumn)] })
-  }
+    if (!firstColumn) return;
+    updateFilter({ conditions: [...conditions, createCondition(firstColumn)] });
+  };
 
   const handleRemoveCondition = (conditionId: string) => {
     updateFilter({
       conditions: conditions.filter((condition) => condition.id !== conditionId),
-    })
-  }
+    });
+  };
 
   const handleColumnChange = (conditionId: string, columnId: string) => {
-    const column = columnsById.get(columnId)
-    if (!column) return
+    const column = columnsById.get(columnId);
+    if (!column) return;
 
     updateCondition(conditionId, {
       columnId: column.id as StorageReportColumnId,
       operator: getDefaultOperator(column),
-      value: "",
-    })
-  }
+      value: '',
+    });
+  };
 
   const handleReset = () => {
     onDraftGlobalFilterChange({
-      logic: "AND",
+      logic: 'AND',
       conditions: [],
-    })
-  }
+    });
+  };
 
   const activeConditionCount = conditions.filter(
-    (condition) =>
-      !isValueRequired(condition.operator) ||
-      condition.value.trim().length > 0,
-  ).length
+    (condition) => !isValueRequired(condition.operator) || condition.value.trim().length > 0,
+  ).length;
 
   return (
     <div className="space-y-4 pt-4">
@@ -188,8 +173,8 @@ const AdvancedTab = ({
               Logic builder
             </p>
             <p className="text-sm text-muted-foreground">
-              Combine conditions with AND / OR logic. For example, storage
-              category equals Seed AND a bag size quantity &gt; 100.
+              Combine conditions with AND / OR logic. For example, storage category equals Seed AND
+              a bag size quantity &gt; 100.
             </p>
           </div>
           <Button
@@ -197,7 +182,7 @@ const AdvancedTab = ({
             variant="link"
             size="sm"
             className="h-auto shrink-0 gap-1 px-0 text-muted-foreground"
-            disabled={conditions.length === 0 && draftGlobalFilter.logic === "AND"}
+            disabled={conditions.length === 0 && draftGlobalFilter.logic === 'AND'}
             onClick={handleReset}
           >
             <RotateCcw className="size-3.5" aria-hidden />
@@ -211,15 +196,15 @@ const AdvancedTab = ({
           <div className="flex min-w-0 items-center gap-2 text-sm text-muted-foreground">
             <span>Match</span>
             <div className="inline-flex rounded-full bg-muted p-0.5">
-              {(["AND", "OR"] as const).map((logic) => (
+              {(['AND', 'OR'] as const).map((logic) => (
                 <button
                   key={logic}
                   type="button"
                   className={cn(
-                    "rounded-full px-3 py-1 text-sm font-semibold transition-colors",
+                    'rounded-full px-3 py-1 text-sm font-semibold transition-colors',
                     draftGlobalFilter.logic === logic
-                      ? "bg-primary text-primary-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground",
+                      ? 'bg-primary text-primary-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground',
                   )}
                   onClick={() => updateFilter({ logic })}
                   aria-pressed={draftGlobalFilter.logic === logic}
@@ -247,21 +232,20 @@ const AdvancedTab = ({
         {conditions.length > 0 ? (
           <div className="space-y-2">
             {conditions.map((condition) => {
-              const selectedColumn = columnsById.get(String(condition.columnId))
-              const operatorOptions = getOperatorOptions(selectedColumn)
+              const selectedColumn = columnsById.get(String(condition.columnId));
+              const operatorOptions = getOperatorOptions(selectedColumn);
               const effectiveOperator = operatorOptions.some(
                 (option) => option.value === condition.operator,
               )
                 ? condition.operator
                 : selectedColumn
                   ? getDefaultOperator(selectedColumn)
-                  : condition.operator
-              const needsValue = isValueRequired(effectiveOperator)
+                  : condition.operator;
+              const needsValue = isValueRequired(effectiveOperator);
               const isNumericColumn =
-                selectedColumn != null &&
-                isAdvancedNumericColumn(selectedColumn.id)
-              const valueOptions = getColumnValueOptions(selectedColumn)
-              const valueListId = `advanced-filter-values-${condition.id}`
+                selectedColumn != null && isAdvancedNumericColumn(selectedColumn.id);
+              const valueOptions = getColumnValueOptions(selectedColumn);
+              const valueListId = `advanced-filter-values-${condition.id}`;
 
               return (
                 <div
@@ -270,9 +254,7 @@ const AdvancedTab = ({
                 >
                   <Select
                     value={String(condition.columnId)}
-                    onValueChange={(value) =>
-                      handleColumnChange(condition.id, value)
-                    }
+                    onValueChange={(value) => handleColumnChange(condition.id, value)}
                   >
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Column" />
@@ -291,10 +273,7 @@ const AdvancedTab = ({
                     onValueChange={(value) =>
                       updateCondition(condition.id, {
                         operator: value as AdvancedFilterOperator,
-                        value:
-                          value === "isEmpty" || value === "isNotEmpty"
-                            ? ""
-                            : condition.value,
+                        value: value === 'isEmpty' || value === 'isNotEmpty' ? '' : condition.value,
                       })
                     }
                   >
@@ -315,13 +294,13 @@ const AdvancedTab = ({
                     value={condition.value}
                     disabled={!needsValue}
                     list={needsValue ? valueListId : undefined}
-                    inputMode={isNumericColumn ? "decimal" : "text"}
+                    inputMode={isNumericColumn ? 'decimal' : 'text'}
                     placeholder={
                       needsValue
                         ? isNumericColumn
-                          ? "Enter number..."
-                          : "Select or type value..."
-                        : "No value needed"
+                          ? 'Enter number...'
+                          : 'Select or type value...'
+                        : 'No value needed'
                     }
                     onChange={(event) =>
                       updateCondition(condition.id, {
@@ -349,14 +328,12 @@ const AdvancedTab = ({
                     <X className="size-4" aria-hidden />
                   </Button>
                 </div>
-              )
+              );
             })}
           </div>
         ) : (
           <div className="rounded-xl border border-dashed border-border bg-muted/10 px-4 py-8 text-center">
-            <p className="text-sm font-semibold text-foreground">
-              No advanced logic yet
-            </p>
+            <p className="text-sm font-semibold text-foreground">No advanced logic yet</p>
             <p className="mt-1 text-sm text-muted-foreground">
               Add a condition to filter rows with AND / OR rules.
             </p>
@@ -364,12 +341,12 @@ const AdvancedTab = ({
         )}
 
         <p className="text-xs tabular-nums text-muted-foreground">
-          {activeConditionCount.toLocaleString("en-IN")} active condition
-          {activeConditionCount === 1 ? "" : "s"}
+          {activeConditionCount.toLocaleString('en-IN')} active condition
+          {activeConditionCount === 1 ? '' : 's'}
         </p>
       </section>
     </div>
-  )
-}
+  );
+};
 
-export default AdvancedTab
+export default AdvancedTab;

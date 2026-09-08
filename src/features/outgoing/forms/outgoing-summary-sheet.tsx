@@ -1,4 +1,4 @@
-import type { ReactNode } from "react"
+import type { ReactNode } from 'react';
 import {
   ArrowLeft,
   ArrowUpRight,
@@ -13,8 +13,8 @@ import {
   User2,
   Warehouse,
   type LucideIcon,
-} from "lucide-react"
-import { Button } from "@/components/ui/button"
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import {
   Sheet,
   SheetContent,
@@ -22,36 +22,36 @@ import {
   SheetFooter,
   SheetHeader,
   SheetTitle,
-} from "@/components/ui/sheet"
-import type { OutgoingFormValues } from "@/features/outgoing/types"
-import { AllocationReviewByVariety } from "@/features/transfer-stock/forms/allocation-review-by-variety"
-import type { TransferStockItem } from "@/features/transfer-stock/types/storage-gate-pass"
-import { cn } from "@/lib/utils"
+} from '@/components/ui/sheet';
+import type { OutgoingFormValues } from '@/features/outgoing/types';
+import { AllocationReviewByVariety } from '@/features/transfer-stock/forms/allocation-review-by-variety';
+import type { TransferStockItem } from '@/features/transfer-stock/types/storage-gate-pass';
+import { cn } from '@/lib/utils';
 
-export type OutgoingSummaryValues = OutgoingFormValues
+export type OutgoingSummaryValues = OutgoingFormValues;
 
 type OutgoingSummarySheetProps = {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  values: OutgoingSummaryValues | null
-  farmerLabel: string
-  outgoingItems: TransferStockItem[]
-  onBack: () => void
-  onSubmit: () => void
-  canSubmit: boolean
-  isSubmitting: boolean
-}
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  values: OutgoingSummaryValues | null;
+  farmerLabel: string;
+  outgoingItems: TransferStockItem[];
+  onBack: () => void;
+  onSubmit: () => void;
+  canSubmit: boolean;
+  isSubmitting: boolean;
+};
 
 function formatReviewDate(iso: string) {
-  if (!iso) return "—"
-  const date = new Date(iso)
-  if (Number.isNaN(date.getTime())) return "—"
-  return new Intl.DateTimeFormat("en-IN", {
-    weekday: "short",
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  }).format(date)
+  if (!iso) return '—';
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return '—';
+  return new Intl.DateTimeFormat('en-IN', {
+    weekday: 'short',
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  }).format(date);
 }
 
 function DetailRow({
@@ -60,10 +60,10 @@ function DetailRow({
   icon: Icon,
   valueClassName,
 }: {
-  label: string
-  value: ReactNode
-  icon?: LucideIcon
-  valueClassName?: string
+  label: string;
+  value: ReactNode;
+  icon?: LucideIcon;
+  valueClassName?: string;
 }) {
   return (
     <div className="flex items-start justify-between gap-4 py-2.5">
@@ -71,25 +71,14 @@ function DetailRow({
         {Icon && <Icon className="size-3.5 shrink-0" />}
         {label}
       </span>
-      <span
-        className={cn(
-          "text-right text-sm font-medium text-foreground",
-          valueClassName
-        )}
-      >
-        {value ?? "—"}
+      <span className={cn('text-right text-sm font-medium text-foreground', valueClassName)}>
+        {value ?? '—'}
       </span>
     </div>
-  )
+  );
 }
 
-function SectionLabel({
-  icon: Icon,
-  children,
-}: {
-  icon: LucideIcon
-  children: ReactNode
-}) {
+function SectionLabel({ icon: Icon, children }: { icon: LucideIcon; children: ReactNode }) {
   return (
     <div className="mb-1 flex items-center gap-2">
       <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
@@ -99,26 +88,20 @@ function SectionLabel({
         {children}
       </span>
     </div>
-  )
+  );
 }
 
-function SummaryCard({
-  children,
-  className,
-}: {
-  children: ReactNode
-  className?: string
-}) {
+function SummaryCard({ children, className }: { children: ReactNode; className?: string }) {
   return (
     <div
       className={cn(
-        "divide-y divide-border/40 rounded-xl border border-border/50 bg-card px-4",
-        className
+        'divide-y divide-border/40 rounded-xl border border-border/50 bg-card px-4',
+        className,
       )}
     >
       {children}
     </div>
-  )
+  );
 }
 
 function OutgoingReviewSummary({
@@ -126,11 +109,11 @@ function OutgoingReviewSummary({
   farmerLabel,
   outgoingItems,
 }: {
-  values: OutgoingSummaryValues
-  farmerLabel: string
-  outgoingItems: TransferStockItem[]
+  values: OutgoingSummaryValues;
+  farmerLabel: string;
+  outgoingItems: TransferStockItem[];
 }) {
-  const totalBags = outgoingItems.reduce((sum, item) => sum + item.quantity, 0)
+  const totalBags = outgoingItems.reduce((sum, item) => sum + item.quantity, 0);
   return (
     <div className="space-y-7">
       <div className="flex items-center justify-between gap-3 rounded-xl border border-border/40 bg-muted/30 px-4 py-3.5">
@@ -158,15 +141,11 @@ function OutgoingReviewSummary({
       <div className="space-y-2">
         <SectionLabel icon={Calendar}>Outgoing date</SectionLabel>
         <SummaryCard>
-          <DetailRow
-            label="Date"
-            value={formatReviewDate(values.date)}
-            icon={Calendar}
-          />
+          <DetailRow label="Date" value={formatReviewDate(values.date)} icon={Calendar} />
           {values.manualGatePassNumber != null ? (
             <DetailRow
               label="Manual GP no."
-              value={values.manualGatePassNumber.toLocaleString("en-IN")}
+              value={values.manualGatePassNumber.toLocaleString('en-IN')}
               valueClassName="font-mono tabular-nums"
             />
           ) : null}
@@ -195,22 +174,16 @@ function OutgoingReviewSummary({
           <DetailRow label="Category" value={values.category} />
           <DetailRow
             label="Bill no."
-            value={Number(values.billNumber).toLocaleString("en-IN")}
+            value={Number(values.billNumber).toLocaleString('en-IN')}
             valueClassName="tabular-nums"
           />
           <DetailRow
             label="Bilti no."
-            value={Number(values.biltiNumber).toLocaleString("en-IN")}
+            value={Number(values.biltiNumber).toLocaleString('en-IN')}
             valueClassName="tabular-nums"
           />
-          <DetailRow
-            label="Bill book"
-            value={values.billBook}
-          />
-          <DetailRow
-            label="Bilti book"
-            value={values.biltiBook}
-          />
+          <DetailRow label="Bill book" value={values.billBook} />
+          <DetailRow label="Bilti book" value={values.biltiBook} />
         </SummaryCard>
       </div>
 
@@ -220,7 +193,7 @@ function OutgoingReviewSummary({
         <SummaryCard className="mt-3">
           <DetailRow
             label="Total bags"
-            value={totalBags.toLocaleString("en-IN")}
+            value={totalBags.toLocaleString('en-IN')}
             icon={Warehouse}
             valueClassName="font-semibold tabular-nums"
           />
@@ -238,7 +211,7 @@ function OutgoingReviewSummary({
         </div>
       ) : null}
     </div>
-  )
+  );
 }
 
 export function OutgoingSummarySheet({
@@ -311,7 +284,7 @@ export function OutgoingSummarySheet({
             onClick={onSubmit}
           >
             {isSubmitting ? (
-              "Submitting…"
+              'Submitting…'
             ) : (
               <>
                 <CheckCircle2 className="size-3.5" />
@@ -322,5 +295,5 @@ export function OutgoingSummarySheet({
         </SheetFooter>
       </SheetContent>
     </Sheet>
-  )
+  );
 }

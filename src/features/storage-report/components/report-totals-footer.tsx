@@ -1,23 +1,21 @@
-import type { Row } from "@tanstack/react-table"
-import type { ReportFeatures } from "@/lib/tanstack-table/report-table-features"
+import type { Row } from '@tanstack/react-table';
+import type { ReportFeatures } from '@/lib/tanstack-table/report-table-features';
 
-import type { StorageGatePass } from "@/features/storage/api/types"
-import { cn } from "@/lib/utils"
+import type { StorageGatePass } from '@/features/storage/api/types';
+import { cn } from '@/lib/utils';
 
-import type { StorageQuantityMode } from "./columns"
+import type { StorageQuantityMode } from './columns';
 
-const numberFormatter = new Intl.NumberFormat("en-IN")
+const numberFormatter = new Intl.NumberFormat('en-IN');
 
 function formatTotalValue(value: number) {
-  return numberFormatter.format(value)
+  return numberFormatter.format(value);
 }
 
 function renderTotalValue(value: number) {
   return (
-    <span className="font-semibold tabular-nums text-foreground">
-      {formatTotalValue(value)}
-    </span>
-  )
+    <span className="font-semibold tabular-nums text-foreground">{formatTotalValue(value)}</span>
+  );
 }
 
 function sumBagSizeQuantity(
@@ -32,18 +30,15 @@ function sumBagSizeQuantity(
         .filter((bag) => bag.size === size)
         .reduce(
           (sum, bag) =>
-            sum +
-            (quantityMode === "current"
-              ? bag.currentQuantity
-              : bag.initialQuantity),
+            sum + (quantityMode === 'current' ? bag.currentQuantity : bag.initialQuantity),
           0,
         )
-    )
-  }, 0)
+    );
+  }, 0);
 }
 
 export function ReportTotalLabel() {
-  return <span className="text-sm font-semibold text-foreground">Total</span>
+  return <span className="text-sm font-semibold text-foreground">Total</span>;
 }
 
 export function getStorageReportFooterContent(
@@ -51,31 +46,25 @@ export function getStorageReportFooterContent(
   rows: readonly Row<ReportFeatures, StorageGatePass>[],
   quantityMode: StorageQuantityMode,
 ) {
-  if (columnId === "totalBags") {
+  if (columnId === 'totalBags') {
     const total = rows.reduce(
-      (sum, row) =>
-        sum +
-        (typeof row.original.totalBags === "number" ? row.original.totalBags : 0),
+      (sum, row) => sum + (typeof row.original.totalBags === 'number' ? row.original.totalBags : 0),
       0,
-    )
+    );
 
-    return renderTotalValue(total)
+    return renderTotalValue(total);
   }
 
-  if (!columnId.startsWith("size-")) {
-    return null
+  if (!columnId.startsWith('size-')) {
+    return null;
   }
 
-  const total = sumBagSizeQuantity(
-    rows,
-    columnId.replace(/^size-/, ""),
-    quantityMode,
-  )
+  const total = sumBagSizeQuantity(rows, columnId.replace(/^size-/, ''), quantityMode);
 
-  return renderTotalValue(total)
+  return renderTotalValue(total);
 }
 
 export const storageReportFooterCellClassName = cn(
-  "bg-muted/70 px-3 py-3 align-middle text-sm backdrop-blur-sm",
-  "supports-[backdrop-filter]:bg-muted/60",
-)
+  'bg-muted/70 px-3 py-3 align-middle text-sm backdrop-blur-sm',
+  'supports-[backdrop-filter]:bg-muted/60',
+);

@@ -1,15 +1,15 @@
-import { useForm } from "@tanstack/react-form"
-import { Loader2, Pencil } from "lucide-react"
-import { useMemo, useRef, useState, type RefObject } from "react"
-import { toast } from "sonner"
+import { useForm } from '@tanstack/react-form';
+import { Loader2, Pencil } from 'lucide-react';
+import { useMemo, useRef, useState, type RefObject } from 'react';
+import { toast } from 'sonner';
 
-import { DatePickerInput } from "@/components/date-picker"
+import { DatePickerInput } from '@/components/date-picker';
 import {
   SearchableOptionCombobox,
   filterAndSortOptions,
   type ComboboxOption,
-} from "@/components/searchable-option-combobox"
-import { Button } from "@/components/ui/button"
+} from '@/components/searchable-option-combobox';
+import { Button } from '@/components/ui/button';
 import {
   Field,
   FieldDescription,
@@ -18,8 +18,8 @@ import {
   FieldLabel,
   FieldLegend,
   FieldSet,
-} from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
+} from '@/components/ui/field';
+import { Input } from '@/components/ui/input';
 import {
   Sheet,
   SheetContent,
@@ -27,83 +27,79 @@ import {
   SheetFooter,
   SheetHeader,
   SheetTitle,
-} from "@/components/ui/sheet"
-import { Textarea } from "@/components/ui/textarea"
-import type { DaybookOutgoingEntry } from "@/features/daybook/api/types"
-import { useUpdateOutgoingGatePass } from "@/features/outgoing/api/use-update-outgoing-gate-pass"
-import { editOutgoingFormSchema } from "@/features/outgoing/schemas/edit-outgoing-form-schema"
-import { outgoingGatePassToEditFormValues } from "@/features/outgoing/utils/outgoing-gate-pass-to-edit-form-values"
-import { OUTGOING_CATEGORIES } from "@/lib/constants"
+} from '@/components/ui/sheet';
+import { Textarea } from '@/components/ui/textarea';
+import type { DaybookOutgoingEntry } from '@/features/daybook/api/types';
+import { useUpdateOutgoingGatePass } from '@/features/outgoing/api/use-update-outgoing-gate-pass';
+import { editOutgoingFormSchema } from '@/features/outgoing/schemas/edit-outgoing-form-schema';
+import { outgoingGatePassToEditFormValues } from '@/features/outgoing/utils/outgoing-gate-pass-to-edit-form-values';
+import { OUTGOING_CATEGORIES } from '@/lib/constants';
 
 const CATEGORY_ITEMS = OUTGOING_CATEGORIES.map((value) => ({
   id: value,
   label: value,
-}))
+}));
 
 function ensureOptionInList(
   options: ComboboxOption[],
   value: string | undefined,
 ): ComboboxOption[] {
-  if (!value?.trim()) return options
-  if (options.some((o) => o.id === value)) return options
-  return [...options, { id: value, label: value }]
+  if (!value?.trim()) return options;
+  if (options.some((o) => o.id === value)) return options;
+  return [...options, { id: value, label: value }];
 }
 
 function isFieldInvalid(meta: { isTouched: boolean; isValid: boolean }) {
-  return meta.isTouched && !meta.isValid
+  return meta.isTouched && !meta.isValid;
 }
 
 function parseOptionalPositiveNumber(value: string): number | undefined {
-  if (value === "") return undefined
-  const parsed = Number(value)
-  return Number.isNaN(parsed) ? undefined : parsed
+  if (value === '') return undefined;
+  const parsed = Number(value);
+  return Number.isNaN(parsed) ? undefined : parsed;
 }
 
 const numericInputProps = {
-  type: "number" as const,
+  type: 'number' as const,
   min: 0,
   onWheel: (e: React.WheelEvent<HTMLInputElement>) => e.currentTarget.blur(),
-}
+};
 
 type EditOutgoingGatePassSheetProps = {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  gatePass: DaybookOutgoingEntry
-}
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  gatePass: DaybookOutgoingEntry;
+};
 
 type EditOutgoingFormFieldsProps = {
-  gatePass: DaybookOutgoingEntry
-  onClose: () => void
-  comboboxPortalContainer: RefObject<HTMLDivElement | null>
-}
+  gatePass: DaybookOutgoingEntry;
+  onClose: () => void;
+  comboboxPortalContainer: RefObject<HTMLDivElement | null>;
+};
 
 function EditOutgoingFormFields({
   gatePass,
   onClose,
   comboboxPortalContainer,
 }: EditOutgoingFormFieldsProps) {
-  const { mutateAsync: updateOutgoingGatePass, isPending } =
-    useUpdateOutgoingGatePass(gatePass._id)
+  const { mutateAsync: updateOutgoingGatePass, isPending } = useUpdateOutgoingGatePass(
+    gatePass._id,
+  );
 
-  const defaultValues = useMemo(
-    () => outgoingGatePassToEditFormValues(gatePass),
-    [gatePass],
-  )
+  const defaultValues = useMemo(() => outgoingGatePassToEditFormValues(gatePass), [gatePass]);
 
   const categoryOptions = useMemo(
     () => ensureOptionInList(CATEGORY_ITEMS, defaultValues.category),
     [defaultValues.category],
-  )
+  );
 
-  const [categorySearch, setCategorySearch] = useState(
-    () => defaultValues.category,
-  )
-  const [categoryComboboxOpen, setCategoryComboboxOpen] = useState(false)
+  const [categorySearch, setCategorySearch] = useState(() => defaultValues.category);
+  const [categoryComboboxOpen, setCategoryComboboxOpen] = useState(false);
 
   const sortedCategories = useMemo(
     () => filterAndSortOptions(categorySearch, categoryOptions),
     [categorySearch, categoryOptions],
-  )
+  );
 
   const form = useForm({
     defaultValues,
@@ -112,38 +108,36 @@ function EditOutgoingFormFields({
       onSubmit: editOutgoingFormSchema,
     },
     onSubmit: async ({ value }) => {
-      const parsed = editOutgoingFormSchema.parse(value)
+      const parsed = editOutgoingFormSchema.parse(value);
 
       try {
         const { message } = await updateOutgoingGatePass({
           id: gatePass._id,
           form: parsed,
-        })
+        });
 
-        toast.success(message ?? "Outgoing gate pass updated.", {
-          position: "bottom-right",
-        })
-        onClose()
+        toast.success(message ?? 'Outgoing gate pass updated.', {
+          position: 'bottom-right',
+        });
+        onClose();
       } catch (error) {
         toast.error(
-          error instanceof Error
-            ? error.message
-            : "Failed to update outgoing gate pass",
-          { position: "bottom-right" },
-        )
+          error instanceof Error ? error.message : 'Failed to update outgoing gate pass',
+          { position: 'bottom-right' },
+        );
       }
     },
-  })
+  });
 
   const resetComboboxState = () => {
-    setCategorySearch(defaultValues.category)
-    setCategoryComboboxOpen(false)
-  }
+    setCategorySearch(defaultValues.category);
+    setCategoryComboboxOpen(false);
+  };
 
   const handleReset = () => {
-    form.reset(defaultValues)
-    resetComboboxState()
-  }
+    form.reset(defaultValues);
+    resetComboboxState();
+  };
 
   return (
     <>
@@ -152,8 +146,8 @@ function EditOutgoingFormFields({
         noValidate
         className="flex flex-1 flex-col overflow-hidden"
         onSubmit={(event) => {
-          event.preventDefault()
-          void form.handleSubmit()
+          event.preventDefault();
+          void form.handleSubmit();
         }}
       >
         <div className="flex-1 overflow-y-auto px-5 py-5">
@@ -168,54 +162,38 @@ function EditOutgoingFormFields({
               <FieldGroup className="mt-5 grid grid-cols-1 gap-6">
                 <form.Field name="date">
                   {(field) => {
-                    const isInvalid = isFieldInvalid(field.state.meta)
+                    const isInvalid = isFieldInvalid(field.state.meta);
                     return (
                       <Field data-invalid={isInvalid}>
                         <DatePickerInput
                           id={field.name}
                           label="Date"
-                          value={
-                            field.state.value
-                              ? new Date(field.state.value)
-                              : undefined
-                          }
-                          onChange={(date) =>
-                            field.handleChange(date ? date.toISOString() : "")
-                          }
+                          value={field.state.value ? new Date(field.state.value) : undefined}
+                          onChange={(date) => field.handleChange(date ? date.toISOString() : '')}
                           onBlur={field.handleBlur}
                           aria-invalid={isInvalid}
                           placeholder="Pick a date"
                         />
-                        {isInvalid && (
-                          <FieldError errors={field.state.meta.errors} />
-                        )}
+                        {isInvalid && <FieldError errors={field.state.meta.errors} />}
                       </Field>
-                    )
+                    );
                   }}
                 </form.Field>
 
                 <form.Field name="manualGatePassNumber">
                   {(field) => {
-                    const isInvalid = isFieldInvalid(field.state.meta)
+                    const isInvalid = isFieldInvalid(field.state.meta);
                     return (
                       <Field data-invalid={isInvalid}>
-                        <FieldLabel htmlFor={field.name}>
-                          Manual gate pass no.
-                        </FieldLabel>
+                        <FieldLabel htmlFor={field.name}>Manual gate pass no.</FieldLabel>
                         <Input
                           {...numericInputProps}
                           id={field.name}
                           name={field.name}
-                          value={
-                            field.state.value != null
-                              ? String(field.state.value)
-                              : ""
-                          }
+                          value={field.state.value != null ? String(field.state.value) : ''}
                           onBlur={field.handleBlur}
                           onChange={(event) =>
-                            field.handleChange(
-                              parseOptionalPositiveNumber(event.target.value),
-                            )
+                            field.handleChange(parseOptionalPositiveNumber(event.target.value))
                           }
                           inputMode="numeric"
                           placeholder="Optional"
@@ -225,11 +203,9 @@ function EditOutgoingFormFields({
                         <FieldDescription>
                           Leave blank if no manual slip number was issued.
                         </FieldDescription>
-                        {isInvalid && (
-                          <FieldError errors={field.state.meta.errors} />
-                        )}
+                        {isInvalid && <FieldError errors={field.state.meta.errors} />}
                       </Field>
-                    )
+                    );
                   }}
                 </form.Field>
               </FieldGroup>
@@ -245,7 +221,7 @@ function EditOutgoingFormFields({
               <FieldGroup className="mt-5 grid grid-cols-1 gap-6">
                 <form.Field name="from">
                   {(field) => {
-                    const isInvalid = isFieldInvalid(field.state.meta)
+                    const isInvalid = isFieldInvalid(field.state.meta);
                     return (
                       <Field data-invalid={isInvalid}>
                         <FieldLabel htmlFor={field.name}>From</FieldLabel>
@@ -254,25 +230,21 @@ function EditOutgoingFormFields({
                           name={field.name}
                           value={field.state.value}
                           onBlur={field.handleBlur}
-                          onChange={(event) =>
-                            field.handleChange(event.target.value)
-                          }
+                          onChange={(event) => field.handleChange(event.target.value)}
                           placeholder="e.g. Chamber A"
                           autoComplete="off"
                           aria-invalid={isInvalid}
                           className="h-11 text-base"
                         />
-                        {isInvalid && (
-                          <FieldError errors={field.state.meta.errors} />
-                        )}
+                        {isInvalid && <FieldError errors={field.state.meta.errors} />}
                       </Field>
-                    )
+                    );
                   }}
                 </form.Field>
 
                 <form.Field name="to">
                   {(field) => {
-                    const isInvalid = isFieldInvalid(field.state.meta)
+                    const isInvalid = isFieldInvalid(field.state.meta);
                     return (
                       <Field data-invalid={isInvalid}>
                         <FieldLabel htmlFor={field.name}>To</FieldLabel>
@@ -281,25 +253,21 @@ function EditOutgoingFormFields({
                           name={field.name}
                           value={field.state.value}
                           onBlur={field.handleBlur}
-                          onChange={(event) =>
-                            field.handleChange(event.target.value)
-                          }
+                          onChange={(event) => field.handleChange(event.target.value)}
                           placeholder="e.g. Market Yard"
                           autoComplete="off"
                           aria-invalid={isInvalid}
                           className="h-11 text-base"
                         />
-                        {isInvalid && (
-                          <FieldError errors={field.state.meta.errors} />
-                        )}
+                        {isInvalid && <FieldError errors={field.state.meta.errors} />}
                       </Field>
-                    )
+                    );
                   }}
                 </form.Field>
 
                 <form.Field name="truckNumber">
                   {(field) => {
-                    const isInvalid = isFieldInvalid(field.state.meta)
+                    const isInvalid = isFieldInvalid(field.state.meta);
                     return (
                       <Field data-invalid={isInvalid}>
                         <FieldLabel htmlFor={field.name}>Truck number</FieldLabel>
@@ -308,21 +276,15 @@ function EditOutgoingFormFields({
                           name={field.name}
                           value={field.state.value}
                           onBlur={field.handleBlur}
-                          onChange={(event) =>
-                            field.handleChange(
-                              event.target.value.toUpperCase(),
-                            )
-                          }
+                          onChange={(event) => field.handleChange(event.target.value.toUpperCase())}
                           placeholder="e.g. HR-12-3456"
                           autoComplete="off"
                           aria-invalid={isInvalid}
                           className="h-11 text-base uppercase"
                         />
-                        {isInvalid && (
-                          <FieldError errors={field.state.meta.errors} />
-                        )}
+                        {isInvalid && <FieldError errors={field.state.meta.errors} />}
                       </Field>
-                    )
+                    );
                   }}
                 </form.Field>
               </FieldGroup>
@@ -338,12 +300,10 @@ function EditOutgoingFormFields({
               <FieldGroup className="mt-5 grid grid-cols-1 gap-6">
                 <form.Field name="category">
                   {(field) => {
-                    const isInvalid = isFieldInvalid(field.state.meta)
+                    const isInvalid = isFieldInvalid(field.state.meta);
                     return (
                       <Field data-invalid={isInvalid}>
-                        <FieldLabel htmlFor="edit-outgoing-category">
-                          Category
-                        </FieldLabel>
+                        <FieldLabel htmlFor="edit-outgoing-category">Category</FieldLabel>
                         <SearchableOptionCombobox
                           id="edit-outgoing-category"
                           name={field.name}
@@ -362,17 +322,15 @@ function EditOutgoingFormFields({
                           disabled={isPending}
                           portalContainer={comboboxPortalContainer}
                         />
-                        {isInvalid && (
-                          <FieldError errors={field.state.meta.errors} />
-                        )}
+                        {isInvalid && <FieldError errors={field.state.meta.errors} />}
                       </Field>
-                    )
+                    );
                   }}
                 </form.Field>
 
                 <form.Field name="billNumber">
                   {(field) => {
-                    const isInvalid = isFieldInvalid(field.state.meta)
+                    const isInvalid = isFieldInvalid(field.state.meta);
                     return (
                       <Field data-invalid={isInvalid}>
                         <FieldLabel htmlFor={field.name}>Bill number</FieldLabel>
@@ -382,26 +340,22 @@ function EditOutgoingFormFields({
                           name={field.name}
                           value={field.state.value}
                           onBlur={field.handleBlur}
-                          onChange={(event) =>
-                            field.handleChange(event.target.value)
-                          }
+                          onChange={(event) => field.handleChange(event.target.value)}
                           inputMode="numeric"
                           placeholder="e.g. 1234"
                           aria-invalid={isInvalid}
                           disabled={isPending}
                           className="h-11 text-base tabular-nums"
                         />
-                        {isInvalid && (
-                          <FieldError errors={field.state.meta.errors} />
-                        )}
+                        {isInvalid && <FieldError errors={field.state.meta.errors} />}
                       </Field>
-                    )
+                    );
                   }}
                 </form.Field>
 
                 <form.Field name="biltiNumber">
                   {(field) => {
-                    const isInvalid = isFieldInvalid(field.state.meta)
+                    const isInvalid = isFieldInvalid(field.state.meta);
                     return (
                       <Field data-invalid={isInvalid}>
                         <FieldLabel htmlFor={field.name}>Bilti number</FieldLabel>
@@ -411,26 +365,22 @@ function EditOutgoingFormFields({
                           name={field.name}
                           value={field.state.value}
                           onBlur={field.handleBlur}
-                          onChange={(event) =>
-                            field.handleChange(event.target.value)
-                          }
+                          onChange={(event) => field.handleChange(event.target.value)}
                           inputMode="numeric"
                           placeholder="e.g. 5678"
                           aria-invalid={isInvalid}
                           disabled={isPending}
                           className="h-11 text-base tabular-nums"
                         />
-                        {isInvalid && (
-                          <FieldError errors={field.state.meta.errors} />
-                        )}
+                        {isInvalid && <FieldError errors={field.state.meta.errors} />}
                       </Field>
-                    )
+                    );
                   }}
                 </form.Field>
 
                 <form.Field name="billBook">
                   {(field) => {
-                    const isInvalid = isFieldInvalid(field.state.meta)
+                    const isInvalid = isFieldInvalid(field.state.meta);
                     return (
                       <Field data-invalid={isInvalid}>
                         <FieldLabel htmlFor={field.name}>Bill book</FieldLabel>
@@ -440,26 +390,22 @@ function EditOutgoingFormFields({
                           name={field.name}
                           value={field.state.value}
                           onBlur={field.handleBlur}
-                          onChange={(event) =>
-                            field.handleChange(event.target.value)
-                          }
+                          onChange={(event) => field.handleChange(event.target.value)}
                           inputMode="numeric"
                           placeholder="e.g. 1"
                           aria-invalid={isInvalid}
                           disabled={isPending}
                           className="h-11 text-base tabular-nums"
                         />
-                        {isInvalid && (
-                          <FieldError errors={field.state.meta.errors} />
-                        )}
+                        {isInvalid && <FieldError errors={field.state.meta.errors} />}
                       </Field>
-                    )
+                    );
                   }}
                 </form.Field>
 
                 <form.Field name="biltiBook">
                   {(field) => {
-                    const isInvalid = isFieldInvalid(field.state.meta)
+                    const isInvalid = isFieldInvalid(field.state.meta);
                     return (
                       <Field data-invalid={isInvalid}>
                         <FieldLabel htmlFor={field.name}>Bilti book</FieldLabel>
@@ -469,33 +415,27 @@ function EditOutgoingFormFields({
                           name={field.name}
                           value={field.state.value}
                           onBlur={field.handleBlur}
-                          onChange={(event) =>
-                            field.handleChange(event.target.value)
-                          }
+                          onChange={(event) => field.handleChange(event.target.value)}
                           inputMode="numeric"
                           placeholder="e.g. 2"
                           aria-invalid={isInvalid}
                           disabled={isPending}
                           className="h-11 text-base tabular-nums"
                         />
-                        {isInvalid && (
-                          <FieldError errors={field.state.meta.errors} />
-                        )}
+                        {isInvalid && <FieldError errors={field.state.meta.errors} />}
                       </Field>
-                    )
+                    );
                   }}
                 </form.Field>
               </FieldGroup>
             </FieldSet>
 
             <FieldSet>
-              <FieldLegend className="font-heading text-base font-semibold">
-                Remarks
-              </FieldLegend>
+              <FieldLegend className="font-heading text-base font-semibold">Remarks</FieldLegend>
               <FieldGroup className="mt-5">
                 <form.Field name="remarks">
                   {(field) => {
-                    const isInvalid = isFieldInvalid(field.state.meta)
+                    const isInvalid = isFieldInvalid(field.state.meta);
                     return (
                       <Field data-invalid={isInvalid}>
                         <FieldLabel htmlFor={field.name} className="sr-only">
@@ -506,19 +446,15 @@ function EditOutgoingFormFields({
                           name={field.name}
                           value={field.state.value}
                           onBlur={field.handleBlur}
-                          onChange={(event) =>
-                            field.handleChange(event.target.value)
-                          }
+                          onChange={(event) => field.handleChange(event.target.value)}
                           aria-invalid={isInvalid}
                           placeholder="Add any additional comments or observations (optional)"
                           className="min-h-[120px] resize-y text-base"
                           disabled={isPending}
                         />
-                        {isInvalid && (
-                          <FieldError errors={field.state.meta.errors} />
-                        )}
+                        {isInvalid && <FieldError errors={field.state.meta.errors} />}
                       </Field>
-                    )
+                    );
                   }}
                 </form.Field>
               </FieldGroup>
@@ -551,7 +487,7 @@ function EditOutgoingFormFields({
                     Saving…
                   </>
                 ) : (
-                  "Save changes"
+                  'Save changes'
                 )}
               </Button>
             )}
@@ -559,7 +495,7 @@ function EditOutgoingFormFields({
         </SheetFooter>
       </form>
     </>
-  )
+  );
 }
 
 export function EditOutgoingGatePassSheet({
@@ -567,11 +503,11 @@ export function EditOutgoingGatePassSheet({
   onOpenChange,
   gatePass,
 }: EditOutgoingGatePassSheetProps) {
-  const comboboxPortalContainerRef = useRef<HTMLDivElement>(null)
+  const comboboxPortalContainerRef = useRef<HTMLDivElement>(null);
 
   const handleOpenChange = (nextOpen: boolean) => {
-    onOpenChange(nextOpen)
-  }
+    onOpenChange(nextOpen);
+  };
 
   return (
     <Sheet open={open} onOpenChange={handleOpenChange} modal={false}>
@@ -590,14 +526,10 @@ export function EditOutgoingGatePassSheet({
               </span>
               <div className="min-w-0 space-y-0.5">
                 <SheetTitle className="text-base leading-none font-semibold">
-                  Edit OGP{" "}
-                  <span className="font-mono tabular-nums">
-                    #{gatePass.gatePassNo}
-                  </span>
+                  Edit OGP <span className="font-mono tabular-nums">#{gatePass.gatePassNo}</span>
                 </SheetTitle>
                 <SheetDescription className="text-xs leading-snug text-muted-foreground">
-                  Update date, route, truck, billing details, and remarks for
-                  this outgoing pass.
+                  Update date, route, truck, billing details, and remarks for this outgoing pass.
                 </SheetDescription>
               </div>
             </div>
@@ -614,5 +546,5 @@ export function EditOutgoingGatePassSheet({
         </div>
       </SheetContent>
     </Sheet>
-  )
+  );
 }

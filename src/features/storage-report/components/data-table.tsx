@@ -1,11 +1,4 @@
-import {
-  type ReactNode,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react"
+import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   type Column,
   type ColumnDef,
@@ -20,7 +13,7 @@ import {
   type Table as TanStackTable,
   flexRender,
   useTable,
-} from "@tanstack/react-table"
+} from '@tanstack/react-table';
 import {
   ArrowDown,
   ArrowUp,
@@ -29,7 +22,7 @@ import {
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
-} from "lucide-react"
+} from 'lucide-react';
 
 import {
   Pagination,
@@ -39,7 +32,7 @@ import {
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
-} from "@/components/ui/pagination"
+} from '@/components/ui/pagination';
 import {
   Table,
   TableBody,
@@ -48,150 +41,139 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
-import type { StorageGatePass } from "@/features/storage/api/types"
+} from '@/components/ui/table';
+import type { StorageGatePass } from '@/features/storage/api/types';
 import {
   getStorageReportColumnIds,
   getStoredStorageReportColumnState,
-} from "@/features/storage-report/utils/report-column-preferences"
+} from '@/features/storage-report/utils/report-column-preferences';
 import {
   advancedReportGlobalFilterFn,
   type AdvancedReportGlobalFilter,
   selectedValuesFilterFn,
-} from "@/features/storage-report/utils/report-filter-fns"
-import { storageReportTableFeatures } from "@/features/storage-report/table-features"
-import type {
-  ReportColumnMeta,
-  ReportFeatures,
-} from "@/lib/tanstack-table/report-table-features"
-import { cn } from "@/lib/utils"
+} from '@/features/storage-report/utils/report-filter-fns';
+import { storageReportTableFeatures } from '@/features/storage-report/table-features';
+import type { ReportColumnMeta, ReportFeatures } from '@/lib/tanstack-table/report-table-features';
+import { cn } from '@/lib/utils';
 
-import type { StorageQuantityMode } from "./columns"
+import type { StorageQuantityMode } from './columns';
 import {
   getStorageReportFooterContent,
   ReportTotalLabel,
   storageReportFooterCellClassName,
-} from "./report-totals-footer"
+} from './report-totals-footer';
 
-type PaginationItemValue = number | "ellipsis"
+type PaginationItemValue = number | 'ellipsis';
 
-function getPaginationItems(
-  pageIndex: number,
-  pageCount: number,
-): PaginationItemValue[] {
+function getPaginationItems(pageIndex: number, pageCount: number): PaginationItemValue[] {
   if (pageCount <= 7) {
-    return Array.from({ length: pageCount }, (_, index) => index)
+    return Array.from({ length: pageCount }, (_, index) => index);
   }
 
   const visiblePages = Array.from(
     new Set([0, pageIndex - 1, pageIndex, pageIndex + 1, pageCount - 1]),
   )
     .filter((page) => page >= 0 && page < pageCount)
-    .sort((a, b) => a - b)
+    .sort((a, b) => a - b);
 
   return visiblePages.reduce<PaginationItemValue[]>((items, page) => {
-    const previousPage = items[items.length - 1]
+    const previousPage = items[items.length - 1];
 
-    if (typeof previousPage === "number") {
+    if (typeof previousPage === 'number') {
       if (page - previousPage === 2) {
-        items.push(previousPage + 1)
+        items.push(previousPage + 1);
       } else if (page - previousPage > 2) {
-        items.push("ellipsis")
+        items.push('ellipsis');
       }
     }
 
-    items.push(page)
-    return items
-  }, [])
+    items.push(page);
+    return items;
+  }, []);
 }
 
 const TABLE_GRID_CLASS = cn(
-  "border-collapse",
-  "[&_th]:border-b [&_th]:border-r [&_td]:border-b [&_td]:border-r",
-  "[&_th]:border-border/50 [&_td]:border-border/35",
-  "[&_th:first-child]:border-l [&_td:first-child]:border-l",
-  "[&_thead_th]:border-t [&_thead_th]:border-b-2 [&_thead_th]:border-b-border/60",
-  "[&_th:last-child]:border-r-0 [&_td:last-child]:border-r-0",
-)
+  'border-collapse',
+  '[&_th]:border-b [&_th]:border-r [&_td]:border-b [&_td]:border-r',
+  '[&_th]:border-border/50 [&_td]:border-border/35',
+  '[&_th:first-child]:border-l [&_td:first-child]:border-l',
+  '[&_thead_th]:border-t [&_thead_th]:border-b-2 [&_thead_th]:border-b-border/60',
+  '[&_th:last-child]:border-r-0 [&_td:last-child]:border-r-0',
+);
 
-type ColumnMeta = ReportColumnMeta
+type ColumnMeta = ReportColumnMeta;
 
-function SortIcon({ sorted }: { sorted: false | "asc" | "desc" }) {
-  if (sorted === "desc") {
-    return <ArrowDown className="size-3.5 shrink-0" aria-hidden />
+function SortIcon({ sorted }: { sorted: false | 'asc' | 'desc' }) {
+  if (sorted === 'desc') {
+    return <ArrowDown className="size-3.5 shrink-0" aria-hidden />;
   }
 
-  if (sorted === "asc") {
-    return <ArrowUp className="size-3.5 shrink-0" aria-hidden />
+  if (sorted === 'asc') {
+    return <ArrowUp className="size-3.5 shrink-0" aria-hidden />;
   }
 
-  return <ArrowUpDown className="size-3.5 shrink-0" aria-hidden />
+  return <ArrowUpDown className="size-3.5 shrink-0" aria-hidden />;
 }
 
-function getColumnAlign(meta: ColumnMeta | undefined): "left" | "right" {
-  return meta?.align ?? "left"
+function getColumnAlign(meta: ColumnMeta | undefined): 'left' | 'right' {
+  return meta?.align ?? 'left';
 }
 
 function formatDisplayValue(value: unknown, meta: ColumnMeta | undefined) {
-  if (value == null || value === "") return "Blank"
+  if (value == null || value === '') return 'Blank';
 
-  return meta?.filterValueFormatter?.(value) ?? String(value)
+  return meta?.filterValueFormatter?.(value) ?? String(value);
 }
 
-function getHeadClassName(
-  meta: ColumnMeta | undefined,
-  isHeaderScrolled: boolean,
-) {
-  const align = getColumnAlign(meta)
+function getHeadClassName(meta: ColumnMeta | undefined, isHeaderScrolled: boolean) {
+  const align = getColumnAlign(meta);
 
   return cn(
-    "h-11 px-3 py-2 align-middle text-sm font-semibold transition-[background-color,color] duration-200",
+    'h-11 px-3 py-2 align-middle text-sm font-semibold transition-[background-color,color] duration-200',
     isHeaderScrolled
-      ? "bg-muted/60 text-foreground backdrop-blur-sm supports-[backdrop-filter]:bg-muted/55"
-      : "bg-secondary text-secondary-foreground",
-    "whitespace-nowrap",
-    meta?.groupStart === true && "border-l-2 border-l-border/70",
-    meta?.numeric === true && "tabular-nums",
-    meta?.wrap === true && "min-w-[14rem] whitespace-normal",
-    align === "right" && "text-right",
-  )
+      ? 'bg-muted/60 text-foreground backdrop-blur-sm supports-[backdrop-filter]:bg-muted/55'
+      : 'bg-secondary text-secondary-foreground',
+    'whitespace-nowrap',
+    meta?.groupStart === true && 'border-l-2 border-l-border/70',
+    meta?.numeric === true && 'tabular-nums',
+    meta?.wrap === true && 'min-w-[14rem] whitespace-normal',
+    align === 'right' && 'text-right',
+  );
 }
 
 function getCellClassName(meta: ColumnMeta | undefined) {
-  const align = getColumnAlign(meta)
+  const align = getColumnAlign(meta);
 
   return cn(
-    "px-3 py-3 align-top text-sm leading-normal text-foreground",
-    meta?.groupStart === true && "border-l-2 border-l-border/55",
-    meta?.numeric === true && "tabular-nums font-medium",
-    meta?.mono === true && "font-mono",
-    meta?.emphasize === true && "font-medium",
+    'px-3 py-3 align-top text-sm leading-normal text-foreground',
+    meta?.groupStart === true && 'border-l-2 border-l-border/55',
+    meta?.numeric === true && 'tabular-nums font-medium',
+    meta?.mono === true && 'font-mono',
+    meta?.emphasize === true && 'font-medium',
     meta?.wrap === true
-      ? "min-w-[14rem] max-w-[22rem] whitespace-normal break-words leading-relaxed"
-      : "whitespace-nowrap",
-    align === "right" && "text-right",
-  )
+      ? 'min-w-[14rem] max-w-[22rem] whitespace-normal break-words leading-relaxed'
+      : 'whitespace-nowrap',
+    align === 'right' && 'text-right',
+  );
 }
 
 function getFooterClassName(meta: ColumnMeta | undefined) {
-  const align = getColumnAlign(meta)
+  const align = getColumnAlign(meta);
 
   return cn(
     storageReportFooterCellClassName,
-    meta?.groupStart === true && "border-l-2 border-l-border/55",
-    meta?.numeric === true && "tabular-nums",
-    meta?.wrap === true
-      ? "min-w-[14rem] max-w-[22rem] whitespace-normal"
-      : "whitespace-nowrap",
-    align === "right" && "text-right",
-  )
+    meta?.groupStart === true && 'border-l-2 border-l-border/55',
+    meta?.numeric === true && 'tabular-nums',
+    meta?.wrap === true ? 'min-w-[14rem] max-w-[22rem] whitespace-normal' : 'whitespace-nowrap',
+    align === 'right' && 'text-right',
+  );
 }
 
 interface DataTableColumnHeaderProps<TData extends RowData, TValue> {
-  column: Column<ReportFeatures, TData, TValue>
-  sorted: false | "asc" | "desc"
-  align: "left" | "right"
-  children: ReactNode
+  column: Column<ReportFeatures, TData, TValue>;
+  sorted: false | 'asc' | 'desc';
+  align: 'left' | 'right';
+  children: ReactNode;
 }
 
 function DataTableColumnHeader<TData extends RowData, TValue>({
@@ -203,81 +185,71 @@ function DataTableColumnHeader<TData extends RowData, TValue>({
   if (!column.getCanSort()) {
     return (
       <div
-        className={cn(
-          "flex h-8 items-center",
-          align === "right" ? "justify-end" : "justify-start",
-        )}
+        className={cn('flex h-8 items-center', align === 'right' ? 'justify-end' : 'justify-start')}
       >
         {children}
       </div>
-    )
+    );
   }
 
   return (
     <button
       type="button"
       className={cn(
-        "flex w-full min-w-0 items-center gap-1.5 rounded-md text-inherit transition-colors",
-        "hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30",
-        align === "right" ? "justify-end text-right" : "justify-between text-left",
+        'flex w-full min-w-0 items-center gap-1.5 rounded-md text-inherit transition-colors',
+        'hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30',
+        align === 'right' ? 'justify-end text-right' : 'justify-between text-left',
       )}
       onClick={column.getToggleSortingHandler()}
     >
       {children}
       <span
         className={cn(
-          "shrink-0 text-muted-foreground transition-opacity",
-          sorted ? "opacity-100" : "opacity-0 group-hover/head:opacity-70",
+          'shrink-0 text-muted-foreground transition-opacity',
+          sorted ? 'opacity-100' : 'opacity-0 group-hover/head:opacity-70',
         )}
       >
         <SortIcon sorted={sorted} />
       </span>
     </button>
-  )
+  );
 }
 
 interface DataTableProps {
-  columns: ColumnDef<ReportFeatures, StorageGatePass>[]
-  data: StorageGatePass[]
-  quantityMode: StorageQuantityMode
-  onTableReady?: (table: TanStackTable<ReportFeatures, StorageGatePass>) => void
+  columns: ColumnDef<ReportFeatures, StorageGatePass>[];
+  data: StorageGatePass[];
+  quantityMode: StorageQuantityMode;
+  onTableReady?: (table: TanStackTable<ReportFeatures, StorageGatePass>) => void;
 }
 
-export function DataTable({
-  columns,
-  data,
-  quantityMode,
-  onTableReady,
-}: DataTableProps) {
-  const [columnVisibility, setColumnVisibility] = useState<ColumnVisibilityState>(
-    () => {
-      const columnIds = getStorageReportColumnIds(
-        columns as ColumnDef<ReportFeatures, Record<string, unknown>>[],
-      )
-      return getStoredStorageReportColumnState(columnIds).columnVisibility
-    },
-  )
+export function DataTable({ columns, data, quantityMode, onTableReady }: DataTableProps) {
+  const [columnVisibility, setColumnVisibility] = useState<ColumnVisibilityState>(() => {
+    const columnIds = getStorageReportColumnIds(
+      columns as ColumnDef<ReportFeatures, Record<string, unknown>>[],
+    );
+    return getStoredStorageReportColumnState(columnIds).columnVisibility;
+  });
   const [columnOrder, setColumnOrder] = useState<ColumnOrderState>(() => {
     const columnIds = getStorageReportColumnIds(
-        columns as ColumnDef<ReportFeatures, Record<string, unknown>>[],
-    )
-    return getStoredStorageReportColumnState(columnIds).columnOrder
-  })
-  const [sorting, setSorting] = useState<SortingState>([])
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
-  const [grouping, setGrouping] = useState<GroupingState>([])
-  const [expanded, setExpanded] = useState<ExpandedState>({})
+      columns as ColumnDef<ReportFeatures, Record<string, unknown>>[],
+    );
+    return getStoredStorageReportColumnState(columnIds).columnOrder;
+  });
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [grouping, setGrouping] = useState<GroupingState>([]);
+  const [expanded, setExpanded] = useState<ExpandedState>({});
   const [globalFilter, setGlobalFilter] = useState<AdvancedReportGlobalFilter>({
-    logic: "AND",
+    logic: 'AND',
     conditions: [],
-  })
+  });
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
     pageSize: 100,
-  })
-  const [isHeaderScrolled, setIsHeaderScrolled] = useState(false)
-  const [isFooterElevated, setIsFooterElevated] = useState(false)
-  const scrollContainerRef = useRef<HTMLDivElement>(null)
+  });
+  const [isHeaderScrolled, setIsHeaderScrolled] = useState(false);
+  const [isFooterElevated, setIsFooterElevated] = useState(false);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const table = useTable<ReportFeatures, StorageGatePass>({
     features: storageReportTableFeatures,
@@ -310,61 +282,50 @@ export function DataTable({
     },
     autoResetPageIndex: false,
     pageCount: Math.max(1, Math.ceil(data.length / pagination.pageSize)),
-  })
-  const rows = table.getRowModel().rows
-  const footerRows = table.getFilteredRowModel().rows
-  const totalRowCount = footerRows.length
-  const { pageIndex, pageSize } = pagination
-  const pageCount = Math.max(Math.ceil(totalRowCount / pageSize), 1)
-  const canPreviousPage = pageIndex > 0
-  const canNextPage = pageIndex < pageCount - 1
-  const pageItems = useMemo(
-    () => getPaginationItems(pageIndex, pageCount),
-    [pageCount, pageIndex],
-  )
-  const rangeStart =
-    totalRowCount === 0
-      ? 0
-      : Math.min(pageIndex * pageSize + 1, totalRowCount)
-  const rangeEnd =
-    totalRowCount === 0
-      ? 0
-      : Math.min((pageIndex + 1) * pageSize, totalRowCount)
-  const hasDataRows = rows.length > 0
+  });
+  const rows = table.getRowModel().rows;
+  const footerRows = table.getFilteredRowModel().rows;
+  const totalRowCount = footerRows.length;
+  const { pageIndex, pageSize } = pagination;
+  const pageCount = Math.max(Math.ceil(totalRowCount / pageSize), 1);
+  const canPreviousPage = pageIndex > 0;
+  const canNextPage = pageIndex < pageCount - 1;
+  const pageItems = useMemo(() => getPaginationItems(pageIndex, pageCount), [pageCount, pageIndex]);
+  const rangeStart = totalRowCount === 0 ? 0 : Math.min(pageIndex * pageSize + 1, totalRowCount);
+  const rangeEnd = totalRowCount === 0 ? 0 : Math.min((pageIndex + 1) * pageSize, totalRowCount);
+  const hasDataRows = rows.length > 0;
 
   const handleTableScroll = useCallback(() => {
-    const el = scrollContainerRef.current
-    if (!el) return
+    const el = scrollContainerRef.current;
+    if (!el) return;
 
-    setIsHeaderScrolled(el.scrollTop > 0)
-    setIsFooterElevated(
-      el.scrollTop + el.clientHeight < el.scrollHeight - 1,
-    )
-  }, [])
+    setIsHeaderScrolled(el.scrollTop > 0);
+    setIsFooterElevated(el.scrollTop + el.clientHeight < el.scrollHeight - 1);
+  }, []);
 
   useEffect(() => {
-    handleTableScroll()
-  }, [handleTableScroll, rows.length])
+    handleTableScroll();
+  }, [handleTableScroll, rows.length]);
 
   useEffect(() => {
-    onTableReady?.(table)
-  }, [onTableReady, table])
+    onTableReady?.(table);
+  }, [onTableReady, table]);
 
   useEffect(() => {
-    if (pagination.pageIndex < pageCount) return
+    if (pagination.pageIndex < pageCount) return;
 
     setPagination((current) => ({
       ...current,
       pageIndex: Math.max(pageCount - 1, 0),
-    }))
-  }, [pageCount, pagination.pageIndex])
+    }));
+  }, [pageCount, pagination.pageIndex]);
 
   useEffect(() => {
-    const el = scrollContainerRef.current
-    if (!el) return
+    const el = scrollContainerRef.current;
+    if (!el) return;
 
-    el.scrollTo({ left: el.scrollLeft, top: 0 })
-  }, [pageIndex])
+    el.scrollTo({ left: el.scrollLeft, top: 0 });
+  }, [pageIndex]);
 
   return (
     <div className="min-w-0 overflow-hidden">
@@ -376,48 +337,34 @@ export function DataTable({
         <Table className={TABLE_GRID_CLASS}>
           <TableHeader
             className={cn(
-              "sticky top-0 z-10 [&_tr]:border-0 [&_tr]:hover:bg-transparent",
-              isHeaderScrolled && "shadow-[0_1px_0_0] shadow-border/80",
+              'sticky top-0 z-10 [&_tr]:border-0 [&_tr]:hover:bg-transparent',
+              isHeaderScrolled && 'shadow-[0_1px_0_0] shadow-border/80',
             )}
           >
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id} className="border-0">
                 {headerGroup.headers.map((header) => {
-                  const align = getColumnAlign(header.column.columnDef.meta)
-                  const sorted = header.column.getIsSorted()
+                  const align = getColumnAlign(header.column.columnDef.meta);
+                  const sorted = header.column.getIsSorted();
 
                   return (
                     <TableHead
                       key={header.id}
                       className={cn(
-                        "group/head",
-                        getHeadClassName(
-                          header.column.columnDef.meta,
-                          isHeaderScrolled,
-                        ),
+                        'group/head',
+                        getHeadClassName(header.column.columnDef.meta, isHeaderScrolled),
                       )}
                       aria-sort={
-                        sorted === "asc"
-                          ? "ascending"
-                          : sorted === "desc"
-                            ? "descending"
-                            : "none"
+                        sorted === 'asc' ? 'ascending' : sorted === 'desc' ? 'descending' : 'none'
                       }
                     >
                       {header.isPlaceholder ? null : (
-                        <DataTableColumnHeader
-                          column={header.column}
-                          sorted={sorted}
-                          align={align}
-                        >
-                          {flexRender(
-                            header.column.columnDef.header,
-                            header.getContext(),
-                          )}
+                        <DataTableColumnHeader column={header.column} sorted={sorted} align={align}>
+                          {flexRender(header.column.columnDef.header, header.getContext())}
                         </DataTableColumnHeader>
                       )}
                     </TableHead>
-                  )
+                  );
                 })}
               </TableRow>
             ))}
@@ -425,30 +372,27 @@ export function DataTable({
           <TableBody className="[&_tr:last-child]:border-0">
             {hasDataRows ? (
               rows.map((row) => {
-                const isGroupedRow = row.getIsGrouped()
+                const isGroupedRow = row.getIsGrouped();
 
                 return (
                   <TableRow
                     key={row.id}
                     className={cn(
-                      "border-0 even:bg-muted/20 hover:bg-muted/40",
+                      'border-0 even:bg-muted/20 hover:bg-muted/40',
                       isGroupedRow &&
-                        "bg-primary/5 even:bg-primary/5 hover:bg-primary/10 [&>td]:border-b-border/60 [&>td]:border-t-border/60 [&>td]:shadow-[inset_0_1px_0_hsl(var(--primary)/0.12)]",
+                        'bg-primary/5 even:bg-primary/5 hover:bg-primary/10 [&>td]:border-b-border/60 [&>td]:border-t-border/60 [&>td]:shadow-[inset_0_1px_0_hsl(var(--primary)/0.12)]',
                     )}
                   >
                     {row.getVisibleCells().map((cell) => {
-                      const meta = cell.column.columnDef.meta
-                      const isGroupedCell = cell.getIsGrouped()
-                      const isAggregatedCell = cell.getIsAggregated()
-                      const isPlaceholderCell = cell.getIsPlaceholder()
+                      const meta = cell.column.columnDef.meta;
+                      const isGroupedCell = cell.getIsGrouped();
+                      const isAggregatedCell = cell.getIsAggregated();
+                      const isPlaceholderCell = cell.getIsPlaceholder();
 
                       return (
                         <TableCell
                           key={cell.id}
-                          className={cn(
-                            getCellClassName(meta),
-                            isGroupedRow && "bg-transparent",
-                          )}
+                          className={cn(getCellClassName(meta), isGroupedRow && 'bg-transparent')}
                         >
                           {isGroupedCell ? (
                             <button
@@ -475,31 +419,25 @@ export function DataTable({
                                 {formatDisplayValue(cell.getValue(), meta)}
                               </span>
                               <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold tabular-nums text-primary">
-                                {row.subRows.length.toLocaleString("en-IN")}
+                                {row.subRows.length.toLocaleString('en-IN')}
                               </span>
                             </button>
                           ) : isAggregatedCell ? (
                             meta?.numeric === true && cell.getValue() != null ? (
                               <span className="font-semibold text-foreground">
-                                {flexRender(
-                                  cell.column.columnDef.cell,
-                                  cell.getContext(),
-                                )}
+                                {flexRender(cell.column.columnDef.cell, cell.getContext())}
                               </span>
                             ) : (
                               <span aria-hidden />
                             )
                           ) : isPlaceholderCell ? null : (
-                            flexRender(
-                              cell.column.columnDef.cell,
-                              cell.getContext(),
-                            )
+                            flexRender(cell.column.columnDef.cell, cell.getContext())
                           )}
                         </TableCell>
-                      )
+                      );
                     })}
                   </TableRow>
-                )
+                );
               })
             ) : (
               <TableRow className="border-0">
@@ -515,8 +453,8 @@ export function DataTable({
           {hasDataRows ? (
             <TableFooter
               className={cn(
-                "sticky bottom-0 z-10 border-0 bg-transparent [&>tr]:border-0",
-                isFooterElevated && "shadow-[0_-1px_0_0] shadow-border/80",
+                'sticky bottom-0 z-10 border-0 bg-transparent [&>tr]:border-0',
+                isFooterElevated && 'shadow-[0_-1px_0_0] shadow-border/80',
               )}
             >
               <TableRow className="border-0 hover:bg-transparent">
@@ -525,12 +463,8 @@ export function DataTable({
                     columnIndex === 0 ? (
                       <ReportTotalLabel />
                     ) : (
-                      getStorageReportFooterContent(
-                        column.id,
-                        footerRows,
-                        quantityMode,
-                      )
-                    )
+                      getStorageReportFooterContent(column.id, footerRows, quantityMode)
+                    );
 
                   if (columnIndex === 0) {
                     return (
@@ -541,18 +475,18 @@ export function DataTable({
                       >
                         {footerContent}
                       </TableHead>
-                    )
+                    );
                   }
 
                   return (
                     <TableCell
                       key={`footer-${column.id}`}
                       className={getFooterClassName(column.columnDef.meta)}
-                      aria-label={footerContent ? "column total" : undefined}
+                      aria-label={footerContent ? 'column total' : undefined}
                     >
                       {footerContent}
                     </TableCell>
-                  )
+                  );
                 })}
               </TableRow>
             </TableFooter>
@@ -562,20 +496,16 @@ export function DataTable({
       {hasDataRows ? (
         <div className="flex flex-col gap-3 border-t border-border/60 bg-muted/20 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
           <p className="text-sm text-muted-foreground">
-            Showing{" "}
+            Showing{' '}
             <span className="font-medium tabular-nums text-foreground">
-              {rangeStart.toLocaleString("en-IN")}–
-              {rangeEnd.toLocaleString("en-IN")}
-            </span>{" "}
-            of{" "}
+              {rangeStart.toLocaleString('en-IN')}–{rangeEnd.toLocaleString('en-IN')}
+            </span>{' '}
+            of{' '}
             <span className="font-medium tabular-nums text-foreground">
-              {totalRowCount.toLocaleString("en-IN")}
-            </span>{" "}
+              {totalRowCount.toLocaleString('en-IN')}
+            </span>{' '}
             visible rows
-            <span className="hidden sm:inline">
-              {" "}
-              · {pageSize.toLocaleString("en-IN")} per page
-            </span>
+            <span className="hidden sm:inline"> · {pageSize.toLocaleString('en-IN')} per page</span>
           </p>
           <Pagination className="mx-0 w-auto justify-start sm:justify-end">
             <PaginationContent className="flex-wrap justify-start sm:justify-end">
@@ -585,16 +515,13 @@ export function DataTable({
                   aria-label="Go to first page"
                   aria-disabled={!canPreviousPage}
                   tabIndex={canPreviousPage ? undefined : -1}
-                  className={cn(
-                    "size-9",
-                    !canPreviousPage && "pointer-events-none opacity-50",
-                  )}
+                  className={cn('size-9', !canPreviousPage && 'pointer-events-none opacity-50')}
                   onClick={(event) => {
-                    event.preventDefault()
+                    event.preventDefault();
                     table.setPagination((current) => ({
                       ...current,
                       pageIndex: 0,
-                    }))
+                    }));
                   }}
                 >
                   <ChevronsLeft className="size-4" aria-hidden />
@@ -606,20 +533,18 @@ export function DataTable({
                   text="Prev"
                   aria-disabled={!canPreviousPage}
                   tabIndex={canPreviousPage ? undefined : -1}
-                  className={cn(
-                    !canPreviousPage && "pointer-events-none opacity-50",
-                  )}
+                  className={cn(!canPreviousPage && 'pointer-events-none opacity-50')}
                   onClick={(event) => {
-                    event.preventDefault()
+                    event.preventDefault();
                     table.setPagination((current) => ({
                       ...current,
                       pageIndex: Math.max(current.pageIndex - 1, 0),
-                    }))
+                    }));
                   }}
                 />
               </PaginationItem>
               {pageItems.map((item, itemIndex) =>
-                typeof item === "number" ? (
+                typeof item === 'number' ? (
                   <PaginationItem
                     key={`storage-report-page-${item}`}
                     className="hidden sm:list-item"
@@ -628,11 +553,11 @@ export function DataTable({
                       href="#"
                       isActive={item === pageIndex}
                       onClick={(event) => {
-                        event.preventDefault()
+                        event.preventDefault();
                         table.setPagination((current) => ({
                           ...current,
                           pageIndex: item,
-                        }))
+                        }));
                       }}
                     >
                       {item + 1}
@@ -660,15 +585,13 @@ export function DataTable({
                   href="#"
                   aria-disabled={!canNextPage}
                   tabIndex={canNextPage ? undefined : -1}
-                  className={cn(
-                    !canNextPage && "pointer-events-none opacity-50",
-                  )}
+                  className={cn(!canNextPage && 'pointer-events-none opacity-50')}
                   onClick={(event) => {
-                    event.preventDefault()
+                    event.preventDefault();
                     table.setPagination((current) => ({
                       ...current,
                       pageIndex: Math.min(current.pageIndex + 1, pageCount - 1),
-                    }))
+                    }));
                   }}
                 />
               </PaginationItem>
@@ -678,16 +601,13 @@ export function DataTable({
                   aria-label="Go to last page"
                   aria-disabled={!canNextPage}
                   tabIndex={canNextPage ? undefined : -1}
-                  className={cn(
-                    "size-9",
-                    !canNextPage && "pointer-events-none opacity-50",
-                  )}
+                  className={cn('size-9', !canNextPage && 'pointer-events-none opacity-50')}
                   onClick={(event) => {
-                    event.preventDefault()
+                    event.preventDefault();
                     table.setPagination((current) => ({
                       ...current,
                       pageIndex: pageCount - 1,
-                    }))
+                    }));
                   }}
                 >
                   <ChevronsRight className="size-4" aria-hidden />
@@ -698,5 +618,5 @@ export function DataTable({
         </div>
       ) : null}
     </div>
-  )
+  );
 }

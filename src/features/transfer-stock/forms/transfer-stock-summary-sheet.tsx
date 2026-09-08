@@ -1,4 +1,4 @@
-import type { ReactNode } from "react"
+import type { ReactNode } from 'react';
 import {
   ArrowLeft,
   ArrowRightLeft,
@@ -12,8 +12,8 @@ import {
   User2,
   Warehouse,
   type LucideIcon,
-} from "lucide-react"
-import { Button } from "@/components/ui/button"
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import {
   Sheet,
   SheetContent,
@@ -21,37 +21,37 @@ import {
   SheetFooter,
   SheetHeader,
   SheetTitle,
-} from "@/components/ui/sheet"
-import { AllocationReviewByVariety } from "@/features/transfer-stock/forms/allocation-review-by-variety"
-import type { TransferStockFormValues } from "@/features/transfer-stock/types"
-import type { TransferStockItem } from "@/features/transfer-stock/types/storage-gate-pass"
-import { cn } from "@/lib/utils"
+} from '@/components/ui/sheet';
+import { AllocationReviewByVariety } from '@/features/transfer-stock/forms/allocation-review-by-variety';
+import type { TransferStockFormValues } from '@/features/transfer-stock/types';
+import type { TransferStockItem } from '@/features/transfer-stock/types/storage-gate-pass';
+import { cn } from '@/lib/utils';
 
-export type TransferStockSummaryValues = TransferStockFormValues
+export type TransferStockSummaryValues = TransferStockFormValues;
 
 type TransferStockSummarySheetProps = {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  values: TransferStockSummaryValues | null
-  fromFarmerLabel: string
-  toFarmerLabel: string
-  transferItems: TransferStockItem[]
-  onBack: () => void
-  onSubmit: () => void
-  canSubmit: boolean
-  isSubmitting: boolean
-}
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  values: TransferStockSummaryValues | null;
+  fromFarmerLabel: string;
+  toFarmerLabel: string;
+  transferItems: TransferStockItem[];
+  onBack: () => void;
+  onSubmit: () => void;
+  canSubmit: boolean;
+  isSubmitting: boolean;
+};
 
 function formatReviewDate(iso: string) {
-  if (!iso) return "—"
-  const date = new Date(iso)
-  if (Number.isNaN(date.getTime())) return "—"
-  return new Intl.DateTimeFormat("en-IN", {
-    weekday: "short",
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  }).format(date)
+  if (!iso) return '—';
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return '—';
+  return new Intl.DateTimeFormat('en-IN', {
+    weekday: 'short',
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  }).format(date);
 }
 
 function DetailRow({
@@ -60,10 +60,10 @@ function DetailRow({
   icon: Icon,
   valueClassName,
 }: {
-  label: string
-  value: ReactNode
-  icon?: LucideIcon
-  valueClassName?: string
+  label: string;
+  value: ReactNode;
+  icon?: LucideIcon;
+  valueClassName?: string;
 }) {
   return (
     <div className="flex items-start justify-between gap-4 py-2.5">
@@ -71,25 +71,14 @@ function DetailRow({
         {Icon && <Icon className="size-3.5 shrink-0" />}
         {label}
       </span>
-      <span
-        className={cn(
-          "text-right text-sm font-medium text-foreground",
-          valueClassName
-        )}
-      >
-        {value ?? "—"}
+      <span className={cn('text-right text-sm font-medium text-foreground', valueClassName)}>
+        {value ?? '—'}
       </span>
     </div>
-  )
+  );
 }
 
-function SectionLabel({
-  icon: Icon,
-  children,
-}: {
-  icon: LucideIcon
-  children: ReactNode
-}) {
+function SectionLabel({ icon: Icon, children }: { icon: LucideIcon; children: ReactNode }) {
   return (
     <div className="mb-1 flex items-center gap-2">
       <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
@@ -99,26 +88,20 @@ function SectionLabel({
         {children}
       </span>
     </div>
-  )
+  );
 }
 
-function SummaryCard({
-  children,
-  className,
-}: {
-  children: ReactNode
-  className?: string
-}) {
+function SummaryCard({ children, className }: { children: ReactNode; className?: string }) {
   return (
     <div
       className={cn(
-        "divide-y divide-border/40 rounded-xl border border-border/50 bg-card px-4",
-        className
+        'divide-y divide-border/40 rounded-xl border border-border/50 bg-card px-4',
+        className,
       )}
     >
       {children}
     </div>
-  )
+  );
 }
 
 function TransferReviewSummary({
@@ -127,12 +110,12 @@ function TransferReviewSummary({
   toFarmerLabel,
   transferItems,
 }: {
-  values: TransferStockSummaryValues
-  fromFarmerLabel: string
-  toFarmerLabel: string
-  transferItems: TransferStockItem[]
+  values: TransferStockSummaryValues;
+  fromFarmerLabel: string;
+  toFarmerLabel: string;
+  transferItems: TransferStockItem[];
 }) {
-  const totalBags = transferItems.reduce((sum, item) => sum + item.quantity, 0)
+  const totalBags = transferItems.reduce((sum, item) => sum + item.quantity, 0);
   return (
     <div className="space-y-7">
       <div className="flex items-center justify-between gap-3 rounded-xl border border-border/40 bg-muted/30 px-4 py-3.5">
@@ -154,27 +137,18 @@ function TransferReviewSummary({
         <SectionLabel icon={User2}>Accounts</SectionLabel>
         <SummaryCard>
           <DetailRow label="From" value={fromFarmerLabel} icon={User2} />
-          <DetailRow
-            label="To"
-            value={toFarmerLabel}
-            icon={User2}
-            valueClassName="text-primary"
-          />
+          <DetailRow label="To" value={toFarmerLabel} icon={User2} valueClassName="text-primary" />
         </SummaryCard>
       </div>
 
       <div className="space-y-2">
         <SectionLabel icon={Calendar}>Transfer date</SectionLabel>
         <SummaryCard>
-          <DetailRow
-            label="Date"
-            value={formatReviewDate(values.date)}
-            icon={Calendar}
-          />
+          <DetailRow label="Date" value={formatReviewDate(values.date)} icon={Calendar} />
           {values.manualGatePassNumber != null && (
             <DetailRow
               label="Manual gate pass no."
-              value={`#${values.manualGatePassNumber.toLocaleString("en-IN")}`}
+              value={`#${values.manualGatePassNumber.toLocaleString('en-IN')}`}
               icon={FileText}
               valueClassName="font-mono tabular-nums"
             />
@@ -194,7 +168,7 @@ function TransferReviewSummary({
         <SummaryCard>
           <DetailRow
             label="Truck number"
-            value={values.truckNumber || "—"}
+            value={values.truckNumber || '—'}
             icon={Truck}
             valueClassName="font-mono uppercase"
           />
@@ -207,7 +181,7 @@ function TransferReviewSummary({
         <SummaryCard className="mt-3">
           <DetailRow
             label="Total bags"
-            value={totalBags.toLocaleString("en-IN")}
+            value={totalBags.toLocaleString('en-IN')}
             icon={Warehouse}
             valueClassName="font-semibold tabular-nums"
           />
@@ -225,7 +199,7 @@ function TransferReviewSummary({
         </div>
       ) : null}
     </div>
-  )
+  );
 }
 
 export function TransferStockSummarySheet({
@@ -300,7 +274,7 @@ export function TransferStockSummarySheet({
             onClick={onSubmit}
           >
             {isSubmitting ? (
-              "Submitting…"
+              'Submitting…'
             ) : (
               <>
                 <CheckCircle2 className="size-3.5" />
@@ -311,5 +285,5 @@ export function TransferStockSummarySheet({
         </SheetFooter>
       </SheetContent>
     </Sheet>
-  )
+  );
 }

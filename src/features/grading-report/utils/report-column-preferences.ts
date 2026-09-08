@@ -38,7 +38,9 @@ function getColumnId(column: ColumnDef<ReportFeatures, Record<string, unknown>>,
 function getLeafColumnIds(columns: ColumnDef<ReportFeatures, Record<string, unknown>>[]): string[] {
   return columns.flatMap((column, index) => {
     if ('columns' in column && Array.isArray(column.columns)) {
-      return getLeafColumnIds(column.columns as ColumnDef<ReportFeatures, Record<string, unknown>>[]);
+      return getLeafColumnIds(
+        column.columns as ColumnDef<ReportFeatures, Record<string, unknown>>[],
+      );
     }
 
     return getColumnId(column, index);
@@ -99,7 +101,9 @@ function toColumnState(
   };
 }
 
-export function getGradingReportColumnIds(columns: ColumnDef<ReportFeatures, Record<string, unknown>>[]) {
+export function getGradingReportColumnIds(
+  columns: ColumnDef<ReportFeatures, Record<string, unknown>>[],
+) {
   return getLeafColumnIds(columns);
 }
 

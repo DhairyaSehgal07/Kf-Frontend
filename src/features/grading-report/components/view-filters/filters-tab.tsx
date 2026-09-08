@@ -35,7 +35,9 @@ interface ColumnFilterSectionProps<TData extends RowData> {
   onDraftColumnFiltersChange: (filters: ColumnFiltersState) => void;
 }
 
-function getColumnLabel<TData extends RowData>(column: Column<ReportFeatures, TData, unknown>): string {
+function getColumnLabel<TData extends RowData>(
+  column: Column<ReportFeatures, TData, unknown>,
+): string {
   return column.columnDef.meta?.filterLabel ?? column.id;
 }
 
@@ -154,12 +156,17 @@ function ColumnFilterSection<TData extends RowData>({
         onClick={onToggleOpen}
       >
         <span className="min-w-0">
-          <span className="text-foreground block truncate text-sm font-semibold">{columnLabel}</span>
+          <span className="text-foreground block truncate text-sm font-semibold">
+            {columnLabel}
+          </span>
         </span>
         <span className="flex shrink-0 items-center gap-2">
           <span className="text-muted-foreground text-xs font-medium">{summary}</span>
           <ChevronDown
-            className={cn('text-muted-foreground size-4 transition-transform', isOpen && 'rotate-180')}
+            className={cn(
+              'text-muted-foreground size-4 transition-transform',
+              isOpen && 'rotate-180',
+            )}
             aria-hidden
           />
         </span>
@@ -280,9 +287,7 @@ const FiltersTab = <TData extends RowData>({
     () => table.getAllLeafColumns().filter((column) => column.getCanFilter()),
     [table],
   );
-  const [openColumnId, setOpenColumnId] = useState<string | null>(
-    filterableColumns[0]?.id ?? null,
-  );
+  const [openColumnId, setOpenColumnId] = useState<string | null>(filterableColumns[0]?.id ?? null);
   const [searchQueries, setSearchQueries] = useState<Record<string, string>>({});
 
   if (filterableColumns.length === 0) {

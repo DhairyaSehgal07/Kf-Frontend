@@ -196,10 +196,7 @@ function sumIncomingGatePassNumber(
   );
 }
 
-function getIncomingGatePassText(
-  row: GradingGatePassReportRow,
-  key: 'stage' | 'category',
-) {
+function getIncomingGatePassText(row: GradingGatePassReportRow, key: 'stage' | 'category') {
   return getIncomingGatePassObjects(row)
     .map((gatePass) => gatePass[key])
     .filter(Boolean)
@@ -540,7 +537,9 @@ export function getGradingReportColumns(
             quantity: detail.quantity,
             weight: parseReportNumber(detail.weightPerBagKg),
           }))
-          .filter((detail): detail is { quantity: number; weight: number } => detail.weight != null);
+          .filter(
+            (detail): detail is { quantity: number; weight: number } => detail.weight != null,
+          );
         const weightQuantity = weights.reduce((sum, detail) => sum + detail.quantity, 0);
         const averageWeightPerBagKg =
           weights.length && weightQuantity > 0

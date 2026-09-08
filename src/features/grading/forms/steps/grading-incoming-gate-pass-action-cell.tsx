@@ -1,14 +1,14 @@
-import { Loader2 } from "lucide-react"
+import { Loader2 } from 'lucide-react';
 
-import { useGradingIncomingGatePassLink } from "@/features/grading/api/use-grading-incoming-gate-pass-link"
-import type { GradingSelectIncomingGatePasses } from "@/features/grading/types"
-import { Button } from "@/components/ui/button"
+import { useGradingIncomingGatePassLink } from '@/features/grading/api/use-grading-incoming-gate-pass-link';
+import type { GradingSelectIncomingGatePasses } from '@/features/grading/types';
+import { Button } from '@/components/ui/button';
 
 type GradingIncomingGatePassActionCellProps = {
-  gradingGatePassId: string
-  farmerStorageLinkId: string
-  incomingGatePass: GradingSelectIncomingGatePasses
-}
+  gradingGatePassId: string;
+  farmerStorageLinkId: string;
+  incomingGatePass: GradingSelectIncomingGatePasses;
+};
 
 export function GradingIncomingGatePassActionCell({
   gradingGatePassId,
@@ -18,23 +18,23 @@ export function GradingIncomingGatePassActionCell({
   const { link, delink, isRowPending } = useGradingIncomingGatePassLink({
     gradingGatePassId,
     farmerStorageLinkId,
-  })
+  });
 
-  const isGraded = incomingGatePass.status === "GRADED"
-  const incomingGatePassId = incomingGatePass._id
-  const isPending = isRowPending(incomingGatePassId)
+  const isGraded = incomingGatePass.status === 'GRADED';
+  const incomingGatePassId = incomingGatePass._id;
+  const isPending = isRowPending(incomingGatePassId);
 
   const handleClick = () => {
-    const input = { gradingGatePassId, incomingGatePassId }
-    void (isGraded ? delink(input) : link(input))
-  }
+    const input = { gradingGatePassId, incomingGatePassId };
+    void (isGraded ? delink(input) : link(input));
+  };
 
   return (
     <Button
       type="button"
       variant="outline"
       size="sm"
-      disabled={isPending || incomingGatePassId.startsWith("linked-")}
+      disabled={isPending || incomingGatePassId.startsWith('linked-')}
       onClick={handleClick}
       aria-label={
         isGraded
@@ -42,13 +42,7 @@ export function GradingIncomingGatePassActionCell({
           : `Link gate pass ${incomingGatePass.manualGatePassNumber}`
       }
     >
-      {isPending ? (
-        <Loader2 className="size-4 animate-spin" />
-      ) : isGraded ? (
-        "DELINK"
-      ) : (
-        "Link"
-      )}
+      {isPending ? <Loader2 className="size-4 animate-spin" /> : isGraded ? 'DELINK' : 'Link'}
     </Button>
-  )
+  );
 }

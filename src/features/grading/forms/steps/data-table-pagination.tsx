@@ -1,75 +1,61 @@
-import {
-  type PaginationState,
-  type RowData,
-  type Table,
-} from "@tanstack/react-table"
-import {
-  ChevronLeft,
-  ChevronRight,
-  ChevronsLeft,
-  ChevronsRight,
-} from "lucide-react"
+import { type PaginationState, type RowData, type Table } from '@tanstack/react-table';
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 
-import { Button } from "@/components/ui/button"
+import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { cn } from "@/lib/utils"
-import type { GradingFormTableFeatures } from "./table-features"
+} from '@/components/ui/select';
+import { cn } from '@/lib/utils';
+import type { GradingFormTableFeatures } from './table-features';
 
 interface DataTablePaginationProps<TData extends RowData> {
-  table: Table<GradingFormTableFeatures, TData>
-  pagination: PaginationState
-  className?: string
+  table: Table<GradingFormTableFeatures, TData>;
+  pagination: PaginationState;
+  className?: string;
 }
 
-const PAGE_SIZE_OPTIONS = [10, 20, 25, 30, 40, 50] as const
+const PAGE_SIZE_OPTIONS = [10, 20, 25, 30, 40, 50] as const;
 
 export function DataTablePagination<TData extends RowData>({
   table,
   pagination,
   className,
 }: DataTablePaginationProps<TData>) {
-  const { pageIndex, pageSize } = pagination
-  const filteredTotal = table.getFilteredRowModel().rows.length
-  const pageCount = Math.max(table.getPageCount(), 1)
-  const canPreviousPage = pageIndex > 0
-  const canNextPage = pageIndex < pageCount - 1
-  const selectedCount = table.getFilteredSelectedRowModel().rows.length
-  const rangeStart =
-    filteredTotal === 0 ? 0 : pageIndex * pageSize + 1
-  const rangeEnd =
-    filteredTotal === 0
-      ? 0
-      : Math.min((pageIndex + 1) * pageSize, filteredTotal)
+  const { pageIndex, pageSize } = pagination;
+  const filteredTotal = table.getFilteredRowModel().rows.length;
+  const pageCount = Math.max(table.getPageCount(), 1);
+  const canPreviousPage = pageIndex > 0;
+  const canNextPage = pageIndex < pageCount - 1;
+  const selectedCount = table.getFilteredSelectedRowModel().rows.length;
+  const rangeStart = filteredTotal === 0 ? 0 : pageIndex * pageSize + 1;
+  const rangeEnd = filteredTotal === 0 ? 0 : Math.min((pageIndex + 1) * pageSize, filteredTotal);
 
   return (
     <div
       className={cn(
-        "flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:py-4",
-        className
+        'flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:py-4',
+        className,
       )}
     >
       <div className="flex min-w-0 items-center justify-between gap-3 text-sm text-muted-foreground tabular-nums sm:block sm:space-y-0.5 sm:justify-start">
         <p className="min-w-0 truncate">
-          Showing{" "}
+          Showing{' '}
           <span className="font-medium text-foreground">
-            {rangeStart.toLocaleString("en-IN")}–
-            {rangeEnd.toLocaleString("en-IN")}
-          </span>{" "}
-          of{" "}
+            {rangeStart.toLocaleString('en-IN')}–{rangeEnd.toLocaleString('en-IN')}
+          </span>{' '}
+          of{' '}
           <span className="font-medium text-foreground">
-            {filteredTotal.toLocaleString("en-IN")}
+            {filteredTotal.toLocaleString('en-IN')}
           </span>
         </p>
         <p className="shrink-0">
           <span className="font-medium text-foreground">
-            {selectedCount.toLocaleString("en-IN")}
-          </span>{" "}
+            {selectedCount.toLocaleString('en-IN')}
+          </span>{' '}
           selected
         </p>
       </div>
@@ -86,7 +72,7 @@ export function DataTablePagination<TData extends RowData>({
           <Select
             value={`${pageSize}`}
             onValueChange={(value) => {
-              table.setPageSize(Number(value))
+              table.setPageSize(Number(value));
             }}
           >
             <SelectTrigger
@@ -159,5 +145,5 @@ export function DataTablePagination<TData extends RowData>({
         </div>
       </div>
     </div>
-  )
+  );
 }

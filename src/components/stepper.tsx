@@ -1,64 +1,59 @@
-import { Fragment } from "react"
-import { Check } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { Fragment } from 'react';
+import { Check } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 export interface Step {
-  title: string
-  description: string
+  title: string;
+  description: string;
 }
 
 export interface StepperProps {
-  steps: readonly Step[]
+  steps: readonly Step[];
   /** 1-based index of the active step (first step = 1). */
-  currentStep: number
-  className?: string
-  "aria-label"?: string
+  currentStep: number;
+  className?: string;
+  'aria-label'?: string;
 }
 
 export function Stepper({
   steps,
   currentStep,
   className,
-  "aria-label": ariaLabel = "Progress",
+  'aria-label': ariaLabel = 'Progress',
 }: StepperProps) {
   return (
-    <nav aria-label={ariaLabel} className={cn("w-full", className)}>
+    <nav aria-label={ariaLabel} className={cn('w-full', className)}>
       <ol className="flex w-full items-start">
         {steps.map((step, index) => {
-          const stepNumber = index + 1
-          const isCompleted = stepNumber < currentStep
-          const isCurrent = stepNumber === currentStep
-          const isUpcoming = stepNumber > currentStep
+          const stepNumber = index + 1;
+          const isCompleted = stepNumber < currentStep;
+          const isCurrent = stepNumber === currentStep;
+          const isUpcoming = stepNumber > currentStep;
 
           return (
             <Fragment key={index}>
               <li
                 className="flex shrink-0 flex-col items-center"
-                aria-current={isCurrent ? "step" : undefined}
+                aria-current={isCurrent ? 'step' : undefined}
               >
                 <div className="relative flex h-10 w-10 items-center justify-center">
                   {isCurrent && (
                     <span
                       className="absolute inset-0 animate-ping rounded-full bg-primary/20"
-                      style={{ animationDuration: "2s" }}
+                      style={{ animationDuration: '2s' }}
                     />
                   )}
                   <div
                     className={cn(
-                      "relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 text-xs font-semibold tabular-nums transition-all duration-500",
-                      isCompleted &&
-                        "border-primary bg-primary text-primary-foreground shadow-sm",
+                      'relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 text-xs font-semibold tabular-nums transition-all duration-500',
+                      isCompleted && 'border-primary bg-primary text-primary-foreground shadow-sm',
                       isCurrent &&
-                        "border-primary bg-primary text-primary-foreground shadow-sm ring-2 ring-primary/25",
-                      isUpcoming &&
-                        "border-border bg-background text-muted-foreground",
+                        'border-primary bg-primary text-primary-foreground shadow-sm ring-2 ring-primary/25',
+                      isUpcoming && 'border-border bg-background text-muted-foreground',
                     )}
                   >
                     {isCompleted ? (
-                      <Check
-                        className="size-4 stroke-[2.5]"
-                        aria-hidden
-                      />
+                      <Check className="size-4 stroke-[2.5]" aria-hidden />
                     ) : (
                       <span>{stepNumber}</span>
                     )}
@@ -67,18 +62,18 @@ export function Stepper({
 
                 <span
                   className={cn(
-                    "mt-3 whitespace-nowrap text-center text-sm font-medium leading-tight transition-colors duration-300",
-                    (isCompleted || isCurrent) && "text-foreground",
-                    isCurrent && "font-semibold",
-                    isUpcoming && "text-muted-foreground",
+                    'mt-3 whitespace-nowrap text-center text-sm font-medium leading-tight transition-colors duration-300',
+                    (isCompleted || isCurrent) && 'text-foreground',
+                    isCurrent && 'font-semibold',
+                    isUpcoming && 'text-muted-foreground',
                   )}
                 >
                   {step.title}
                 </span>
                 <span
                   className={cn(
-                    "mt-1 whitespace-nowrap text-center text-xs leading-snug text-muted-foreground transition-colors duration-300",
-                    isCurrent && "text-foreground/80",
+                    'mt-1 whitespace-nowrap text-center text-xs leading-snug text-muted-foreground transition-colors duration-300',
+                    isCurrent && 'text-foreground/80',
                   )}
                 >
                   {step.description}
@@ -91,16 +86,16 @@ export function Stepper({
                     <div
                       className="absolute inset-y-0 left-0 rounded-full bg-primary transition-all duration-700 ease-out"
                       style={{
-                        width: currentStep > index + 1 ? "100%" : "0%",
+                        width: currentStep > index + 1 ? '100%' : '0%',
                       }}
                     />
                   </div>
                 </li>
               )}
             </Fragment>
-          )
+          );
         })}
       </ol>
     </nav>
-  )
+  );
 }

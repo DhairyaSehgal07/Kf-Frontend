@@ -1,72 +1,72 @@
-import { useMemo, useState } from "react"
-import { DragDropProvider, type DragEndEvent } from "@dnd-kit/react"
-import { useSortable } from "@dnd-kit/react/sortable"
-import { move } from "@dnd-kit/helpers"
+import { useMemo, useState } from 'react';
+import { DragDropProvider, type DragEndEvent } from '@dnd-kit/react';
+import { useSortable } from '@dnd-kit/react/sortable';
+import { move } from '@dnd-kit/helpers';
 import type {
   Column,
   ColumnOrderState,
   RowData,
   Table,
   ColumnVisibilityState,
-} from "@tanstack/react-table"
-import { GripVertical, RotateCcw, Save, Trash2 } from "lucide-react"
-import type { ReportFeatures } from "@/lib/tanstack-table/report-table-features"
+} from '@tanstack/react-table';
+import { GripVertical, RotateCcw, Save, Trash2 } from 'lucide-react';
+import type { ReportFeatures } from '@/lib/tanstack-table/report-table-features';
 
-import { Button } from "@/components/ui/button"
-import { Switch } from "@/components/ui/switch"
-import { cn } from "@/lib/utils"
+import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
+import { cn } from '@/lib/utils';
 import {
   clearStoredTransferStockReportColumnState,
   hasStoredTransferStockReportColumnState,
   saveTransferStockReportColumnState,
-} from "@/features/transfer-stock-report/utils/report-column-preferences"
+} from '@/features/transfer-stock-report/utils/report-column-preferences';
 
-const COLUMN_ORDER_GROUP = "transfer-stock-report-columns"
+const COLUMN_ORDER_GROUP = 'transfer-stock-report-columns';
 
 interface ColumnsTabProps<TData extends RowData> {
-  table: Table<ReportFeatures, TData>
-  draftColumnVisibility: ColumnVisibilityState
-  draftColumnOrder: ColumnOrderState
-  onDraftColumnVisibilityChange: (visibility: ColumnVisibilityState) => void
-  onDraftColumnOrderChange: (order: ColumnOrderState) => void
+  table: Table<ReportFeatures, TData>;
+  draftColumnVisibility: ColumnVisibilityState;
+  draftColumnOrder: ColumnOrderState;
+  onDraftColumnVisibilityChange: (visibility: ColumnVisibilityState) => void;
+  onDraftColumnOrderChange: (order: ColumnOrderState) => void;
 }
 
 interface ColumnVisibilityRowProps<TData extends RowData> {
-  column: Column<ReportFeatures, TData, unknown>
-  index: number
-  isVisible: boolean
-  visibleColumnCount: number
-  onVisibilityChange: (columnId: string, visible: boolean) => void
+  column: Column<ReportFeatures, TData, unknown>;
+  index: number;
+  isVisible: boolean;
+  visibleColumnCount: number;
+  onVisibilityChange: (columnId: string, visible: boolean) => void;
 }
 
 function getColumnLabel<TData extends RowData>(
   column: Column<ReportFeatures, TData, unknown>,
 ): string {
-  return column.columnDef.meta?.filterLabel ?? column.id
+  return column.columnDef.meta?.filterLabel ?? column.id;
 }
 
 function getDraftColumnVisible(
   columnId: string,
   draftColumnVisibility: ColumnVisibilityState,
 ): boolean {
-  return draftColumnVisibility[columnId] !== false
+  return draftColumnVisibility[columnId] !== false;
 }
 
 function getOrderedColumns<TData extends RowData>(
   columns: Column<ReportFeatures, TData, unknown>[],
   draftColumnOrder: ColumnOrderState,
 ): Column<ReportFeatures, TData, unknown>[] {
-  const columnsById = new Map(columns.map((column) => [column.id, column]))
+  const columnsById = new Map(columns.map((column) => [column.id, column]));
   const orderedIds = [
     ...draftColumnOrder.filter((columnId) => columnsById.has(columnId)),
     ...columns
       .map((column) => column.id)
       .filter((columnId) => !draftColumnOrder.includes(columnId)),
-  ]
+  ];
 
   return orderedIds
     .map((columnId) => columnsById.get(columnId))
-    .filter((column): column is Column<ReportFeatures, TData, unknown> => column != null)
+    .filter((column): column is Column<ReportFeatures, TData, unknown> => column != null);
 }
 
 function ColumnVisibilityRow<TData extends RowData>({
@@ -76,25 +76,25 @@ function ColumnVisibilityRow<TData extends RowData>({
   visibleColumnCount,
   onVisibilityChange,
 }: ColumnVisibilityRowProps<TData>) {
-  const canHide = column.getCanHide()
-  const isLastVisibleColumn = isVisible && visibleColumnCount <= 1
-  const switchDisabled = !canHide || isLastVisibleColumn
-  const columnLabel = getColumnLabel(column)
+  const canHide = column.getCanHide();
+  const isLastVisibleColumn = isVisible && visibleColumnCount <= 1;
+  const switchDisabled = !canHide || isLastVisibleColumn;
+  const columnLabel = getColumnLabel(column);
   const { ref, handleRef, isDragging, isDropTarget } = useSortable({
     id: column.id,
     index,
     group: COLUMN_ORDER_GROUP,
     data: { index },
-  })
+  });
 
   return (
     <div
       ref={ref}
       className={cn(
-        "flex min-h-11 items-center gap-3 rounded-lg border border-border bg-card px-3 py-2 text-sm transition-[background-color,border-color,opacity,box-shadow]",
-        isDragging && "opacity-60 shadow-sm",
-        isDropTarget && "border-primary/50 bg-primary/5",
-        !isVisible && "bg-muted/20 text-muted-foreground",
+        'flex min-h-11 items-center gap-3 rounded-lg border border-border bg-card px-3 py-2 text-sm transition-[background-color,border-color,opacity,box-shadow]',
+        isDragging && 'opacity-60 shadow-sm',
+        isDropTarget && 'border-primary/50 bg-primary/5',
+        !isVisible && 'bg-muted/20 text-muted-foreground',
       )}
     >
       <button
@@ -109,8 +109,8 @@ function ColumnVisibilityRow<TData extends RowData>({
       <div className="min-w-0 flex-1">
         <p
           className={cn(
-            "truncate text-sm font-medium",
-            isVisible ? "text-foreground" : "text-muted-foreground",
+            'truncate text-sm font-medium',
+            isVisible ? 'text-foreground' : 'text-muted-foreground',
           )}
           title={columnLabel}
         >
@@ -122,13 +122,11 @@ function ColumnVisibilityRow<TData extends RowData>({
         size="sm"
         checked={isVisible}
         disabled={switchDisabled}
-        onCheckedChange={(checked) =>
-          onVisibilityChange(column.id, checked === true)
-        }
-        aria-label={`${isVisible ? "Hide" : "Show"} ${columnLabel} column`}
+        onCheckedChange={(checked) => onVisibilityChange(column.id, checked === true)}
+        aria-label={`${isVisible ? 'Hide' : 'Show'} ${columnLabel} column`}
       />
     </div>
-  )
+  );
 }
 
 const ColumnsTab = <TData extends RowData>({
@@ -138,72 +136,72 @@ const ColumnsTab = <TData extends RowData>({
   onDraftColumnVisibilityChange,
   onDraftColumnOrderChange,
 }: ColumnsTabProps<TData>) => {
-  const allColumns = table.getAllLeafColumns()
+  const allColumns = table.getAllLeafColumns();
   const orderedColumns = useMemo(
     () => getOrderedColumns(allColumns, draftColumnOrder),
     [allColumns, draftColumnOrder],
-  )
-  const orderedColumnIds = orderedColumns.map((column) => column.id)
+  );
+  const orderedColumnIds = orderedColumns.map((column) => column.id);
   const visibleColumnCount = orderedColumns.filter((column) =>
     getDraftColumnVisible(column.id, draftColumnVisibility),
-  ).length
-  const hiddenColumnCount = orderedColumns.length - visibleColumnCount
-  const columnIds = allColumns.map((column) => column.id)
+  ).length;
+  const hiddenColumnCount = orderedColumns.length - visibleColumnCount;
+  const columnIds = allColumns.map((column) => column.id);
   const [hasSavedDefault, setHasSavedDefault] = useState(() =>
     hasStoredTransferStockReportColumnState(),
-  )
-  const [preferenceStatus, setPreferenceStatus] = useState<
-    "idle" | "saved" | "cleared" | "error"
-  >("idle")
+  );
+  const [preferenceStatus, setPreferenceStatus] = useState<'idle' | 'saved' | 'cleared' | 'error'>(
+    'idle',
+  );
 
   const handleVisibilityChange = (columnId: string, visible: boolean) => {
-    const nextVisibility = { ...draftColumnVisibility }
+    const nextVisibility = { ...draftColumnVisibility };
 
     if (visible) {
-      delete nextVisibility[columnId]
+      delete nextVisibility[columnId];
     } else {
-      nextVisibility[columnId] = false
+      nextVisibility[columnId] = false;
     }
 
-    onDraftColumnVisibilityChange(nextVisibility)
-  }
+    onDraftColumnVisibilityChange(nextVisibility);
+  };
 
   const handleShowAll = () => {
-    onDraftColumnVisibilityChange({})
-  }
+    onDraftColumnVisibilityChange({});
+  };
 
   const handleResetOrder = () => {
-    onDraftColumnOrderChange([])
-  }
+    onDraftColumnOrderChange([]);
+  };
 
   const handleSaveDefaultColumns = () => {
     const saved = saveTransferStockReportColumnState(
       columnIds,
       draftColumnVisibility,
       draftColumnOrder,
-    )
+    );
 
-    setHasSavedDefault(saved)
-    setPreferenceStatus(saved ? "saved" : "error")
-  }
+    setHasSavedDefault(saved);
+    setPreferenceStatus(saved ? 'saved' : 'error');
+  };
 
   const handleClearDefaultColumns = () => {
-    const cleared = clearStoredTransferStockReportColumnState()
+    const cleared = clearStoredTransferStockReportColumnState();
 
     if (cleared) {
-      setHasSavedDefault(false)
-      setPreferenceStatus("cleared")
-      return
+      setHasSavedDefault(false);
+      setPreferenceStatus('cleared');
+      return;
     }
 
-    setPreferenceStatus("error")
-  }
+    setPreferenceStatus('error');
+  };
 
   const handleDragEnd = (event: DragEndEvent) => {
-    if (event.canceled || !event.operation.target) return
+    if (event.canceled || !event.operation.target) return;
 
-    onDraftColumnOrderChange(move(orderedColumnIds, event).map(String))
-  }
+    onDraftColumnOrderChange(move(orderedColumnIds, event).map(String));
+  };
 
   return (
     <div className="space-y-4 pt-4">
@@ -232,26 +230,22 @@ const ColumnsTab = <TData extends RowData>({
 
       <section className="flex flex-col gap-3 rounded-xl border border-border bg-card px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0 space-y-1">
-          <p className="text-sm font-semibold text-foreground">
-            Default column view
-          </p>
+          <p className="text-sm font-semibold text-foreground">Default column view</p>
           <p className="text-sm text-muted-foreground">
             Save the current visible columns and order for this browser.
           </p>
-          {preferenceStatus !== "idle" ? (
+          {preferenceStatus !== 'idle' ? (
             <p
               className={cn(
-                "text-xs",
-                preferenceStatus === "error"
-                  ? "text-destructive"
-                  : "text-muted-foreground",
+                'text-xs',
+                preferenceStatus === 'error' ? 'text-destructive' : 'text-muted-foreground',
               )}
             >
-              {preferenceStatus === "saved"
-                ? "Default column view saved."
-                : preferenceStatus === "cleared"
-                  ? "Default column view cleared."
-                  : "Could not update local storage."}
+              {preferenceStatus === 'saved'
+                ? 'Default column view saved.'
+                : preferenceStatus === 'cleared'
+                  ? 'Default column view cleared.'
+                  : 'Could not update local storage.'}
             </p>
           ) : null}
         </div>
@@ -288,10 +282,7 @@ const ColumnsTab = <TData extends RowData>({
                 key={column.id}
                 column={column}
                 index={index}
-                isVisible={getDraftColumnVisible(
-                  column.id,
-                  draftColumnVisibility,
-                )}
+                isVisible={getDraftColumnVisible(column.id, draftColumnVisibility)}
                 visibleColumnCount={visibleColumnCount}
                 onVisibilityChange={handleVisibilityChange}
               />
@@ -303,12 +294,12 @@ const ColumnsTab = <TData extends RowData>({
       <div className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card px-4 py-3">
         <p className="min-w-0 text-sm text-muted-foreground">
           <span className="tabular-nums text-foreground">
-            {visibleColumnCount.toLocaleString("en-IN")}
-          </span>{" "}
-          of{" "}
+            {visibleColumnCount.toLocaleString('en-IN')}
+          </span>{' '}
+          of{' '}
           <span className="tabular-nums text-foreground">
-            {orderedColumns.length.toLocaleString("en-IN")}
-          </span>{" "}
+            {orderedColumns.length.toLocaleString('en-IN')}
+          </span>{' '}
           columns visible
         </p>
         <Button
@@ -324,7 +315,7 @@ const ColumnsTab = <TData extends RowData>({
         </Button>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default ColumnsTab
+export default ColumnsTab;

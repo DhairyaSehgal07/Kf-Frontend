@@ -3,23 +3,18 @@ import {
   queryOptions,
   useQuery,
   type UseQueryOptions,
-} from "@tanstack/react-query"
+} from '@tanstack/react-query';
 
-import { getIncomingGatePasses } from "./get-incoming-gate-passes"
-import { incomingGatePassKeys } from "./query-keys"
-import type {
-  IncomingGatePassListParams,
-  IncomingGatePassListResult,
-} from "./types"
+import { getIncomingGatePasses } from './get-incoming-gate-passes';
+import { incomingGatePassKeys } from './query-keys';
+import type { IncomingGatePassListParams, IncomingGatePassListResult } from './types';
 
-export function incomingGatePassesQueryOptions(
-  params: IncomingGatePassListParams,
-) {
+export function incomingGatePassesQueryOptions(params: IncomingGatePassListParams) {
   return queryOptions({
     queryKey: incomingGatePassKeys.list(params),
     queryFn: () => getIncomingGatePasses(params),
     placeholderData: keepPreviousData,
-  })
+  });
 }
 
 type UseIncomingGatePassesOptions = Omit<
@@ -29,8 +24,8 @@ type UseIncomingGatePassesOptions = Omit<
     IncomingGatePassListResult,
     ReturnType<typeof incomingGatePassKeys.list>
   >,
-  "queryKey" | "queryFn" | "placeholderData"
->
+  'queryKey' | 'queryFn' | 'placeholderData'
+>;
 
 export function useIncomingGatePasses(
   params: IncomingGatePassListParams,
@@ -39,5 +34,5 @@ export function useIncomingGatePasses(
   return useQuery({
     ...incomingGatePassesQueryOptions(params),
     ...options,
-  })
+  });
 }

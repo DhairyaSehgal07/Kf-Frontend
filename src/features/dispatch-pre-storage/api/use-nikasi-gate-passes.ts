@@ -3,23 +3,18 @@ import {
   queryOptions,
   useQuery,
   type UseQueryOptions,
-} from "@tanstack/react-query"
+} from '@tanstack/react-query';
 
-import { getNikasiGatePasses } from "./get-nikasi-gate-passes"
-import { nikasiGatePassKeys } from "./types"
-import type {
-  NikasiGatePassListParams,
-  NikasiGatePassListResult,
-} from "./types"
+import { getNikasiGatePasses } from './get-nikasi-gate-passes';
+import { nikasiGatePassKeys } from './types';
+import type { NikasiGatePassListParams, NikasiGatePassListResult } from './types';
 
-export function nikasiGatePassesQueryOptions(
-  params: NikasiGatePassListParams,
-) {
+export function nikasiGatePassesQueryOptions(params: NikasiGatePassListParams) {
   return queryOptions({
     queryKey: nikasiGatePassKeys.list(params),
     queryFn: () => getNikasiGatePasses(params),
     placeholderData: keepPreviousData,
-  })
+  });
 }
 
 type UseNikasiGatePassesOptions = Omit<
@@ -29,8 +24,8 @@ type UseNikasiGatePassesOptions = Omit<
     NikasiGatePassListResult,
     ReturnType<typeof nikasiGatePassKeys.list>
   >,
-  "queryKey" | "queryFn" | "placeholderData"
->
+  'queryKey' | 'queryFn' | 'placeholderData'
+>;
 
 export function useNikasiGatePasses(
   params: NikasiGatePassListParams,
@@ -39,5 +34,5 @@ export function useNikasiGatePasses(
   return useQuery({
     ...nikasiGatePassesQueryOptions(params),
     ...options,
-  })
+  });
 }

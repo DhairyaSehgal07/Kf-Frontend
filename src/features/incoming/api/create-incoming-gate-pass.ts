@@ -1,10 +1,10 @@
-import apiClient, { getApiErrorMessage } from "@/lib/api-client"
+import apiClient, { getApiErrorMessage } from '@/lib/api-client';
 
 import type {
   CreateIncomingGatePassBody,
   CreateIncomingGatePassInput,
   CreateIncomingGatePassResponse,
-} from "./types"
+} from './types';
 
 export function toCreateIncomingGatePassBody({
   form,
@@ -18,29 +18,29 @@ export function toCreateIncomingGatePassBody({
     category: form.category,
     truckNumber: form.truckNumber,
     bagsReceived: form.bagsReceived,
-    status: "NOT_GRADED",
+    status: 'NOT_GRADED',
     weightSlip: {
       slipNumber: form.weightSlip.slipNumber.trim(),
       grossWeightKg: form.weightSlip.grossWeightKg,
       tareWeightKg: form.weightSlip.tareWeightKg,
     },
-  }
+  };
 
   if (form.manualGatePassNumber != null) {
-    body.manualGatePassNumber = form.manualGatePassNumber
+    body.manualGatePassNumber = form.manualGatePassNumber;
   }
 
-  const stage = form.stage.trim()
+  const stage = form.stage.trim();
   if (stage) {
-    body.stage = stage
+    body.stage = stage;
   }
 
-  const remarks = form.remarks.trim()
+  const remarks = form.remarks.trim();
   if (remarks) {
-    body.remarks = remarks
+    body.remarks = remarks;
   }
 
-  return body
+  return body;
 }
 
 export async function createIncomingGatePass(
@@ -48,19 +48,18 @@ export async function createIncomingGatePass(
 ): Promise<CreateIncomingGatePassResponse> {
   try {
     const { data } = await apiClient.post<CreateIncomingGatePassResponse>(
-      "/incoming-gate-pass/",
+      '/incoming-gate-pass/',
       toCreateIncomingGatePassBody(input),
-    )
+    );
 
     if (!data.success) {
-      throw new Error(data.message ?? "Failed to create incoming gate pass")
+      throw new Error(data.message ?? 'Failed to create incoming gate pass');
     }
 
-    return data
+    return data;
   } catch (error) {
-    throw new Error(
-      getApiErrorMessage(error, "Failed to create incoming gate pass"),
-      { cause: error },
-    )
+    throw new Error(getApiErrorMessage(error, 'Failed to create incoming gate pass'), {
+      cause: error,
+    });
   }
 }

@@ -1,10 +1,10 @@
-import { useForm } from "@tanstack/react-form"
-import { Loader2, Plus } from "lucide-react"
-import type { ReactNode } from "react"
-import { toast } from "sonner"
+import { useForm } from '@tanstack/react-form';
+import { Loader2, Plus } from 'lucide-react';
+import type { ReactNode } from 'react';
+import { toast } from 'sonner';
 
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -12,74 +12,56 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import {
-  Field,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-} from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
-import { useCreateDispatchLedger } from "@/features/people/api/use-create-dispatch-ledger"
+} from '@/components/ui/dialog';
+import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
+import { Input } from '@/components/ui/input';
+import { useCreateDispatchLedger } from '@/features/people/api/use-create-dispatch-ledger';
 import {
   addDispatchLedgerFormSchema,
   buildAddDispatchLedgerPayload,
   type AddDispatchLedgerFormInput,
-} from "@/features/people/schemas/add-dispatch-ledger-form-schema"
-import type { DispatchLedger } from "@/features/people/types"
+} from '@/features/people/schemas/add-dispatch-ledger-form-schema';
+import type { DispatchLedger } from '@/features/people/types';
 
 type AddDispatchLedgerDialogProps = {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  onSuccess?: (ledger: DispatchLedger) => void
-}
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSuccess?: (ledger: DispatchLedger) => void;
+};
 
 type FieldMetaForDisplay = {
-  isBlurred: boolean
-  isValid: boolean
-  errors: unknown[]
-}
+  isBlurred: boolean;
+  isValid: boolean;
+  errors: unknown[];
+};
 
 function createDefaultValues(): AddDispatchLedgerFormInput {
   return {
-    name: "",
-    address: "",
-    mobileNumber: "",
-  }
+    name: '',
+    address: '',
+    mobileNumber: '',
+  };
 }
 
-function shouldShowFieldErrors(
-  meta: FieldMetaForDisplay,
-  submissionAttempts: number,
-) {
-  return (
-    (submissionAttempts > 0 || meta.isBlurred) &&
-    !meta.isValid &&
-    meta.errors.length > 0
-  )
+function shouldShowFieldErrors(meta: FieldMetaForDisplay, submissionAttempts: number) {
+  return (submissionAttempts > 0 || meta.isBlurred) && !meta.isValid && meta.errors.length > 0;
 }
 
 function FieldErrorSlot({
   show,
   errors,
 }: {
-  show: boolean
-  errors?: Array<{ message?: string } | undefined>
+  show: boolean;
+  errors?: Array<{ message?: string } | undefined>;
 }) {
   return (
     <div className="min-h-5" aria-live="polite">
       {show ? <FieldError errors={errors} /> : null}
     </div>
-  )
+  );
 }
 
-function RequiredFieldLabel({
-  htmlFor,
-  children,
-}: {
-  htmlFor: string
-  children: ReactNode
-}) {
+function RequiredFieldLabel({ htmlFor, children }: { htmlFor: string; children: ReactNode }) {
   return (
     <FieldLabel htmlFor={htmlFor} className="gap-1">
       {children}
@@ -87,16 +69,10 @@ function RequiredFieldLabel({
         *
       </span>
     </FieldLabel>
-  )
+  );
 }
 
-function OptionalFieldLabel({
-  htmlFor,
-  children,
-}: {
-  htmlFor: string
-  children: ReactNode
-}) {
+function OptionalFieldLabel({ htmlFor, children }: { htmlFor: string; children: ReactNode }) {
   return (
     <FieldLabel htmlFor={htmlFor} className="flex flex-wrap items-center gap-2">
       {children}
@@ -104,7 +80,7 @@ function OptionalFieldLabel({
         Optional
       </Badge>
     </FieldLabel>
-  )
+  );
 }
 
 export function AddDispatchLedgerDialog({
@@ -115,26 +91,22 @@ export function AddDispatchLedgerDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       {open ? (
-        <AddDispatchLedgerDialogContent
-          onOpenChange={onOpenChange}
-          onSuccess={onSuccess}
-        />
+        <AddDispatchLedgerDialogContent onOpenChange={onOpenChange} onSuccess={onSuccess} />
       ) : null}
     </Dialog>
-  )
+  );
 }
 
 type AddDispatchLedgerDialogContentProps = {
-  onOpenChange: (open: boolean) => void
-  onSuccess?: (ledger: DispatchLedger) => void
-}
+  onOpenChange: (open: boolean) => void;
+  onSuccess?: (ledger: DispatchLedger) => void;
+};
 
 function AddDispatchLedgerDialogContent({
   onOpenChange,
   onSuccess,
 }: AddDispatchLedgerDialogContentProps) {
-  const { mutateAsync: createDispatchLedger, isPending } =
-    useCreateDispatchLedger()
+  const { mutateAsync: createDispatchLedger, isPending } = useCreateDispatchLedger();
 
   const form = useForm({
     defaultValues: createDefaultValues(),
@@ -143,30 +115,25 @@ function AddDispatchLedgerDialogContent({
     },
     onSubmit: async ({ value }) => {
       try {
-        const payload = buildAddDispatchLedgerPayload(
-          addDispatchLedgerFormSchema.parse(value),
-        )
-        const { message, data } = await createDispatchLedger(payload)
+        const payload = buildAddDispatchLedgerPayload(addDispatchLedgerFormSchema.parse(value));
+        const { message, data } = await createDispatchLedger(payload);
 
-        toast.success(message ?? "Dispatch ledger added successfully", {
-          position: "bottom-right",
-        })
+        toast.success(message ?? 'Dispatch ledger added successfully', {
+          position: 'bottom-right',
+        });
 
         if (data) {
-          onSuccess?.(data)
+          onSuccess?.(data);
         }
 
-        onOpenChange(false)
+        onOpenChange(false);
       } catch (error) {
-        toast.error(
-          error instanceof Error
-            ? error.message
-            : "Failed to add dispatch ledger",
-          { position: "bottom-right" },
-        )
+        toast.error(error instanceof Error ? error.message : 'Failed to add dispatch ledger', {
+          position: 'bottom-right',
+        });
       }
     },
-  })
+  });
 
   return (
     <DialogContent className="flex max-h-[min(90dvh,620px)] max-w-lg flex-col gap-0 overflow-hidden p-0 sm:max-w-lg">
@@ -175,8 +142,8 @@ function AddDispatchLedgerDialogContent({
           Add dispatch ledger
         </DialogTitle>
         <DialogDescription>
-          Create a dispatch ledger for the current cold storage. Fields marked
-          with <span className="text-destructive">*</span> are required.
+          Create a dispatch ledger for the current cold storage. Fields marked with{' '}
+          <span className="text-destructive">*</span> are required.
         </DialogDescription>
       </DialogHeader>
 
@@ -184,9 +151,9 @@ function AddDispatchLedgerDialogContent({
         id="add-dispatch-ledger-form"
         noValidate
         onSubmit={(event) => {
-          event.preventDefault()
-          event.stopPropagation()
-          void form.handleSubmit()
+          event.preventDefault();
+          event.stopPropagation();
+          void form.handleSubmit();
         }}
         className="flex min-h-0 flex-1 flex-col"
       >
@@ -197,32 +164,25 @@ function AddDispatchLedgerDialogContent({
                 const isInvalid = shouldShowFieldErrors(
                   field.state.meta,
                   field.form.state.submissionAttempts,
-                )
+                );
 
                 return (
                   <Field data-invalid={isInvalid}>
-                    <RequiredFieldLabel htmlFor={field.name}>
-                      Name
-                    </RequiredFieldLabel>
+                    <RequiredFieldLabel htmlFor={field.name}>Name</RequiredFieldLabel>
                     <Input
                       id={field.name}
                       name={field.name}
                       value={field.state.value}
                       onBlur={field.handleBlur}
-                      onChange={(event) =>
-                        field.handleChange(event.target.value)
-                      }
+                      onChange={(event) => field.handleChange(event.target.value)}
                       aria-invalid={isInvalid}
                       placeholder="Ramesh Kumar"
                       autoComplete="name"
                       className="h-11 text-base"
                     />
-                    <FieldErrorSlot
-                      show={isInvalid}
-                      errors={field.state.meta.errors}
-                    />
+                    <FieldErrorSlot show={isInvalid} errors={field.state.meta.errors} />
                   </Field>
-                )
+                );
               }}
             </form.Field>
 
@@ -231,33 +191,26 @@ function AddDispatchLedgerDialogContent({
                 const isInvalid = shouldShowFieldErrors(
                   field.state.meta,
                   field.form.state.submissionAttempts,
-                )
+                );
 
                 return (
                   <Field data-invalid={isInvalid}>
-                    <RequiredFieldLabel htmlFor={field.name}>
-                      Address
-                    </RequiredFieldLabel>
+                    <RequiredFieldLabel htmlFor={field.name}>Address</RequiredFieldLabel>
                     <Input
                       id={field.name}
                       name={field.name}
                       value={field.state.value}
                       onBlur={field.handleBlur}
-                      onChange={(event) =>
-                        field.handleChange(event.target.value)
-                      }
+                      onChange={(event) => field.handleChange(event.target.value)}
                       aria-invalid={isInvalid}
                       placeholder="Village Road, Ludhiana, Punjab"
                       autoComplete="street-address"
                       maxLength={500}
                       className="h-11 text-base"
                     />
-                    <FieldErrorSlot
-                      show={isInvalid}
-                      errors={field.state.meta.errors}
-                    />
+                    <FieldErrorSlot show={isInvalid} errors={field.state.meta.errors} />
                   </Field>
-                )
+                );
               }}
             </form.Field>
 
@@ -266,22 +219,18 @@ function AddDispatchLedgerDialogContent({
                 const isInvalid = shouldShowFieldErrors(
                   field.state.meta,
                   field.form.state.submissionAttempts,
-                )
+                );
 
                 return (
                   <Field data-invalid={isInvalid}>
-                    <OptionalFieldLabel htmlFor={field.name}>
-                      Mobile number
-                    </OptionalFieldLabel>
+                    <OptionalFieldLabel htmlFor={field.name}>Mobile number</OptionalFieldLabel>
                     <Input
                       id={field.name}
                       name={field.name}
                       value={field.state.value}
                       onBlur={field.handleBlur}
                       onChange={(event) =>
-                        field.handleChange(
-                          event.target.value.replace(/\D/g, "").slice(0, 10),
-                        )
+                        field.handleChange(event.target.value.replace(/\D/g, '').slice(0, 10))
                       }
                       aria-invalid={isInvalid}
                       placeholder="9876543210"
@@ -291,12 +240,9 @@ function AddDispatchLedgerDialogContent({
                       autoComplete="tel"
                       className="h-11 text-base tabular-nums"
                     />
-                    <FieldErrorSlot
-                      show={isInvalid}
-                      errors={field.state.meta.errors}
-                    />
+                    <FieldErrorSlot show={isInvalid} errors={field.state.meta.errors} />
                   </Field>
-                )
+                );
               }}
             </form.Field>
           </FieldGroup>
@@ -337,5 +283,5 @@ function AddDispatchLedgerDialogContent({
         </DialogFooter>
       </form>
     </DialogContent>
-  )
+  );
 }

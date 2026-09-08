@@ -3,23 +3,18 @@ import {
   queryOptions,
   useQuery,
   type UseQueryOptions,
-} from "@tanstack/react-query"
+} from '@tanstack/react-query';
 
-import { getStorageGatePassEdits } from "./get-storage-gate-pass-edits"
-import { storageGatePassKeys } from "./query-keys"
-import type {
-  StorageGatePassEditsListParams,
-  StorageGatePassEditsListResult,
-} from "./types"
+import { getStorageGatePassEdits } from './get-storage-gate-pass-edits';
+import { storageGatePassKeys } from './query-keys';
+import type { StorageGatePassEditsListParams, StorageGatePassEditsListResult } from './types';
 
-export function storageGatePassEditsQueryOptions(
-  params: StorageGatePassEditsListParams,
-) {
+export function storageGatePassEditsQueryOptions(params: StorageGatePassEditsListParams) {
   return queryOptions({
     queryKey: storageGatePassKeys.edits(params),
     queryFn: () => getStorageGatePassEdits(params),
     placeholderData: keepPreviousData,
-  })
+  });
 }
 
 type UseStorageGatePassEditsOptions = Omit<
@@ -29,8 +24,8 @@ type UseStorageGatePassEditsOptions = Omit<
     StorageGatePassEditsListResult,
     ReturnType<typeof storageGatePassKeys.edits>
   >,
-  "queryKey" | "queryFn" | "placeholderData"
->
+  'queryKey' | 'queryFn' | 'placeholderData'
+>;
 
 export function useStorageGatePassEdits(
   params: StorageGatePassEditsListParams,
@@ -39,5 +34,5 @@ export function useStorageGatePassEdits(
   return useQuery({
     ...storageGatePassEditsQueryOptions(params),
     ...options,
-  })
+  });
 }

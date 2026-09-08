@@ -1,19 +1,15 @@
-import {
-  queryOptions,
-  useQuery,
-  type UseQueryOptions,
-} from "@tanstack/react-query"
+import { queryOptions, useQuery, type UseQueryOptions } from '@tanstack/react-query';
 
-import { getGradingGatePassById } from "./get-grading-gate-pass-by-id"
-import { gradingGatePassKeys } from "./query-keys"
-import type { GradingGatePass } from "./types"
+import { getGradingGatePassById } from './get-grading-gate-pass-by-id';
+import { gradingGatePassKeys } from './query-keys';
+import type { GradingGatePass } from './types';
 
 export function gradingGatePassByIdQueryOptions(id: string) {
   return queryOptions({
     queryKey: gradingGatePassKeys.detail(id),
     queryFn: () => getGradingGatePassById(id),
     enabled: id.trim().length > 0,
-  })
+  });
 }
 
 type UseGradingGatePassByIdOptions = Omit<
@@ -23,17 +19,14 @@ type UseGradingGatePassByIdOptions = Omit<
     GradingGatePass | null,
     ReturnType<typeof gradingGatePassKeys.detail>
   >,
-  "queryKey" | "queryFn" | "enabled"
->
+  'queryKey' | 'queryFn' | 'enabled'
+>;
 
-export function useGradingGatePassById(
-  id: string,
-  options?: UseGradingGatePassByIdOptions,
-) {
+export function useGradingGatePassById(id: string, options?: UseGradingGatePassByIdOptions) {
   const query = useQuery({
     ...gradingGatePassByIdQueryOptions(id),
     ...options,
-  })
+  });
 
   return {
     gatePass: query.data ?? null,
@@ -41,5 +34,5 @@ export function useGradingGatePassById(
     isError: query.isError,
     error: query.error,
     refetch: query.refetch,
-  }
+  };
 }

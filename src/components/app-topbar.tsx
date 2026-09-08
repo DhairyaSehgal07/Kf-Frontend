@@ -17,11 +17,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { SidebarTrigger } from '@/components/ui/sidebar';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useLogout } from '@/features/auth/api/use-logout';
 import { useAuthStore } from '@/features/auth/store/use-auth-store';
 import { cn } from '@/lib/utils';
@@ -102,11 +98,7 @@ function ThemeToggle() {
               className="text-muted-foreground hover:bg-accent hover:text-accent-foreground"
               aria-label="Change theme"
             >
-              {isDark ? (
-                <Moon className="h-4 w-4" />
-              ) : (
-                <Sun className="h-4 w-4" />
-              )}
+              {isDark ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
             </Button>
           </DropdownMenuTrigger>
         </TooltipTrigger>
@@ -115,10 +107,7 @@ function ThemeToggle() {
       <DropdownMenuContent align="end" className="w-40">
         <DropdownMenuLabel>Appearance</DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuRadioGroup
-          value={resolvedMode}
-          onValueChange={(value) => setTheme(value)}
-        >
+        <DropdownMenuRadioGroup value={resolvedMode} onValueChange={(value) => setTheme(value)}>
           <DropdownMenuRadioItem value="light">
             <Sun className="mr-2 h-4 w-4" />
             Light
@@ -145,11 +134,7 @@ export function AppTopbar() {
       : (user?.coldStorageId.name ?? 'Dashboard'));
 
   return (
-    <header
-      className={cn(
-        'flex h-14 shrink-0 items-center border-b bg-background px-4',
-      )}
-    >
+    <header className={cn('flex h-14 shrink-0 items-center border-b bg-background px-4')}>
       <div className="flex min-w-0 flex-1 items-center gap-1">
         <SidebarTrigger className="-ml-1" />
         <div
@@ -157,10 +142,7 @@ export function AppTopbar() {
           aria-orientation="vertical"
           className="mx-2 h-6 w-px shrink-0 rounded-full bg-muted-foreground/25"
         />
-        <h1
-          className="truncate text-lg font-semibold tracking-tight"
-          title={pageTitle}
-        >
+        <h1 className="truncate text-lg font-semibold tracking-tight" title={pageTitle}>
           {pageTitle}
         </h1>
       </div>
@@ -187,12 +169,8 @@ export function AppTopbar() {
           <DropdownMenuContent className="w-56" align="end" forceMount>
             <DropdownMenuLabel className="font-normal">
               <div className="flex flex-col gap-1">
-                <p className="text-sm font-medium">
-                  {user?.name ?? 'User'}
-                </p>
-                <p className="text-xs text-muted-foreground tabular-nums">
-                  {user?.mobileNumber}
-                </p>
+                <p className="text-sm font-medium">{user?.name ?? 'User'}</p>
+                <p className="text-xs text-muted-foreground tabular-nums">{user?.mobileNumber}</p>
                 <p
                   className="truncate text-xs text-muted-foreground"
                   title={user?.coldStorageId.name}

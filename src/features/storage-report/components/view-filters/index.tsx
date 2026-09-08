@@ -1,15 +1,15 @@
-import { useState } from "react"
+import { useState } from 'react';
 import type {
   ColumnFiltersState,
   ColumnOrderState,
   GroupingState,
   Table,
   ColumnVisibilityState,
-} from "@tanstack/react-table"
-import { CheckCircle2, RotateCcw, SlidersHorizontal } from "lucide-react"
-import type { ReportFeatures } from "@/lib/tanstack-table/report-table-features"
+} from '@tanstack/react-table';
+import { CheckCircle2, RotateCcw, SlidersHorizontal } from 'lucide-react';
+import type { ReportFeatures } from '@/lib/tanstack-table/report-table-features';
 
-import { Button } from "@/components/ui/button"
+import { Button } from '@/components/ui/button';
 import {
   Sheet,
   SheetContent,
@@ -18,114 +18,111 @@ import {
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-} from "@/components/ui/sheet"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import type { StorageGatePass } from "@/features/storage/api/types"
-import { getStoredStorageReportColumnState } from "@/features/storage-report/utils/report-column-preferences"
-import type { AdvancedReportGlobalFilter } from "@/features/storage-report/utils/report-filter-fns"
+} from '@/components/ui/sheet';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import type { StorageGatePass } from '@/features/storage/api/types';
+import { getStoredStorageReportColumnState } from '@/features/storage-report/utils/report-column-preferences';
+import type { AdvancedReportGlobalFilter } from '@/features/storage-report/utils/report-filter-fns';
 
-import AdvancedTab from "./advanced-tab"
-import ColumnsTab from "./columns-tab"
-import FiltersTab from "./filters-tab"
-import GroupingTab from "./grouping-tab"
+import AdvancedTab from './advanced-tab';
+import ColumnsTab from './columns-tab';
+import FiltersTab from './filters-tab';
+import GroupingTab from './grouping-tab';
 
 interface ViewFiltersSheetProps {
-  table: Table<ReportFeatures, StorageGatePass>
+  table: Table<ReportFeatures, StorageGatePass>;
 }
 
 export function ViewFiltersSheet({ table }: ViewFiltersSheetProps) {
-  const [open, setOpen] = useState(false)
-  const [draftColumnFilters, setDraftColumnFilters] =
-    useState<ColumnFiltersState>(() => table.store.state.columnFilters)
-  const [draftColumnVisibility, setDraftColumnVisibility] =
-    useState<ColumnVisibilityState>(() => table.store.state.columnVisibility)
+  const [open, setOpen] = useState(false);
+  const [draftColumnFilters, setDraftColumnFilters] = useState<ColumnFiltersState>(
+    () => table.store.state.columnFilters,
+  );
+  const [draftColumnVisibility, setDraftColumnVisibility] = useState<ColumnVisibilityState>(
+    () => table.store.state.columnVisibility,
+  );
   const [draftColumnOrder, setDraftColumnOrder] = useState<ColumnOrderState>(
     () => table.store.state.columnOrder,
-  )
+  );
   const [draftGrouping, setDraftGrouping] = useState<GroupingState>(
     () => table.store.state.grouping,
-  )
-  const [draftGlobalFilter, setDraftGlobalFilter] =
-    useState<AdvancedReportGlobalFilter>(() => ({
-      logic: "AND",
-      conditions: [],
-      ...table.store.state.globalFilter,
-    }))
-  const activeFilterCount = table.store.state.columnFilters.length
-  const activeGroupingCount = table.store.state.grouping.length
+  );
+  const [draftGlobalFilter, setDraftGlobalFilter] = useState<AdvancedReportGlobalFilter>(() => ({
+    logic: 'AND',
+    conditions: [],
+    ...table.store.state.globalFilter,
+  }));
+  const activeFilterCount = table.store.state.columnFilters.length;
+  const activeGroupingCount = table.store.state.grouping.length;
   const activeAdvancedCount =
     table.store.state.globalFilter?.conditions?.filter(
-        (condition: { operator: string; value: string }) =>
-          condition.operator === "isEmpty" ||
-          condition.operator === "isNotEmpty" ||
-          condition.value.trim().length > 0,
-      ).length ?? 0
+      (condition: { operator: string; value: string }) =>
+        condition.operator === 'isEmpty' ||
+        condition.operator === 'isNotEmpty' ||
+        condition.value.trim().length > 0,
+    ).length ?? 0;
   const hiddenColumnCount = table
     .getAllLeafColumns()
-    .filter((column) => table.store.state.columnVisibility[column.id] === false)
-    .length
+    .filter((column) => table.store.state.columnVisibility[column.id] === false).length;
   const defaultColumnState = getStoredStorageReportColumnState(
     table.getAllLeafColumns().map((column) => column.id),
-  )
+  );
   const hasDraftViewChanges =
     draftColumnFilters.length > 0 ||
-    !areColumnVisibilityStatesEqual(
-      draftColumnVisibility,
-      defaultColumnState.columnVisibility,
-    ) ||
+    !areColumnVisibilityStatesEqual(draftColumnVisibility, defaultColumnState.columnVisibility) ||
     !areColumnOrdersEqual(draftColumnOrder, defaultColumnState.columnOrder) ||
     draftGrouping.length > 0 ||
-    draftGlobalFilter.logic !== "AND" ||
-    draftGlobalFilter.conditions.length > 0
+    draftGlobalFilter.logic !== 'AND' ||
+    draftGlobalFilter.conditions.length > 0;
 
   const handleOpenChange = (nextOpen: boolean) => {
     if (nextOpen) {
-      const tableState = table.store.state
+      const tableState = table.store.state;
 
-      setDraftColumnFilters(tableState.columnFilters)
-      setDraftColumnVisibility(tableState.columnVisibility)
-      setDraftColumnOrder(tableState.columnOrder)
-      setDraftGrouping(tableState.grouping)
+      setDraftColumnFilters(tableState.columnFilters);
+      setDraftColumnVisibility(tableState.columnVisibility);
+      setDraftColumnOrder(tableState.columnOrder);
+      setDraftGrouping(tableState.grouping);
       setDraftGlobalFilter({
-        logic: "AND",
+        logic: 'AND',
         conditions: [],
         ...tableState.globalFilter,
-      })
+      });
     }
 
-    setOpen(nextOpen)
-  }
+    setOpen(nextOpen);
+  };
 
   const handleApplyChanges = () => {
-    table.setColumnFilters(draftColumnFilters)
-    table.setColumnVisibility(draftColumnVisibility)
-    table.setColumnOrder(draftColumnOrder)
-    table.setGrouping(draftGrouping)
-    table.setExpanded(draftGrouping.length > 0 ? true : {})
-    table.setGlobalFilter(draftGlobalFilter)
-    table.setPageIndex(0)
-    setOpen(false)
-  }
+    table.setColumnFilters(draftColumnFilters);
+    table.setColumnVisibility(draftColumnVisibility);
+    table.setColumnOrder(draftColumnOrder);
+    table.setGrouping(draftGrouping);
+    table.setExpanded(draftGrouping.length > 0 ? true : {});
+    table.setGlobalFilter(draftGlobalFilter);
+    table.setPageIndex(0);
+    setOpen(false);
+  };
 
   const handleResetChanges = () => {
     const nextColumnState = getStoredStorageReportColumnState(
       table.getAllLeafColumns().map((column) => column.id),
-    )
+    );
 
-    setDraftColumnFilters([])
-    setDraftColumnVisibility(nextColumnState.columnVisibility)
-    setDraftColumnOrder(nextColumnState.columnOrder)
-    setDraftGrouping([])
-    setDraftGlobalFilter({ logic: "AND", conditions: [] })
+    setDraftColumnFilters([]);
+    setDraftColumnVisibility(nextColumnState.columnVisibility);
+    setDraftColumnOrder(nextColumnState.columnOrder);
+    setDraftGrouping([]);
+    setDraftGlobalFilter({ logic: 'AND', conditions: [] });
 
-    table.setColumnFilters([])
-    table.setColumnVisibility(nextColumnState.columnVisibility)
-    table.setColumnOrder(nextColumnState.columnOrder)
-    table.setGrouping([])
-    table.setExpanded({})
-    table.setGlobalFilter({ logic: "AND", conditions: [] })
-    table.setPageIndex(0)
-  }
+    table.setColumnFilters([]);
+    table.setColumnVisibility(nextColumnState.columnVisibility);
+    table.setColumnOrder(nextColumnState.columnOrder);
+    table.setGrouping([]);
+    table.setExpanded({});
+    table.setGlobalFilter({ logic: 'AND', conditions: [] });
+    table.setPageIndex(0);
+  };
 
   return (
     <Sheet open={open} onOpenChange={handleOpenChange}>
@@ -139,9 +136,7 @@ export function ViewFiltersSheet({ table }: ViewFiltersSheetProps) {
           <SlidersHorizontal className="size-4 shrink-0" aria-hidden />
           <span className="truncate">
             View filters
-            {activeFilterCount > 0
-              ? ` (${activeFilterCount.toLocaleString("en-IN")})`
-              : ""}
+            {activeFilterCount > 0 ? ` (${activeFilterCount.toLocaleString('en-IN')})` : ''}
           </span>
         </Button>
       </SheetTrigger>
@@ -159,8 +154,7 @@ export function ViewFiltersSheet({ table }: ViewFiltersSheetProps) {
                 View Settings
               </SheetTitle>
               <SheetDescription className="text-xs leading-snug text-muted-foreground">
-                Manage storage report filters, columns, grouping, and default
-                view.
+                Manage storage report filters, columns, grouping, and default view.
               </SheetDescription>
             </div>
           </div>
@@ -174,7 +168,7 @@ export function ViewFiltersSheet({ table }: ViewFiltersSheetProps) {
                 Columns
                 {hiddenColumnCount > 0 ? (
                   <span className="ml-1 rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary">
-                    {hiddenColumnCount.toLocaleString("en-IN")} hidden
+                    {hiddenColumnCount.toLocaleString('en-IN')} hidden
                   </span>
                 ) : null}
               </TabsTrigger>
@@ -182,7 +176,7 @@ export function ViewFiltersSheet({ table }: ViewFiltersSheetProps) {
                 Grouping
                 {activeGroupingCount > 0 ? (
                   <span className="ml-1 rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary">
-                    {activeGroupingCount.toLocaleString("en-IN")}
+                    {activeGroupingCount.toLocaleString('en-IN')}
                   </span>
                 ) : null}
               </TabsTrigger>
@@ -190,7 +184,7 @@ export function ViewFiltersSheet({ table }: ViewFiltersSheetProps) {
                 Advanced
                 {activeAdvancedCount > 0 ? (
                   <span className="ml-1 rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary">
-                    {activeAdvancedCount.toLocaleString("en-IN")}
+                    {activeAdvancedCount.toLocaleString('en-IN')}
                   </span>
                 ) : null}
               </TabsTrigger>
@@ -244,34 +238,26 @@ export function ViewFiltersSheet({ table }: ViewFiltersSheetProps) {
             <RotateCcw className="size-3.5" aria-hidden />
             Reset
           </Button>
-          <Button
-            type="button"
-            size="sm"
-            className="w-full gap-1.5"
-            onClick={handleApplyChanges}
-          >
+          <Button type="button" size="sm" className="w-full gap-1.5" onClick={handleApplyChanges}>
             <CheckCircle2 className="size-3.5" aria-hidden />
             Apply changes
           </Button>
         </SheetFooter>
       </SheetContent>
     </Sheet>
-  )
+  );
 }
 
 function areColumnVisibilityStatesEqual(a: ColumnVisibilityState, b: ColumnVisibilityState) {
-  const keys = new Set([...Object.keys(a), ...Object.keys(b)])
+  const keys = new Set([...Object.keys(a), ...Object.keys(b)]);
 
   for (const key of keys) {
-    if (a[key] !== b[key]) return false
+    if (a[key] !== b[key]) return false;
   }
 
-  return true
+  return true;
 }
 
 function areColumnOrdersEqual(a: ColumnOrderState, b: ColumnOrderState) {
-  return (
-    a.length === b.length &&
-    a.every((columnId, index) => columnId === b[index])
-  )
+  return a.length === b.length && a.every((columnId, index) => columnId === b[index]);
 }

@@ -1,13 +1,13 @@
-import apiClient, { getApiErrorMessage } from "@/lib/api-client"
+import apiClient, { getApiErrorMessage } from '@/lib/api-client';
 
 import type {
   UpdateIncomingGatePassBody,
   UpdateIncomingGatePassInput,
   UpdateIncomingGatePassResponse,
-} from "./types"
+} from './types';
 
 export function toUpdateIncomingGatePassBody(
-  form: UpdateIncomingGatePassInput["form"],
+  form: UpdateIncomingGatePassInput['form'],
 ): UpdateIncomingGatePassBody {
   const body: UpdateIncomingGatePassBody = {
     manualGatePassNumber: form.manualGatePassNumber ?? null,
@@ -23,11 +23,11 @@ export function toUpdateIncomingGatePassBody(
       grossWeightKg: form.weightSlip.grossWeightKg,
       tareWeightKg: form.weightSlip.tareWeightKg,
     },
-  }
+  };
 
-  body.remarks = form.remarks.trim()
+  body.remarks = form.remarks.trim();
 
-  return body
+  return body;
 }
 
 export async function updateIncomingGatePass({
@@ -38,17 +38,16 @@ export async function updateIncomingGatePass({
     const { data } = await apiClient.put<UpdateIncomingGatePassResponse>(
       `/incoming-gate-pass/${id}`,
       toUpdateIncomingGatePassBody(form),
-    )
+    );
 
     if (!data.success) {
-      throw new Error(data.message ?? "Failed to update incoming gate pass")
+      throw new Error(data.message ?? 'Failed to update incoming gate pass');
     }
 
-    return data
+    return data;
   } catch (error) {
-    throw new Error(
-      getApiErrorMessage(error, "Failed to update incoming gate pass"),
-      { cause: error },
-    )
+    throw new Error(getApiErrorMessage(error, 'Failed to update incoming gate pass'), {
+      cause: error,
+    });
   }
 }

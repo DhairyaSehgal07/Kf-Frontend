@@ -44,7 +44,16 @@ const coreNavItems: NavItem[] = [
     name: 'Daybook',
     icon: BookOpen,
     to: '/daybook',
-    activePaths: ['/daybook', '/incoming', '/grading', '/storage', '/transfer', '/dispatch-pre-storage', '/booking', "/outgoing" ],
+    activePaths: [
+      '/daybook',
+      '/incoming',
+      '/grading',
+      '/storage',
+      '/transfer',
+      '/dispatch-pre-storage',
+      '/booking',
+      '/outgoing',
+    ],
   },
   {
     name: 'People',
@@ -80,9 +89,7 @@ function isReportPath(pathname: string) {
 }
 
 function isPathActive(pathname: string, activePaths: string[]) {
-  return activePaths.some(
-    (path) => pathname === path || pathname.startsWith(`${path}/`),
-  );
+  return activePaths.some((path) => pathname === path || pathname.startsWith(`${path}/`));
 }
 
 function NavReports({ pathname }: { pathname: string }) {
@@ -91,11 +98,7 @@ function NavReports({ pathname }: { pathname: string }) {
   const isOpen = reportsActive || open;
 
   return (
-    <Collapsible.Root
-      open={isOpen}
-      onOpenChange={setOpen}
-      className="group/collapsible"
-    >
+    <Collapsible.Root open={isOpen} onOpenChange={setOpen} className="group/collapsible">
       <SidebarMenuItem>
         <Collapsible.Trigger asChild>
           <SidebarMenuButton
@@ -117,10 +120,7 @@ function NavReports({ pathname }: { pathname: string }) {
           <SidebarMenuSub>
             {reportNavItems.map((item) => (
               <SidebarMenuSubItem key={item.to}>
-                <SidebarMenuSubButton
-                  asChild
-                  isActive={pathname === item.to}
-                >
+                <SidebarMenuSubButton asChild isActive={pathname === item.to}>
                   <Link to={item.to}>{item.name}</Link>
                 </SidebarMenuSubButton>
               </SidebarMenuSubItem>
@@ -145,17 +145,12 @@ function NavMain() {
           {coreNavItems.map((item) => {
             const Icon = item.icon;
             const itemActivePaths = item.activePaths ?? (item.to ? [item.to] : []);
-            const isActive =
-              !isReportPath(pathname) && isPathActive(pathname, itemActivePaths);
+            const isActive = !isReportPath(pathname) && isPathActive(pathname, itemActivePaths);
 
             return (
               <SidebarMenuItem key={item.name}>
                 {item.to && !item.disabled ? (
-                  <SidebarMenuButton
-                    asChild
-                    isActive={isActive}
-                    tooltip={item.name}
-                  >
+                  <SidebarMenuButton asChild isActive={isActive} tooltip={item.name}>
                     <Link to={item.to}>
                       <Icon />
                       <span>{item.name}</span>
@@ -186,20 +181,12 @@ export function AppSidebar() {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
-              <Link to="/daybook" search={{ tab: "incoming" }}>
-                <img
-                  src="/favicon.svg"
-                  alt="Coldop"
-                  className="size-8 shrink-0 rounded-md"
-                />
+              <Link to="/daybook" search={{ tab: 'incoming' }}>
+                <img src="/favicon.svg" alt="Coldop" className="size-8 shrink-0 rounded-md" />
                 <div className="grid min-w-0 flex-1 text-left leading-tight">
                   <span className="truncate font-heading text-sm tracking-tight">
-                    <span className="font-semibold text-sidebar-foreground">
-                      Coldop
-                    </span>
-                    <span className="ml-1 text-xs font-normal text-muted-foreground">
-                      1.0.0
-                    </span>
+                    <span className="font-semibold text-sidebar-foreground">Coldop</span>
+                    <span className="ml-1 text-xs font-normal text-muted-foreground">1.0.0</span>
                   </span>
                   {coldStorageName ? (
                     <span

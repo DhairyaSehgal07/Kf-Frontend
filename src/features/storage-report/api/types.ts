@@ -1,16 +1,16 @@
-import type { StorageGatePass } from "@/features/storage/api/types"
+import type { StorageGatePass } from '@/features/storage/api/types';
 
 export type StorageGatePassReportParams = {
-  dateFrom?: string
-  dateTo?: string
-}
+  dateFrom?: string;
+  dateTo?: string;
+};
 
 export type StorageGatePassReportResult = {
-  storageGatePasses: StorageGatePass[]
-}
+  storageGatePasses: StorageGatePass[];
+};
 
 export type GetStorageGatePassReportResponse = {
-  success: boolean
-  data: StorageGatePassReportResult
-  message?: string
-}
+  success: boolean;
+  data: StorageGatePassReportResult;
+  message?: string;
+};

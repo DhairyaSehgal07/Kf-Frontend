@@ -1,10 +1,10 @@
-import type { IncomingGatePass } from "@/features/incoming/api/types"
-import type { IncomingFormValues } from "@/features/incoming/types"
+import type { IncomingGatePass } from '@/features/incoming/api/types';
+import type { IncomingFormValues } from '@/features/incoming/types';
 
 function toIsoDateTime(value: string): string {
-  const parsed = new Date(value)
-  if (Number.isNaN(parsed.getTime())) return value
-  return parsed.toISOString()
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return value;
+  return parsed.toISOString();
 }
 
 export function incomingGatePassToFormValues(
@@ -12,9 +12,9 @@ export function incomingGatePassToFormValues(
   userId: string,
 ): IncomingFormValues {
   const farmerStorageLinkId =
-    typeof gatePass.farmerStorageLinkId === "string"
+    typeof gatePass.farmerStorageLinkId === 'string'
       ? gatePass.farmerStorageLinkId
-      : (gatePass.farmerStorageLinkId._id ?? "")
+      : (gatePass.farmerStorageLinkId._id ?? '');
 
   return {
     manualGatePassNumber: gatePass.manualGatePassNumber,
@@ -22,16 +22,16 @@ export function incomingGatePassToFormValues(
     farmerStorageLinkId,
     createdBy: gatePass.createdBy._id ?? userId,
     variety: gatePass.variety,
-    category: gatePass.category as IncomingFormValues["category"],
-    stage: gatePass.stage ?? "",
+    category: gatePass.category as IncomingFormValues['category'],
+    stage: gatePass.stage ?? '',
     date: toIsoDateTime(gatePass.date),
     bagsReceived: gatePass.bagsReceived,
     weightSlip: gatePass.weightSlip ?? {
-      slipNumber: "",
+      slipNumber: '',
       grossWeightKg: 0,
       tareWeightKg: 0,
     },
     status: gatePass.status,
-    remarks: gatePass.remarks ?? "",
-  }
+    remarks: gatePass.remarks ?? '',
+  };
 }

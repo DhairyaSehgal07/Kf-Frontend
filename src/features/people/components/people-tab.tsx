@@ -1,22 +1,10 @@
-import { useMemo, useState } from "react"
-import {
-  Loader2,
-  Plus,
-  RefreshCw,
-  Search,
-  Users,
-} from "lucide-react"
+import { useMemo, useState } from 'react';
+import { Loader2, Plus, RefreshCw, Search, Users } from 'lucide-react';
 
-import { Button } from "@/components/ui/button"
-import {
-  Item,
-  ItemActions,
-  ItemContent,
-  ItemMedia,
-  ItemTitle,
-} from "@/components/ui/item"
+import { Button } from '@/components/ui/button';
+import { Item, ItemActions, ItemContent, ItemMedia, ItemTitle } from '@/components/ui/item';
 
-import { Input } from "@/components/ui/input"
+import { Input } from '@/components/ui/input';
 
 import {
   Select,
@@ -24,7 +12,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from '@/components/ui/select';
 
 import {
   Empty,
@@ -32,22 +20,22 @@ import {
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
-} from "@/components/ui/empty"
-import { Skeleton } from "@/components/ui/skeleton"
+} from '@/components/ui/empty';
+import { Skeleton } from '@/components/ui/skeleton';
 
-import { useFarmerStorageLinks } from "../api/use-farmer-storage-links"
-import { AddFarmerDialog } from "./add-farmer-dialog"
-import { PeopleCard, PeopleCardSkeleton } from "./people-card"
-import type { FarmerStorageLink } from "../types"
+import { useFarmerStorageLinks } from '../api/use-farmer-storage-links';
+import { AddFarmerDialog } from './add-farmer-dialog';
+import { PeopleCard, PeopleCardSkeleton } from './people-card';
+import type { FarmerStorageLink } from '../types';
 
-type SortOrder = "newest" | "oldest"
+type SortOrder = 'newest' | 'oldest';
 
 function getFarmerCreatedAt(link: FarmerStorageLink): number {
-  const createdAt = link.farmerId.createdAt
-  if (!createdAt) return 0
+  const createdAt = link.farmerId.createdAt;
+  if (!createdAt) return 0;
 
-  const timestamp = new Date(createdAt).getTime()
-  return Number.isNaN(timestamp) ? 0 : timestamp
+  const timestamp = new Date(createdAt).getTime();
+  return Number.isNaN(timestamp) ? 0 : timestamp;
 }
 
 function filterAndSortPeople(
@@ -55,18 +43,16 @@ function filterAndSortPeople(
   search: string,
   sortOrder: SortOrder,
 ): FarmerStorageLink[] {
-  const normalizedSearch = search.trim().toLowerCase()
+  const normalizedSearch = search.trim().toLowerCase();
 
   const filtered = normalizedSearch
-    ? links.filter((link) =>
-        link.farmerId.name.toLowerCase().includes(normalizedSearch),
-      )
-    : links
+    ? links.filter((link) => link.farmerId.name.toLowerCase().includes(normalizedSearch))
+    : links;
 
   return [...filtered].sort((a, b) => {
-    const diff = getFarmerCreatedAt(b) - getFarmerCreatedAt(a)
-    return sortOrder === "newest" ? diff : -diff
-  })
+    const diff = getFarmerCreatedAt(b) - getFarmerCreatedAt(a);
+    return sortOrder === 'newest' ? diff : -diff;
+  });
 }
 
 function PeopleTabSkeleton() {
@@ -105,13 +91,13 @@ function PeopleTabSkeleton() {
         ))}
       </div>
     </div>
-  )
+  );
 }
 
 const PeopleTab = () => {
-  const [search, setSearch] = useState("")
-  const [sortOrder, setSortOrder] = useState<SortOrder>("newest")
-  const [addFarmerOpen, setAddFarmerOpen] = useState(false)
+  const [search, setSearch] = useState('');
+  const [sortOrder, setSortOrder] = useState<SortOrder>('newest');
+  const [addFarmerOpen, setAddFarmerOpen] = useState(false);
 
   const {
     data: farmerStorageLinks = [],
@@ -120,18 +106,18 @@ const PeopleTab = () => {
     error,
     isFetching,
     refetch,
-  } = useFarmerStorageLinks()
+  } = useFarmerStorageLinks();
 
   const visiblePeople = useMemo(
     () => filterAndSortPeople(farmerStorageLinks, search, sortOrder),
     [farmerStorageLinks, search, sortOrder],
-  )
+  );
 
-  const peopleCount = farmerStorageLinks.length
-  const hasSearch = search.trim().length > 0
+  const peopleCount = farmerStorageLinks.length;
+  const hasSearch = search.trim().length > 0;
 
   if (isLoading) {
-    return <PeopleTabSkeleton />
+    return <PeopleTabSkeleton />;
   }
 
   return (
@@ -148,12 +134,7 @@ const PeopleTab = () => {
         </ItemContent>
 
         <ItemActions>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => void refetch()}
-            disabled={isFetching}
-          >
+          <Button variant="outline" size="sm" onClick={() => void refetch()} disabled={isFetching}>
             {isFetching ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (
@@ -178,10 +159,7 @@ const PeopleTab = () => {
 
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
           <div>
-            <Select
-              value={sortOrder}
-              onValueChange={(value) => setSortOrder(value as SortOrder)}
-            >
+            <Select value={sortOrder} onValueChange={(value) => setSortOrder(value as SortOrder)}>
               <SelectTrigger className="w-full min-w-0 sm:w-[150px]">
                 <SelectValue placeholder="Sort by" />
               </SelectTrigger>
@@ -199,10 +177,7 @@ const PeopleTab = () => {
               <span className="hidden sm:inline">People Edit History</span>
             </Button>
 
-            <Button
-              className="min-w-0 px-2.5 sm:px-3"
-              onClick={() => setAddFarmerOpen(true)}
-            >
+            <Button className="min-w-0 px-2.5 sm:px-3" onClick={() => setAddFarmerOpen(true)}>
               <Plus className="h-4 w-4 shrink-0 sm:mr-2" />
               <span className="truncate">Add Farmer</span>
             </Button>
@@ -222,7 +197,7 @@ const PeopleTab = () => {
             <EmptyDescription>
               {error instanceof Error
                 ? error.message
-                : "Something went wrong while fetching people."}
+                : 'Something went wrong while fetching people.'}
             </EmptyDescription>
           </EmptyHeader>
 
@@ -247,14 +222,12 @@ const PeopleTab = () => {
               <Users />
             </EmptyMedia>
 
-            <EmptyTitle>
-              {hasSearch ? "No matching people" : "No people yet"}
-            </EmptyTitle>
+            <EmptyTitle>{hasSearch ? 'No matching people' : 'No people yet'}</EmptyTitle>
 
             <EmptyDescription>
               {hasSearch
-                ? "Try a different name or clear the search."
-                : "Farmer accounts linked to your cold storage will appear here."}
+                ? 'Try a different name or clear the search.'
+                : 'Farmer accounts linked to your cold storage will appear here.'}
             </EmptyDescription>
           </EmptyHeader>
         </Empty>
@@ -272,7 +245,7 @@ const PeopleTab = () => {
         links={farmerStorageLinks}
       />
     </div>
-  )
-}
+  );
+};
 
-export default PeopleTab
+export default PeopleTab;

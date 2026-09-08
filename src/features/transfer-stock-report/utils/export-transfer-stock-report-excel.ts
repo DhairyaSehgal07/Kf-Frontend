@@ -1,10 +1,10 @@
-import { format } from "date-fns"
-import type ExcelJS from "exceljs"
-import type { Table } from "@tanstack/react-table"
-import type { ReportFeatures } from "@/lib/tanstack-table/report-table-features"
+import { format } from 'date-fns';
+import type ExcelJS from 'exceljs';
+import type { Table } from '@tanstack/react-table';
+import type { ReportFeatures } from '@/lib/tanstack-table/report-table-features';
 
-import type { TransferStockReportRow } from "@/features/transfer-stock-report/api/types"
-import { downloadBlob } from "@/lib/download-blob"
+import type { TransferStockReportRow } from '@/features/transfer-stock-report/api/types';
+import { downloadBlob } from '@/lib/download-blob';
 import {
   buildFilterSummaryLines,
   collectExportRows,
@@ -15,170 +15,156 @@ import {
   getFilteredLeafRowCount,
   isSummableExportColumn,
   type ExportCellValue,
-} from "@/features/transfer-stock-report/utils/export-cell-value"
-import {
-  sumReportNumericColumn,
-} from "@/features/transfer-stock-report/utils/report-formatters"
-import {
-  COLDOP_BRANDING,
-  EXPORT_THEME_COLORS,
-} from "@/lib/export-report-theme"
-import { loadExcelJS } from "@/lib/load-exceljs"
+} from '@/features/transfer-stock-report/utils/export-cell-value';
+import { sumReportNumericColumn } from '@/features/transfer-stock-report/utils/report-formatters';
+import { COLDOP_BRANDING, EXPORT_THEME_COLORS } from '@/lib/export-report-theme';
+import { loadExcelJS } from '@/lib/load-exceljs';
 
-const COLORS = EXPORT_THEME_COLORS
+const COLORS = EXPORT_THEME_COLORS;
 
 const THIN_BORDER: Partial<ExcelJS.Borders> = {
-  top: { style: "thin", color: { argb: COLORS.border } },
-  left: { style: "thin", color: { argb: COLORS.border } },
-  bottom: { style: "thin", color: { argb: COLORS.border } },
-  right: { style: "thin", color: { argb: COLORS.border } },
-}
+  top: { style: 'thin', color: { argb: COLORS.border } },
+  left: { style: 'thin', color: { argb: COLORS.border } },
+  bottom: { style: 'thin', color: { argb: COLORS.border } },
+  right: { style: 'thin', color: { argb: COLORS.border } },
+};
 
 const titleStyle: Partial<ExcelJS.Style> = {
   font: {
-    name: "Calibri",
+    name: 'Calibri',
     size: 16,
     bold: true,
     color: { argb: COLORS.primary },
   },
-  alignment: { vertical: "middle", horizontal: "left" },
-}
+  alignment: { vertical: 'middle', horizontal: 'left' },
+};
 
 const reportTitleStyle: Partial<ExcelJS.Style> = {
   font: {
-    name: "Calibri",
+    name: 'Calibri',
     size: 13,
     bold: true,
     color: { argb: COLORS.primary },
   },
-  alignment: { vertical: "middle", horizontal: "left" },
-}
+  alignment: { vertical: 'middle', horizontal: 'left' },
+};
 
 const metadataStyle: Partial<ExcelJS.Style> = {
-  font: { name: "Calibri", size: 10, color: { argb: COLORS.mutedForeground } },
-  alignment: { vertical: "middle", horizontal: "left", wrapText: true },
-}
+  font: { name: 'Calibri', size: 10, color: { argb: COLORS.mutedForeground } },
+  alignment: { vertical: 'middle', horizontal: 'left', wrapText: true },
+};
 
 const filterSummaryStyle: Partial<ExcelJS.Style> = {
-  font: { name: "Calibri", size: 10, color: { argb: COLORS.mutedForeground } },
-  alignment: { vertical: "top", horizontal: "left", wrapText: true },
-}
+  font: { name: 'Calibri', size: 10, color: { argb: COLORS.mutedForeground } },
+  alignment: { vertical: 'top', horizontal: 'left', wrapText: true },
+};
 
 const brandingStyle: Partial<ExcelJS.Style> = {
-  font: { name: "Calibri", size: 9, color: { argb: COLORS.mutedForeground } },
-  alignment: { vertical: "middle", horizontal: "left" },
-}
+  font: { name: 'Calibri', size: 9, color: { argb: COLORS.mutedForeground } },
+  alignment: { vertical: 'middle', horizontal: 'left' },
+};
 
-function createTableHeaderStyle(
-  align: "left" | "right",
-): Partial<ExcelJS.Style> {
+function createTableHeaderStyle(align: 'left' | 'right'): Partial<ExcelJS.Style> {
   return {
     font: {
-      name: "Calibri",
+      name: 'Calibri',
       size: 10,
       bold: true,
       color: { argb: COLORS.primary },
     },
     fill: {
-      type: "pattern",
-      pattern: "solid",
+      type: 'pattern',
+      pattern: 'solid',
       fgColor: { argb: COLORS.mutedFill },
     },
     border: THIN_BORDER,
     alignment: {
-      vertical: "middle",
+      vertical: 'middle',
       horizontal: align,
       wrapText: true,
     },
-  }
+  };
 }
 
 function createBodyStyle(options: {
-  align: "left" | "right"
-  fillArgb?: string
-  bold?: boolean
-  fontColorArgb?: string
-  numFmt?: string
+  align: 'left' | 'right';
+  fillArgb?: string;
+  bold?: boolean;
+  fontColorArgb?: string;
+  numFmt?: string;
 }): Partial<ExcelJS.Style> {
   return {
     font: {
-      name: "Calibri",
+      name: 'Calibri',
       size: 10,
       bold: options.bold ?? false,
       color: { argb: options.fontColorArgb ?? COLORS.foreground },
     },
     fill: options.fillArgb
       ? {
-          type: "pattern",
-          pattern: "solid",
+          type: 'pattern',
+          pattern: 'solid',
           fgColor: { argb: options.fillArgb },
         }
       : undefined,
     border: THIN_BORDER,
     alignment: {
-      vertical: "top",
+      vertical: 'top',
       horizontal: options.align,
       wrapText: true,
     },
     numFmt: options.numFmt,
-  }
+  };
 }
 
-function createTotalStyle(align: "left" | "right", numFmt?: string): Partial<ExcelJS.Style> {
+function createTotalStyle(align: 'left' | 'right', numFmt?: string): Partial<ExcelJS.Style> {
   return {
     font: {
-      name: "Calibri",
+      name: 'Calibri',
       size: 10,
       bold: true,
       color: { argb: COLORS.primary },
     },
     fill: {
-      type: "pattern",
-      pattern: "solid",
+      type: 'pattern',
+      pattern: 'solid',
       fgColor: { argb: COLORS.primarySoftFill },
     },
     border: THIN_BORDER,
-    alignment: { vertical: "middle", horizontal: align },
+    alignment: { vertical: 'middle', horizontal: align },
     numFmt,
-  }
+  };
 }
 
 function columnIndexToLetter(index: number): string {
-  let letter = ""
-  let current = index
+  let letter = '';
+  let current = index;
 
   while (current > 0) {
-    const remainder = (current - 1) % 26
-    letter = String.fromCharCode(65 + remainder) + letter
-    current = Math.floor((current - 1) / 26)
+    const remainder = (current - 1) % 26;
+    letter = String.fromCharCode(65 + remainder) + letter;
+    current = Math.floor((current - 1) / 26);
   }
 
-  return letter
+  return letter;
 }
 
-function formatDateRangeLabel(
-  fromDate: Date | undefined,
-  toDate: Date | undefined,
-): string {
+function formatDateRangeLabel(fromDate: Date | undefined, toDate: Date | undefined): string {
   if (fromDate && toDate) {
-    return `${format(fromDate, "do MMM yyyy")} – ${format(toDate, "do MMM yyyy")}`
+    return `${format(fromDate, 'do MMM yyyy')} – ${format(toDate, 'do MMM yyyy')}`;
   }
-  if (fromDate) return `From ${format(fromDate, "do MMM yyyy")}`
-  if (toDate) return `Until ${format(toDate, "do MMM yyyy")}`
-  return "All dates"
+  if (fromDate) return `From ${format(fromDate, 'do MMM yyyy')}`;
+  if (toDate) return `Until ${format(toDate, 'do MMM yyyy')}`;
+  return 'All dates';
 }
 
 function sanitizeFilename(value: string): string {
-  return value.replace(/[^\w.-]+/g, "-").replace(/-+/g, "-")
+  return value.replace(/[^\w.-]+/g, '-').replace(/-+/g, '-');
 }
 
-function applyStyleToRow(
-  row: ExcelJS.Row,
-  style: Partial<ExcelJS.Style>,
-  columnCount: number,
-) {
+function applyStyleToRow(row: ExcelJS.Row, style: Partial<ExcelJS.Style>, columnCount: number) {
   for (let index = 1; index <= columnCount; index += 1) {
-    Object.assign(row.getCell(index), { style })
+    Object.assign(row.getCell(index), { style });
   }
 }
 
@@ -186,14 +172,13 @@ function applyCellStyle(
   cell: ExcelJS.Cell,
   exportCell: ExportCellValue,
   options: {
-    align: "left" | "right"
-    fillArgb?: string
-    bold?: boolean
-    fontColorArgb?: string
+    align: 'left' | 'right';
+    fillArgb?: string;
+    bold?: boolean;
+    fontColorArgb?: string;
   },
 ) {
-  const numFmt =
-    exportCell.kind === "number" ? getExcelNumFmt(exportCell.format) : undefined
+  const numFmt = exportCell.kind === 'number' ? getExcelNumFmt(exportCell.format) : undefined;
 
   Object.assign(cell, {
     style: createBodyStyle({
@@ -203,7 +188,7 @@ function applyCellStyle(
       fontColorArgb: options.fontColorArgb,
       numFmt,
     }),
-  })
+  });
 }
 
 function applyBrandingToCell(cell: ExcelJS.Cell) {
@@ -211,7 +196,7 @@ function applyBrandingToCell(cell: ExcelJS.Cell) {
     richText: [
       {
         font: {
-          name: "Calibri",
+          name: 'Calibri',
           size: 9,
           color: { argb: COLORS.mutedForeground },
         },
@@ -219,7 +204,7 @@ function applyBrandingToCell(cell: ExcelJS.Cell) {
       },
       {
         font: {
-          name: "Calibri",
+          name: 'Calibri',
           size: 9,
           bold: true,
           color: { argb: COLORS.primary },
@@ -227,208 +212,192 @@ function applyBrandingToCell(cell: ExcelJS.Cell) {
         text: COLDOP_BRANDING.name,
       },
     ],
-  }
-  cell.style = brandingStyle
+  };
+  cell.style = brandingStyle;
 }
 
-function autoFitColumns(
-  worksheet: ExcelJS.Worksheet,
-  columnCount: number,
-  maxWidth = 40,
-) {
+function autoFitColumns(worksheet: ExcelJS.Worksheet, columnCount: number, maxWidth = 40) {
   for (let index = 1; index <= columnCount; index += 1) {
-    const column = worksheet.getColumn(index)
-    let maxLength = 10
+    const column = worksheet.getColumn(index);
+    let maxLength = 10;
 
     column.eachCell({ includeEmpty: false }, (cell) => {
-      const value = cell.value
+      const value = cell.value;
       const text =
         value == null
-          ? ""
-          : typeof value === "object" && "text" in value
+          ? ''
+          : typeof value === 'object' && 'text' in value
             ? String(value.text)
-            : String(value)
-      maxLength = Math.max(maxLength, Math.min(text.length + 2, maxWidth))
-    })
+            : String(value);
+      maxLength = Math.max(maxLength, Math.min(text.length + 2, maxWidth));
+    });
 
-    column.width = maxLength
+    column.width = maxLength;
   }
 }
 
 export type ExportTransferStockReportOptions = {
-  table: Table<ReportFeatures, TransferStockReportRow>
-  coldStorageName: string
-  reportTitle?: string
-  fromDate?: Date
-  toDate?: Date
-  generatedAt?: Date
-}
+  table: Table<ReportFeatures, TransferStockReportRow>;
+  coldStorageName: string;
+  reportTitle?: string;
+  fromDate?: Date;
+  toDate?: Date;
+  generatedAt?: Date;
+};
 
 export async function exportTransferStockReportToExcel({
   table,
   coldStorageName,
-  reportTitle = "Transfer Stock Gate Passes",
+  reportTitle = 'Transfer Stock Gate Passes',
   fromDate,
   toDate,
   generatedAt = new Date(),
 }: ExportTransferStockReportOptions): Promise<void> {
-  const ExcelJS = await loadExcelJS()
-  const visibleColumns = table.getVisibleLeafColumns()
-  const columnCount = Math.max(visibleColumns.length, 1)
-  const lastColumnLetter = columnIndexToLetter(columnCount)
-  const exportRows = collectExportRows(table)
-  const filteredLeafCount = getFilteredLeafRowCount(table)
-  const filterSummaryLines = buildFilterSummaryLines(table)
-  const filteredRows = table.getFilteredRowModel().rows
+  const ExcelJS = await loadExcelJS();
+  const visibleColumns = table.getVisibleLeafColumns();
+  const columnCount = Math.max(visibleColumns.length, 1);
+  const lastColumnLetter = columnIndexToLetter(columnCount);
+  const exportRows = collectExportRows(table);
+  const filteredLeafCount = getFilteredLeafRowCount(table);
+  const filterSummaryLines = buildFilterSummaryLines(table);
+  const filteredRows = table.getFilteredRowModel().rows;
 
-  const workbook = new ExcelJS.Workbook()
-  workbook.creator = coldStorageName
-  workbook.company = COLDOP_BRANDING.name
-  workbook.created = generatedAt
+  const workbook = new ExcelJS.Workbook();
+  workbook.creator = coldStorageName;
+  workbook.company = COLDOP_BRANDING.name;
+  workbook.created = generatedAt;
 
-  const worksheet = workbook.addWorksheet("Transfer Stock Gate Passes", {
+  const worksheet = workbook.addWorksheet('Transfer Stock Gate Passes', {
     views: [{ showGridLines: false }],
-  })
+  });
 
-  worksheet.mergeCells(`A1:${lastColumnLetter}1`)
-  const titleRow = worksheet.getRow(1)
-  titleRow.height = 28
-  titleRow.getCell(1).value = coldStorageName
-  applyStyleToRow(titleRow, titleStyle, columnCount)
+  worksheet.mergeCells(`A1:${lastColumnLetter}1`);
+  const titleRow = worksheet.getRow(1);
+  titleRow.height = 28;
+  titleRow.getCell(1).value = coldStorageName;
+  applyStyleToRow(titleRow, titleStyle, columnCount);
 
-  worksheet.mergeCells(`A2:${lastColumnLetter}2`)
-  const reportRow = worksheet.getRow(2)
-  reportRow.height = 22
-  reportRow.getCell(1).value = reportTitle
-  applyStyleToRow(reportRow, reportTitleStyle, columnCount)
+  worksheet.mergeCells(`A2:${lastColumnLetter}2`);
+  const reportRow = worksheet.getRow(2);
+  reportRow.height = 22;
+  reportRow.getCell(1).value = reportTitle;
+  applyStyleToRow(reportRow, reportTitleStyle, columnCount);
 
   const metadataText = [
-    `Generated: ${format(generatedAt, "do MMM yyyy, h:mm a")}`,
+    `Generated: ${format(generatedAt, 'do MMM yyyy, h:mm a')}`,
     `Period: ${formatDateRangeLabel(fromDate, toDate)}`,
-    `${filteredLeafCount.toLocaleString("en-IN")} ${
-      filteredLeafCount === 1 ? "entry" : "entries"
-    }`,
-  ].join("  |  ")
+    `${filteredLeafCount.toLocaleString('en-IN')} ${filteredLeafCount === 1 ? 'entry' : 'entries'}`,
+  ].join('  |  ');
 
-  worksheet.mergeCells(`A3:${lastColumnLetter}3`)
-  const metadataRow = worksheet.getRow(3)
-  metadataRow.height = 18
-  metadataRow.getCell(1).value = metadataText
-  applyStyleToRow(metadataRow, metadataStyle, columnCount)
+  worksheet.mergeCells(`A3:${lastColumnLetter}3`);
+  const metadataRow = worksheet.getRow(3);
+  metadataRow.height = 18;
+  metadataRow.getCell(1).value = metadataText;
+  applyStyleToRow(metadataRow, metadataStyle, columnCount);
 
-  worksheet.mergeCells(`A4:${lastColumnLetter}4`)
-  const filterRow = worksheet.getRow(4)
-  filterRow.height = filterSummaryLines.length > 0 ? 36 : 14
+  worksheet.mergeCells(`A4:${lastColumnLetter}4`);
+  const filterRow = worksheet.getRow(4);
+  filterRow.height = filterSummaryLines.length > 0 ? 36 : 14;
   filterRow.getCell(1).value =
-    filterSummaryLines.length > 0
-      ? filterSummaryLines.join("\n")
-      : "Filters: none applied"
-  applyStyleToRow(filterRow, filterSummaryStyle, columnCount)
+    filterSummaryLines.length > 0 ? filterSummaryLines.join('\n') : 'Filters: none applied';
+  applyStyleToRow(filterRow, filterSummaryStyle, columnCount);
 
-  worksheet.mergeCells(`A5:${lastColumnLetter}5`)
-  const brandingHeaderRow = worksheet.getRow(5)
-  brandingHeaderRow.height = 16
-  applyBrandingToCell(brandingHeaderRow.getCell(1))
+  worksheet.mergeCells(`A5:${lastColumnLetter}5`);
+  const brandingHeaderRow = worksheet.getRow(5);
+  brandingHeaderRow.height = 16;
+  applyBrandingToCell(brandingHeaderRow.getCell(1));
 
-  worksheet.getRow(6).height = 8
+  worksheet.getRow(6).height = 8;
 
-  const headerRowIndex = 7
-  const headerRow = worksheet.getRow(headerRowIndex)
-  headerRow.height = 22
+  const headerRowIndex = 7;
+  const headerRow = worksheet.getRow(headerRowIndex);
+  headerRow.height = 22;
 
   visibleColumns.forEach((column, index) => {
-    const align = column.columnDef.meta?.align === "right" ? "right" : "left"
-    const cell = headerRow.getCell(index + 1)
-    cell.value = getColumnExportLabel(column)
-    cell.style = createTableHeaderStyle(align)
-  })
+    const align = column.columnDef.meta?.align === 'right' ? 'right' : 'left';
+    const cell = headerRow.getCell(index + 1);
+    cell.value = getColumnExportLabel(column);
+    cell.style = createTableHeaderStyle(align);
+  });
 
-  let currentRowIndex = headerRowIndex + 1
-  let dataRowCounter = 0
+  let currentRowIndex = headerRowIndex + 1;
+  let dataRowCounter = 0;
 
   for (const row of exportRows) {
-    const isGroupRow = row.getIsGrouped()
-    const excelRow = worksheet.getRow(currentRowIndex)
-    excelRow.height = isGroupRow ? 20 : 18
+    const isGroupRow = row.getIsGrouped();
+    const excelRow = worksheet.getRow(currentRowIndex);
+    excelRow.height = isGroupRow ? 20 : 18;
 
     visibleColumns.forEach((column, columnIndex) => {
-      const align =
-        column.columnDef.meta?.align === "right" ? "right" : "left"
-      const exportCell = getExportCellForRow(row, column)
-      const cell = excelRow.getCell(columnIndex + 1)
-      cell.value = exportCellValueToPrimitive(exportCell)
+      const align = column.columnDef.meta?.align === 'right' ? 'right' : 'left';
+      const exportCell = getExportCellForRow(row, column);
+      const cell = excelRow.getCell(columnIndex + 1);
+      cell.value = exportCellValueToPrimitive(exportCell);
 
       const fillArgb = isGroupRow
         ? COLORS.primaryMutedFill
         : dataRowCounter % 2 === 1
           ? COLORS.zebraFill
-          : undefined
+          : undefined;
 
       applyCellStyle(cell, exportCell, {
         align,
         fillArgb,
-        bold: isGroupRow && exportCell.kind === "text",
-        fontColorArgb:
-          isGroupRow && exportCell.kind === "text"
-            ? COLORS.primary
-            : undefined,
-      })
-    })
+        bold: isGroupRow && exportCell.kind === 'text',
+        fontColorArgb: isGroupRow && exportCell.kind === 'text' ? COLORS.primary : undefined,
+      });
+    });
 
     if (!isGroupRow) {
-      dataRowCounter += 1
+      dataRowCounter += 1;
     }
 
-    currentRowIndex += 1
+    currentRowIndex += 1;
   }
 
-  const totalsRowIndex = currentRowIndex
-  const totalsRow = worksheet.getRow(totalsRowIndex)
-  totalsRow.height = 22
+  const totalsRowIndex = currentRowIndex;
+  const totalsRow = worksheet.getRow(totalsRowIndex);
+  totalsRow.height = 22;
 
   visibleColumns.forEach((column, columnIndex) => {
-    const columnId = column.id
-    const align =
-      column.columnDef.meta?.align === "right" ? "right" : "left"
-    const cell = totalsRow.getCell(columnIndex + 1)
+    const columnId = column.id;
+    const align = column.columnDef.meta?.align === 'right' ? 'right' : 'left';
+    const cell = totalsRow.getCell(columnIndex + 1);
 
     if (columnIndex === 0) {
-      cell.value = "Total"
-      cell.style = createTotalStyle("left")
-      return
+      cell.value = 'Total';
+      cell.style = createTotalStyle('left');
+      return;
     }
 
     if (isSummableExportColumn(columnId)) {
-      const total = sumReportNumericColumn(
-        filteredRows,
-        columnId as keyof TransferStockReportRow,
-      )
-      const format = "integer"
-      cell.value = total
-      cell.style = createTotalStyle(align, getExcelNumFmt(format))
-      return
+      const total = sumReportNumericColumn(filteredRows, columnId as keyof TransferStockReportRow);
+      const format = 'integer';
+      cell.value = total;
+      cell.style = createTotalStyle(align, getExcelNumFmt(format));
+      return;
     }
 
-    cell.value = ""
-    cell.style = createTotalStyle(align)
-  })
+    cell.value = '';
+    cell.style = createTotalStyle(align);
+  });
 
   worksheet.views = [
     {
-      state: "frozen",
+      state: 'frozen',
       ySplit: headerRowIndex,
       showGridLines: false,
     },
-  ]
+  ];
 
   worksheet.autoFilter = {
     from: `A${headerRowIndex}`,
     to: `${lastColumnLetter}${Math.max(totalsRowIndex - 1, headerRowIndex)}`,
-  }
+  };
 
   worksheet.pageSetup = {
     paperSize: 9,
-    orientation: "landscape",
+    orientation: 'landscape',
     fitToPage: true,
     fitToWidth: 1,
     fitToHeight: 0,
@@ -440,21 +409,21 @@ export async function exportTransferStockReportToExcel({
       header: 0.2,
       footer: 0.2,
     },
-  }
+  };
 
-  worksheet.headerFooter.oddFooter = `&C${COLDOP_BRANDING.label}&"Calibri,Bold"${COLDOP_BRANDING.name}`
+  worksheet.headerFooter.oddFooter = `&C${COLDOP_BRANDING.label}&"Calibri,Bold"${COLDOP_BRANDING.name}`;
 
-  autoFitColumns(worksheet, columnCount)
+  autoFitColumns(worksheet, columnCount);
 
-  const buffer = await workbook.xlsx.writeBuffer()
+  const buffer = await workbook.xlsx.writeBuffer();
   const filename = sanitizeFilename(
-    `transfer-stock-gate-passes_${format(generatedAt, "yyyy-MM-dd")}.xlsx`,
-  )
+    `transfer-stock-gate-passes_${format(generatedAt, 'yyyy-MM-dd')}.xlsx`,
+  );
 
   downloadBlob(
     new Blob([buffer], {
-      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     }),
     filename,
-  )
+  );
 }

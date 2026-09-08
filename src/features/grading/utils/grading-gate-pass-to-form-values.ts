@@ -1,54 +1,54 @@
-import type { QueryClient } from "@tanstack/react-query"
+import type { QueryClient } from '@tanstack/react-query';
 
-import { findIncomingGatePassByGatePassNoInCache } from "@/features/incoming/api/find-incoming-gate-pass-by-gate-pass-no-in-cache"
-import type { GatePassStatus } from "@/features/incoming/api/types"
-import type { GradingOrderDetail } from "@/features/grading/api/types"
-import type { GradingGatePass, GradingGatePassIncomingRef } from "@/features/grading/api/types"
-import { BAG_SIZES } from "@/lib/constants"
+import { findIncomingGatePassByGatePassNoInCache } from '@/features/incoming/api/find-incoming-gate-pass-by-gate-pass-no-in-cache';
+import type { GatePassStatus } from '@/features/incoming/api/types';
+import type { GradingOrderDetail } from '@/features/grading/api/types';
+import type { GradingGatePass, GradingGatePassIncomingRef } from '@/features/grading/api/types';
+import { BAG_SIZES } from '@/lib/constants';
 import {
   createDefaultQuantities,
   type GradingQuantityRow,
-} from "@/features/grading/schemas/grading-fill-details-schema"
-import type { GradingFormValues } from "@/features/grading/schemas/grading-form-schema"
-import type { GradingSelectIncomingGatePasses } from "@/features/grading/types"
+} from '@/features/grading/schemas/grading-fill-details-schema';
+import type { GradingFormValues } from '@/features/grading/schemas/grading-form-schema';
+import type { GradingSelectIncomingGatePasses } from '@/features/grading/types';
 
 function toIsoDateTime(value: string): string {
-  const parsed = new Date(value)
-  if (Number.isNaN(parsed.getTime())) return value
-  return parsed.toISOString()
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return value;
+  return parsed.toISOString();
 }
 
 function isStandardBagSize(size: string): size is (typeof BAG_SIZES)[number] {
-  return (BAG_SIZES as readonly string[]).includes(size)
+  return (BAG_SIZES as readonly string[]).includes(size);
 }
 
 function toGatePassStatus(status: string | undefined): GatePassStatus {
-  return status === "NOT_GRADED" ? "NOT_GRADED" : "GRADED"
+  return status === 'NOT_GRADED' ? 'NOT_GRADED' : 'GRADED';
 }
 
 function weightSlipFromIncomingRef(ref: GradingGatePassIncomingRef) {
   return {
-    slipNumber: ref.weightSlip?.slipNumber ?? "",
+    slipNumber: ref.weightSlip?.slipNumber ?? '',
     grossWeightKg: ref.grossWeightKg ?? ref.weightSlip?.grossWeightKg ?? 0,
     tareWeightKg: ref.tareWeightKg ?? ref.weightSlip?.tareWeightKg ?? 0,
-  }
+  };
 }
 
 export function orderDetailsToQuantities(
   orderDetails: readonly GradingOrderDetail[],
 ): GradingQuantityRow[] {
-  const rows = createDefaultQuantities()
-  const extras: GradingQuantityRow[] = []
+  const rows = createDefaultQuantities();
+  const extras: GradingQuantityRow[] = [];
 
   for (const detail of orderDetails) {
     if (isStandardBagSize(detail.size)) {
-      const row = rows.find((entry) => entry.size === detail.size)
+      const row = rows.find((entry) => entry.size === detail.size);
       if (row) {
-        row.qty = detail.quantity
-        row.bagType = detail.bagType
-        row.weight = detail.weightPerBagKg
+        row.qty = detail.quantity;
+        row.bagType = detail.bagType;
+        row.weight = detail.weightPerBagKg;
       }
-      continue
+      continue;
     }
 
     extras.push({
@@ -57,10 +57,10 @@ export function orderDetailsToQuantities(
       qty: detail.quantity,
       bagType: detail.bagType,
       weight: detail.weightPerBagKg,
-    })
+    });
   }
 
-  return extras.length > 0 ? [...rows, ...extras] : rows
+  return extras.length > 0 ? [...rows, ...extras] : rows;
 }
 
 export function resolveGradingIncomingGatePassIds(
@@ -68,25 +68,25 @@ export function resolveGradingIncomingGatePassIds(
   refs: readonly GradingGatePassIncomingRef[],
   farmerStorageLinkId: string,
 ): string[] {
-  const ids: string[] = []
+  const ids: string[] = [];
 
   for (const ref of refs) {
     if (ref._id) {
-      ids.push(ref._id)
-      continue
+      ids.push(ref._id);
+      continue;
     }
 
     const cached = findIncomingGatePassByGatePassNoInCache(
       queryClient,
       ref.gatePassNo,
       farmerStorageLinkId,
-    )
+    );
     if (cached) {
-      ids.push(cached._id)
+      ids.push(cached._id);
     }
   }
 
-  return ids
+  return ids;
 }
 
 export function gradingIncomingRefsToSelectRows(
@@ -102,21 +102,21 @@ export function gradingIncomingRefsToSelectRows(
           _id: ref._id,
           gatePassNo: ref.gatePassNo,
           manualGatePassNumber: ref.manualGatePassNumber ?? 0,
-          date: ref.date ?? "",
+          date: ref.date ?? '',
           variety,
-          truckNumber: ref.truckNumber ?? "—",
+          truckNumber: ref.truckNumber ?? '—',
           bagsReceived: ref.bagsReceived,
           weightSlip: weightSlipFromIncomingRef(ref),
           status: toGatePassStatus(ref.status),
         },
-      ]
+      ];
     }
 
     const cached = findIncomingGatePassByGatePassNoInCache(
       queryClient,
       ref.gatePassNo,
       farmerStorageLinkId,
-    )
+    );
 
     if (cached) {
       return [
@@ -129,13 +129,13 @@ export function gradingIncomingRefsToSelectRows(
           truckNumber: cached.truckNumber,
           bagsReceived: cached.bagsReceived,
           weightSlip: cached.weightSlip ?? {
-            slipNumber: "",
+            slipNumber: '',
             grossWeightKg: 0,
             tareWeightKg: 0,
           },
           status: cached.status,
         },
-      ]
+      ];
     }
 
     return [
@@ -143,15 +143,15 @@ export function gradingIncomingRefsToSelectRows(
         _id: `linked-${ref.gatePassNo}`,
         gatePassNo: ref.gatePassNo,
         manualGatePassNumber: ref.manualGatePassNumber ?? 0,
-        date: ref.date ?? "",
+        date: ref.date ?? '',
         variety,
-        truckNumber: ref.truckNumber ?? "—",
+        truckNumber: ref.truckNumber ?? '—',
         bagsReceived: ref.bagsReceived,
         weightSlip: weightSlipFromIncomingRef(ref),
         status: toGatePassStatus(ref.status),
       },
-    ]
-  })
+    ];
+  });
 }
 
 export function gradingGatePassToFormValues(
@@ -159,9 +159,9 @@ export function gradingGatePassToFormValues(
   selectedIncomingGatePassIds: string[],
 ): GradingFormValues {
   const farmerStorageLinkId =
-    typeof gatePass.farmerStorageLinkId === "string"
+    typeof gatePass.farmerStorageLinkId === 'string'
       ? gatePass.farmerStorageLinkId
-      : (gatePass.farmerStorageLinkId._id ?? "")
+      : (gatePass.farmerStorageLinkId._id ?? '');
 
   return {
     farmerStorageLinkId,
@@ -170,6 +170,6 @@ export function gradingGatePassToFormValues(
     manualGatePassNumber: gatePass.manualGatePassNumber,
     date: toIsoDateTime(gatePass.date),
     quantities: orderDetailsToQuantities(gatePass.orderDetails),
-    remarks: gatePass.remarks ?? "",
-  }
+    remarks: gatePass.remarks ?? '',
+  };
 }

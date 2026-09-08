@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react"
+import { useState, type ReactNode } from 'react';
 import {
   ArrowLeft,
   ArrowRight,
@@ -12,16 +12,16 @@ import {
   Scale,
   Truck,
   type LucideIcon,
-} from "lucide-react"
+} from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogContent,
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
+} from '@/components/ui/alert-dialog';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
   Sheet,
   SheetContent,
@@ -29,46 +29,46 @@ import {
   SheetFooter,
   SheetHeader,
   SheetTitle,
-} from "@/components/ui/sheet"
-import { cn } from "@/lib/utils"
+} from '@/components/ui/sheet';
+import { cn } from '@/lib/utils';
 import type {
   DispatchPreStorageBagSizeSummary,
   DispatchPreStorageSummaryValues,
-} from "@/features/dispatch-pre-storage/forms/dispatch-pre-storage-form-utils"
+} from '@/features/dispatch-pre-storage/forms/dispatch-pre-storage-form-utils';
 
 export type {
   DispatchPreStorageBagSizeSummary,
   DispatchPreStorageSummaryValues,
-} from "@/features/dispatch-pre-storage/forms/dispatch-pre-storage-form-utils"
+} from '@/features/dispatch-pre-storage/forms/dispatch-pre-storage-form-utils';
 
 type DispatchPreStorageSummarySheetProps = {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  values: DispatchPreStorageSummaryValues | null
-  dispatchLedgerLabel: string
-  onBack: () => void
-  onSubmit: (isBooked: boolean) => void
-  canSubmit: boolean
-  isSubmitting: boolean
-}
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  values: DispatchPreStorageSummaryValues | null;
+  dispatchLedgerLabel: string;
+  onBack: () => void;
+  onSubmit: (isBooked: boolean) => void;
+  canSubmit: boolean;
+  isSubmitting: boolean;
+};
 
 function formatReviewDate(iso: string) {
-  if (!iso) return "—"
-  const date = new Date(iso)
-  if (Number.isNaN(date.getTime())) return "—"
-  return new Intl.DateTimeFormat("en-IN", {
-    weekday: "short",
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  }).format(date)
+  if (!iso) return '—';
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return '—';
+  return new Intl.DateTimeFormat('en-IN', {
+    weekday: 'short',
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  }).format(date);
 }
 
 function formatKg(value: number) {
-  return `${value.toLocaleString("en-IN", {
+  return `${value.toLocaleString('en-IN', {
     minimumFractionDigits: 0,
     maximumFractionDigits: 2,
-  })} kg`
+  })} kg`;
 }
 
 function DetailRow({
@@ -77,10 +77,10 @@ function DetailRow({
   icon: Icon,
   valueClassName,
 }: {
-  label: string
-  value: ReactNode
-  icon?: LucideIcon
-  valueClassName?: string
+  label: string;
+  value: ReactNode;
+  icon?: LucideIcon;
+  valueClassName?: string;
 }) {
   return (
     <div className="flex items-start justify-between gap-4 py-2.5">
@@ -88,25 +88,14 @@ function DetailRow({
         {Icon && <Icon className="size-3.5 shrink-0" />}
         {label}
       </span>
-      <span
-        className={cn(
-          "text-right text-sm font-medium text-foreground",
-          valueClassName
-        )}
-      >
-        {value ?? "—"}
+      <span className={cn('text-right text-sm font-medium text-foreground', valueClassName)}>
+        {value ?? '—'}
       </span>
     </div>
-  )
+  );
 }
 
-function SectionLabel({
-  icon: Icon,
-  children,
-}: {
-  icon: LucideIcon
-  children: ReactNode
-}) {
+function SectionLabel({ icon: Icon, children }: { icon: LucideIcon; children: ReactNode }) {
   return (
     <div className="mb-1 flex items-center gap-2">
       <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
@@ -116,74 +105,55 @@ function SectionLabel({
         {children}
       </span>
     </div>
-  )
+  );
 }
 
-function SummaryCard({
-  children,
-  className,
-}: {
-  children: ReactNode
-  className?: string
-}) {
+function SummaryCard({ children, className }: { children: ReactNode; className?: string }) {
   return (
     <div
       className={cn(
-        "divide-y divide-border/40 rounded-xl border border-border/50 bg-card px-4",
-        className
+        'divide-y divide-border/40 rounded-xl border border-border/50 bg-card px-4',
+        className,
       )}
     >
       {children}
     </div>
-  )
+  );
 }
 
-function StatPill({
-  label,
-  value,
-  suffix,
-}: {
-  label: string
-  value: string
-  suffix?: string
-}) {
+function StatPill({ label, value, suffix }: { label: string; value: string; suffix?: string }) {
   return (
     <div className="rounded-lg border border-border/50 bg-muted/25 px-3 py-2.5">
       <p className="text-xs font-medium text-muted-foreground">{label}</p>
       <p className="mt-0.5 font-heading text-base font-semibold tabular-nums text-foreground">
         {value}
         {suffix ? (
-          <span className="ml-1 text-sm font-normal text-muted-foreground">
-            {suffix}
-          </span>
+          <span className="ml-1 text-sm font-normal text-muted-foreground">{suffix}</span>
         ) : null}
       </p>
     </div>
-  )
+  );
 }
 
 function activeBagRows(bagSize: DispatchPreStorageBagSizeSummary[]) {
   return bagSize.filter(
-    (row) =>
-      row.size.trim() !== "" ||
-      row.variety.trim() !== "" ||
-      row.quantityIssued > 0
-  )
+    (row) => row.size.trim() !== '' || row.variety.trim() !== '' || row.quantityIssued > 0,
+  );
 }
 
 function DispatchPreStorageReviewSummary({
   values,
   dispatchLedgerLabel,
 }: {
-  values: DispatchPreStorageSummaryValues
-  dispatchLedgerLabel: string
+  values: DispatchPreStorageSummaryValues;
+  dispatchLedgerLabel: string;
 }) {
-  const rows = activeBagRows(values.bagSize)
-  const totalIssued = rows.reduce((sum, row) => sum + row.quantityIssued, 0)
+  const rows = activeBagRows(values.bagSize);
+  const totalIssued = rows.reduce((sum, row) => sum + row.quantityIssued, 0);
   const routeLabel =
     values.from.trim() && values.to.trim()
       ? `${values.from.trim()} → ${values.to.trim()}`
-      : values.from.trim() || values.to.trim() || "Dispatch route"
+      : values.from.trim() || values.to.trim() || 'Dispatch route';
 
   return (
     <div className="space-y-7">
@@ -193,10 +163,7 @@ function DispatchPreStorageReviewSummary({
             <Truck className="size-4" />
           </span>
           <div className="min-w-0">
-            <p
-              className="truncate text-sm font-semibold tracking-tight"
-              title={routeLabel}
-            >
+            <p className="truncate text-sm font-semibold tracking-tight" title={routeLabel}>
               {routeLabel}
             </p>
             <p className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
@@ -206,17 +173,11 @@ function DispatchPreStorageReviewSummary({
           </div>
         </div>
         <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
-          <Badge
-            variant="outline"
-            className="h-5 px-1.5 font-mono text-xs tabular-nums"
-          >
-            GP #{values.gatePassNo || "—"}
+          <Badge variant="outline" className="h-5 px-1.5 font-mono text-xs tabular-nums">
+            GP #{values.gatePassNo || '—'}
           </Badge>
           {values.manualGatePassNumber?.trim() ? (
-            <Badge
-              variant="outline"
-              className="h-5 px-1.5 font-mono text-xs tabular-nums"
-            >
+            <Badge variant="outline" className="h-5 px-1.5 font-mono text-xs tabular-nums">
               M #{values.manualGatePassNumber}
             </Badge>
           ) : null}
@@ -224,15 +185,9 @@ function DispatchPreStorageReviewSummary({
       </div>
 
       <div className="grid grid-cols-3 gap-2">
-        <StatPill
-          label="Qty issued"
-          value={totalIssued.toLocaleString("en-IN")}
-        />
+        <StatPill label="Qty issued" value={totalIssued.toLocaleString('en-IN')} />
         <StatPill label="Net weight" value={formatKg(values.netWeight)} />
-        <StatPill
-          label="Avg / bag"
-          value={formatKg(values.averageWeightPerBag)}
-        />
+        <StatPill label="Avg / bag" value={formatKg(values.averageWeightPerBag)} />
       </div>
 
       <div className="space-y-2">
@@ -240,7 +195,7 @@ function DispatchPreStorageReviewSummary({
         <SummaryCard>
           <DetailRow
             label="Gate pass no."
-            value={`#${values.gatePassNo || "—"}`}
+            value={`#${values.gatePassNo || '—'}`}
             valueClassName="font-mono tabular-nums"
           />
           {values.manualGatePassNumber?.trim() ? (
@@ -250,11 +205,7 @@ function DispatchPreStorageReviewSummary({
               valueClassName="font-mono tabular-nums"
             />
           ) : null}
-          <DetailRow
-            label="Date"
-            value={formatReviewDate(values.date)}
-            icon={Calendar}
-          />
+          <DetailRow label="Date" value={formatReviewDate(values.date)} icon={Calendar} />
           <DetailRow label="Category" value={values.category} />
         </SummaryCard>
       </div>
@@ -262,11 +213,7 @@ function DispatchPreStorageReviewSummary({
       <div className="space-y-2">
         <SectionLabel icon={Landmark}>Accounts</SectionLabel>
         <SummaryCard>
-          <DetailRow
-            label="Dispatch ledger"
-            value={dispatchLedgerLabel}
-            icon={Landmark}
-          />
+          <DetailRow label="Dispatch ledger" value={dispatchLedgerLabel} icon={Landmark} />
         </SummaryCard>
       </div>
 
@@ -274,27 +221,18 @@ function DispatchPreStorageReviewSummary({
         <SectionLabel icon={MapPin}>Route &amp; vehicle</SectionLabel>
         <SummaryCard>
           <DetailRow label="From" value={values.from} icon={MapPin} />
-          <DetailRow
-            label="To"
-            value={values.to}
-            icon={ArrowRight}
-            valueClassName="text-primary"
-          />
+          <DetailRow label="To" value={values.to} icon={ArrowRight} valueClassName="text-primary" />
           <DetailRow
             label="Truck"
-            value={values.truckNumber || "—"}
+            value={values.truckNumber || '—'}
             icon={Truck}
             valueClassName="uppercase"
           />
           {values.billNumber.trim() ? (
             <DetailRow label="Bill no." value={values.billNumber} />
           ) : null}
-          {values.biltiNo.trim() ? (
-            <DetailRow label="Bilti no." value={values.biltiNo} />
-          ) : null}
-          {values.billBook.trim() ? (
-            <DetailRow label="Bill book" value={values.billBook} />
-          ) : null}
+          {values.biltiNo.trim() ? <DetailRow label="Bilti no." value={values.biltiNo} /> : null}
+          {values.billBook.trim() ? <DetailRow label="Bill book" value={values.billBook} /> : null}
           {values.biltiBook.trim() ? (
             <DetailRow label="Bilti book" value={values.biltiBook} />
           ) : null}
@@ -308,12 +246,8 @@ function DispatchPreStorageReviewSummary({
             <table className="w-full caption-bottom text-sm">
               <thead className="border-b border-border/40 bg-muted/30">
                 <tr className="text-left">
-                  <th className="h-10 px-3 font-medium text-muted-foreground">
-                    Size
-                  </th>
-                  <th className="h-10 px-3 font-medium text-muted-foreground">
-                    Variety
-                  </th>
+                  <th className="h-10 px-3 font-medium text-muted-foreground">Size</th>
+                  <th className="h-10 px-3 font-medium text-muted-foreground">Variety</th>
                   <th className="h-10 px-3 text-right font-medium text-muted-foreground">
                     Qty issued
                   </th>
@@ -325,12 +259,10 @@ function DispatchPreStorageReviewSummary({
                     key={`${row.size}-${row.variety}-${index}`}
                     className="border-b border-border/40 last:border-0"
                   >
-                    <td className="px-3 py-2.5 font-medium">{row.size || "—"}</td>
-                    <td className="px-3 py-2.5 text-muted-foreground">
-                      {row.variety || "—"}
-                    </td>
+                    <td className="px-3 py-2.5 font-medium">{row.size || '—'}</td>
+                    <td className="px-3 py-2.5 text-muted-foreground">{row.variety || '—'}</td>
                     <td className="px-3 py-2.5 text-right font-medium tabular-nums">
-                      {row.quantityIssued.toLocaleString("en-IN")}
+                      {row.quantityIssued.toLocaleString('en-IN')}
                     </td>
                   </tr>
                 ))}
@@ -346,7 +278,7 @@ function DispatchPreStorageReviewSummary({
         <SummaryCard className="mt-3">
           <DetailRow
             label="Total issued"
-            value={totalIssued.toLocaleString("en-IN")}
+            value={totalIssued.toLocaleString('en-IN')}
             icon={Package2}
             valueClassName="font-semibold tabular-nums"
           />
@@ -357,10 +289,7 @@ function DispatchPreStorageReviewSummary({
         <SectionLabel icon={Scale}>Weight</SectionLabel>
         <SummaryCard>
           <DetailRow label="Net weight" value={formatKg(values.netWeight)} />
-          <DetailRow
-            label="Average per bag"
-            value={formatKg(values.averageWeightPerBag)}
-          />
+          <DetailRow label="Average per bag" value={formatKg(values.averageWeightPerBag)} />
         </SummaryCard>
       </div>
 
@@ -375,7 +304,7 @@ function DispatchPreStorageReviewSummary({
         </div>
       ) : null}
     </div>
-  )
+  );
 }
 
 export function DispatchPreStorageSummarySheet({
@@ -388,12 +317,12 @@ export function DispatchPreStorageSummarySheet({
   canSubmit,
   isSubmitting,
 }: DispatchPreStorageSummarySheetProps) {
-  const [bookingDialogOpen, setBookingDialogOpen] = useState(false)
+  const [bookingDialogOpen, setBookingDialogOpen] = useState(false);
 
   const handleBookingChoice = (isBooked: boolean) => {
-    setBookingDialogOpen(false)
-    onSubmit(isBooked)
-  }
+    setBookingDialogOpen(false);
+    onSubmit(isBooked);
+  };
 
   return (
     <>
@@ -454,7 +383,7 @@ export function DispatchPreStorageSummarySheet({
               onClick={() => setBookingDialogOpen(true)}
             >
               {isSubmitting ? (
-                "Submitting…"
+                'Submitting…'
               ) : (
                 <>
                   <CheckCircle2 className="size-3.5" />
@@ -469,9 +398,7 @@ export function DispatchPreStorageSummarySheet({
       <AlertDialog open={bookingDialogOpen} onOpenChange={setBookingDialogOpen}>
         <AlertDialogContent className="sm:max-w-md">
           <AlertDialogHeader className="sm:text-left">
-            <AlertDialogTitle>
-              Do you want to adjust booking stock?
-            </AlertDialogTitle>
+            <AlertDialogTitle>Do you want to adjust booking stock?</AlertDialogTitle>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <Button
@@ -482,16 +409,12 @@ export function DispatchPreStorageSummarySheet({
             >
               No
             </Button>
-            <Button
-              type="button"
-              disabled={isSubmitting}
-              onClick={() => handleBookingChoice(true)}
-            >
+            <Button type="button" disabled={isSubmitting} onClick={() => handleBookingChoice(true)}>
               Yes
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </>
-  )
+  );
 }

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react"
+import { useMemo, useState } from 'react';
 import {
   Card,
   CardContent,
@@ -6,20 +6,20 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { useFarmerLinkOptions } from "@/features/people/api/use-farmer-link-options"
-import { farmerLinkOptionsToComboboxOptions } from "@/features/people/utils/farmer-link-combobox"
-import { OutgoingSummarySheet } from "@/features/outgoing/forms/outgoing-summary-sheet"
-import { useCreateOutgoingForm } from "@/features/outgoing/forms/use-create-outgoing-form"
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { useFarmerLinkOptions } from '@/features/people/api/use-farmer-link-options';
+import { farmerLinkOptionsToComboboxOptions } from '@/features/people/utils/farmer-link-combobox';
+import { OutgoingSummarySheet } from '@/features/outgoing/forms/outgoing-summary-sheet';
+import { useCreateOutgoingForm } from '@/features/outgoing/forms/use-create-outgoing-form';
 import {
   outgoingFormSchema,
   type OutgoingFormValues,
-} from "@/features/outgoing/schemas/outgoing-form-schema"
-import { TransferGatePassesSection } from "@/features/transfer-stock/forms/transfer-gate-passes-section"
-import { useStorageGatePassesForFarmer } from "@/features/transfer-stock/hooks/use-storage-gate-passes-for-farmer"
-import { buildTransferItems } from "@/features/transfer-stock/utils/gate-pass-matrix-utils"
+} from '@/features/outgoing/schemas/outgoing-form-schema';
+import { TransferGatePassesSection } from '@/features/transfer-stock/forms/transfer-gate-passes-section';
+import { useStorageGatePassesForFarmer } from '@/features/transfer-stock/hooks/use-storage-gate-passes-for-farmer';
+import { buildTransferItems } from '@/features/transfer-stock/utils/gate-pass-matrix-utils';
 import {
   Field,
   FieldDescription,
@@ -28,48 +28,48 @@ import {
   FieldLabel,
   FieldLegend,
   FieldSet,
-} from "@/components/ui/field"
-import { Textarea } from "@/components/ui/textarea"
-import { DatePickerInput } from "@/components/date-picker"
+} from '@/components/ui/field';
+import { Textarea } from '@/components/ui/textarea';
+import { DatePickerInput } from '@/components/date-picker';
 import {
   SearchableOptionCombobox,
   filterAndSortOptions,
   type ComboboxOption,
-} from "@/components/searchable-option-combobox"
-import { OUTGOING_CATEGORIES } from "@/lib/constants"
+} from '@/components/searchable-option-combobox';
+import { OUTGOING_CATEGORIES } from '@/lib/constants';
 
 const CATEGORY_ITEMS = OUTGOING_CATEGORIES.map((value) => ({
   id: value,
   label: value,
-}))
+}));
 
 function isFieldInvalid(meta: { isTouched: boolean; isValid: boolean }) {
-  return meta.isTouched && !meta.isValid
+  return meta.isTouched && !meta.isValid;
 }
 
 function parseOptionalPositiveNumber(value: string): number | undefined {
-  if (value === "") return undefined
-  const parsed = Number(value)
-  return Number.isNaN(parsed) ? undefined : parsed
+  if (value === '') return undefined;
+  const parsed = Number(value);
+  return Number.isNaN(parsed) ? undefined : parsed;
 }
 
 const numericInputProps = {
-  type: "number" as const,
+  type: 'number' as const,
   min: 0,
   onWheel: (e: React.WheelEvent<HTMLInputElement>) => e.currentTarget.blur(),
-}
+};
 
 type OutgoingReviewSheetProps = {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  farmerStorageLinkId: string
-  values: OutgoingFormValues | null
-  farmerLabel: string
-  onBack: () => void
-  onSubmit: () => void
-  canSubmit: boolean
-  isSubmitting: boolean
-}
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  farmerStorageLinkId: string;
+  values: OutgoingFormValues | null;
+  farmerLabel: string;
+  onBack: () => void;
+  onSubmit: () => void;
+  canSubmit: boolean;
+  isSubmitting: boolean;
+};
 
 function OutgoingReviewSheet({
   open,
@@ -82,9 +82,8 @@ function OutgoingReviewSheet({
   canSubmit,
   isSubmitting,
 }: OutgoingReviewSheetProps) {
-  const { data: passes } = useStorageGatePassesForFarmer(farmerStorageLinkId)
-  const outgoingItems =
-    values != null ? buildTransferItems(values.allocations, passes) : []
+  const { data: passes } = useStorageGatePassesForFarmer(farmerStorageLinkId);
+  const outgoingItems = values != null ? buildTransferItems(values.allocations, passes) : [];
 
   return (
     <OutgoingSummarySheet
@@ -98,37 +97,36 @@ function OutgoingReviewSheet({
       canSubmit={canSubmit}
       isSubmitting={isSubmitting}
     />
-  )
+  );
 }
 
 const CreateOutgoingForm = () => {
-  const { data: farmerLinkOptions = [], isLoading: isLoadingFarmers } =
-    useFarmerLinkOptions()
+  const { data: farmerLinkOptions = [], isLoading: isLoadingFarmers } = useFarmerLinkOptions();
   const farmerOptions = useMemo<ComboboxOption[]>(
     () => farmerLinkOptionsToComboboxOptions(farmerLinkOptions),
     [farmerLinkOptions],
-  )
-  const [farmerSearch, setFarmerSearch] = useState("")
-  const [farmerComboboxOpen, setFarmerComboboxOpen] = useState(false)
-  const [categorySearch, setCategorySearch] = useState("")
-  const [categoryComboboxOpen, setCategoryComboboxOpen] = useState(false)
-  const [reviewOpen, setReviewOpen] = useState(false)
+  );
+  const [farmerSearch, setFarmerSearch] = useState('');
+  const [farmerComboboxOpen, setFarmerComboboxOpen] = useState(false);
+  const [categorySearch, setCategorySearch] = useState('');
+  const [categoryComboboxOpen, setCategoryComboboxOpen] = useState(false);
+  const [reviewOpen, setReviewOpen] = useState(false);
 
   const sortedFarmers = useMemo(
     () => filterAndSortOptions(farmerSearch, farmerOptions),
     [farmerSearch, farmerOptions],
-  )
+  );
 
   const sortedCategories = useMemo(
     () => filterAndSortOptions(categorySearch, CATEGORY_ITEMS),
     [categorySearch],
-  )
+  );
 
   function resetComboboxState() {
-    setFarmerSearch("")
-    setFarmerComboboxOpen(false)
-    setCategorySearch("")
-    setCategoryComboboxOpen(false)
+    setFarmerSearch('');
+    setFarmerComboboxOpen(false);
+    setCategorySearch('');
+    setCategoryComboboxOpen(false);
   }
 
   const {
@@ -141,31 +139,30 @@ const CreateOutgoingForm = () => {
     onOpenReview: () => setReviewOpen(true),
     onCloseReview: () => setReviewOpen(false),
     onResetComboboxState: resetComboboxState,
-  })
+  });
 
   const displayGatePassNo = isLoadingVoucherNumber
-    ? "…"
+    ? '…'
     : isVoucherNumberError
-      ? "—"
-      : (nextVoucherNumber ?? "—")
+      ? '—'
+      : (nextVoucherNumber ?? '—');
 
   const getFarmerLabel = (farmerStorageLinkId: string) =>
-    farmerOptions.find((option) => option.id === farmerStorageLinkId)?.label ??
-    farmerStorageLinkId
+    farmerOptions.find((option) => option.id === farmerStorageLinkId)?.label ?? farmerStorageLinkId;
 
   const handleOpenReview = () => {
-    void form.handleSubmit({ submitAction: "review" })
-  }
+    void form.handleSubmit({ submitAction: 'review' });
+  };
 
   const handleConfirmSubmit = () => {
-    void form.handleSubmit({ submitAction: "submit" })
-  }
+    void form.handleSubmit({ submitAction: 'submit' });
+  };
 
   return (
     <Card className="mx-auto w-full max-w-7xl shadow-sm">
       <CardHeader className="border-b bg-muted/30 pb-6">
         <CardTitle className="font-heading text-xl font-semibold tracking-tight sm:text-2xl">
-          Outgoing{" "}
+          Outgoing{' '}
           <span className="font-mono text-xl tabular-nums text-primary sm:text-2xl">
             #{displayGatePassNo}
           </span>
@@ -175,49 +172,33 @@ const CreateOutgoingForm = () => {
         </CardDescription>
       </CardHeader>
 
-      <form
-        id="create-outgoing-form"
-        noValidate
-        onSubmit={(e) => e.preventDefault()}
-      >
+      <form id="create-outgoing-form" noValidate onSubmit={(e) => e.preventDefault()}>
         <CardContent className="pt-8 pb-8">
           <FieldGroup className="@container/field-group gap-10">
             <FieldSet>
               <FieldLegend className="font-heading text-base font-semibold">
                 Outgoing details
               </FieldLegend>
-              <FieldDescription>
-                Select the farmer account and outgoing date.
-              </FieldDescription>
+              <FieldDescription>Select the farmer account and outgoing date.</FieldDescription>
               <FieldGroup className="mt-5 grid grid-cols-1 gap-6">
                 <form.Field name="farmerStorageLinkId">
                   {(field) => {
-                    const isInvalid = isFieldInvalid(field.state.meta)
+                    const isInvalid = isFieldInvalid(field.state.meta);
                     return (
                       <Field data-invalid={isInvalid}>
-                        <FieldLabel htmlFor="outgoing-farmer">
-                          Farmer
-                        </FieldLabel>
+                        <FieldLabel htmlFor="outgoing-farmer">Farmer</FieldLabel>
                         <SearchableOptionCombobox
                           id="outgoing-farmer"
                           name={field.name}
                           value={field.state.value}
                           onValueChange={(value) => {
-                            field.handleChange(value)
-                            form.setFieldValue("allocations", {})
+                            field.handleChange(value);
+                            form.setFieldValue('allocations', {});
                           }}
                           onBlur={field.handleBlur}
                           isInvalid={isInvalid}
-                          placeholder={
-                            isLoadingFarmers
-                              ? "Loading farmers…"
-                              : "Search farmers…"
-                          }
-                          emptyMessage={
-                            isLoadingFarmers
-                              ? "Loading farmers…"
-                              : "No farmers found."
-                          }
+                          placeholder={isLoadingFarmers ? 'Loading farmers…' : 'Search farmers…'}
+                          emptyMessage={isLoadingFarmers ? 'Loading farmers…' : 'No farmers found.'}
                           options={farmerOptions}
                           sortedOptions={sortedFarmers}
                           search={farmerSearch}
@@ -226,73 +207,47 @@ const CreateOutgoingForm = () => {
                           setOpen={setFarmerComboboxOpen}
                           disabled={isLoadingFarmers}
                         />
-                        <FieldDescription>
-                          Farmer account stock is outgoing from.
-                        </FieldDescription>
-                        {isInvalid && (
-                          <FieldError errors={field.state.meta.errors} />
-                        )}
+                        <FieldDescription>Farmer account stock is outgoing from.</FieldDescription>
+                        {isInvalid && <FieldError errors={field.state.meta.errors} />}
                       </Field>
-                    )
+                    );
                   }}
                 </form.Field>
 
                 <form.Field name="date">
                   {(field) => {
-                    const isInvalid = isFieldInvalid(field.state.meta)
+                    const isInvalid = isFieldInvalid(field.state.meta);
                     return (
-                      <Field
-                        data-invalid={isInvalid}
-                        className="@md/field-group:max-w-sm"
-                      >
+                      <Field data-invalid={isInvalid} className="@md/field-group:max-w-sm">
                         <DatePickerInput
                           id={field.name}
                           label="Date"
-                          value={
-                            field.state.value
-                              ? new Date(field.state.value)
-                              : undefined
-                          }
-                          onChange={(date) =>
-                            field.handleChange(date ? date.toISOString() : "")
-                          }
+                          value={field.state.value ? new Date(field.state.value) : undefined}
+                          onChange={(date) => field.handleChange(date ? date.toISOString() : '')}
                           onBlur={field.handleBlur}
                           aria-invalid={isInvalid}
                           placeholder="Pick a date"
                         />
-                        {isInvalid && (
-                          <FieldError errors={field.state.meta.errors} />
-                        )}
+                        {isInvalid && <FieldError errors={field.state.meta.errors} />}
                       </Field>
-                    )
+                    );
                   }}
                 </form.Field>
 
                 <form.Field name="manualGatePassNumber">
                   {(field) => {
-                    const isInvalid = isFieldInvalid(field.state.meta)
+                    const isInvalid = isFieldInvalid(field.state.meta);
                     return (
-                      <Field
-                        data-invalid={isInvalid}
-                        className="@md/field-group:max-w-sm"
-                      >
-                        <FieldLabel htmlFor={field.name}>
-                          Manual gate pass no.
-                        </FieldLabel>
+                      <Field data-invalid={isInvalid} className="@md/field-group:max-w-sm">
+                        <FieldLabel htmlFor={field.name}>Manual gate pass no.</FieldLabel>
                         <Input
                           {...numericInputProps}
                           id={field.name}
                           name={field.name}
-                          value={
-                            field.state.value != null
-                              ? String(field.state.value)
-                              : ""
-                          }
+                          value={field.state.value != null ? String(field.state.value) : ''}
                           onBlur={field.handleBlur}
                           onChange={(e) =>
-                            field.handleChange(
-                              parseOptionalPositiveNumber(e.target.value),
-                            )
+                            field.handleChange(parseOptionalPositiveNumber(e.target.value))
                           }
                           inputMode="numeric"
                           placeholder="Optional"
@@ -302,11 +257,9 @@ const CreateOutgoingForm = () => {
                         <FieldDescription>
                           Optional reference number if used on the physical pass.
                         </FieldDescription>
-                        {isInvalid && (
-                          <FieldError errors={field.state.meta.errors} />
-                        )}
+                        {isInvalid && <FieldError errors={field.state.meta.errors} />}
                       </Field>
-                    )
+                    );
                   }}
                 </form.Field>
               </FieldGroup>
@@ -322,7 +275,7 @@ const CreateOutgoingForm = () => {
               <FieldGroup className="mt-5 grid grid-cols-1 gap-6 @md/field-group:grid-cols-3">
                 <form.Field name="from">
                   {(field) => {
-                    const isInvalid = isFieldInvalid(field.state.meta)
+                    const isInvalid = isFieldInvalid(field.state.meta);
                     return (
                       <Field data-invalid={isInvalid}>
                         <FieldLabel htmlFor={field.name}>From</FieldLabel>
@@ -337,17 +290,15 @@ const CreateOutgoingForm = () => {
                           aria-invalid={isInvalid}
                           className="h-11 text-base"
                         />
-                        {isInvalid && (
-                          <FieldError errors={field.state.meta.errors} />
-                        )}
+                        {isInvalid && <FieldError errors={field.state.meta.errors} />}
                       </Field>
-                    )
+                    );
                   }}
                 </form.Field>
 
                 <form.Field name="to">
                   {(field) => {
-                    const isInvalid = isFieldInvalid(field.state.meta)
+                    const isInvalid = isFieldInvalid(field.state.meta);
                     return (
                       <Field data-invalid={isInvalid}>
                         <FieldLabel htmlFor={field.name}>To</FieldLabel>
@@ -362,17 +313,15 @@ const CreateOutgoingForm = () => {
                           aria-invalid={isInvalid}
                           className="h-11 text-base"
                         />
-                        {isInvalid && (
-                          <FieldError errors={field.state.meta.errors} />
-                        )}
+                        {isInvalid && <FieldError errors={field.state.meta.errors} />}
                       </Field>
-                    )
+                    );
                   }}
                 </form.Field>
 
                 <form.Field name="truckNumber">
                   {(field) => {
-                    const isInvalid = isFieldInvalid(field.state.meta)
+                    const isInvalid = isFieldInvalid(field.state.meta);
                     return (
                       <Field data-invalid={isInvalid}>
                         <FieldLabel htmlFor={field.name}>Truck number</FieldLabel>
@@ -381,9 +330,7 @@ const CreateOutgoingForm = () => {
                           name={field.name}
                           value={field.state.value}
                           onBlur={field.handleBlur}
-                          onChange={(e) =>
-                            field.handleChange(e.target.value.toUpperCase())
-                          }
+                          onChange={(e) => field.handleChange(e.target.value.toUpperCase())}
                           placeholder="Optional"
                           autoComplete="off"
                           aria-invalid={isInvalid}
@@ -392,11 +339,9 @@ const CreateOutgoingForm = () => {
                         <FieldDescription>
                           Optional vehicle registration for this dispatch.
                         </FieldDescription>
-                        {isInvalid && (
-                          <FieldError errors={field.state.meta.errors} />
-                        )}
+                        {isInvalid && <FieldError errors={field.state.meta.errors} />}
                       </Field>
-                    )
+                    );
                   }}
                 </form.Field>
               </FieldGroup>
@@ -412,12 +357,10 @@ const CreateOutgoingForm = () => {
               <FieldGroup className="mt-5 grid grid-cols-1 gap-6 @md/field-group:grid-cols-2 @lg/field-group:grid-cols-3">
                 <form.Field name="category">
                   {(field) => {
-                    const isInvalid = isFieldInvalid(field.state.meta)
+                    const isInvalid = isFieldInvalid(field.state.meta);
                     return (
                       <Field data-invalid={isInvalid}>
-                        <FieldLabel htmlFor="outgoing-category">
-                          Category
-                        </FieldLabel>
+                        <FieldLabel htmlFor="outgoing-category">Category</FieldLabel>
                         <SearchableOptionCombobox
                           id="outgoing-category"
                           name={field.name}
@@ -434,17 +377,15 @@ const CreateOutgoingForm = () => {
                           open={categoryComboboxOpen}
                           setOpen={setCategoryComboboxOpen}
                         />
-                        {isInvalid && (
-                          <FieldError errors={field.state.meta.errors} />
-                        )}
+                        {isInvalid && <FieldError errors={field.state.meta.errors} />}
                       </Field>
-                    )
+                    );
                   }}
                 </form.Field>
 
                 <form.Field name="billNumber">
                   {(field) => {
-                    const isInvalid = isFieldInvalid(field.state.meta)
+                    const isInvalid = isFieldInvalid(field.state.meta);
                     return (
                       <Field data-invalid={isInvalid}>
                         <FieldLabel htmlFor={field.name}>Bill number</FieldLabel>
@@ -460,17 +401,15 @@ const CreateOutgoingForm = () => {
                           aria-invalid={isInvalid}
                           className="h-11 text-base tabular-nums"
                         />
-                        {isInvalid && (
-                          <FieldError errors={field.state.meta.errors} />
-                        )}
+                        {isInvalid && <FieldError errors={field.state.meta.errors} />}
                       </Field>
-                    )
+                    );
                   }}
                 </form.Field>
 
                 <form.Field name="biltiNumber">
                   {(field) => {
-                    const isInvalid = isFieldInvalid(field.state.meta)
+                    const isInvalid = isFieldInvalid(field.state.meta);
                     return (
                       <Field data-invalid={isInvalid}>
                         <FieldLabel htmlFor={field.name}>Bilti number</FieldLabel>
@@ -486,17 +425,15 @@ const CreateOutgoingForm = () => {
                           aria-invalid={isInvalid}
                           className="h-11 text-base tabular-nums"
                         />
-                        {isInvalid && (
-                          <FieldError errors={field.state.meta.errors} />
-                        )}
+                        {isInvalid && <FieldError errors={field.state.meta.errors} />}
                       </Field>
-                    )
+                    );
                   }}
                 </form.Field>
 
                 <form.Field name="billBook">
                   {(field) => {
-                    const isInvalid = isFieldInvalid(field.state.meta)
+                    const isInvalid = isFieldInvalid(field.state.meta);
                     return (
                       <Field data-invalid={isInvalid}>
                         <FieldLabel htmlFor={field.name}>Bill book</FieldLabel>
@@ -510,17 +447,15 @@ const CreateOutgoingForm = () => {
                           aria-invalid={isInvalid}
                           className="h-11 text-base"
                         />
-                        {isInvalid && (
-                          <FieldError errors={field.state.meta.errors} />
-                        )}
+                        {isInvalid && <FieldError errors={field.state.meta.errors} />}
                       </Field>
-                    )
+                    );
                   }}
                 </form.Field>
 
                 <form.Field name="biltiBook">
                   {(field) => {
-                    const isInvalid = isFieldInvalid(field.state.meta)
+                    const isInvalid = isFieldInvalid(field.state.meta);
                     return (
                       <Field data-invalid={isInvalid}>
                         <FieldLabel htmlFor={field.name}>Bilti book</FieldLabel>
@@ -534,11 +469,9 @@ const CreateOutgoingForm = () => {
                           aria-invalid={isInvalid}
                           className="h-11 text-base"
                         />
-                        {isInvalid && (
-                          <FieldError errors={field.state.meta.errors} />
-                        )}
+                        {isInvalid && <FieldError errors={field.state.meta.errors} />}
                       </Field>
-                    )
+                    );
                   }}
                 </form.Field>
               </FieldGroup>
@@ -558,7 +491,7 @@ const CreateOutgoingForm = () => {
                     <form.Field name="allocations">
                       {(allocField) => (
                         <TransferGatePassesSection
-                          key={farmerStorageLinkId || "no-farmer"}
+                          key={farmerStorageLinkId || 'no-farmer'}
                           fromFarmerStorageLinkId={farmerStorageLinkId}
                           allocations={allocField.state.value}
                           onAllocationsChange={allocField.handleChange}
@@ -578,7 +511,7 @@ const CreateOutgoingForm = () => {
               <FieldGroup className="mt-5">
                 <form.Field name="remarks">
                   {(field) => {
-                    const isInvalid = isFieldInvalid(field.state.meta)
+                    const isInvalid = isFieldInvalid(field.state.meta);
                     return (
                       <Field data-invalid={isInvalid}>
                         <FieldLabel htmlFor={field.name} className="sr-only">
@@ -594,11 +527,9 @@ const CreateOutgoingForm = () => {
                           placeholder="Add any additional comments or observations (optional)"
                           className="min-h-[120px] resize-y text-base"
                         />
-                        {isInvalid && (
-                          <FieldError errors={field.state.meta.errors} />
-                        )}
+                        {isInvalid && <FieldError errors={field.state.meta.errors} />}
                       </Field>
-                    )
+                    );
                   }}
                 </form.Field>
               </FieldGroup>
@@ -611,8 +542,8 @@ const CreateOutgoingForm = () => {
             variant="outline"
             type="button"
             onClick={() => {
-              form.reset()
-              resetComboboxState()
+              form.reset();
+              resetComboboxState();
             }}
           >
             Reset form
@@ -625,7 +556,7 @@ const CreateOutgoingForm = () => {
                 disabled={isSubmitting || !isGatePassNumberReady}
                 onClick={handleOpenReview}
               >
-                {isSubmitting ? "Validating…" : "Review"}
+                {isSubmitting ? 'Validating…' : 'Review'}
               </Button>
             )}
           />
@@ -639,10 +570,10 @@ const CreateOutgoingForm = () => {
           isSubmitting: state.isSubmitting,
         })}
         children={({ values, canSubmit, isSubmitting }) => {
-          const parsed = outgoingFormSchema.safeParse(values)
+          const parsed = outgoingFormSchema.safeParse(values);
           const farmerId = parsed.success
             ? parsed.data.farmerStorageLinkId
-            : values.farmerStorageLinkId
+            : values.farmerStorageLinkId;
 
           return (
             <OutgoingReviewSheet
@@ -650,21 +581,17 @@ const CreateOutgoingForm = () => {
               onOpenChange={setReviewOpen}
               farmerStorageLinkId={farmerId}
               values={parsed.success ? parsed.data : null}
-              farmerLabel={
-                parsed.success
-                  ? getFarmerLabel(parsed.data.farmerStorageLinkId)
-                  : ""
-              }
+              farmerLabel={parsed.success ? getFarmerLabel(parsed.data.farmerStorageLinkId) : ''}
               onBack={() => setReviewOpen(false)}
               onSubmit={handleConfirmSubmit}
               canSubmit={canSubmit}
               isSubmitting={isSubmitting}
             />
-          )
+          );
         }}
       />
     </Card>
-  )
-}
+  );
+};
 
-export default CreateOutgoingForm
+export default CreateOutgoingForm;

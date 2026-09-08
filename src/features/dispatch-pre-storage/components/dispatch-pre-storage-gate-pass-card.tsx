@@ -1,5 +1,5 @@
-import { useState } from "react"
-import { useNavigate } from "@tanstack/react-router"
+import { useState } from 'react';
+import { useNavigate } from '@tanstack/react-router';
 import {
   Building2,
   ChevronDown,
@@ -12,7 +12,7 @@ import {
   Truck,
   User,
   type LucideIcon,
-} from "lucide-react"
+} from 'lucide-react';
 
 import {
   Card,
@@ -21,85 +21,78 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
-import { Skeleton } from "@/components/ui/skeleton"
-import { cn } from "@/lib/utils"
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
 import type {
   NikasiGatePass,
   NikasiGatePassBagSizeItem,
-} from "@/features/dispatch-pre-storage/api/types"
-import { nikasiAccent } from "@/features/dispatch-pre-storage/constants/nikasi-accent"
+} from '@/features/dispatch-pre-storage/api/types';
+import { nikasiAccent } from '@/features/dispatch-pre-storage/constants/nikasi-accent';
 
 interface InfoBlockProps {
-  label: string
-  value: string | number
-  icon?: LucideIcon
-  valueClassName?: string
+  label: string;
+  value: string | number;
+  icon?: LucideIcon;
+  valueClassName?: string;
 }
 
-const InfoBlock = ({
-  label,
-  value,
-  icon: Icon,
-  valueClassName,
-}: InfoBlockProps) => (
+const InfoBlock = ({ label, value, icon: Icon, valueClassName }: InfoBlockProps) => (
   <div className="space-y-1.5">
     <span className="flex items-center gap-1.5 text-xs font-medium tracking-wider text-muted-foreground uppercase">
       {Icon && <Icon className="h-3.5 w-3.5" />}
       {label}
     </span>
-    <p className={cn("text-sm font-semibold text-foreground", valueClassName)}>
-      {value}
-    </p>
+    <p className={cn('text-sm font-semibold text-foreground', valueClassName)}>{value}</p>
   </div>
-)
+);
 
 function formatDateTime(value: string) {
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return "—"
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '—';
 
-  return new Intl.DateTimeFormat("en-IN", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(date)
+  return new Intl.DateTimeFormat('en-IN', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(date);
 }
 
 function formatWeight(value: number) {
-  return new Intl.NumberFormat("en-IN", {
+  return new Intl.NumberFormat('en-IN', {
     minimumFractionDigits: 0,
     maximumFractionDigits: 3,
-  }).format(value)
+  }).format(value);
 }
 
 function formatOptionalInt(value: number | undefined) {
-  return value != null ? value.toLocaleString("en-IN") : "—"
+  return value != null ? value.toLocaleString('en-IN') : '—';
 }
 
 function nikasiTotalBags(bagSize: readonly NikasiGatePassBagSizeItem[]): number {
-  return bagSize.reduce((sum, row) => sum + row.quantityIssued, 0)
+  return bagSize.reduce((sum, row) => sum + row.quantityIssued, 0);
 }
 
 interface DispatchPreStorageGatePassCardProps {
-  data: NikasiGatePass
+  data: NikasiGatePass;
 }
 
 export function DispatchPreStorageGatePassCard({
   data: gatePass,
 }: DispatchPreStorageGatePassCardProps) {
-  const [isExpanded, setIsExpanded] = useState(false)
-  const navigate = useNavigate()
+  const [isExpanded, setIsExpanded] = useState(false);
+  const navigate = useNavigate();
 
-  const farmerStorageLink = gatePass.farmerStorageLinkId
-  const farmer = farmerStorageLink?.farmerId
-  const dispatchParty = gatePass.dispatchLedgerId
-  const totalBags = nikasiTotalBags(gatePass.bagSize)
-  const createdBy = gatePass.createdBy?.name ?? "—"
+  const farmerStorageLink = gatePass.farmerStorageLinkId;
+  const farmer = farmerStorageLink?.farmerId;
+  const dispatchParty = gatePass.dispatchLedgerId;
+  const totalBags = nikasiTotalBags(gatePass.bagSize);
+  const createdBy = gatePass.createdBy?.name ?? '—';
 
   return (
     <Card className="card-hover overflow-hidden border-border/60">
@@ -107,14 +100,9 @@ export function DispatchPreStorageGatePassCard({
         <div className="space-y-1.5">
           <div className="flex flex-wrap items-center gap-3">
             <CardTitle className="flex items-center gap-2 text-lg">
-              <span className={cn("h-2 w-2 rounded-full", nikasiAccent.dot)} />
-              NGP{" "}
-              <span
-                className={cn(
-                  "font-mono tabular-nums",
-                  nikasiAccent.emphasis,
-                )}
-              >
+              <span className={cn('h-2 w-2 rounded-full', nikasiAccent.dot)} />
+              NGP{' '}
+              <span className={cn('font-mono tabular-nums', nikasiAccent.emphasis)}>
                 #{gatePass.gatePassNo}
               </span>
             </CardTitle>
@@ -127,9 +115,7 @@ export function DispatchPreStorageGatePassCard({
               </Badge>
             )}
           </div>
-          <CardDescription className="text-xs">
-            {formatDateTime(gatePass.date)}
-          </CardDescription>
+          <CardDescription className="text-xs">{formatDateTime(gatePass.date)}</CardDescription>
         </div>
 
         <div className="flex flex-wrap items-center justify-end gap-2">
@@ -143,24 +129,16 @@ export function DispatchPreStorageGatePassCard({
           <Badge
             variant="outline"
             className={cn(
-              "text-xs",
-              gatePass.isBooked
-                ? nikasiAccent.booked
-                : "bg-background text-muted-foreground",
+              'text-xs',
+              gatePass.isBooked ? nikasiAccent.booked : 'bg-background text-muted-foreground',
             )}
           >
-            {gatePass.isBooked ? "Booked" : "Not booked"}
+            {gatePass.isBooked ? 'Booked' : 'Not booked'}
           </Badge>
-          <Badge
-            variant="outline"
-            className="bg-background text-xs tabular-nums"
-          >
-            {totalBags.toLocaleString("en-IN")} Bags
+          <Badge variant="outline" className="bg-background text-xs tabular-nums">
+            {totalBags.toLocaleString('en-IN')} Bags
           </Badge>
-          <Badge
-            variant="outline"
-            className="bg-background text-xs tabular-nums"
-          >
+          <Badge variant="outline" className="bg-background text-xs tabular-nums">
             {formatWeight(gatePass.netWeight)} kg
           </Badge>
         </div>
@@ -168,26 +146,16 @@ export function DispatchPreStorageGatePassCard({
 
       <CardContent className="pt-5">
         <div className="grid grid-cols-2 gap-6 sm:grid-cols-4">
-          {farmer ? (
-            <InfoBlock label="Farmer" value={farmer.name ?? "—"} icon={User} />
-          ) : null}
+          {farmer ? <InfoBlock label="Farmer" value={farmer.name ?? '—'} icon={User} /> : null}
           {farmerStorageLink ? (
             <InfoBlock
               label="Account"
-              value={farmerStorageLink.accountNumber ?? "—"}
+              value={farmerStorageLink.accountNumber ?? '—'}
               valueClassName="tabular-nums"
             />
           ) : null}
-          <InfoBlock
-            label="Dispatch party"
-            value={dispatchParty.name ?? "—"}
-            icon={Building2}
-          />
-          <InfoBlock
-            label="Truck"
-            value={gatePass.truckNumber || "—"}
-            icon={Truck}
-          />
+          <InfoBlock label="Dispatch party" value={dispatchParty.name ?? '—'} icon={Building2} />
+          <InfoBlock label="Truck" value={gatePass.truckNumber || '—'} icon={Truck} />
         </div>
 
         {isExpanded && (
@@ -198,29 +166,23 @@ export function DispatchPreStorageGatePassCard({
                 {farmerStorageLink || farmer ? (
                   <div>
                     <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
-                      <User className={cn("h-4 w-4", nikasiAccent.icon)} />
+                      <User className={cn('h-4 w-4', nikasiAccent.icon)} />
                       Farmer information
                     </h4>
                     <div className="grid grid-cols-2 gap-4 rounded-xl border border-border/50 bg-muted/20 p-4">
-                      <InfoBlock label="Name" value={farmer?.name ?? "—"} />
-                      <InfoBlock
-                        label="Mobile"
-                        value={farmer?.mobileNumber ?? "—"}
-                      />
+                      <InfoBlock label="Name" value={farmer?.name ?? '—'} />
+                      <InfoBlock label="Mobile" value={farmer?.mobileNumber ?? '—'} />
                       <div className="col-span-2">
-                        <InfoBlock
-                          label="Address"
-                          value={farmer?.address ?? "—"}
-                        />
+                        <InfoBlock label="Address" value={farmer?.address ?? '—'} />
                       </div>
                       <InfoBlock
                         label="Account"
-                        value={farmerStorageLink?.accountNumber ?? "—"}
+                        value={farmerStorageLink?.accountNumber ?? '—'}
                         valueClassName="tabular-nums"
                       />
                       <InfoBlock
                         label="Linked by"
-                        value={farmerStorageLink?.linkedById?.name ?? "—"}
+                        value={farmerStorageLink?.linkedById?.name ?? '—'}
                       />
                     </div>
                   </div>
@@ -228,37 +190,26 @@ export function DispatchPreStorageGatePassCard({
 
                 <div>
                   <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
-                    <Building2 className={cn("h-4 w-4", nikasiAccent.icon)} />
+                    <Building2 className={cn('h-4 w-4', nikasiAccent.icon)} />
                     Dispatch party
                   </h4>
                   <div className="grid grid-cols-2 gap-4 rounded-xl border border-border/50 bg-muted/20 p-4">
-                    <InfoBlock
-                      label="Name"
-                      value={dispatchParty.name ?? "—"}
-                    />
-                    <InfoBlock
-                      label="Mobile"
-                      value={dispatchParty.mobileNumber ?? "—"}
-                    />
+                    <InfoBlock label="Name" value={dispatchParty.name ?? '—'} />
+                    <InfoBlock label="Mobile" value={dispatchParty.mobileNumber ?? '—'} />
                     <div className="col-span-2">
-                      <InfoBlock
-                        label="Address"
-                        value={dispatchParty.address ?? "—"}
-                      />
+                      <InfoBlock label="Address" value={dispatchParty.address ?? '—'} />
                     </div>
                   </div>
                 </div>
 
                 <div>
                   <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
-                    <FileText className={cn("h-4 w-4", nikasiAccent.icon)} />
+                    <FileText className={cn('h-4 w-4', nikasiAccent.icon)} />
                     Remarks
                   </h4>
                   <div className="rounded-xl border border-border/50 bg-muted/20 p-4">
                     <p className="text-sm text-muted-foreground">
-                      {gatePass.remarks
-                        ? `"${gatePass.remarks}"`
-                        : "No remarks provided."}
+                      {gatePass.remarks ? `"${gatePass.remarks}"` : 'No remarks provided.'}
                     </p>
                   </div>
                 </div>
@@ -267,12 +218,12 @@ export function DispatchPreStorageGatePassCard({
               <div className="space-y-6">
                 <div>
                   <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
-                    <Truck className={cn("h-4 w-4", nikasiAccent.icon)} />
+                    <Truck className={cn('h-4 w-4', nikasiAccent.icon)} />
                     Movement & billing
                   </h4>
                   <div className="grid grid-cols-2 gap-4 rounded-xl border border-border/50 bg-muted/20 p-4">
-                    <InfoBlock label="From" value={gatePass.from || "—"} />
-                    <InfoBlock label="To" value={gatePass.to || "—"} />
+                    <InfoBlock label="From" value={gatePass.from || '—'} />
+                    <InfoBlock label="To" value={gatePass.to || '—'} />
                     <InfoBlock
                       label="Bill no."
                       value={formatOptionalInt(gatePass.billNumber)}
@@ -309,7 +260,7 @@ export function DispatchPreStorageGatePassCard({
 
                 <div>
                   <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
-                    <Package className={cn("h-4 w-4", nikasiAccent.icon)} />
+                    <Package className={cn('h-4 w-4', nikasiAccent.icon)} />
                     Bag lines
                   </h4>
                   <div className="overflow-x-auto rounded-xl border border-border/50">
@@ -333,14 +284,10 @@ export function DispatchPreStorageGatePassCard({
                             key={`${slot.size}-${slot.variety}-${index}`}
                             className="border-b border-border/40 last:border-0"
                           >
-                            <td className="px-3 py-2.5 font-medium text-foreground">
-                              {slot.size}
-                            </td>
-                            <td className="px-3 py-2.5 text-muted-foreground">
-                              {slot.variety}
-                            </td>
+                            <td className="px-3 py-2.5 font-medium text-foreground">{slot.size}</td>
+                            <td className="px-3 py-2.5 text-muted-foreground">{slot.variety}</td>
                             <td className="px-3 py-2.5 text-right font-medium text-foreground tabular-nums">
-                              {slot.quantityIssued.toLocaleString("en-IN")}
+                              {slot.quantityIssued.toLocaleString('en-IN')}
                             </td>
                           </tr>
                         ))}
@@ -386,7 +333,7 @@ export function DispatchPreStorageGatePassCard({
             aria-label={`Edit nikasi gate pass ${gatePass.gatePassNo}`}
             onClick={() =>
               navigate({
-                to: "/dispatch-pre-storage/$id",
+                to: '/dispatch-pre-storage/$id',
                 params: { id: gatePass._id },
               })
             }
@@ -400,7 +347,7 @@ export function DispatchPreStorageGatePassCard({
         </div>
       </CardFooter>
     </Card>
-  )
+  );
 }
 
 export function DispatchPreStorageGatePassCardSkeleton() {
@@ -435,5 +382,5 @@ export function DispatchPreStorageGatePassCardSkeleton() {
         <Skeleton className="h-8 w-16 rounded-md" />
       </CardFooter>
     </Card>
-  )
+  );
 }

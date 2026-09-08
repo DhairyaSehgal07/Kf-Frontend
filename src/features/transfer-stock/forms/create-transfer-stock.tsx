@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react"
+import { useMemo, useState } from 'react';
 import {
   Card,
   CardContent,
@@ -6,20 +6,20 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { useFarmerLinkOptions } from "@/features/people/api/use-farmer-link-options"
-import { farmerLinkOptionsToComboboxOptions } from "@/features/people/utils/farmer-link-combobox"
-import { TransferGatePassesSection } from "@/features/transfer-stock/forms/transfer-gate-passes-section"
-import { TransferStockSummarySheet } from "@/features/transfer-stock/forms/transfer-stock-summary-sheet"
-import { useCreateTransferStockForm } from "@/features/transfer-stock/forms/use-create-transfer-stock-form"
-import { useStorageGatePassesForFarmer } from "@/features/transfer-stock/hooks/use-storage-gate-passes-for-farmer"
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { useFarmerLinkOptions } from '@/features/people/api/use-farmer-link-options';
+import { farmerLinkOptionsToComboboxOptions } from '@/features/people/utils/farmer-link-combobox';
+import { TransferGatePassesSection } from '@/features/transfer-stock/forms/transfer-gate-passes-section';
+import { TransferStockSummarySheet } from '@/features/transfer-stock/forms/transfer-stock-summary-sheet';
+import { useCreateTransferStockForm } from '@/features/transfer-stock/forms/use-create-transfer-stock-form';
+import { useStorageGatePassesForFarmer } from '@/features/transfer-stock/hooks/use-storage-gate-passes-for-farmer';
 import {
   transferStockFormSchema,
   type TransferStockFormValues,
-} from "@/features/transfer-stock/schemas/transfer-stock-form-schema"
-import { buildTransferItems } from "@/features/transfer-stock/utils/gate-pass-matrix-utils"
+} from '@/features/transfer-stock/schemas/transfer-stock-form-schema';
+import { buildTransferItems } from '@/features/transfer-stock/utils/gate-pass-matrix-utils';
 import {
   Field,
   FieldDescription,
@@ -28,49 +28,49 @@ import {
   FieldLabel,
   FieldLegend,
   FieldSet,
-} from "@/components/ui/field"
-import { Textarea } from "@/components/ui/textarea"
-import { DatePickerInput } from "@/components/date-picker"
+} from '@/components/ui/field';
+import { Textarea } from '@/components/ui/textarea';
+import { DatePickerInput } from '@/components/date-picker';
 import {
   SearchableOptionCombobox,
   filterAndSortOptions,
   type ComboboxOption,
-} from "@/components/searchable-option-combobox"
-import { STORAGE_CATEGORIES } from "@/lib/constants"
+} from '@/components/searchable-option-combobox';
+import { STORAGE_CATEGORIES } from '@/lib/constants';
 
 const CATEGORY_ITEMS = STORAGE_CATEGORIES.map((value) => ({
   id: value,
   label: value,
-}))
+}));
 
 function isFieldInvalid(meta: { isTouched: boolean; isValid: boolean }) {
-  return meta.isTouched && !meta.isValid
+  return meta.isTouched && !meta.isValid;
 }
 
 function parseOptionalPositiveNumber(value: string): number | undefined {
-  if (value === "") return undefined
-  const parsed = Number(value)
-  return Number.isNaN(parsed) ? undefined : parsed
+  if (value === '') return undefined;
+  const parsed = Number(value);
+  return Number.isNaN(parsed) ? undefined : parsed;
 }
 
 const numericInputProps = {
-  type: "number" as const,
+  type: 'number' as const,
   min: 0,
   onWheel: (e: React.WheelEvent<HTMLInputElement>) => e.currentTarget.blur(),
-}
+};
 
 type TransferStockReviewSheetProps = {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  fromFarmerStorageLinkId: string
-  values: TransferStockFormValues | null
-  fromFarmerLabel: string
-  toFarmerLabel: string
-  onBack: () => void
-  onSubmit: () => void
-  canSubmit: boolean
-  isSubmitting: boolean
-}
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  fromFarmerStorageLinkId: string;
+  values: TransferStockFormValues | null;
+  fromFarmerLabel: string;
+  toFarmerLabel: string;
+  onBack: () => void;
+  onSubmit: () => void;
+  canSubmit: boolean;
+  isSubmitting: boolean;
+};
 
 function TransferStockReviewSheet({
   open,
@@ -84,9 +84,8 @@ function TransferStockReviewSheet({
   canSubmit,
   isSubmitting,
 }: TransferStockReviewSheetProps) {
-  const { data: passes } = useStorageGatePassesForFarmer(fromFarmerStorageLinkId)
-  const transferItems =
-    values != null ? buildTransferItems(values.allocations, passes) : []
+  const { data: passes } = useStorageGatePassesForFarmer(fromFarmerStorageLinkId);
+  const transferItems = values != null ? buildTransferItems(values.allocations, passes) : [];
 
   return (
     <TransferStockSummarySheet
@@ -101,44 +100,43 @@ function TransferStockReviewSheet({
       canSubmit={canSubmit}
       isSubmitting={isSubmitting}
     />
-  )
+  );
 }
 
 const CreateTransferStock = () => {
-  const { data: farmerLinkOptions = [], isLoading: isLoadingFarmers } =
-    useFarmerLinkOptions()
+  const { data: farmerLinkOptions = [], isLoading: isLoadingFarmers } = useFarmerLinkOptions();
   const farmerOptions = useMemo<ComboboxOption[]>(
     () => farmerLinkOptionsToComboboxOptions(farmerLinkOptions),
     [farmerLinkOptions],
-  )
-  const [fromFarmerSearch, setFromFarmerSearch] = useState("")
-  const [fromFarmerComboboxOpen, setFromFarmerComboboxOpen] = useState(false)
-  const [toFarmerSearch, setToFarmerSearch] = useState("")
-  const [toFarmerComboboxOpen, setToFarmerComboboxOpen] = useState(false)
-  const [categorySearch, setCategorySearch] = useState("")
-  const [categoryComboboxOpen, setCategoryComboboxOpen] = useState(false)
-  const [reviewOpen, setReviewOpen] = useState(false)
+  );
+  const [fromFarmerSearch, setFromFarmerSearch] = useState('');
+  const [fromFarmerComboboxOpen, setFromFarmerComboboxOpen] = useState(false);
+  const [toFarmerSearch, setToFarmerSearch] = useState('');
+  const [toFarmerComboboxOpen, setToFarmerComboboxOpen] = useState(false);
+  const [categorySearch, setCategorySearch] = useState('');
+  const [categoryComboboxOpen, setCategoryComboboxOpen] = useState(false);
+  const [reviewOpen, setReviewOpen] = useState(false);
 
   const sortedFromFarmers = useMemo(
     () => filterAndSortOptions(fromFarmerSearch, farmerOptions),
-    [fromFarmerSearch, farmerOptions]
-  )
+    [fromFarmerSearch, farmerOptions],
+  );
   const sortedToFarmers = useMemo(
     () => filterAndSortOptions(toFarmerSearch, farmerOptions),
-    [toFarmerSearch, farmerOptions]
-  )
+    [toFarmerSearch, farmerOptions],
+  );
   const sortedCategories = useMemo(
     () => filterAndSortOptions(categorySearch, CATEGORY_ITEMS),
-    [categorySearch]
-  )
+    [categorySearch],
+  );
 
   function resetComboboxState() {
-    setFromFarmerSearch("")
-    setFromFarmerComboboxOpen(false)
-    setToFarmerSearch("")
-    setToFarmerComboboxOpen(false)
-    setCategorySearch("")
-    setCategoryComboboxOpen(false)
+    setFromFarmerSearch('');
+    setFromFarmerComboboxOpen(false);
+    setToFarmerSearch('');
+    setToFarmerComboboxOpen(false);
+    setCategorySearch('');
+    setCategoryComboboxOpen(false);
   }
 
   const {
@@ -152,31 +150,30 @@ const CreateTransferStock = () => {
     onOpenReview: () => setReviewOpen(true),
     onCloseReview: () => setReviewOpen(false),
     onResetComboboxState: resetComboboxState,
-  })
+  });
 
   const displayGatePassNo = isLoadingVoucherNumbers
-    ? "…"
+    ? '…'
     : isVoucherNumbersError
-      ? "—"
-      : (nextTransferGatePassNo ?? "—")
+      ? '—'
+      : (nextTransferGatePassNo ?? '—');
 
   const getFarmerLabel = (farmerStorageLinkId: string) =>
-    farmerOptions.find((option) => option.id === farmerStorageLinkId)
-      ?.label ?? farmerStorageLinkId
+    farmerOptions.find((option) => option.id === farmerStorageLinkId)?.label ?? farmerStorageLinkId;
 
   const handleOpenReview = () => {
-    void form.handleSubmit({ submitAction: "review" })
-  }
+    void form.handleSubmit({ submitAction: 'review' });
+  };
 
   const handleConfirmSubmit = () => {
-    void form.handleSubmit({ submitAction: "submit" })
-  }
+    void form.handleSubmit({ submitAction: 'submit' });
+  };
 
   return (
     <Card className="mx-auto w-full max-w-7xl shadow-sm">
       <CardHeader className="border-b bg-muted/30 pb-6">
         <CardTitle className="font-heading text-xl font-semibold tracking-tight sm:text-2xl">
-          Transfer Stock{" "}
+          Transfer Stock{' '}
           <span className="font-mono text-xl tabular-nums text-primary sm:text-2xl">
             #{displayGatePassNo}
           </span>
@@ -185,18 +182,13 @@ const CreateTransferStock = () => {
           Move stock between farmer storage accounts.
           {isVoucherNumbersError ? (
             <span className="mt-1 block text-destructive">
-              Gate pass numbers could not be loaded. Refresh the page and try
-              again.
+              Gate pass numbers could not be loaded. Refresh the page and try again.
             </span>
           ) : null}
         </CardDescription>
       </CardHeader>
 
-      <form
-        id="create-transfer-stock-form"
-        noValidate
-        onSubmit={(e) => e.preventDefault()}
-      >
+      <form id="create-transfer-stock-form" noValidate onSubmit={(e) => e.preventDefault()}>
         <CardContent className="pt-8 pb-8">
           <FieldGroup className="@container/field-group gap-10">
             <FieldSet>
@@ -209,22 +201,18 @@ const CreateTransferStock = () => {
               <FieldGroup className="mt-5 grid grid-cols-1 gap-6 @md/field-group:grid-cols-2">
                 <form.Field name="manualGatePassNumber">
                   {(field) => {
-                    const isInvalid = isFieldInvalid(field.state.meta)
+                    const isInvalid = isFieldInvalid(field.state.meta);
                     return (
                       <Field data-invalid={isInvalid}>
-                        <FieldLabel htmlFor={field.name}>
-                          Manual Gate Pass No.
-                        </FieldLabel>
+                        <FieldLabel htmlFor={field.name}>Manual Gate Pass No.</FieldLabel>
                         <Input
                           {...numericInputProps}
                           id={field.name}
                           name={field.name}
-                          value={field.state.value ?? ""}
+                          value={field.state.value ?? ''}
                           onBlur={field.handleBlur}
                           onChange={(e) =>
-                            field.handleChange(
-                              parseOptionalPositiveNumber(e.target.value),
-                            )
+                            field.handleChange(parseOptionalPositiveNumber(e.target.value))
                           }
                           aria-invalid={isInvalid}
                           placeholder="e.g. 1024 (optional)"
@@ -233,45 +221,30 @@ const CreateTransferStock = () => {
                         <FieldDescription>
                           Leave blank if no manual slip number was issued.
                         </FieldDescription>
-                        {isInvalid && (
-                          <FieldError errors={field.state.meta.errors} />
-                        )}
+                        {isInvalid && <FieldError errors={field.state.meta.errors} />}
                       </Field>
-                    )
+                    );
                   }}
                 </form.Field>
 
                 <form.Field name="fromFarmerStorageLinkId">
                   {(field) => {
-                    const isInvalid = isFieldInvalid(field.state.meta)
+                    const isInvalid = isFieldInvalid(field.state.meta);
                     return (
-                      <Field
-                        data-invalid={isInvalid}
-                        className="@md/field-group:col-span-2"
-                      >
-                        <FieldLabel htmlFor="transfer-stock-from-farmer">
-                          From
-                        </FieldLabel>
+                      <Field data-invalid={isInvalid} className="@md/field-group:col-span-2">
+                        <FieldLabel htmlFor="transfer-stock-from-farmer">From</FieldLabel>
                         <SearchableOptionCombobox
                           id="transfer-stock-from-farmer"
                           name={field.name}
                           value={field.state.value}
                           onValueChange={(value) => {
-                            field.handleChange(value)
-                            form.setFieldValue("allocations", {})
+                            field.handleChange(value);
+                            form.setFieldValue('allocations', {});
                           }}
                           onBlur={field.handleBlur}
                           isInvalid={isInvalid}
-                          placeholder={
-                            isLoadingFarmers
-                              ? "Loading farmers…"
-                              : "Search farmers…"
-                          }
-                          emptyMessage={
-                            isLoadingFarmers
-                              ? "Loading farmers…"
-                              : "No farmers found."
-                          }
+                          placeholder={isLoadingFarmers ? 'Loading farmers…' : 'Search farmers…'}
+                          emptyMessage={isLoadingFarmers ? 'Loading farmers…' : 'No farmers found.'}
                           options={farmerOptions}
                           sortedOptions={sortedFromFarmers}
                           search={fromFarmerSearch}
@@ -283,25 +256,18 @@ const CreateTransferStock = () => {
                         <FieldDescription>
                           Farmer account stock is transferred from.
                         </FieldDescription>
-                        {isInvalid && (
-                          <FieldError errors={field.state.meta.errors} />
-                        )}
+                        {isInvalid && <FieldError errors={field.state.meta.errors} />}
                       </Field>
-                    )
+                    );
                   }}
                 </form.Field>
 
                 <form.Field name="toFarmerStorageLinkId">
                   {(field) => {
-                    const isInvalid = isFieldInvalid(field.state.meta)
+                    const isInvalid = isFieldInvalid(field.state.meta);
                     return (
-                      <Field
-                        data-invalid={isInvalid}
-                        className="@md/field-group:col-span-2"
-                      >
-                        <FieldLabel htmlFor="transfer-stock-to-farmer">
-                          To
-                        </FieldLabel>
+                      <Field data-invalid={isInvalid} className="@md/field-group:col-span-2">
+                        <FieldLabel htmlFor="transfer-stock-to-farmer">To</FieldLabel>
                         <SearchableOptionCombobox
                           id="transfer-stock-to-farmer"
                           name={field.name}
@@ -309,16 +275,8 @@ const CreateTransferStock = () => {
                           onValueChange={field.handleChange}
                           onBlur={field.handleBlur}
                           isInvalid={isInvalid}
-                          placeholder={
-                            isLoadingFarmers
-                              ? "Loading farmers…"
-                              : "Search farmers…"
-                          }
-                          emptyMessage={
-                            isLoadingFarmers
-                              ? "Loading farmers…"
-                              : "No farmers found."
-                          }
+                          placeholder={isLoadingFarmers ? 'Loading farmers…' : 'Search farmers…'}
+                          emptyMessage={isLoadingFarmers ? 'Loading farmers…' : 'No farmers found.'}
                           options={farmerOptions}
                           sortedOptions={sortedToFarmers}
                           search={toFarmerSearch}
@@ -330,53 +288,38 @@ const CreateTransferStock = () => {
                         <FieldDescription>
                           Farmer account receiving the transferred stock.
                         </FieldDescription>
-                        {isInvalid && (
-                          <FieldError errors={field.state.meta.errors} />
-                        )}
+                        {isInvalid && <FieldError errors={field.state.meta.errors} />}
                       </Field>
-                    )
+                    );
                   }}
                 </form.Field>
 
                 <form.Field name="date">
                   {(field) => {
-                    const isInvalid = isFieldInvalid(field.state.meta)
+                    const isInvalid = isFieldInvalid(field.state.meta);
                     return (
-                      <Field
-                        data-invalid={isInvalid}
-                        className="@md/field-group:max-w-sm"
-                      >
+                      <Field data-invalid={isInvalid} className="@md/field-group:max-w-sm">
                         <DatePickerInput
                           id={field.name}
                           label="Date"
-                          value={
-                            field.state.value
-                              ? new Date(field.state.value)
-                              : undefined
-                          }
-                          onChange={(date) =>
-                            field.handleChange(date ? date.toISOString() : "")
-                          }
+                          value={field.state.value ? new Date(field.state.value) : undefined}
+                          onChange={(date) => field.handleChange(date ? date.toISOString() : '')}
                           onBlur={field.handleBlur}
                           aria-invalid={isInvalid}
                           placeholder="Pick a date"
                         />
-                        {isInvalid && (
-                          <FieldError errors={field.state.meta.errors} />
-                        )}
+                        {isInvalid && <FieldError errors={field.state.meta.errors} />}
                       </Field>
-                    )
+                    );
                   }}
                 </form.Field>
 
                 <form.Field name="category">
                   {(field) => {
-                    const isInvalid = isFieldInvalid(field.state.meta)
+                    const isInvalid = isFieldInvalid(field.state.meta);
                     return (
                       <Field data-invalid={isInvalid}>
-                        <FieldLabel htmlFor="transfer-stock-category">
-                          Category
-                        </FieldLabel>
+                        <FieldLabel htmlFor="transfer-stock-category">Category</FieldLabel>
                         <SearchableOptionCombobox
                           id="transfer-stock-category"
                           name={field.name}
@@ -396,11 +339,9 @@ const CreateTransferStock = () => {
                         <FieldDescription>
                           Gate pass category for the transfer, same as incoming.
                         </FieldDescription>
-                        {isInvalid && (
-                          <FieldError errors={field.state.meta.errors} />
-                        )}
+                        {isInvalid && <FieldError errors={field.state.meta.errors} />}
                       </Field>
-                    )
+                    );
                   }}
                 </form.Field>
               </FieldGroup>
@@ -414,14 +355,13 @@ const CreateTransferStock = () => {
                     Storage gate passes
                   </FieldLegend>
                   <FieldDescription>
-                    Select vouchers and quantities to transfer from the source
-                    account.
+                    Select vouchers and quantities to transfer from the source account.
                   </FieldDescription>
                   <div className="mt-5">
                     <form.Field name="allocations">
                       {(allocField) => (
                         <TransferGatePassesSection
-                          key={fromFarmerStorageLinkId || "no-farmer"}
+                          key={fromFarmerStorageLinkId || 'no-farmer'}
                           fromFarmerStorageLinkId={fromFarmerStorageLinkId}
                           allocations={allocField.state.value}
                           onAllocationsChange={allocField.handleChange}
@@ -434,39 +374,31 @@ const CreateTransferStock = () => {
             />
 
             <FieldSet>
-              <FieldLegend className="font-heading text-base font-semibold">
-                Vehicle
-              </FieldLegend>
+              <FieldLegend className="font-heading text-base font-semibold">Vehicle</FieldLegend>
               <FieldDescription>
                 Truck used to move stock between accounts (optional).
               </FieldDescription>
               <FieldGroup className="mt-5 grid grid-cols-1 gap-6 @md/field-group:max-w-sm">
                 <form.Field name="truckNumber">
                   {(field) => {
-                    const isInvalid = isFieldInvalid(field.state.meta)
+                    const isInvalid = isFieldInvalid(field.state.meta);
                     return (
                       <Field data-invalid={isInvalid}>
-                        <FieldLabel htmlFor={field.name}>
-                          Truck number
-                        </FieldLabel>
+                        <FieldLabel htmlFor={field.name}>Truck number</FieldLabel>
                         <Input
                           id={field.name}
                           name={field.name}
                           value={field.state.value}
                           onBlur={field.handleBlur}
-                          onChange={(e) =>
-                            field.handleChange(e.target.value.toUpperCase())
-                          }
+                          onChange={(e) => field.handleChange(e.target.value.toUpperCase())}
                           placeholder="e.g. HR-12-AB-1234"
                           autoComplete="off"
                           aria-invalid={isInvalid}
                           className="h-11 text-base uppercase"
                         />
-                        {isInvalid && (
-                          <FieldError errors={field.state.meta.errors} />
-                        )}
+                        {isInvalid && <FieldError errors={field.state.meta.errors} />}
                       </Field>
-                    )
+                    );
                   }}
                 </form.Field>
               </FieldGroup>
@@ -479,7 +411,7 @@ const CreateTransferStock = () => {
               <FieldGroup className="mt-5">
                 <form.Field name="remarks">
                   {(field) => {
-                    const isInvalid = isFieldInvalid(field.state.meta)
+                    const isInvalid = isFieldInvalid(field.state.meta);
                     return (
                       <Field data-invalid={isInvalid}>
                         <FieldLabel htmlFor={field.name} className="sr-only">
@@ -495,11 +427,9 @@ const CreateTransferStock = () => {
                           placeholder="Add any additional comments or observations (optional)"
                           className="min-h-[120px] resize-y text-base"
                         />
-                        {isInvalid && (
-                          <FieldError errors={field.state.meta.errors} />
-                        )}
+                        {isInvalid && <FieldError errors={field.state.meta.errors} />}
                       </Field>
-                    )
+                    );
                   }}
                 </form.Field>
               </FieldGroup>
@@ -512,8 +442,8 @@ const CreateTransferStock = () => {
             variant="outline"
             type="button"
             onClick={() => {
-              form.reset()
-              resetComboboxState()
+              form.reset();
+              resetComboboxState();
             }}
           >
             Reset form
@@ -526,7 +456,7 @@ const CreateTransferStock = () => {
                 disabled={isSubmitting || !isGatePassNumbersReady}
                 onClick={handleOpenReview}
               >
-                {isSubmitting ? "Validating…" : "Review"}
+                {isSubmitting ? 'Validating…' : 'Review'}
               </Button>
             )}
           />
@@ -540,10 +470,10 @@ const CreateTransferStock = () => {
           isSubmitting: state.isSubmitting,
         })}
         children={({ values, canSubmit, isSubmitting }) => {
-          const parsed = transferStockFormSchema.safeParse(values)
+          const parsed = transferStockFormSchema.safeParse(values);
           const fromFarmerId = parsed.success
             ? parsed.data.fromFarmerStorageLinkId
-            : values.fromFarmerStorageLinkId
+            : values.fromFarmerStorageLinkId;
 
           return (
             <TransferStockReviewSheet
@@ -552,25 +482,21 @@ const CreateTransferStock = () => {
               fromFarmerStorageLinkId={fromFarmerId}
               values={parsed.success ? parsed.data : null}
               fromFarmerLabel={
-                parsed.success
-                  ? getFarmerLabel(parsed.data.fromFarmerStorageLinkId)
-                  : ""
+                parsed.success ? getFarmerLabel(parsed.data.fromFarmerStorageLinkId) : ''
               }
               toFarmerLabel={
-                parsed.success
-                  ? getFarmerLabel(parsed.data.toFarmerStorageLinkId)
-                  : ""
+                parsed.success ? getFarmerLabel(parsed.data.toFarmerStorageLinkId) : ''
               }
               onBack={() => setReviewOpen(false)}
               onSubmit={handleConfirmSubmit}
               canSubmit={canSubmit && isGatePassNumbersReady}
               isSubmitting={isSubmitting}
             />
-          )
+          );
         }}
       />
     </Card>
-  )
-}
+  );
+};
 
-export default CreateTransferStock
+export default CreateTransferStock;

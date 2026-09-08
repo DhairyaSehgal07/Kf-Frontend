@@ -60,9 +60,7 @@ export function formatIndianPercentageTotal(total: number): string {
 
 export function getIncomingGatePassObjects(row: GradingGatePassReportRow) {
   return row.incomingGatePassIds.filter(
-    (
-      gatePass,
-    ): gatePass is Exclude<GradingGatePassReportIncomingGatePass, string> =>
+    (gatePass): gatePass is Exclude<GradingGatePassReportIncomingGatePass, string> =>
       typeof gatePass === 'object' && gatePass !== null,
   );
 }

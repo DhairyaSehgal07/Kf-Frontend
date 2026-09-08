@@ -1,23 +1,10 @@
-import { useMemo, useState } from "react"
-import type { UseQueryResult } from "@tanstack/react-query"
-import {
-  AlertCircle,
-  ChevronDown,
-  ChevronUp,
-  Layers,
-  MapPin,
-  RefreshCw,
-} from "lucide-react"
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts"
+import { useMemo, useState } from 'react';
+import type { UseQueryResult } from '@tanstack/react-query';
+import { AlertCircle, ChevronDown, ChevronUp, Layers, MapPin, RefreshCw } from 'lucide-react';
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 
-import { Button } from "@/components/ui/button"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   ChartContainer,
   ChartLegend,
@@ -25,8 +12,8 @@ import {
   ChartTooltip,
   ChartTooltipContent,
   type ChartConfig,
-} from "@/components/ui/chart"
-import { Skeleton } from "@/components/ui/skeleton"
+} from '@/components/ui/chart';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
   TableBody,
@@ -35,78 +22,75 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { cn } from "@/lib/utils"
+} from '@/components/ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { cn } from '@/lib/utils';
 
 import type {
   AreaWiseSizeDistributionData,
   AreaWiseVarietyItem,
-} from "../api/get-area-wise-size-distribution"
-import { getAnalyticsChartColor } from "../lib/chart-palette"
-import { orderGradingSizeNames } from "../lib/grading-size-order"
+} from '../api/get-area-wise-size-distribution';
+import { getAnalyticsChartColor } from '../lib/chart-palette';
+import { orderGradingSizeNames } from '../lib/grading-size-order';
 
-const bagFormatter = new Intl.NumberFormat("en-IN", {
+const bagFormatter = new Intl.NumberFormat('en-IN', {
   maximumFractionDigits: 0,
-})
+});
 
 type AreaTableRow = {
-  area: string
-  values: Record<string, number>
-  total: number
-}
+  area: string;
+  values: Record<string, number>;
+  total: number;
+};
 
 function toSizeChartKey(index: number): string {
-  return `size${index}`
+  return `size${index}`;
 }
 
 function buildAreaTable(varietyItem: AreaWiseVarietyItem) {
   const sizeNames = orderGradingSizeNames(
     varietyItem.areas.flatMap((area) => area.sizes.map((size) => size.name)),
-  )
+  );
 
   const rows: AreaTableRow[] = varietyItem.areas.map((area) => {
-    const bySize = new Map(area.sizes.map((size) => [size.name, size.value]))
-    const values: Record<string, number> = {}
+    const bySize = new Map(area.sizes.map((size) => [size.name, size.value]));
+    const values: Record<string, number> = {};
     for (const sizeName of sizeNames) {
-      values[sizeName] = Number(bySize.get(sizeName) ?? 0)
+      values[sizeName] = Number(bySize.get(sizeName) ?? 0);
     }
-    const total = area.sizes.reduce((sum, size) => sum + size.value, 0)
-    return { area: area.area, values, total }
-  })
+    const total = area.sizes.reduce((sum, size) => sum + size.value, 0);
+    return { area: area.area, values, total };
+  });
 
-  const totals: Record<string, number> = {}
+  const totals: Record<string, number> = {};
   for (const sizeName of sizeNames) {
-    totals[sizeName] = rows.reduce(
-      (sum, row) => sum + Number(row.values[sizeName] ?? 0),
-      0,
-    )
+    totals[sizeName] = rows.reduce((sum, row) => sum + Number(row.values[sizeName] ?? 0), 0);
   }
-  const varietyTotal = rows.reduce((sum, row) => sum + row.total, 0)
+  const varietyTotal = rows.reduce((sum, row) => sum + row.total, 0);
 
-  return { sizeNames, rows, totals, varietyTotal }
+  return { sizeNames, rows, totals, varietyTotal };
 }
 
 function buildStackedBarData(
   rows: AreaTableRow[],
   sizeNames: string[],
 ): { data: Array<Record<string, string | number>>; config: ChartConfig } {
-  const config: ChartConfig = {}
+  const config: ChartConfig = {};
   const data = rows.map((row) => {
     const point: Record<string, string | number> = {
       area: row.area,
-    }
+    };
     for (const [index, sizeName] of sizeNames.entries()) {
-      const chartKey = toSizeChartKey(index)
+      const chartKey = toSizeChartKey(index);
       config[chartKey] = {
         label: sizeName,
         color: getAnalyticsChartColor(index),
-      }
-      point[chartKey] = Number(row.values[sizeName] ?? 0)
+      };
+      point[chartKey] = Number(row.values[sizeName] ?? 0);
     }
-    return point
-  })
-  return { data, config }
+    return point;
+  });
+  return { data, config };
 }
 
 function VarietyAreaPanel({
@@ -114,26 +98,22 @@ function VarietyAreaPanel({
   showChart,
   onToggleChart,
 }: {
-  varietyItem: AreaWiseVarietyItem
-  showChart: boolean
-  onToggleChart: () => void
+  varietyItem: AreaWiseVarietyItem;
+  showChart: boolean;
+  onToggleChart: () => void;
 }) {
   const { sizeNames, rows, totals, varietyTotal } = useMemo(
     () => buildAreaTable(varietyItem),
     [varietyItem],
-  )
+  );
 
   const { data: barData, config: barConfig } = useMemo(
     () => buildStackedBarData(rows, sizeNames),
     [rows, sizeNames],
-  )
+  );
 
   if (sizeNames.length === 0) {
-    return (
-      <p className="text-sm text-muted-foreground">
-        No size data for {varietyItem.variety}.
-      </p>
-    )
+    return <p className="text-sm text-muted-foreground">No size data for {varietyItem.variety}.</p>;
   }
 
   return (
@@ -141,7 +121,7 @@ function VarietyAreaPanel({
       <p className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
         <Layers className="size-4 shrink-0 text-primary" aria-hidden />
         <span className="text-foreground">
-          {rows.length} area{rows.length === 1 ? "" : "s"}
+          {rows.length} area{rows.length === 1 ? '' : 's'}
         </span>
         <span aria-hidden>·</span>
         <span className="tabular-nums font-medium text-foreground">
@@ -162,9 +142,7 @@ function VarietyAreaPanel({
                   className="h-10 px-3 text-right font-medium whitespace-nowrap text-muted-foreground"
                   title={sizeName}
                 >
-                  <span className="block max-w-40 truncate sm:max-w-none">
-                    {sizeName}
-                  </span>
+                  <span className="block max-w-40 truncate sm:max-w-none">{sizeName}</span>
                 </TableHead>
               ))}
               <TableHead className="h-10 px-3 text-right font-medium whitespace-nowrap text-muted-foreground">
@@ -180,7 +158,7 @@ function VarietyAreaPanel({
               >
                 <TableCell className="max-w-48 px-3 py-2.5 font-medium whitespace-nowrap text-foreground">
                   <span className="block truncate" title={row.area}>
-                    {row.area || "—"}
+                    {row.area || '—'}
                   </span>
                 </TableCell>
                 {sizeNames.map((sizeName) => (
@@ -199,9 +177,7 @@ function VarietyAreaPanel({
           </TableBody>
           <TableFooter>
             <TableRow className="border-t border-border bg-muted/30 hover:bg-muted/30">
-              <TableCell className="px-3 py-2.5 font-medium text-foreground">
-                Bag total
-              </TableCell>
+              <TableCell className="px-3 py-2.5 font-medium text-foreground">Bag total</TableCell>
               {sizeNames.map((sizeName) => (
                 <TableCell
                   key={`total-${sizeName}`}
@@ -232,7 +208,7 @@ function VarietyAreaPanel({
           ) : (
             <ChevronDown className="mr-2 size-4" aria-hidden />
           )}
-          {showChart ? "Hide area chart" : "Show area chart"}
+          {showChart ? 'Hide area chart' : 'Show area chart'}
         </Button>
 
         {showChart && rows.length > 0 ? (
@@ -277,39 +253,36 @@ function VarietyAreaPanel({
               />
               <ChartLegend content={<ChartLegendContent />} />
               {sizeNames.map((_, index) => {
-                const chartKey = toSizeChartKey(index)
+                const chartKey = toSizeChartKey(index);
                 return (
                   <Bar
                     key={chartKey}
                     dataKey={chartKey}
                     stackId="bags"
                     fill={`var(--color-${chartKey})`}
-                    radius={
-                      index === sizeNames.length - 1 ? [4, 4, 0, 0] : [0, 0, 0, 0]
-                    }
+                    radius={index === sizeNames.length - 1 ? [4, 4, 0, 0] : [0, 0, 0, 0]}
                   />
-                )
+                );
               })}
             </BarChart>
           </ChartContainer>
         ) : null}
       </div>
     </div>
-  )
+  );
 }
 
 export function AnalyticsGradingAreaWiseChart({
   query,
 }: {
-  query: UseQueryResult<AreaWiseSizeDistributionData, Error>
+  query: UseQueryResult<AreaWiseSizeDistributionData, Error>;
 }) {
-  const [showChart, setShowChart] = useState(false)
-  const { data, error, isError, isLoading, isFetching, refetch } = query
+  const [showChart, setShowChart] = useState(false);
+  const { data, error, isError, isLoading, isFetching, refetch } = query;
 
-  const chartData = data?.chartData ?? []
-  const hasData =
-    chartData.length > 0 && chartData.some((item) => item.areas.length > 0)
-  const defaultTab = chartData[0]?.variety ?? ""
+  const chartData = data?.chartData ?? [];
+  const hasData = chartData.length > 0 && chartData.some((item) => item.areas.length > 0);
+  const defaultTab = chartData[0]?.variety ?? '';
 
   if (isLoading) {
     return (
@@ -324,7 +297,7 @@ export function AnalyticsGradingAreaWiseChart({
           <Skeleton className="h-10 w-full" />
         </CardContent>
       </Card>
-    )
+    );
   }
 
   if (isError && data === undefined) {
@@ -346,15 +319,12 @@ export function AnalyticsGradingAreaWiseChart({
             disabled={isFetching}
             className="w-full sm:w-auto"
           >
-            <RefreshCw
-              className={cn("mr-2 size-4", isFetching && "animate-spin")}
-              aria-hidden
-            />
+            <RefreshCw className={cn('mr-2 size-4', isFetching && 'animate-spin')} aria-hidden />
             Retry
           </Button>
         </CardContent>
       </Card>
-    )
+    );
   }
 
   return (
@@ -364,9 +334,7 @@ export function AnalyticsGradingAreaWiseChart({
           <MapPin className="size-5 text-primary" aria-hidden />
           Area-wise size distribution
         </CardTitle>
-        <CardDescription>
-          Grading bags by farmer area and size for each variety
-        </CardDescription>
+        <CardDescription>Grading bags by farmer area and size for each variety</CardDescription>
       </CardHeader>
 
       <CardContent>
@@ -378,11 +346,7 @@ export function AnalyticsGradingAreaWiseChart({
           <Tabs defaultValue={defaultTab} className="w-full">
             <TabsList className="mb-4 flex h-auto w-full flex-nowrap justify-start overflow-x-auto">
               {chartData.map(({ variety }) => (
-                <TabsTrigger
-                  key={variety}
-                  value={variety}
-                  className="shrink-0 px-3 sm:px-4"
-                >
+                <TabsTrigger key={variety} value={variety} className="shrink-0 px-3 sm:px-4">
                   {variety}
                 </TabsTrigger>
               ))}
@@ -405,5 +369,5 @@ export function AnalyticsGradingAreaWiseChart({
         )}
       </CardContent>
     </Card>
-  )
+  );
 }

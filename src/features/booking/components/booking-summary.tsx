@@ -1,42 +1,32 @@
-import { useMemo } from "react"
-import type { UseQueryResult } from "@tanstack/react-query"
-import { AlertCircle, ChevronRight, Package, RefreshCw } from "lucide-react"
+import { useMemo } from 'react';
+import type { UseQueryResult } from '@tanstack/react-query';
+import { AlertCircle, ChevronRight, Package, RefreshCw } from 'lucide-react';
 
-import { Button } from "@/components/ui/button"
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-import { Skeleton } from "@/components/ui/skeleton"
-import { BookingSummaryTable } from "@/features/booking/components/booking-summary-table"
-import type { SummaryVariety } from "@/features/booking/api/summary-types"
+import { Button } from '@/components/ui/button';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
+import { BookingSummaryTable } from '@/features/booking/components/booking-summary-table';
+import type { SummaryVariety } from '@/features/booking/api/summary-types';
 import {
   buildBookingSummaryTable,
   computeNetAvailable,
   formatBookingBagCount,
   mapApiSummaryToVarietySummary,
-} from "@/features/booking/lib/booking-summary-utils"
-import { cn } from "@/lib/utils"
+} from '@/features/booking/lib/booking-summary-utils';
+import { cn } from '@/lib/utils';
 
 type BookingSummaryProps = {
-  bookingQuery: UseQueryResult<SummaryVariety[], Error>
-  storageQuery: UseQueryResult<SummaryVariety[], Error>
-}
+  bookingQuery: UseQueryResult<SummaryVariety[], Error>;
+  storageQuery: UseQueryResult<SummaryVariety[], Error>;
+};
 
 type BookingSummaryCollapsibleSectionProps = {
-  title: string
-  description: string
-  grandTotal: number
-  children: React.ReactNode
-}
+  title: string;
+  description: string;
+  grandTotal: number;
+  children: React.ReactNode;
+};
 
 function BookingSummaryCollapsibleSection({
   title,
@@ -51,16 +41,12 @@ function BookingSummaryCollapsibleSection({
     >
       <CollapsibleTrigger
         className={cn(
-          "flex min-h-11 w-full cursor-pointer items-center justify-between gap-3 px-4 py-3 text-left outline-none transition-colors hover:bg-muted/30 focus-visible:ring-2 focus-visible:ring-ring/30 data-[state=open]:bg-muted/20 sm:px-5",
+          'flex min-h-11 w-full cursor-pointer items-center justify-between gap-3 px-4 py-3 text-left outline-none transition-colors hover:bg-muted/30 focus-visible:ring-2 focus-visible:ring-ring/30 data-[state=open]:bg-muted/20 sm:px-5',
         )}
       >
         <div className="min-w-0 flex-1 space-y-0.5">
-          <p className="font-heading text-sm font-semibold text-foreground sm:text-base">
-            {title}
-          </p>
-          <p className="text-xs text-muted-foreground sm:text-sm">
-            {description}
-          </p>
+          <p className="font-heading text-sm font-semibold text-foreground sm:text-base">{title}</p>
+          <p className="text-xs text-muted-foreground sm:text-sm">{description}</p>
         </div>
         <div className="flex shrink-0 items-center gap-3">
           <span className="text-sm font-medium tabular-nums text-primary">
@@ -76,7 +62,7 @@ function BookingSummaryCollapsibleSection({
         {children}
       </CollapsibleContent>
     </Collapsible>
-  )
+  );
 }
 
 function BookingSummarySkeleton() {
@@ -95,13 +81,10 @@ function BookingSummarySkeleton() {
       <Skeleton className="h-14 w-full rounded-lg" />
       <Skeleton className="h-14 w-full rounded-lg" />
     </div>
-  )
+  );
 }
 
-export function BookingSummary({
-  bookingQuery,
-  storageQuery,
-}: BookingSummaryProps) {
+export function BookingSummary({ bookingQuery, storageQuery }: BookingSummaryProps) {
   const {
     data: bookingData,
     error: bookingError,
@@ -109,7 +92,7 @@ export function BookingSummary({
     isLoading: isBookingLoading,
     isFetching: isBookingFetching,
     refetch: refetchBooking,
-  } = bookingQuery
+  } = bookingQuery;
 
   const {
     data: storageData,
@@ -118,52 +101,45 @@ export function BookingSummary({
     isLoading: isStorageLoading,
     isFetching: isStorageFetching,
     refetch: refetchStorage,
-  } = storageQuery
+  } = storageQuery;
 
   const isLoading =
     (isBookingLoading && bookingData === undefined) ||
-    (isStorageLoading && storageData === undefined)
+    (isStorageLoading && storageData === undefined);
   const isError =
-    (isBookingError && bookingData === undefined) ||
-    (isStorageError && storageData === undefined)
-  const isFetching = isBookingFetching || isStorageFetching
+    (isBookingError && bookingData === undefined) || (isStorageError && storageData === undefined);
+  const isFetching = isBookingFetching || isStorageFetching;
 
   const mappedStorage = useMemo(
-    () => mapApiSummaryToVarietySummary(storageData ?? [], "initial"),
+    () => mapApiSummaryToVarietySummary(storageData ?? [], 'initial'),
     [storageData],
-  )
+  );
   const mappedBooked = useMemo(
-    () => mapApiSummaryToVarietySummary(bookingData ?? [], "initial"),
+    () => mapApiSummaryToVarietySummary(bookingData ?? [], 'initial'),
     [bookingData],
-  )
+  );
 
-  const totalTable = useMemo(
-    () => buildBookingSummaryTable(mappedStorage),
-    [mappedStorage],
-  )
-  const bookedTable = useMemo(
-    () => buildBookingSummaryTable(mappedBooked),
-    [mappedBooked],
-  )
+  const totalTable = useMemo(() => buildBookingSummaryTable(mappedStorage), [mappedStorage]);
+  const bookedTable = useMemo(() => buildBookingSummaryTable(mappedBooked), [mappedBooked]);
   const netTable = useMemo(() => {
-    const netData = computeNetAvailable(mappedStorage, mappedBooked)
-    return buildBookingSummaryTable(netData)
-  }, [mappedStorage, mappedBooked])
+    const netData = computeNetAvailable(mappedStorage, mappedBooked);
+    return buildBookingSummaryTable(netData);
+  }, [mappedStorage, mappedBooked]);
 
   const handleRetry = () => {
-    void refetchBooking()
-    void refetchStorage()
-  }
+    void refetchBooking();
+    void refetchStorage();
+  };
 
   if (isLoading) {
-    return <BookingSummarySkeleton />
+    return <BookingSummarySkeleton />;
   }
 
   if (isError) {
     const errorMessage =
       bookingError?.message ??
       storageError?.message ??
-      "Something went wrong while fetching booking summary data."
+      'Something went wrong while fetching booking summary data.';
 
     return (
       <Card className="border-destructive/30 bg-destructive/5">
@@ -183,15 +159,12 @@ export function BookingSummary({
             disabled={isFetching}
             className="w-full sm:w-auto"
           >
-            <RefreshCw
-              className={cn("mr-2 size-4", isFetching && "animate-spin")}
-              aria-hidden
-            />
+            <RefreshCw className={cn('mr-2 size-4', isFetching && 'animate-spin')} aria-hidden />
             Retry
           </Button>
         </CardContent>
       </Card>
-    )
+    );
   }
 
   return (
@@ -205,14 +178,11 @@ export function BookingSummary({
                 Net available for booking
               </CardTitle>
               <CardDescription>
-                Remaining stock after booked quantities are subtracted from total
-                inventory.
+                Remaining stock after booked quantities are subtracted from total inventory.
               </CardDescription>
             </div>
             <div className="rounded-lg border border-border bg-primary/10 px-4 py-2.5 text-right">
-              <p className="text-xs font-medium text-muted-foreground">
-                Net total
-              </p>
+              <p className="text-xs font-medium text-muted-foreground">Net total</p>
               <p className="font-heading text-xl font-semibold tabular-nums text-primary">
                 {formatBookingBagCount(netTable.grandTotal)}
               </p>
@@ -220,7 +190,7 @@ export function BookingSummary({
           </div>
 
           <p className="text-sm font-medium text-foreground">
-            Quantity{" "}
+            Quantity{' '}
             <span className="tabular-nums text-muted-foreground">
               ({formatBookingBagCount(netTable.grandTotal)})
             </span>
@@ -240,10 +210,7 @@ export function BookingSummary({
         description="Full inventory available across varieties and bag sizes."
         grandTotal={totalTable.grandTotal}
       >
-        <BookingSummaryTable
-          table={totalTable}
-          emptyMessage="No total stock data available."
-        />
+        <BookingSummaryTable table={totalTable} emptyMessage="No total stock data available." />
       </BookingSummaryCollapsibleSection>
 
       <BookingSummaryCollapsibleSection
@@ -257,5 +224,5 @@ export function BookingSummary({
         />
       </BookingSummaryCollapsibleSection>
     </div>
-  )
+  );
 }

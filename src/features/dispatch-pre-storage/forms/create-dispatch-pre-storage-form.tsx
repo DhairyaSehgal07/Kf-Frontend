@@ -1,6 +1,6 @@
-import { useMemo, useState } from "react"
-import { Plus, Trash2, UserPlus } from "lucide-react"
-import { toast } from "sonner"
+import { useMemo, useState } from 'react';
+import { Plus, Trash2, UserPlus } from 'lucide-react';
+import { toast } from 'sonner';
 
 import {
   Card,
@@ -9,8 +9,8 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import {
   Field,
   FieldDescription,
@@ -19,40 +19,29 @@ import {
   FieldLegend,
   FieldSeparator,
   FieldSet,
-} from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
+} from '@/components/ui/field';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { DatePickerInput } from "@/components/date-picker"
-import {
-  BagSizeSelectField,
-  FixedBagSizeLabel,
-} from "@/components/bag-quantity-size-field"
+} from '@/components/ui/select';
+import { DatePickerInput } from '@/components/date-picker';
+import { BagSizeSelectField, FixedBagSizeLabel } from '@/components/bag-quantity-size-field';
 import {
   SearchableOptionCombobox,
   filterAndSortOptions,
   type ComboboxOption,
-} from "@/components/searchable-option-combobox"
-import {
-  DISPATCH_PRE_STORAGE_CATEGORIES,
-  POTATO_VARIETY_OPTIONS,
-} from "@/lib/constants"
-import { useDispatchLedgers } from "@/features/people/api/use-dispatch-ledgers"
-import {
-  useGetReceiptVoucherNumber,
-  voucherNumberKeys,
-} from "@/hooks/use-get-voucher-number"
-import { queryClient } from "@/lib/queryClient"
-import { useCreateNikasiGatePass } from "@/features/dispatch-pre-storage/api/use-create-nikasi-gate-pass"
-import {
-  DispatchPreStorageSummarySheet,
-} from "@/features/dispatch-pre-storage/forms/dispatch-pre-storage-summary-sheet"
+} from '@/components/searchable-option-combobox';
+import { DISPATCH_PRE_STORAGE_CATEGORIES, POTATO_VARIETY_OPTIONS } from '@/lib/constants';
+import { useDispatchLedgers } from '@/features/people/api/use-dispatch-ledgers';
+import { useGetReceiptVoucherNumber, voucherNumberKeys } from '@/hooks/use-get-voucher-number';
+import { queryClient } from '@/lib/queryClient';
+import { useCreateNikasiGatePass } from '@/features/dispatch-pre-storage/api/use-create-nikasi-gate-pass';
+import { DispatchPreStorageSummarySheet } from '@/features/dispatch-pre-storage/forms/dispatch-pre-storage-summary-sheet';
 import {
   buildCreateApiBody,
   buildSummaryValues,
@@ -65,26 +54,24 @@ import {
   numericInputProps,
   parseOptionalNumber,
   type DispatchPreStorageBagSizeRow,
-} from "@/features/dispatch-pre-storage/forms/dispatch-pre-storage-form-utils"
+} from '@/features/dispatch-pre-storage/forms/dispatch-pre-storage-form-utils';
 
-const CATEGORY_ITEMS: ComboboxOption[] = DISPATCH_PRE_STORAGE_CATEGORIES.map(
-  (value) => ({ id: value, label: value })
-)
+const CATEGORY_ITEMS: ComboboxOption[] = DISPATCH_PRE_STORAGE_CATEGORIES.map((value) => ({
+  id: value,
+  label: value,
+}));
 
 const CreateDispatchPreStorageForm = () => {
-  const { data: dispatchLedgersData } = useDispatchLedgers()
+  const { data: dispatchLedgersData } = useDispatchLedgers();
   const {
     data: nextVoucherNumber,
     isLoading: isLoadingVoucherNumber,
     isError: isVoucherNumberError,
-  } = useGetReceiptVoucherNumber("nikasi-gate-pass")
-  const { mutateAsync: createNikasiGatePass, isPending: isSubmitting } =
-    useCreateNikasiGatePass()
+  } = useGetReceiptVoucherNumber('nikasi-gate-pass');
+  const { mutateAsync: createNikasiGatePass, isPending: isSubmitting } = useCreateNikasiGatePass();
 
   const isGatePassNumberReady =
-    !isLoadingVoucherNumber &&
-    !isVoucherNumberError &&
-    nextVoucherNumber != null
+    !isLoadingVoucherNumber && !isVoucherNumberError && nextVoucherNumber != null;
 
   const dispatchLedgerOptions = useMemo<ComboboxOption[]>(
     () =>
@@ -93,68 +80,64 @@ const CreateDispatchPreStorageForm = () => {
         label: ledger.name,
       })),
     [dispatchLedgersData],
-  )
+  );
 
-  const [manualGatePassNumber, setManualGatePassNumber] = useState("")
-  const [date, setDate] = useState<Date | undefined>(new Date())
-  const [dispatchLedgerId, setDispatchLedgerId] = useState("")
-  const [category, setCategory] = useState("")
-  const [billNumber, setBillNumber] = useState("")
-  const [biltiNo, setBiltiNo] = useState("")
-  const [billBook, setBillBook] = useState("")
-  const [biltiBook, setBiltiBook] = useState("")
-  const [from, setFrom] = useState("")
-  const [to, setTo] = useState("")
-  const [truckNumber, setTruckNumber] = useState("")
-  const [bagSize, setBagSize] = useState(createDefaultBagSizeRows)
-  const [netWeight, setNetWeight] = useState("")
-  const [remarks, setRemarks] = useState("")
+  const [manualGatePassNumber, setManualGatePassNumber] = useState('');
+  const [date, setDate] = useState<Date | undefined>(new Date());
+  const [dispatchLedgerId, setDispatchLedgerId] = useState('');
+  const [category, setCategory] = useState('');
+  const [billNumber, setBillNumber] = useState('');
+  const [biltiNo, setBiltiNo] = useState('');
+  const [billBook, setBillBook] = useState('');
+  const [biltiBook, setBiltiBook] = useState('');
+  const [from, setFrom] = useState('');
+  const [to, setTo] = useState('');
+  const [truckNumber, setTruckNumber] = useState('');
+  const [bagSize, setBagSize] = useState(createDefaultBagSizeRows);
+  const [netWeight, setNetWeight] = useState('');
+  const [remarks, setRemarks] = useState('');
 
-  const [dispatchLedgerSearch, setDispatchLedgerSearch] = useState("")
-  const [dispatchLedgerComboboxOpen, setDispatchLedgerComboboxOpen] =
-    useState(false)
-  const [categorySearch, setCategorySearch] = useState("")
-  const [categoryComboboxOpen, setCategoryComboboxOpen] = useState(false)
-  const [reviewOpen, setReviewOpen] = useState(false)
+  const [dispatchLedgerSearch, setDispatchLedgerSearch] = useState('');
+  const [dispatchLedgerComboboxOpen, setDispatchLedgerComboboxOpen] = useState(false);
+  const [categorySearch, setCategorySearch] = useState('');
+  const [categoryComboboxOpen, setCategoryComboboxOpen] = useState(false);
+  const [reviewOpen, setReviewOpen] = useState(false);
 
   const sortedDispatchLedgers = useMemo(
     () => filterAndSortOptions(dispatchLedgerSearch, dispatchLedgerOptions),
     [dispatchLedgerSearch, dispatchLedgerOptions],
-  )
+  );
   const sortedCategories = useMemo(
     () => filterAndSortOptions(categorySearch, CATEGORY_ITEMS),
     [categorySearch],
-  )
+  );
 
   const totalQuantityIssued = useMemo(
     () =>
       bagSize.reduce((sum, row) => {
-        const parsed = Number(row.quantityIssued)
-        return sum + (Number.isNaN(parsed) ? 0 : parsed)
+        const parsed = Number(row.quantityIssued);
+        return sum + (Number.isNaN(parsed) ? 0 : parsed);
       }, 0),
     [bagSize],
-  )
+  );
 
-  const netWeightKg = useMemo(
-    () => parseOptionalNumber(netWeight),
-    [netWeight],
-  )
+  const netWeightKg = useMemo(() => parseOptionalNumber(netWeight), [netWeight]);
 
   const averageWeightPerBagKg = useMemo(
     () => calculateAverageWeightPerBagKg(netWeightKg, totalQuantityIssued),
     [netWeightKg, totalQuantityIssued],
-  )
+  );
 
   const displayGatePassNo = isLoadingVoucherNumber
-    ? "…"
+    ? '…'
     : isVoucherNumberError
-      ? "—"
-      : (nextVoucherNumber ?? "—")
+      ? '—'
+      : (nextVoucherNumber ?? '—');
 
   const summaryValues = useMemo(
     () =>
       buildSummaryValues({
-        gatePassNo: String(nextVoucherNumber ?? ""),
+        gatePassNo: String(nextVoucherNumber ?? ''),
         manualGatePassNumber,
         date,
         dispatchLedgerId,
@@ -187,134 +170,117 @@ const CreateDispatchPreStorageForm = () => {
       netWeight,
       remarks,
     ],
-  )
+  );
 
   const dispatchLedgerLabel = useMemo(
-    () =>
-      dispatchLedgerOptions.find((o) => o.id === dispatchLedgerId)?.label ??
-      "—",
+    () => dispatchLedgerOptions.find((o) => o.id === dispatchLedgerId)?.label ?? '—',
     [dispatchLedgerId, dispatchLedgerOptions],
-  )
+  );
 
   const canSubmit = canSubmitSummaryValues(summaryValues, {
     gatePassNumberReady: isGatePassNumberReady,
-  })
+  });
 
   const handleOpenReview = () => {
     if (!summaryValues) {
-      toast.error("Pick a date before reviewing.", { position: "bottom-right" })
-      return
+      toast.error('Pick a date before reviewing.', { position: 'bottom-right' });
+      return;
     }
     if (!isGatePassNumberReady) {
       toast.error(
         isLoadingVoucherNumber
-          ? "Loading gate pass number, please wait…"
-          : "Gate pass number unavailable. Refresh and try again.",
-        { position: "bottom-right" },
-      )
-      return
+          ? 'Loading gate pass number, please wait…'
+          : 'Gate pass number unavailable. Refresh and try again.',
+        { position: 'bottom-right' },
+      );
+      return;
     }
-    setReviewOpen(true)
-  }
+    setReviewOpen(true);
+  };
 
   const handleConfirmSubmit = async (isBooked: boolean) => {
-    if (!canSubmit || !summaryValues) return
+    if (!canSubmit || !summaryValues) return;
 
     const gatePassNo = queryClient.getQueryData<number>(
-      voucherNumberKeys.detail("nikasi-gate-pass"),
-    )
+      voucherNumberKeys.detail('nikasi-gate-pass'),
+    );
 
     if (gatePassNo == null) {
-      toast.error("Gate pass number is unavailable. Refresh and try again.", {
-        position: "bottom-right",
-      })
-      return
+      toast.error('Gate pass number is unavailable. Refresh and try again.', {
+        position: 'bottom-right',
+      });
+      return;
     }
 
-    let body
+    let body;
     try {
-      body = buildCreateApiBody(summaryValues, gatePassNo, isBooked)
+      body = buildCreateApiBody(summaryValues, gatePassNo, isBooked);
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Invalid form data.",
-        { position: "bottom-right" },
-      )
-      return
+      toast.error(error instanceof Error ? error.message : 'Invalid form data.', {
+        position: 'bottom-right',
+      });
+      return;
     }
 
     try {
-      const { message } = await createNikasiGatePass(body)
-      toast.success(message ?? "Nikasi gate pass created.", {
-        position: "bottom-right",
-      })
-      setReviewOpen(false)
-      resetForm()
+      const { message } = await createNikasiGatePass(body);
+      toast.success(message ?? 'Nikasi gate pass created.', {
+        position: 'bottom-right',
+      });
+      setReviewOpen(false);
+      resetForm();
     } catch (error) {
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Failed to create nikasi gate pass.",
-        { position: "bottom-right" },
-      )
+      toast.error(error instanceof Error ? error.message : 'Failed to create nikasi gate pass.', {
+        position: 'bottom-right',
+      });
     }
-  }
+  };
 
   const resetComboboxState = () => {
-    setDispatchLedgerSearch("")
-    setDispatchLedgerComboboxOpen(false)
-    setCategorySearch("")
-    setCategoryComboboxOpen(false)
-  }
+    setDispatchLedgerSearch('');
+    setDispatchLedgerComboboxOpen(false);
+    setCategorySearch('');
+    setCategoryComboboxOpen(false);
+  };
 
   const resetForm = () => {
-    setManualGatePassNumber("")
-    setDate(new Date())
-    setDispatchLedgerId("")
-    setCategory("")
-    setBillNumber("")
-    setBiltiNo("")
-    setBillBook("")
-    setBiltiBook("")
-    setFrom("")
-    setTo("")
-    setTruckNumber("")
-    setBagSize(createDefaultBagSizeRows())
-    setNetWeight("")
-    setRemarks("")
-    resetComboboxState()
-  }
+    setManualGatePassNumber('');
+    setDate(new Date());
+    setDispatchLedgerId('');
+    setCategory('');
+    setBillNumber('');
+    setBiltiNo('');
+    setBillBook('');
+    setBiltiBook('');
+    setFrom('');
+    setTo('');
+    setTruckNumber('');
+    setBagSize(createDefaultBagSizeRows());
+    setNetWeight('');
+    setRemarks('');
+    resetComboboxState();
+  };
 
-  const updateBagSizeRow = (
-    index: number,
-    patch: Partial<DispatchPreStorageBagSizeRow>,
-  ) => {
+  const updateBagSizeRow = (index: number, patch: Partial<DispatchPreStorageBagSizeRow>) => {
     setBagSize((current) =>
-      current.map((row, rowIndex) =>
-        rowIndex === index ? { ...row, ...patch } : row,
-      ),
-    )
-  }
+      current.map((row, rowIndex) => (rowIndex === index ? { ...row, ...patch } : row)),
+    );
+  };
 
   return (
     <>
       <Card className="mx-auto w-full max-w-4xl shadow-sm">
         <CardHeader className="border-b bg-muted/30 pb-6">
           <CardTitle className="font-heading text-xl font-semibold tracking-tight sm:text-2xl">
-            Dispatch Gate Pass {" "}
+            Dispatch Gate Pass{' '}
             <span className="font-mono tabular-nums text-primary sm:text-2xl">
               #{displayGatePassNo}
             </span>
           </CardTitle>
-          <CardDescription className="text-base">
-            Create a dispatch gate pass.
-          </CardDescription>
+          <CardDescription className="text-base">Create a dispatch gate pass.</CardDescription>
         </CardHeader>
 
-        <form
-          id="create-dispatch-pre-storage-form"
-          noValidate
-          onSubmit={(e) => e.preventDefault()}
-        >
+        <form id="create-dispatch-pre-storage-form" noValidate onSubmit={(e) => e.preventDefault()}>
           <CardContent className="pb-8 pt-8">
             <FieldGroup className="@container/field-group gap-10">
               <FieldSet>
@@ -350,9 +316,7 @@ const CreateDispatchPreStorageForm = () => {
                   />
 
                   <Field>
-                    <FieldLabel htmlFor="dispatch-pre-storage-category">
-                      Category
-                    </FieldLabel>
+                    <FieldLabel htmlFor="dispatch-pre-storage-category">Category</FieldLabel>
                     <SearchableOptionCombobox
                       id="dispatch-pre-storage-category"
                       name="category"
@@ -427,14 +391,11 @@ const CreateDispatchPreStorageForm = () => {
                   Route &amp; Vehicle
                 </FieldLegend>
                 <FieldDescription>
-                  Source, destination, vehicle, bill number, and bilti for the
-                  dispatch.
+                  Source, destination, vehicle, bill number, and bilti for the dispatch.
                 </FieldDescription>
                 <FieldGroup className="mt-5 grid grid-cols-1 gap-6 @md/field-group:grid-cols-3">
                   <Field>
-                    <FieldLabel htmlFor="dispatch-pre-storage-from">
-                      From
-                    </FieldLabel>
+                    <FieldLabel htmlFor="dispatch-pre-storage-from">From</FieldLabel>
                     <Input
                       id="dispatch-pre-storage-from"
                       name="from"
@@ -446,9 +407,7 @@ const CreateDispatchPreStorageForm = () => {
                   </Field>
 
                   <Field>
-                    <FieldLabel htmlFor="dispatch-pre-storage-to">
-                      To
-                    </FieldLabel>
+                    <FieldLabel htmlFor="dispatch-pre-storage-to">To</FieldLabel>
                     <Input
                       id="dispatch-pre-storage-to"
                       name="to"
@@ -467,9 +426,7 @@ const CreateDispatchPreStorageForm = () => {
                       id="dispatch-pre-storage-truck-number"
                       name="truckNumber"
                       value={truckNumber}
-                      onChange={(e) =>
-                        setTruckNumber(e.target.value.toUpperCase())
-                      }
+                      onChange={(e) => setTruckNumber(e.target.value.toUpperCase())}
                       placeholder="e.g. PB10AB1234"
                       autoComplete="off"
                       className="uppercase"
@@ -477,9 +434,7 @@ const CreateDispatchPreStorageForm = () => {
                   </Field>
 
                   <Field>
-                    <FieldLabel htmlFor="dispatch-pre-storage-bill-number">
-                      Bill Number
-                    </FieldLabel>
+                    <FieldLabel htmlFor="dispatch-pre-storage-bill-number">Bill Number</FieldLabel>
                     <Input
                       {...numericInputProps}
                       id="dispatch-pre-storage-bill-number"
@@ -493,9 +448,7 @@ const CreateDispatchPreStorageForm = () => {
                   </Field>
 
                   <Field>
-                    <FieldLabel htmlFor="dispatch-pre-storage-bilti-no">
-                      Bilti No.
-                    </FieldLabel>
+                    <FieldLabel htmlFor="dispatch-pre-storage-bilti-no">Bilti No.</FieldLabel>
                     <Input
                       {...numericInputProps}
                       id="dispatch-pre-storage-bilti-no"
@@ -509,9 +462,7 @@ const CreateDispatchPreStorageForm = () => {
                   </Field>
 
                   <Field>
-                    <FieldLabel htmlFor="dispatch-pre-storage-bill-book">
-                      Bill book
-                    </FieldLabel>
+                    <FieldLabel htmlFor="dispatch-pre-storage-bill-book">Bill book</FieldLabel>
                     <Input
                       id="dispatch-pre-storage-bill-book"
                       name="billBook"
@@ -523,9 +474,7 @@ const CreateDispatchPreStorageForm = () => {
                   </Field>
 
                   <Field>
-                    <FieldLabel htmlFor="dispatch-pre-storage-bilti-book">
-                      Bilti book
-                    </FieldLabel>
+                    <FieldLabel htmlFor="dispatch-pre-storage-bilti-book">Bilti book</FieldLabel>
                     <Input
                       id="dispatch-pre-storage-bilti-book"
                       name="biltiBook"
@@ -545,16 +494,13 @@ const CreateDispatchPreStorageForm = () => {
                   Bag Lines
                 </FieldLegend>
                 <FieldDescription>
-                  Enter variety and quantity issued for each bag size. Use Add
-                  more for an extra size line. Rows with zero quantity are
-                  ignored on submit.
+                  Enter variety and quantity issued for each bag size. Use Add more for an extra
+                  size line. Rows with zero quantity are ignored on submit.
                 </FieldDescription>
 
                 <div className="mt-5 rounded-lg border border-border">
                   <div className="hidden border-b border-border bg-muted/50 px-3 py-2.5 lg:grid lg:grid-cols-12 lg:gap-2">
-                    <div className="col-span-3 text-sm font-medium text-muted-foreground">
-                      Size
-                    </div>
+                    <div className="col-span-3 text-sm font-medium text-muted-foreground">Size</div>
                     <div className="col-span-4 text-sm font-medium text-muted-foreground">
                       Variety
                     </div>
@@ -580,15 +526,10 @@ const CreateDispatchPreStorageForm = () => {
                               labelClassName="lg:sr-only"
                               isInvalid={false}
                               onBlur={() => {}}
-                              onValueChange={(value) =>
-                                updateBagSizeRow(index, { size: value })
-                              }
+                              onValueChange={(value) => updateBagSizeRow(index, { size: value })}
                             />
                           ) : (
-                            <FixedBagSizeLabel
-                              size={row.size}
-                              rowIndex={index}
-                            />
+                            <FixedBagSizeLabel size={row.size} rowIndex={index} />
                           )}
                         </div>
 
@@ -602,9 +543,7 @@ const CreateDispatchPreStorageForm = () => {
                             </FieldLabel>
                             <Select
                               value={row.variety || undefined}
-                              onValueChange={(value) =>
-                                updateBagSizeRow(index, { variety: value })
-                              }
+                              onValueChange={(value) => updateBagSizeRow(index, { variety: value })}
                             >
                               <SelectTrigger
                                 id={`dispatch-pre-storage-bag-size-${index}-variety`}
@@ -658,9 +597,7 @@ const CreateDispatchPreStorageForm = () => {
                               aria-label={`Remove bag size row ${index + 1}`}
                               onClick={() =>
                                 setBagSize((current) =>
-                                  current.filter(
-                                    (_, rowIndex) => rowIndex !== index,
-                                  ),
+                                  current.filter((_, rowIndex) => rowIndex !== index),
                                 )
                               }
                             >
@@ -677,12 +614,7 @@ const CreateDispatchPreStorageForm = () => {
                       type="button"
                       variant="outline"
                       className="h-11"
-                      onClick={() =>
-                        setBagSize((current) => [
-                          ...current,
-                          createEmptyBagSizeRow(),
-                        ])
-                      }
+                      onClick={() => setBagSize((current) => [...current, createEmptyBagSizeRow()])}
                     >
                       <Plus className="mr-2 size-4" aria-hidden />
                       Add more
@@ -706,14 +638,12 @@ const CreateDispatchPreStorageForm = () => {
                   Weight &amp; Remarks
                 </FieldLegend>
                 <FieldDescription>
-                  Net weight and remarks. Average weight per bag is calculated
-                  from net weight divided by total bags issued.
+                  Net weight and remarks. Average weight per bag is calculated from net weight
+                  divided by total bags issued.
                 </FieldDescription>
                 <FieldGroup className="mt-5 grid grid-cols-1 gap-6 @md/field-group:grid-cols-2">
                   <Field>
-                    <FieldLabel htmlFor="dispatch-pre-storage-net-weight">
-                      Net Weight
-                    </FieldLabel>
+                    <FieldLabel htmlFor="dispatch-pre-storage-net-weight">Net Weight</FieldLabel>
                     <Input
                       {...numericInputProps}
                       id="dispatch-pre-storage-net-weight"
@@ -736,11 +666,11 @@ const CreateDispatchPreStorageForm = () => {
                       name="averageWeightPerBag"
                       value={
                         totalQuantityIssued > 0 && netWeightKg > 0
-                          ? averageWeightPerBagKg.toLocaleString("en-IN", {
+                          ? averageWeightPerBagKg.toLocaleString('en-IN', {
                               minimumFractionDigits: 2,
                               maximumFractionDigits: 2,
                             })
-                          : ""
+                          : ''
                       }
                       readOnly
                       tabIndex={-1}
@@ -753,9 +683,7 @@ const CreateDispatchPreStorageForm = () => {
                   </Field>
 
                   <Field className="@md/field-group:col-span-2">
-                    <FieldLabel htmlFor="dispatch-pre-storage-remarks">
-                      Remarks
-                    </FieldLabel>
+                    <FieldLabel htmlFor="dispatch-pre-storage-remarks">Remarks</FieldLabel>
                     <Textarea
                       id="dispatch-pre-storage-remarks"
                       name="remarks"
@@ -769,25 +697,19 @@ const CreateDispatchPreStorageForm = () => {
 
                 <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
                   <div className="rounded-lg border border-border bg-muted/30 px-4 py-3">
-                    <div className="text-sm font-medium text-muted-foreground">
-                      Quantity issued
-                    </div>
+                    <div className="text-sm font-medium text-muted-foreground">Quantity issued</div>
                     <div className="mt-1 font-heading text-xl font-semibold tabular-nums text-foreground">
-                      {totalQuantityIssued.toLocaleString("en-IN")}
+                      {totalQuantityIssued.toLocaleString('en-IN')}
                     </div>
                   </div>
                   <div className="rounded-lg border border-border bg-muted/30 px-4 py-3">
-                    <div className="text-sm font-medium text-muted-foreground">
-                      Net weight
-                    </div>
+                    <div className="text-sm font-medium text-muted-foreground">Net weight</div>
                     <div className="mt-1 font-heading text-xl font-semibold tabular-nums text-foreground">
                       {formatOptionalNumber(netWeight)} kg
                     </div>
                   </div>
                   <div className="rounded-lg border border-border bg-muted/30 px-4 py-3">
-                    <div className="text-sm font-medium text-muted-foreground">
-                      Avg. per bag
-                    </div>
+                    <div className="text-sm font-medium text-muted-foreground">Avg. per bag</div>
                     <div className="mt-1 font-heading text-xl font-semibold tabular-nums text-foreground">
                       {formatWeightKg(averageWeightPerBagKg)}
                     </div>
@@ -801,12 +723,8 @@ const CreateDispatchPreStorageForm = () => {
             <Button variant="outline" type="button" onClick={resetForm}>
               Reset Form
             </Button>
-            <Button
-              type="button"
-              onClick={handleOpenReview}
-              disabled={isLoadingVoucherNumber}
-            >
-              {isLoadingVoucherNumber ? "Loading…" : "Review"}
+            <Button type="button" onClick={handleOpenReview} disabled={isLoadingVoucherNumber}>
+              {isLoadingVoucherNumber ? 'Loading…' : 'Review'}
             </Button>
           </CardFooter>
         </form>
@@ -823,7 +741,7 @@ const CreateDispatchPreStorageForm = () => {
         isSubmitting={isSubmitting}
       />
     </>
-  )
-}
+  );
+};
 
-export default CreateDispatchPreStorageForm
+export default CreateDispatchPreStorageForm;

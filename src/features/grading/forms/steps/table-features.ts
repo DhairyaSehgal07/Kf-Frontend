@@ -10,7 +10,7 @@ import {
   rowSelectionFeature,
   rowSortingFeature,
   tableFeatures,
-} from "@tanstack/react-table"
+} from '@tanstack/react-table';
 
 export const gradingFormTableFeatures = tableFeatures({
   columnFilteringFeature,
@@ -25,6 +25,6 @@ export const gradingFormTableFeatures = tableFeatures({
   filterFns: {
     includesString: filterFn_includesString,
   },
-})
+});
 
-export type GradingFormTableFeatures = typeof gradingFormTableFeatures
+export type GradingFormTableFeatures = typeof gradingFormTableFeatures;

@@ -1,8 +1,5 @@
-
 const AnalyticsDispatchTab = () => {
-  return (
-    <div>AnalyticsDispatchTab</div>
-  )
-}
+  return <div>AnalyticsDispatchTab</div>;
+};
 
-export default AnalyticsDispatchTab
+export default AnalyticsDispatchTab;

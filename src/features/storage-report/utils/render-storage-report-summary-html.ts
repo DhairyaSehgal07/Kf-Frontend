@@ -2,24 +2,22 @@ import {
   formatSummaryBagCount,
   hasSummaryTableData,
   type StorageReportSummaryTable,
-} from "@/features/storage-report/utils/build-storage-report-summaries"
+} from '@/features/storage-report/utils/build-storage-report-summaries';
 
 function escapeHtml(value: string): string {
   return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }
 
-export function buildSummaryTableHtml(
-  summary: StorageReportSummaryTable,
-): string {
+export function buildSummaryTableHtml(summary: StorageReportSummaryTable): string {
   if (!hasSummaryTableData(summary)) {
     return `<section class="summary-section">
       <h3 class="summary-title">${escapeHtml(summary.title)}</h3>
       <p class="summary-empty">No data</p>
-    </section>`
+    </section>`;
   }
 
   const headerCells = [
@@ -29,7 +27,7 @@ export function buildSummaryTableHtml(
         `<th class="numeric" title="${escapeHtml(sizeName)}">${escapeHtml(sizeName)}</th>`,
     ),
     `<th class="numeric">Total</th>`,
-  ].join("")
+  ].join('');
 
   const bodyRows = summary.rows
     .map(
@@ -40,11 +38,11 @@ export function buildSummaryTableHtml(
             (sizeName) =>
               `<td class="numeric">${escapeHtml(formatSummaryBagCount(row.values[sizeName] ?? 0))}</td>`,
           )
-          .join("")}
+          .join('')}
         <td class="numeric total-col">${escapeHtml(formatSummaryBagCount(row.total))}</td>
       </tr>`,
     )
-    .join("")
+    .join('');
 
   const footerCells = [
     `<th scope="row">Bag total</th>`,
@@ -53,7 +51,7 @@ export function buildSummaryTableHtml(
         `<td class="numeric">${escapeHtml(formatSummaryBagCount(summary.totals[sizeName] ?? 0))}</td>`,
     ),
     `<td class="numeric total-col">${escapeHtml(formatSummaryBagCount(summary.grandTotal))}</td>`,
-  ].join("")
+  ].join('');
 
   return `<section class="summary-section">
     <h3 class="summary-title">${escapeHtml(summary.title)}</h3>
@@ -70,13 +68,11 @@ export function buildSummaryTableHtml(
         </tfoot>
       </table>
     </div>
-  </section>`
+  </section>`;
 }
 
-export function buildSummarySectionsHtml(
-  summaries: StorageReportSummaryTable[],
-): string {
-  return summaries.map((summary) => buildSummaryTableHtml(summary)).join("\n")
+export function buildSummarySectionsHtml(summaries: StorageReportSummaryTable[]): string {
+  return summaries.map((summary) => buildSummaryTableHtml(summary)).join('\n');
 }
 
 export function buildSummaryPreviewStyles(): string {
@@ -119,5 +115,5 @@ export function buildSummaryPreviewStyles(): string {
     .summary-table tfoot td {
       background: var(--muted-fill);
     }
-  `
+  `;
 }

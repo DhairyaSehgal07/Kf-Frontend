@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState } from 'react';
 import {
   AlertCircle,
   Loader2,
@@ -8,19 +8,13 @@ import {
   Search,
   Thermometer,
   X,
-} from 'lucide-react'
-import { toast } from 'sonner'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
-import { DatePickerInput } from '@/components/date-picker'
-import { Input } from '@/components/ui/input'
+} from 'lucide-react';
+import { toast } from 'sonner';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { DatePickerInput } from '@/components/date-picker';
+import { Input } from '@/components/ui/input';
 import {
   Item,
   ItemActions,
@@ -29,8 +23,8 @@ import {
   ItemHeader,
   ItemMedia,
   ItemTitle,
-} from '@/components/ui/item'
-import { Skeleton } from '@/components/ui/skeleton'
+} from '@/components/ui/item';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
   TableBody,
@@ -38,39 +32,36 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table'
-import { useCreateTemperatureRecord } from '@/features/additional/api/use-create-temperature-record'
-import { useTemperatureRecords } from '@/features/additional/api/use-temperature-records'
-import { useUpdateTemperatureRecord } from '@/features/additional/api/use-update-temperature-record'
-import { cn } from '@/lib/utils'
+} from '@/components/ui/table';
+import { useCreateTemperatureRecord } from '@/features/additional/api/use-create-temperature-record';
+import { useTemperatureRecords } from '@/features/additional/api/use-temperature-records';
+import { useUpdateTemperatureRecord } from '@/features/additional/api/use-update-temperature-record';
+import { cn } from '@/lib/utils';
 import {
   TemperatureReadingDialog,
   type TemperatureReadingDraft,
-} from './temperature-reading-dialog.tsx'
-import {
-  TemperatureTrendChart,
-  type TemperatureChartPoint,
-} from './temperature-trend-chart.tsx'
+} from './temperature-reading-dialog.tsx';
+import { TemperatureTrendChart, type TemperatureChartPoint } from './temperature-trend-chart.tsx';
 import type {
   CreateTemperatureRecordBody,
   TemperatureRecord as ApiTemperatureRecord,
-} from '@/features/additional/api/types'
+} from '@/features/additional/api/types';
 
 type TemperatureReading = {
-  chamber: string
-  value: number
-}
+  chamber: string;
+  value: number;
+};
 
 type TemperatureRecord = {
-  id: string
-  date: string
-  readings: TemperatureReading[]
-}
+  id: string;
+  date: string;
+  readings: TemperatureReading[];
+};
 
-const UNIT = '°F'
-const TEMP_MIN = -58
-const TEMP_MAX = 122
-const DEFAULT_CHAMBER_IDS = ['1', '2', '3', '4', '5', '6'] as const
+const UNIT = '°F';
+const TEMP_MIN = -58;
+const TEMP_MAX = 122;
+const DEFAULT_CHAMBER_IDS = ['1', '2', '3', '4', '5', '6'] as const;
 
 const INITIAL_PRESETS: Record<string, number> = {
   '1': 32,
@@ -79,7 +70,7 @@ const INITIAL_PRESETS: Record<string, number> = {
   '4': 34,
   '5': 35,
   '6': 36,
-}
+};
 
 function formatDateTime(value: string) {
   return new Intl.DateTimeFormat('en-IN', {
@@ -88,25 +79,25 @@ function formatDateTime(value: string) {
     year: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
-  }).format(new Date(value))
+  }).format(new Date(value));
 }
 
 function formatTemperature(value: number) {
   return `${new Intl.NumberFormat('en-IN', {
     minimumFractionDigits: 1,
     maximumFractionDigits: 1,
-  }).format(value)}${UNIT}`
+  }).format(value)}${UNIT}`;
 }
 
 function isSameCalendarDay(value: string, selectedDate: Date | undefined) {
-  if (!selectedDate) return true
+  if (!selectedDate) return true;
 
-  const date = new Date(value)
+  const date = new Date(value);
   return (
     date.getFullYear() === selectedDate.getFullYear() &&
     date.getMonth() === selectedDate.getMonth() &&
     date.getDate() === selectedDate.getDate()
-  )
+  );
 }
 
 function getTemperatureStatus(value: number) {
@@ -114,42 +105,40 @@ function getTemperatureStatus(value: number) {
     return {
       label: 'Ideal',
       className: 'bg-primary/10 text-primary ring-primary/20',
-    }
+    };
   }
 
   if (value >= 34 && value <= 40) {
     return {
       label: 'Watch',
       className: 'bg-secondary text-secondary-foreground ring-border',
-    }
+    };
   }
 
   if (value >= 41 && value <= 48) {
     return {
       label: 'Warm',
       className: 'bg-muted text-foreground ring-border',
-    }
+    };
   }
 
   if (value > 48) {
     return {
       label: 'High',
       className: 'bg-destructive/10 text-destructive ring-destructive/20',
-    }
+    };
   }
 
   return {
     label: 'Low',
     className: 'bg-background text-muted-foreground ring-border',
-  }
+  };
 }
 
-function draftToCreateBody(
-  draft: TemperatureReadingDraft,
-): CreateTemperatureRecordBody {
-  const [hours = '00', minutes = '00'] = draft.time.split(':')
-  const date = new Date(draft.date)
-  date.setHours(Number(hours), Number(minutes), 0, 0)
+function draftToCreateBody(draft: TemperatureReadingDraft): CreateTemperatureRecordBody {
+  const [hours = '00', minutes = '00'] = draft.time.split(':');
+  const date = new Date(draft.date);
+  date.setHours(Number(hours), Number(minutes), 0, 0);
 
   return {
     date: date.toISOString(),
@@ -157,37 +146,38 @@ function draftToCreateBody(
       chamber: `Chamber ${normalizeChamberLabel(reading.chamber)}`,
       value: Number(reading.value) || 0,
     })),
-  }
+  };
 }
 
 function getRecordDraft(record: TemperatureRecord): TemperatureReadingDraft {
-  const date = new Date(record.date)
+  const date = new Date(record.date);
 
   return {
     date,
-    time: `${String(date.getHours()).padStart(2, '0')}:${String(
-      date.getMinutes(),
-    ).padStart(2, '0')}`,
+    time: `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(
+      2,
+      '0',
+    )}`,
     readings: record.readings.map((reading) => ({
       chamber: reading.chamber,
       value: String(reading.value),
     })),
-  }
+  };
 }
 
 function TemperatureCell({
   value,
   preset,
 }: {
-  value: number | undefined
-  preset: number | undefined
+  value: number | undefined;
+  preset: number | undefined;
 }) {
   if (value == null) {
-    return <span className="text-muted-foreground">-</span>
+    return <span className="text-muted-foreground">-</span>;
   }
 
-  const status = getTemperatureStatus(value)
-  const difference = preset == null ? null : value - preset
+  const status = getTemperatureStatus(value);
+  const difference = preset == null ? null : value - preset;
 
   return (
     <div className="flex justify-end">
@@ -200,24 +190,20 @@ function TemperatureCell({
         <span>{formatTemperature(value)}</span>
         <span className="text-xs font-normal opacity-85">
           {status.label}
-          {difference != null
-            ? ` ${difference >= 0 ? '+' : ''}${difference.toFixed(1)}`
-            : ''}
+          {difference != null ? ` ${difference >= 0 ? '+' : ''}${difference.toFixed(1)}` : ''}
         </span>
       </div>
     </div>
-  )
+  );
 }
 
 function getLatestRecord(records: TemperatureRecord[]) {
-  return [...records].sort(
-    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
-  )[0]
+  return [...records].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
 }
 
 function normalizeChamberLabel(chamber: string) {
-  const chamberNumber = chamber.match(/\d+/)?.[0]
-  return chamberNumber ?? chamber.trim()
+  const chamberNumber = chamber.match(/\d+/)?.[0];
+  return chamberNumber ?? chamber.trim();
 }
 
 function toTemperatureRecord(record: ApiTemperatureRecord): TemperatureRecord {
@@ -228,7 +214,7 @@ function toTemperatureRecord(record: ApiTemperatureRecord): TemperatureRecord {
       chamber: normalizeChamberLabel(reading.chamber),
       value: reading.value,
     })),
-  }
+  };
 }
 
 function TemperaturePage() {
@@ -238,42 +224,38 @@ function TemperaturePage() {
     isFetching,
     isLoading,
     refetch,
-  } = useTemperatureRecords()
-  const createTemperatureRecord = useCreateTemperatureRecord()
-  const updateTemperatureRecord = useUpdateTemperatureRecord()
-  const [presets, setPresets] = useState(INITIAL_PRESETS)
-  const [searchQuery, setSearchQuery] = useState('')
-  const [dateFilter, setDateFilter] = useState<Date | undefined>()
-  const [addDialogOpen, setAddDialogOpen] = useState(false)
-  const [editingRecord, setEditingRecord] = useState<TemperatureRecord | null>(
-    null,
-  )
+  } = useTemperatureRecords();
+  const createTemperatureRecord = useCreateTemperatureRecord();
+  const updateTemperatureRecord = useUpdateTemperatureRecord();
+  const [presets, setPresets] = useState(INITIAL_PRESETS);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [dateFilter, setDateFilter] = useState<Date | undefined>();
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [editingRecord, setEditingRecord] = useState<TemperatureRecord | null>(null);
 
   const records = useMemo(() => {
-    const fetchedRecords = temperatureRecords.map(toTemperatureRecord)
+    const fetchedRecords = temperatureRecords.map(toTemperatureRecord);
 
-    return fetchedRecords
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-  }, [temperatureRecords])
+    return fetchedRecords.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [temperatureRecords]);
 
   const filteredRecords = useMemo(() => {
-    const query = searchQuery.trim().toLowerCase()
+    const query = searchQuery.trim().toLowerCase();
 
     return records.filter((record) => {
-      if (!isSameCalendarDay(record.date, dateFilter)) return false
-      if (!query) return true
+      if (!isSameCalendarDay(record.date, dateFilter)) return false;
+      if (!query) return true;
 
       return (
         record.id.toLowerCase().includes(query) ||
         formatDateTime(record.date).toLowerCase().includes(query) ||
         record.readings.some(
           (reading) =>
-            reading.chamber.toLowerCase().includes(query) ||
-            String(reading.value).includes(query),
+            reading.chamber.toLowerCase().includes(query) || String(reading.value).includes(query),
         )
-      )
-    })
-  }, [dateFilter, records, searchQuery])
+      );
+    });
+  }, [dateFilter, records, searchQuery]);
 
   const chartData = useMemo<TemperatureChartPoint[]>(() => {
     return [...filteredRecords]
@@ -286,44 +268,44 @@ function TemperaturePage() {
         values: Object.fromEntries(
           record.readings.map((reading) => [reading.chamber, reading.value]),
         ),
-      }))
-  }, [filteredRecords])
+      }));
+  }, [filteredRecords]);
 
-  const latestRecord = getLatestRecord(records)
+  const latestRecord = getLatestRecord(records);
   const latestAverage =
     latestRecord?.readings.reduce((total, reading) => total + reading.value, 0) /
-    (latestRecord?.readings.length || 1)
+    (latestRecord?.readings.length || 1);
 
   const handlePresetChange = (chamberId: string, value: string) => {
     setPresets((current) => {
-      const next = { ...current }
+      const next = { ...current };
 
       if (!value) {
-        delete next[chamberId]
-        return next
+        delete next[chamberId];
+        return next;
       }
 
-      next[chamberId] = Number(value)
-      return next
-    })
-  }
+      next[chamberId] = Number(value);
+      return next;
+    });
+  };
 
   const handleAddRecord = (draft: TemperatureReadingDraft) => {
     createTemperatureRecord.mutate(draftToCreateBody(draft), {
       onSuccess: (response) => {
-        setAddDialogOpen(false)
+        setAddDialogOpen(false);
         toast.success(response.message ?? 'Temperature record created', {
           position: 'bottom-right',
-        })
+        });
       },
       onError: (mutationError) => {
-        toast.error(mutationError.message, { position: 'bottom-right' })
+        toast.error(mutationError.message, { position: 'bottom-right' });
       },
-    })
-  }
+    });
+  };
 
   const handleUpdateRecord = (draft: TemperatureReadingDraft) => {
-    if (!editingRecord) return
+    if (!editingRecord) return;
 
     updateTemperatureRecord.mutate(
       {
@@ -332,17 +314,17 @@ function TemperaturePage() {
       },
       {
         onSuccess: (response) => {
-          setEditingRecord(null)
+          setEditingRecord(null);
           toast.success(response.message ?? 'Temperature record updated', {
             position: 'bottom-right',
-          })
+          });
         },
         onError: (mutationError) => {
-          toast.error(mutationError.message, { position: 'bottom-right' })
+          toast.error(mutationError.message, { position: 'bottom-right' });
         },
       },
-    )
-  }
+    );
+  };
 
   return (
     <main className="flex min-w-0 flex-1 flex-col gap-4 sm:gap-6">
@@ -351,18 +333,14 @@ function TemperaturePage() {
           Temperature
         </h1>
         <p className="text-sm text-muted-foreground">
-          Monitor chamber readings, compare against preset targets, and review
-          recent trends.
+          Monitor chamber readings, compare against preset targets, and review recent trends.
         </p>
       </div>
 
       <Item variant="outline" size="sm" className="rounded-xl bg-card shadow-sm">
         <ItemHeader className="flex-col items-stretch gap-3 sm:flex-row sm:items-center">
           <div className="flex min-w-0 items-center gap-3">
-            <ItemMedia
-              variant="icon"
-              className="size-10 rounded-xl bg-primary/10 text-primary"
-            >
+            <ItemMedia variant="icon" className="size-10 rounded-xl bg-primary/10 text-primary">
               <Thermometer className="size-5" aria-hidden="true" />
             </ItemMedia>
             <ItemContent className="min-w-0">
@@ -418,25 +396,20 @@ function TemperaturePage() {
             Preset temperatures
           </CardTitle>
           <CardDescription>
-            Set target values per chamber. Differences are shown beside every
-            reading in the table.
+            Set target values per chamber. Differences are shown beside every reading in the table.
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
           {DEFAULT_CHAMBER_IDS.map((chamberId) => (
             <label key={chamberId} className="flex min-w-0 flex-col gap-1.5">
-              <span className="text-sm font-medium text-foreground">
-                Chamber {chamberId}
-              </span>
+              <span className="text-sm font-medium text-foreground">Chamber {chamberId}</span>
               <Input
                 type="number"
                 inputMode="decimal"
                 min={TEMP_MIN}
                 max={TEMP_MAX}
                 value={presets[chamberId] ?? ''}
-                onChange={(event) =>
-                  handlePresetChange(chamberId, event.target.value)
-                }
+                onChange={(event) => handlePresetChange(chamberId, event.target.value)}
                 className="h-10 tabular-nums"
                 aria-label={`Preset temperature for chamber ${chamberId}`}
               />
@@ -514,10 +487,7 @@ function TemperaturePage() {
                 </div>
               </div>
               {Array.from({ length: 5 }).map((_, rowIndex) => (
-                <div
-                  key={rowIndex}
-                  className="border-b border-border px-3 py-3 last:border-b-0"
-                >
+                <div key={rowIndex} className="border-b border-border px-3 py-3 last:border-b-0">
                   <div className="grid min-w-4xl grid-cols-8 gap-3">
                     {Array.from({ length: 8 }).map((_, columnIndex) => (
                       <Skeleton key={columnIndex} className="h-8" />
@@ -531,18 +501,14 @@ function TemperaturePage() {
               <div className="flex gap-2">
                 <AlertCircle className="mt-0.5 size-4 shrink-0" />
                 <div className="space-y-1">
-                  <p className="font-medium">
-                    Failed to load temperature records.
-                  </p>
+                  <p className="font-medium">Failed to load temperature records.</p>
                   <p>{error.message}</p>
                 </div>
               </div>
             </div>
           ) : filteredRecords.length === 0 ? (
             <div className="rounded-xl border border-dashed border-border p-8 text-center">
-              <p className="text-sm font-medium text-foreground">
-                No temperature readings found.
-              </p>
+              <p className="text-sm font-medium text-foreground">No temperature readings found.</p>
               <p className="mt-1 text-sm text-muted-foreground">
                 Try changing the search or date filter.
               </p>
@@ -552,9 +518,7 @@ function TemperaturePage() {
               <Table>
                 <TableHeader className="bg-muted/50">
                   <TableRow className="hover:bg-muted/50">
-                    <TableHead className="sticky left-0 z-10 min-w-44 bg-muted/95">
-                      Date
-                    </TableHead>
+                    <TableHead className="sticky left-0 z-10 min-w-44 bg-muted/95">Date</TableHead>
                     {DEFAULT_CHAMBER_IDS.map((chamberId) => (
                       <TableHead
                         key={chamberId}
@@ -580,18 +544,13 @@ function TemperaturePage() {
                         </div>
                       </TableCell>
                       {DEFAULT_CHAMBER_IDS.map((chamberId) => {
-                        const reading = record.readings.find(
-                          (item) => item.chamber === chamberId,
-                        )
+                        const reading = record.readings.find((item) => item.chamber === chamberId);
 
                         return (
                           <TableCell key={chamberId} className="text-right">
-                            <TemperatureCell
-                              value={reading?.value}
-                              preset={presets[chamberId]}
-                            />
+                            <TemperatureCell value={reading?.value} preset={presets[chamberId]} />
                           </TableCell>
-                        )
+                        );
                       })}
                       <TableCell className="text-right">
                         <Button
@@ -631,11 +590,11 @@ function TemperaturePage() {
         open={editingRecord != null}
         isSubmitting={updateTemperatureRecord.isPending}
         onOpenChange={(open) => {
-          if (!open) setEditingRecord(null)
+          if (!open) setEditingRecord(null);
         }}
         onSubmit={handleUpdateRecord}
       />
     </main>
-  )
+  );
 }
-export default TemperaturePage
+export default TemperaturePage;

@@ -180,8 +180,7 @@ function applyCellStyle(
     fontColorArgb?: string;
   },
 ) {
-  const numFmt =
-    exportCell.kind === 'number' ? getExcelNumFmt(exportCell.format) : undefined;
+  const numFmt = exportCell.kind === 'number' ? getExcelNumFmt(exportCell.format) : undefined;
 
   Object.assign(cell, {
     style: createBodyStyle({
@@ -289,9 +288,7 @@ export async function exportGradingReportToExcel({
   const metadataText = [
     `Generated: ${format(generatedAt, 'do MMM yyyy, h:mm a')}`,
     `Period: ${formatDateRangeLabel(fromDate, toDate)}`,
-    `${filteredLeafCount.toLocaleString('en-IN')} ${
-      filteredLeafCount === 1 ? 'entry' : 'entries'
-    }`,
+    `${filteredLeafCount.toLocaleString('en-IN')} ${filteredLeafCount === 1 ? 'entry' : 'entries'}`,
   ].join('  |  ');
 
   worksheet.mergeCells(`A3:${lastColumnLetter}3`);
@@ -304,9 +301,7 @@ export async function exportGradingReportToExcel({
   const filterRow = worksheet.getRow(4);
   filterRow.height = filterSummaryLines.length > 0 ? 36 : 14;
   filterRow.getCell(1).value =
-    filterSummaryLines.length > 0
-      ? filterSummaryLines.join('\n')
-      : 'Filters: none applied';
+    filterSummaryLines.length > 0 ? filterSummaryLines.join('\n') : 'Filters: none applied';
   applyStyleToRow(filterRow, filterSummaryStyle, columnCount);
 
   worksheet.mergeCells(`A5:${lastColumnLetter}5`);
@@ -340,11 +335,7 @@ export async function exportGradingReportToExcel({
     const excelRow = worksheet.getRow(currentRowIndex);
     excelRow.height = isGroupRow ? 20 : 18;
 
-    if (
-      !isGroupRow &&
-      line.incomingIndex === 0 &&
-      line.incomingCount > 1
-    ) {
+    if (!isGroupRow && line.incomingIndex === 0 && line.incomingCount > 1) {
       visibleColumns.forEach((column, columnIndex) => {
         if (isIncomingGatePassColumn(column.id)) return;
 
@@ -372,8 +363,7 @@ export async function exportGradingReportToExcel({
         align,
         fillArgb,
         bold: isGroupRow && exportCell.kind === 'text',
-        fontColorArgb:
-          isGroupRow && exportCell.kind === 'text' ? COLORS.primary : undefined,
+        fontColorArgb: isGroupRow && exportCell.kind === 'text' ? COLORS.primary : undefined,
       });
     });
 
@@ -385,12 +375,7 @@ export async function exportGradingReportToExcel({
   }
 
   for (const range of mergeRanges) {
-    worksheet.mergeCells(
-      range.startRow,
-      range.columnIndex,
-      range.endRow,
-      range.columnIndex,
-    );
+    worksheet.mergeCells(range.startRow, range.columnIndex, range.endRow, range.columnIndex);
   }
 
   const totalsRowIndex = currentRowIndex;
@@ -410,8 +395,7 @@ export async function exportGradingReportToExcel({
 
     if (isSummableExportColumn(columnId) || isAverageExportColumn(columnId)) {
       const exportCell = getFooterExportValue(columnId, filteredRows);
-      const numFmt =
-        exportCell.kind === 'number' ? getExcelNumFmt(exportCell.format) : undefined;
+      const numFmt = exportCell.kind === 'number' ? getExcelNumFmt(exportCell.format) : undefined;
 
       if (isAverageExportColumn(columnId) && exportCell.kind === 'number') {
         cell.value = `Avg ${exportCell.value}`;

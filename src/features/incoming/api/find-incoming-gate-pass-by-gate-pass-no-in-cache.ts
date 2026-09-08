@@ -1,11 +1,11 @@
-import type { QueryClient } from "@tanstack/react-query"
+import type { QueryClient } from '@tanstack/react-query';
 
-import { incomingGatePassKeys } from "./query-keys"
-import type { IncomingGatePass, IncomingGatePassListResult } from "./types"
+import { incomingGatePassKeys } from './query-keys';
+import type { IncomingGatePass, IncomingGatePassListResult } from './types';
 
 function farmerLinkIdFromPass(pass: IncomingGatePass): string {
-  const link = pass.farmerStorageLinkId
-  return typeof link === "string" ? link : (link._id ?? "")
+  const link = pass.farmerStorageLinkId;
+  return typeof link === 'string' ? link : (link._id ?? '');
 }
 
 function scanLists(
@@ -15,14 +15,14 @@ function scanLists(
 ): IncomingGatePass | undefined {
   for (const [, data] of queries) {
     const match = data?.incomingGatePasses.find((pass) => {
-      if (pass.gatePassNo !== gatePassNo) return false
-      if (!farmerStorageLinkId) return true
-      return farmerLinkIdFromPass(pass) === farmerStorageLinkId
-    })
-    if (match) return match
+      if (pass.gatePassNo !== gatePassNo) return false;
+      if (!farmerStorageLinkId) return true;
+      return farmerLinkIdFromPass(pass) === farmerStorageLinkId;
+    });
+    if (match) return match;
   }
 
-  return undefined
+  return undefined;
 }
 
 export function findIncomingGatePassByGatePassNoInCache(
@@ -32,14 +32,14 @@ export function findIncomingGatePassByGatePassNoInCache(
 ): IncomingGatePass | undefined {
   const listQueries = queryClient.getQueriesData<IncomingGatePassListResult>({
     queryKey: incomingGatePassKeys.lists(),
-  })
+  });
 
-  const fromLists = scanLists(listQueries, gatePassNo, farmerStorageLinkId)
-  if (fromLists) return fromLists
+  const fromLists = scanLists(listQueries, gatePassNo, farmerStorageLinkId);
+  if (fromLists) return fromLists;
 
   const searchQueries = queryClient.getQueriesData<IncomingGatePassListResult>({
     queryKey: incomingGatePassKeys.searches(),
-  })
+  });
 
-  return scanLists(searchQueries, gatePassNo, farmerStorageLinkId)
+  return scanLists(searchQueries, gatePassNo, farmerStorageLinkId);
 }

@@ -1,5 +1,5 @@
-import { useState } from "react"
-import { useNavigate } from "@tanstack/react-router"
+import { useState } from 'react';
+import { useNavigate } from '@tanstack/react-router';
 import {
   Card,
   CardContent,
@@ -7,10 +7,10 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
 import {
   ChevronDown,
   ChevronUp,
@@ -21,81 +21,66 @@ import {
   Printer,
   User,
   type LucideIcon,
-} from "lucide-react"
-import { cn } from "@/lib/utils"
-import { Skeleton } from "@/components/ui/skeleton"
-import type {
-  Booking,
-  BookingGatePassBagSize,
-} from "@/features/booking/api/types"
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { Skeleton } from '@/components/ui/skeleton';
+import type { Booking, BookingGatePassBagSize } from '@/features/booking/api/types';
 
 interface InfoBlockProps {
-  label: string
-  value: string | number
-  icon?: LucideIcon
-  valueClassName?: string
+  label: string;
+  value: string | number;
+  icon?: LucideIcon;
+  valueClassName?: string;
 }
 
-const InfoBlock = ({
-  label,
-  value,
-  icon: Icon,
-  valueClassName,
-}: InfoBlockProps) => (
+const InfoBlock = ({ label, value, icon: Icon, valueClassName }: InfoBlockProps) => (
   <div className="space-y-1.5">
     <span className="flex items-center gap-1.5 text-xs font-medium tracking-wider text-muted-foreground uppercase">
       {Icon && <Icon className="h-3.5 w-3.5" />}
       {label}
     </span>
-    <p className={cn("text-sm font-semibold text-foreground", valueClassName)}>
-      {value}
-    </p>
+    <p className={cn('text-sm font-semibold text-foreground', valueClassName)}>{value}</p>
   </div>
-)
+);
 
 function formatDateTime(value: string) {
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return "—"
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '—';
 
-  return new Intl.DateTimeFormat("en-IN", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(date)
+  return new Intl.DateTimeFormat('en-IN', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(date);
 }
 
-function bookingTotalBags(
-  bagSizes: readonly BookingGatePassBagSize[],
-): number {
-  return bagSizes.reduce((sum, row) => sum + row.currentQuantity, 0)
+function bookingTotalBags(bagSizes: readonly BookingGatePassBagSize[]): number {
+  return bagSizes.reduce((sum, row) => sum + row.currentQuantity, 0);
 }
 
 interface BookingGatePassCardProps {
-  data: Booking
-  canUpdate?: boolean
+  data: Booking;
+  canUpdate?: boolean;
 }
 
-export function BookingGatePassCard({
-  data: booking,
-  canUpdate = true,
-}: BookingGatePassCardProps) {
-  const navigate = useNavigate()
-  const [isExpanded, setIsExpanded] = useState(false)
+export function BookingGatePassCard({ data: booking, canUpdate = true }: BookingGatePassCardProps) {
+  const navigate = useNavigate();
+  const [isExpanded, setIsExpanded] = useState(false);
 
-  const ledger = booking.dispatchLedgerId
-  const totalBags = bookingTotalBags(booking.bagSizes)
-  const createdBy = booking.createdBy?.name ?? "—"
+  const ledger = booking.dispatchLedgerId;
+  const totalBags = bookingTotalBags(booking.bagSizes);
+  const createdBy = booking.createdBy?.name ?? '—';
 
   const handleEditClick = () => {
-    if (!canUpdate) return
+    if (!canUpdate) return;
 
     navigate({
-      to: "/booking/$id",
+      to: '/booking/$id',
       params: { id: booking._id },
-    })
-  }
+    });
+  };
 
   return (
     <Card className="card-hover overflow-hidden border-border/60">
@@ -104,10 +89,7 @@ export function BookingGatePassCard({
           <div className="flex flex-wrap items-center gap-3">
             <CardTitle className="flex items-center gap-2 text-lg">
               <span className="h-2 w-2 rounded-full bg-primary" />
-              BGP{" "}
-              <span className="font-mono tabular-nums text-primary">
-                #{booking.gatePassNo}
-              </span>
+              BGP <span className="font-mono tabular-nums text-primary">#{booking.gatePassNo}</span>
             </CardTitle>
             {booking.manualGatePassNumber != null && (
               <Badge
@@ -118,31 +100,22 @@ export function BookingGatePassCard({
               </Badge>
             )}
           </div>
-          <CardDescription className="text-xs">
-            {formatDateTime(booking.date)}
-          </CardDescription>
+          <CardDescription className="text-xs">{formatDateTime(booking.date)}</CardDescription>
         </div>
 
         <div className="flex flex-wrap items-center justify-end gap-2">
-          <Badge
-            variant="outline"
-            className="bg-background text-xs tabular-nums"
-          >
-            {totalBags.toLocaleString("en-IN")} Bags
+          <Badge variant="outline" className="bg-background text-xs tabular-nums">
+            {totalBags.toLocaleString('en-IN')} Bags
           </Badge>
         </div>
       </CardHeader>
 
       <CardContent className="pt-5">
         <div className="grid grid-cols-2 gap-6 sm:grid-cols-4">
-          <InfoBlock
-            label="Dispatch ledger"
-            value={ledger.name ?? "—"}
-            icon={Landmark}
-          />
+          <InfoBlock label="Dispatch ledger" value={ledger.name ?? '—'} icon={Landmark} />
           <InfoBlock
             label="Mobile"
-            value={ledger.mobileNumber ?? "—"}
+            value={ledger.mobileNumber ?? '—'}
             valueClassName="tabular-nums"
           />
           <InfoBlock
@@ -153,7 +126,7 @@ export function BookingGatePassCard({
           />
           <InfoBlock
             label="Total bags"
-            value={totalBags.toLocaleString("en-IN")}
+            value={totalBags.toLocaleString('en-IN')}
             valueClassName="tabular-nums"
           />
         </div>
@@ -169,17 +142,14 @@ export function BookingGatePassCard({
                     Dispatch ledger
                   </h4>
                   <div className="grid grid-cols-2 gap-4 rounded-xl border border-border/50 bg-muted/20 p-4">
-                    <InfoBlock label="Name" value={ledger.name ?? "—"} />
+                    <InfoBlock label="Name" value={ledger.name ?? '—'} />
                     <InfoBlock
                       label="Mobile"
-                      value={ledger.mobileNumber ?? "—"}
+                      value={ledger.mobileNumber ?? '—'}
                       valueClassName="tabular-nums"
                     />
                     <div className="col-span-2">
-                      <InfoBlock
-                        label="Address"
-                        value={ledger.address ?? "—"}
-                      />
+                      <InfoBlock label="Address" value={ledger.address ?? '—'} />
                     </div>
                   </div>
                 </div>
@@ -191,9 +161,7 @@ export function BookingGatePassCard({
                   </h4>
                   <div className="rounded-xl border border-border/50 bg-muted/20 p-4">
                     <p className="text-sm text-muted-foreground">
-                      {booking.remarks
-                        ? `"${booking.remarks}"`
-                        : "No remarks provided."}
+                      {booking.remarks ? `"${booking.remarks}"` : 'No remarks provided.'}
                     </p>
                   </div>
                 </div>
@@ -229,17 +197,13 @@ export function BookingGatePassCard({
                             key={`${slot.size}-${slot.variety}-${index}`}
                             className="border-b border-border/40 last:border-0"
                           >
-                            <td className="px-3 py-2.5 font-medium text-foreground">
-                              {slot.size}
-                            </td>
-                            <td className="px-3 py-2.5 text-muted-foreground">
-                              {slot.variety}
-                            </td>
+                            <td className="px-3 py-2.5 font-medium text-foreground">{slot.size}</td>
+                            <td className="px-3 py-2.5 text-muted-foreground">{slot.variety}</td>
                             <td className="px-3 py-2.5 text-right tabular-nums font-medium text-foreground">
-                              {slot.currentQuantity.toLocaleString("en-IN")}
+                              {slot.currentQuantity.toLocaleString('en-IN')}
                             </td>
                             <td className="px-3 py-2.5 text-right tabular-nums text-muted-foreground">
-                              {slot.initialQuantity.toLocaleString("en-IN")}
+                              {slot.initialQuantity.toLocaleString('en-IN')}
                             </td>
                           </tr>
                         ))}
@@ -252,19 +216,12 @@ export function BookingGatePassCard({
                   <InfoBlock label="Created by" value={createdBy} icon={User} />
                   {booking.createdAt ? (
                     <div className="mt-4">
-                      <InfoBlock
-                        label="Recorded at"
-                        value={formatDateTime(booking.createdAt)}
-                      />
+                      <InfoBlock label="Recorded at" value={formatDateTime(booking.createdAt)} />
                     </div>
                   ) : null}
-                  {booking.updatedAt &&
-                  booking.updatedAt !== booking.createdAt ? (
+                  {booking.updatedAt && booking.updatedAt !== booking.createdAt ? (
                     <div className="mt-4">
-                      <InfoBlock
-                        label="Last updated"
-                        value={formatDateTime(booking.updatedAt)}
-                      />
+                      <InfoBlock label="Last updated" value={formatDateTime(booking.updatedAt)} />
                     </div>
                   ) : null}
                 </div>
@@ -313,7 +270,7 @@ export function BookingGatePassCard({
         </div>
       </CardFooter>
     </Card>
-  )
+  );
 }
 
 export function BookingGatePassCardSkeleton() {
@@ -347,5 +304,5 @@ export function BookingGatePassCardSkeleton() {
         <Skeleton className="h-8 w-16 rounded-md" />
       </CardFooter>
     </Card>
-  )
+  );
 }

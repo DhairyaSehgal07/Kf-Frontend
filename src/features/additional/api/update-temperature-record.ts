@@ -1,8 +1,5 @@
-import apiClient, { getApiErrorMessage } from '@/lib/api-client'
-import type {
-  UpdateTemperatureRecordInput,
-  UpdateTemperatureRecordResponse,
-} from './types'
+import apiClient, { getApiErrorMessage } from '@/lib/api-client';
+import type { UpdateTemperatureRecordInput, UpdateTemperatureRecordResponse } from './types';
 
 export async function updateTemperatureRecord({
   id,
@@ -12,17 +9,16 @@ export async function updateTemperatureRecord({
     const { data } = await apiClient.put<UpdateTemperatureRecordResponse>(
       `/temperature/${id}`,
       body,
-    )
+    );
 
     if (!data.success) {
-      throw new Error(data.message ?? 'Failed to update temperature record')
+      throw new Error(data.message ?? 'Failed to update temperature record');
     }
 
-    return data
+    return data;
   } catch (error) {
-    throw new Error(
-      getApiErrorMessage(error, 'Failed to update temperature record'),
-      { cause: error },
-    )
+    throw new Error(getApiErrorMessage(error, 'Failed to update temperature record'), {
+      cause: error,
+    });
   }
 }

@@ -1,7 +1,7 @@
-import { useState } from "react"
-import { useQueryClient } from "@tanstack/react-query"
-import { getRouteApi } from "@tanstack/react-router"
-import { format } from "date-fns"
+import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { getRouteApi } from '@tanstack/react-router';
+import { format } from 'date-fns';
 import {
   ArrowLeftRight,
   BarChart3,
@@ -10,58 +10,38 @@ import {
   RefreshCw,
   Scale,
   Sprout,
-} from "lucide-react"
+} from 'lucide-react';
 
-import { DatePickerInput } from "@/components/date-picker"
-import { Button } from "@/components/ui/button"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-import {
-  Item,
-  ItemActions,
-  ItemContent,
-  ItemMedia,
-  ItemTitle,
-} from "@/components/ui/item"
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs"
+import { DatePickerInput } from '@/components/date-picker';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Item, ItemActions, ItemContent, ItemMedia, ItemTitle } from '@/components/ui/item';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-import { preserveScroll } from "@/lib/preserve-scroll"
+import { preserveScroll } from '@/lib/preserve-scroll';
 
-import AnalyticsGradingTab from "./components/analytics-grading-tab"
-import AnalyticsIncomingTab from "./components/analytics-incoming-tab"
-import AnalyticsStorageTab from "./components/analytics-storage-tab"
-import Overview from "./components/overview"
-import type { AnalyticsTab } from "./search"
-import type { AnalyticsDateParams } from "./types"
+import AnalyticsGradingTab from './components/analytics-grading-tab';
+import AnalyticsIncomingTab from './components/analytics-incoming-tab';
+import AnalyticsStorageTab from './components/analytics-storage-tab';
+import Overview from './components/overview';
+import type { AnalyticsTab } from './search';
+import type { AnalyticsDateParams } from './types';
 
 function toAnalyticsDateParam(date: Date | undefined): string | undefined {
-  return date ? format(date, "yyyy-MM-dd") : undefined
+  return date ? format(date, 'yyyy-MM-dd') : undefined;
 }
 
-const analyticsRouteApi = getRouteApi("/_authenticated/analytics")
+const analyticsRouteApi = getRouteApi('/_authenticated/analytics');
 
-const TAB_PLACEHOLDER: Record<
-  Exclude<AnalyticsTab, "incoming" | "grading" | "storage">,
-  string
-> = {
-  dispatch: "Show Dispatch Analytics here",
-  booking: "Show Booking Analytics here",
-}
+const TAB_PLACEHOLDER: Record<Exclude<AnalyticsTab, 'incoming' | 'grading' | 'storage'>, string> = {
+  dispatch: 'Show Dispatch Analytics here',
+  booking: 'Show Booking Analytics here',
+};
 
 function AnalyticsTabPlaceholder({
   tab,
 }: {
-  tab: Exclude<AnalyticsTab, "incoming" | "grading" | "storage">
+  tab: Exclude<AnalyticsTab, 'incoming' | 'grading' | 'storage'>;
 }) {
   return (
     <Card className="card-hover">
@@ -73,44 +53,43 @@ function AnalyticsTabPlaceholder({
         <p className="text-sm text-muted-foreground">{TAB_PLACEHOLDER[tab]}</p>
       </CardContent>
     </Card>
-  )
+  );
 }
 
 const AnalyticsPage = () => {
-  const { tab } = analyticsRouteApi.useSearch()
-  const navigate = analyticsRouteApi.useNavigate()
-  const queryClient = useQueryClient()
+  const { tab } = analyticsRouteApi.useSearch();
+  const navigate = analyticsRouteApi.useNavigate();
+  const queryClient = useQueryClient();
 
-  const [fromDate, setFromDate] = useState<Date | undefined>()
-  const [toDate, setToDate] = useState<Date | undefined>()
-  const [appliedDateRange, setAppliedDateRange] =
-    useState<AnalyticsDateParams>({})
+  const [fromDate, setFromDate] = useState<Date | undefined>();
+  const [toDate, setToDate] = useState<Date | undefined>();
+  const [appliedDateRange, setAppliedDateRange] = useState<AnalyticsDateParams>({});
 
   const handleTabChange = (value: string) => {
     navigate({
       search: { tab: value as AnalyticsTab },
       ...preserveScroll,
-    })
-  }
+    });
+  };
 
   const handleApply = () => {
-    const next: AnalyticsDateParams = {}
-    const dateFrom = toAnalyticsDateParam(fromDate)
-    const dateTo = toAnalyticsDateParam(toDate)
-    if (dateFrom) next.dateFrom = dateFrom
-    if (dateTo) next.dateTo = dateTo
-    setAppliedDateRange(next)
-  }
+    const next: AnalyticsDateParams = {};
+    const dateFrom = toAnalyticsDateParam(fromDate);
+    const dateTo = toAnalyticsDateParam(toDate);
+    if (dateFrom) next.dateFrom = dateFrom;
+    if (dateTo) next.dateTo = dateTo;
+    setAppliedDateRange(next);
+  };
 
   const handleReset = () => {
-    setFromDate(undefined)
-    setToDate(undefined)
-    setAppliedDateRange({})
-  }
+    setFromDate(undefined);
+    setToDate(undefined);
+    setAppliedDateRange({});
+  };
 
   const handleRefresh = () => {
-    void queryClient.invalidateQueries({ queryKey: ["analytics"] })
-  }
+    void queryClient.invalidateQueries({ queryKey: ['analytics'] });
+  };
 
   return (
     <div className="flex w-full flex-col gap-4">
@@ -157,11 +136,7 @@ const AnalyticsPage = () => {
             <Button className="flex-1 sm:flex-none" onClick={handleApply}>
               Apply
             </Button>
-            <Button
-              variant="outline"
-              className="flex-1 sm:flex-none"
-              onClick={handleReset}
-            >
+            <Button variant="outline" className="flex-1 sm:flex-none" onClick={handleReset}>
               Reset
             </Button>
           </div>
@@ -169,10 +144,7 @@ const AnalyticsPage = () => {
       </div>
 
       <section>
-        <Overview
-          dateFrom={appliedDateRange.dateFrom}
-          dateTo={appliedDateRange.dateTo}
-        />
+        <Overview dateFrom={appliedDateRange.dateFrom} dateTo={appliedDateRange.dateTo} />
       </section>
 
       <Tabs value={tab} onValueChange={handleTabChange} className="w-full gap-4">
@@ -233,7 +205,7 @@ const AnalyticsPage = () => {
         </TabsContent>
       </Tabs>
     </div>
-  )
-}
+  );
+};
 
-export default AnalyticsPage
+export default AnalyticsPage;

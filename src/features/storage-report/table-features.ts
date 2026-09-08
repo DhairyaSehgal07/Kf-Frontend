@@ -1,9 +1,9 @@
-import { createReportTableFeatures } from "@/lib/tanstack-table/report-table-features"
-import { selectedValuesFilterFn } from "@/features/storage-report/utils/report-filter-fns"
+import { createReportTableFeatures } from '@/lib/tanstack-table/report-table-features';
+import { selectedValuesFilterFn } from '@/features/storage-report/utils/report-filter-fns';
 import {
   reportDateSortingFn,
   reportNumericSortingFn,
-} from "@/features/storage-report/utils/report-sorting-fns"
+} from '@/features/storage-report/utils/report-sorting-fns';
 
 export const storageReportTableFeatures = createReportTableFeatures({
   filterFns: {
@@ -13,4 +13,4 @@ export const storageReportTableFeatures = createReportTableFeatures({
     reportNumeric: reportNumericSortingFn,
     reportDate: reportDateSortingFn,
   },
-})
+});

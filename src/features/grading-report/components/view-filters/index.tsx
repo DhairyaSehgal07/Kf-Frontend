@@ -51,7 +51,9 @@ export function ViewFiltersSheet({ table }: ViewFiltersSheetProps) {
   const [draftColumnOrder, setDraftColumnOrder] = useState<ColumnOrderState>(
     () => table.store.state.columnOrder,
   );
-  const [draftGrouping, setDraftGrouping] = useState<GroupingState>(() => table.store.state.grouping);
+  const [draftGrouping, setDraftGrouping] = useState<GroupingState>(
+    () => table.store.state.grouping,
+  );
   const [draftGlobalFilter, setDraftGlobalFilter] = useState<AdvancedReportGlobalFilter>(() => ({
     logic: 'AND',
     conditions: [],
@@ -61,11 +63,11 @@ export function ViewFiltersSheet({ table }: ViewFiltersSheetProps) {
   const activeGroupingCount = table.store.state.grouping.length;
   const activeAdvancedCount =
     table.store.state.globalFilter?.conditions?.filter(
-        (condition: { operator: string; value: string }) =>
-          condition.operator === 'isEmpty' ||
-          condition.operator === 'isNotEmpty' ||
-          condition.value.trim().length > 0,
-      ).length ?? 0;
+      (condition: { operator: string; value: string }) =>
+        condition.operator === 'isEmpty' ||
+        condition.operator === 'isNotEmpty' ||
+        condition.value.trim().length > 0,
+    ).length ?? 0;
   const hiddenColumnCount = table
     .getAllLeafColumns()
     .filter((column) => table.store.state.columnVisibility[column.id] === false).length;
@@ -163,7 +165,9 @@ export function ViewFiltersSheet({ table }: ViewFiltersSheetProps) {
               <SlidersHorizontal className="size-4" aria-hidden />
             </span>
             <div className="min-w-0 space-y-0.5 text-left">
-              <SheetTitle className="text-base leading-none font-semibold">View Settings</SheetTitle>
+              <SheetTitle className="text-base leading-none font-semibold">
+                View Settings
+              </SheetTitle>
               <SheetDescription className="text-muted-foreground text-xs leading-snug">
                 Manage grading report filters, columns, grouping, and advanced logic.
               </SheetDescription>

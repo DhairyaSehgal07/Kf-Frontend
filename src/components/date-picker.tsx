@@ -1,58 +1,54 @@
-import * as React from "react"
-import { CalendarIcon } from "lucide-react"
+import * as React from 'react';
+import { CalendarIcon } from 'lucide-react';
 
-import { Calendar } from "@/components/ui/calendar"
-import { Field, FieldLabel } from "@/components/ui/field"
+import { Calendar } from '@/components/ui/calendar';
+import { Field, FieldLabel } from '@/components/ui/field';
 import {
   InputGroup,
   InputGroupAddon,
   InputGroupButton,
   InputGroupInput,
-} from "@/components/ui/input-group"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
-import { cn } from "@/lib/utils"
+} from '@/components/ui/input-group';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
 
 function formatDate(date: Date | undefined) {
   if (!date) {
-    return ""
+    return '';
   }
 
-  return date.toLocaleDateString("en-US", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-  })
+  return date.toLocaleDateString('en-US', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+  });
 }
 
 function isValidDate(date: Date | undefined) {
   if (!date) {
-    return false
+    return false;
   }
-  return !Number.isNaN(date.getTime())
+  return !Number.isNaN(date.getTime());
 }
 
 export type DatePickerInputProps = {
-  id?: string
-  label?: string
-  placeholder?: string
-  value?: Date
-  defaultValue?: Date
-  onChange?: (date: Date | undefined) => void
-  onBlur?: React.FocusEventHandler<HTMLInputElement>
-  className?: string
-  disabled?: boolean
-  required?: boolean
-  "aria-invalid"?: boolean
-}
+  id?: string;
+  label?: string;
+  placeholder?: string;
+  value?: Date;
+  defaultValue?: Date;
+  onChange?: (date: Date | undefined) => void;
+  onBlur?: React.FocusEventHandler<HTMLInputElement>;
+  className?: string;
+  disabled?: boolean;
+  required?: boolean;
+  'aria-invalid'?: boolean;
+};
 
 export function DatePickerInput({
   id: idProp,
   label,
-  placeholder = "Pick a date",
+  placeholder = 'Pick a date',
   value: valueProp,
   defaultValue,
   onChange,
@@ -60,56 +56,54 @@ export function DatePickerInput({
   className,
   disabled,
   required,
-  "aria-invalid": ariaInvalid,
+  'aria-invalid': ariaInvalid,
 }: DatePickerInputProps) {
-  const generatedId = React.useId()
-  const id = idProp ?? generatedId
-  const isControlled = valueProp !== undefined
+  const generatedId = React.useId();
+  const id = idProp ?? generatedId;
+  const isControlled = valueProp !== undefined;
 
-  const [open, setOpen] = React.useState(false)
-  const [internalDate, setInternalDate] = React.useState<Date | undefined>(
-    defaultValue
-  )
-  const date = isControlled ? valueProp : internalDate
+  const [open, setOpen] = React.useState(false);
+  const [internalDate, setInternalDate] = React.useState<Date | undefined>(defaultValue);
+  const date = isControlled ? valueProp : internalDate;
 
-  const [month, setMonth] = React.useState<Date | undefined>(date)
-  const [inputValue, setInputValue] = React.useState(formatDate(date))
+  const [month, setMonth] = React.useState<Date | undefined>(date);
+  const [inputValue, setInputValue] = React.useState(formatDate(date));
 
   const setDate = React.useCallback(
     (next: Date | undefined) => {
       if (!isControlled) {
-        setInternalDate(next)
+        setInternalDate(next);
       }
-      onChange?.(next)
+      onChange?.(next);
     },
-    [isControlled, onChange]
-  )
+    [isControlled, onChange],
+  );
 
-  const [prevDate, setPrevDate] = React.useState(date)
+  const [prevDate, setPrevDate] = React.useState(date);
   if (date !== prevDate) {
-    setPrevDate(date)
-    setInputValue(formatDate(date))
+    setPrevDate(date);
+    setInputValue(formatDate(date));
     if (date) {
-      setMonth(date)
+      setMonth(date);
     }
   }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const nextValue = e.target.value
-    setInputValue(nextValue)
+    const nextValue = e.target.value;
+    setInputValue(nextValue);
 
-    const parsed = new Date(nextValue)
+    const parsed = new Date(nextValue);
     if (isValidDate(parsed)) {
-      setDate(parsed)
-      setMonth(parsed)
+      setDate(parsed);
+      setMonth(parsed);
     }
-  }
+  };
 
   const handleCalendarSelect = (selected: Date | undefined) => {
-    setDate(selected)
-    setInputValue(formatDate(selected))
-    setOpen(false)
-  }
+    setDate(selected);
+    setInputValue(formatDate(selected));
+    setOpen(false);
+  };
 
   const field = (
     <InputGroup>
@@ -124,9 +118,9 @@ export function DatePickerInput({
         onChange={handleInputChange}
         onBlur={onBlur}
         onKeyDown={(e) => {
-          if (e.key === "ArrowDown") {
-            e.preventDefault()
-            setOpen(true)
+          if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            setOpen(true);
           }
         }}
       />
@@ -161,16 +155,16 @@ export function DatePickerInput({
         </Popover>
       </InputGroupAddon>
     </InputGroup>
-  )
+  );
 
   if (!label) {
-    return <div className={cn("w-full", className)}>{field}</div>
+    return <div className={cn('w-full', className)}>{field}</div>;
   }
 
   return (
-    <Field className={cn("w-full", className)}>
+    <Field className={cn('w-full', className)}>
       <FieldLabel htmlFor={id}>{label}</FieldLabel>
       {field}
     </Field>
-  )
+  );
 }
