@@ -3,8 +3,8 @@ import { queryOptions, useQuery } from "@tanstack/react-query"
 import { getTransferStockReport } from "./get-transfer-stock-report"
 import { transferStockReportKeys } from "./query-keys"
 import type {
-  GetTransferStockReportResponse,
   TransferStockReportParams,
+  TransferStockReportResult,
 } from "./types"
 
 export function transferStockReportQueryOptions(
@@ -22,7 +22,4 @@ export function useTransferStockReport(params: TransferStockReportParams = {}) {
   })
 }
 
-export type {
-  GetTransferStockReportResponse,
-  TransferStockReportParams,
-}
+export type { TransferStockReportParams, TransferStockReportResult }
