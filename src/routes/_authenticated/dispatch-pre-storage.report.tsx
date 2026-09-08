@@ -1,9 +1,7 @@
-import { createFileRoute } from '@tanstack/react-router';
-
-function DispatchPreStorageReportPage() {
-  return <div>Dispatch pre-storage report</div>;
-}
+import { createFileRoute, redirect } from '@tanstack/react-router';
 
 export const Route = createFileRoute('/_authenticated/dispatch-pre-storage/report')({
-  component: DispatchPreStorageReportPage,
+  beforeLoad: () => {
+    throw redirect({ to: '/dispatch/report' });
+  },
 });

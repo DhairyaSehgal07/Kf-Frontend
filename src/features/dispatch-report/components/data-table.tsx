@@ -2,6 +2,7 @@ import {
   type ColumnDef,
   flexRender,
   type PaginationState,
+  type RowData,
   type Table as TanStackTable,
 } from '@tanstack/react-table';
 import {
@@ -11,7 +12,6 @@ import {
   ChevronsRight,
   ClipboardList,
 } from 'lucide-react';
-import type { JSX as ReactJSX } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Empty,
@@ -39,20 +39,10 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import type { IncomingGatePassReportRow } from '@/features/incoming-report/api/types';
 import { getDensityCellClasses, getDensityHeadClasses } from '@/lib/tanstack-table/density-classes';
 import type { DensityState } from '@/lib/tanstack-table/density-feature';
 import type { ReportColumnMeta, ReportFeatures } from '@/lib/tanstack-table/report-table-features';
 import { cn } from '@/lib/utils';
-
-declare global {
-  // React 19 scopes JSX to `React.JSX`; keep HTML tags typed in this file.
-  // eslint-disable-next-line @typescript-eslint/no-namespace -- JSX namespace augmentation
-  namespace JSX {
-    // eslint-disable-next-line @typescript-eslint/no-empty-object-type -- merge with React.JSX
-    interface IntrinsicElements extends ReactJSX.IntrinsicElements {}
-  }
-}
 
 const SKELETON_ROW_COUNT = 8;
 
@@ -185,7 +175,7 @@ function getBodyCellClassName(
     meta?.numeric === true && !isEmpty && 'tabular-nums font-medium text-foreground',
     meta?.mono === true && !isEmpty && 'font-mono',
     meta?.emphasize === true && !isEmpty && 'text-foreground',
-    columnId === 'address' && 'max-w-[11rem] sm:max-w-[14rem]',
+    (columnId === 'from' || columnId === 'to') && 'max-w-[11rem] sm:max-w-[14rem]',
   );
 }
 
@@ -204,8 +194,8 @@ function getValueSpanClassName(
     !isWrapColumn(meta) && 'truncate',
     isWrapColumn(meta) && 'break-words leading-relaxed',
     align === 'right' && 'ml-auto max-w-none',
-    columnId === 'address' && 'max-w-[11rem] sm:max-w-[14rem]',
-    columnId === 'name' && 'max-w-[10rem] font-medium sm:max-w-[12rem]',
+    columnId === 'from' && 'max-w-[10rem] font-medium sm:max-w-[12rem]',
+    columnId === 'to' && 'max-w-[10rem] font-medium sm:max-w-[12rem]',
     meta?.numeric === true && 'tabular-nums',
     meta?.mono === true && 'font-mono text-sm',
     meta?.emphasize === true && 'font-semibold',
@@ -225,25 +215,25 @@ type ColumnClassEntry = {
   footer: string;
 };
 
-interface DataTableProps {
-  columns: ColumnDef<ReportFeatures, IncomingGatePassReportRow>[];
-  table: TanStackTable<ReportFeatures, IncomingGatePassReportRow>;
+interface DataTableProps<TData extends RowData, TValue> {
+  columns: ColumnDef<ReportFeatures, TData, TValue>[];
+  table: TanStackTable<ReportFeatures, TData>;
   isLoading?: boolean;
   paginationState?: PaginationState;
   totalRowCount?: number;
 }
 
-export function DataTable({
+export function DataTable<TData extends RowData, TValue>({
   columns,
   table,
   isLoading = false,
   paginationState,
   totalRowCount: totalRowCountProp,
-}: DataTableProps) {
+}: DataTableProps<TData, TValue>) {
   const [isHeaderScrolled, setIsHeaderScrolled] = useState(false);
   const [isFooterElevated, setIsFooterElevated] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const density: DensityState = table.store.state.density;
+  const density = table.store.state.density;
 
   const handleTableScroll = useCallback(() => {
     const el = scrollContainerRef.current;
@@ -463,7 +453,7 @@ export function DataTable({
                       <EmptyMedia variant="icon">
                         <ClipboardList />
                       </EmptyMedia>
-                      <EmptyTitle>No gate passes in this range</EmptyTitle>
+                      <EmptyTitle>No dispatch records in this range</EmptyTitle>
                       <EmptyDescription>
                         Adjust the date filters above or reset to load the full report.
                       </EmptyDescription>
@@ -570,7 +560,7 @@ export function DataTable({
               {pageItems.map((item, itemIndex) =>
                 typeof item === 'number' ? (
                   <PaginationItem
-                    key={`incoming-report-page-${item}`}
+                    key={`dispatch-report-page-${item}`}
                     className="hidden sm:list-item"
                   >
                     <PaginationLink
@@ -589,7 +579,7 @@ export function DataTable({
                   </PaginationItem>
                 ) : (
                   <PaginationItem
-                    key={`incoming-report-${item}-${itemIndex}`}
+                    key={`dispatch-report-${item}-${itemIndex}`}
                     className="hidden sm:list-item"
                   >
                     <PaginationEllipsis />

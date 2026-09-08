@@ -333,7 +333,7 @@ export function DispatchPreStorageGatePassCard({
             aria-label={`Edit nikasi gate pass ${gatePass.gatePassNo}`}
             onClick={() =>
               navigate({
-                to: '/dispatch-pre-storage/$id',
+                to: '/dispatch/$id',
                 params: { id: gatePass._id },
               })
             }

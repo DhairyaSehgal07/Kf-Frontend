@@ -65,7 +65,7 @@ const CATEGORY_ITEMS: ComboboxOption[] = DISPATCH_PRE_STORAGE_CATEGORIES.map((va
 }));
 
 export function EditDispatchPreStorageForm() {
-  const { id } = useParams({ from: '/_authenticated/dispatch-pre-storage/$id' });
+  const { id } = useParams({ from: '/_authenticated/dispatch/$id' });
   const { data: gatePass, isLoading, isError, error } = useNikasiGatePassById(id);
 
   if (isLoading) {
@@ -250,7 +250,7 @@ function EditDispatchPreStorageFormFields({ gatePass }: EditDispatchPreStorageFo
         position: 'bottom-right',
       });
       setReviewOpen(false);
-      void navigate({ to: '/dispatch-pre-storage/report' });
+      void navigate({ to: '/dispatch/report' });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Failed to update nikasi gate pass.', {
         position: 'bottom-right',

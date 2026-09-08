@@ -50,7 +50,7 @@ const coreNavItems: NavItem[] = [
       '/grading',
       '/storage',
       '/transfer',
-      '/dispatch-pre-storage',
+      '/dispatch',
       '/booking',
       '/outgoing',
     ],
@@ -80,7 +80,7 @@ const reportNavItems = [
   { name: 'Grading', to: '/grading/report' },
   { name: 'Storage', to: '/storage/report' },
   { name: 'Transfer Stock', to: '/transfer/report' },
-  { name: 'Dispatch', to: '/dispatch-pre-storage/report' },
+  { name: 'Dispatch', to: '/dispatch/report' },
   { name: 'Booking', to: '/dispatch-post-storage/report' },
 ] as const;
 

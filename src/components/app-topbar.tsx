@@ -36,8 +36,8 @@ const routeTitles: Record<string, string> = {
   '/grading/report': 'Grading report',
   '/storage/report': 'Storage report',
   '/transfer/report': 'Transfer stock report',
-  '/dispatch-pre-storage/report': 'Dispatch report',
-  '/dispatch-pre-storage/': 'Dispatch (Pre-Storage)',
+  '/dispatch/report': 'Dispatch report',
+  '/dispatch/': 'Dispatch',
   '/dispatch-post-storage/report': 'Booking report',
   '/booking': 'Booking',
   '/outgoing': 'Outgoing',
@@ -129,7 +129,7 @@ export function AppTopbar() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const pageTitle =
     routeTitles[pathname] ??
-    (/^\/dispatch-pre-storage\/[a-f0-9]{24}$/i.test(pathname)
+    (/^\/dispatch\/[a-f0-9]{24}$/i.test(pathname)
       ? 'Edit dispatch gate pass'
       : (user?.coldStorageId.name ?? 'Dashboard'));
 

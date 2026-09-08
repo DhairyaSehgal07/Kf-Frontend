@@ -183,7 +183,7 @@ const DaybookDispatchTab = () => {
   };
 
   const handleAddDispatch = () => {
-    navigate({ to: '/dispatch-pre-storage' });
+    navigate({ to: '/dispatch' });
   };
 
   const handleSearchChange = (value: string) => {

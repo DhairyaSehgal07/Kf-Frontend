@@ -1,6 +1,7 @@
-import { createFileRoute } from '@tanstack/react-router';
-import CreateDispatchPreStorageForm from '@/features/dispatch-pre-storage/forms/create-dispatch-pre-storage-form';
+import { createFileRoute, redirect } from '@tanstack/react-router';
 
 export const Route = createFileRoute('/_authenticated/dispatch-pre-storage/')({
-  component: CreateDispatchPreStorageForm,
+  beforeLoad: () => {
+    throw redirect({ to: '/dispatch' });
+  },
 });
