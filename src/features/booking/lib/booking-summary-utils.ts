@@ -13,7 +13,12 @@ type QuantityFields = {
 };
 
 function getQuantity(item: QuantityFields, mode: BookingQuantityMode): number {
-  return mode === 'current' ? item.currentQuantity : item.initialQuantity;
+  const current = item.currentQuantity;
+  const initial = item.initialQuantity;
+  if (mode === 'current') {
+    return typeof current === 'number' ? current : (initial ?? 0);
+  }
+  return typeof initial === 'number' ? initial : (current ?? 0);
 }
 
 export function mapApiSummaryToVarietySummary(
@@ -28,9 +33,9 @@ export function mapApiSummaryToVarietySummary(
     const quantity = getQuantity(variety, mode);
 
     return {
-      variety: variety.variety,
+      variety: variety.variety.trim(),
       quantity,
-      sizes,
+      sizes: sizes.map((size) => ({ size: size.size.trim(), quantity: size.quantity })),
     };
   });
 }
@@ -77,32 +82,38 @@ function getQuantityBySize(variety: BookingVarietySummary, size: string): number
 export function computeNetAvailable(
   total: BookingVarietySummary[],
   booked: BookingVarietySummary[],
+  shed: BookingVarietySummary[] = [],
 ): BookingVarietySummary[] {
+  const emptyVariety = (varietyName: string): BookingVarietySummary => ({
+    variety: varietyName,
+    quantity: 0,
+    sizes: [],
+  });
+
+  const totalByVariety = new Map(total.map((variety) => [variety.variety, variety]));
   const bookedByVariety = new Map(booked.map((variety) => [variety.variety, variety]));
+  const shedByVariety = new Map(shed.map((variety) => [variety.variety, variety]));
 
   const allVarieties = new Set([
     ...total.map((variety) => variety.variety),
     ...booked.map((variety) => variety.variety),
+    ...shed.map((variety) => variety.variety),
   ]);
 
   const allSizes = orderBagSizeNames([
     ...total.flatMap((variety) => variety.sizes.map((size) => size.size)),
     ...booked.flatMap((variety) => variety.sizes.map((size) => size.size)),
+    ...shed.flatMap((variety) => variety.sizes.map((size) => size.size)),
   ]);
 
   return [...allVarieties].map((varietyName) => {
-    const totalVariety = total.find((entry) => entry.variety === varietyName);
-    const bookedVariety = bookedByVariety.get(varietyName);
-
     const sizes = allSizes.map((size) => ({
       size,
       quantity: Math.max(
         0,
-        getQuantityBySize(totalVariety ?? { variety: varietyName, quantity: 0, sizes: [] }, size) -
-          getQuantityBySize(
-            bookedVariety ?? { variety: varietyName, quantity: 0, sizes: [] },
-            size,
-          ),
+        getQuantityBySize(totalByVariety.get(varietyName) ?? emptyVariety(varietyName), size) +
+          getQuantityBySize(shedByVariety.get(varietyName) ?? emptyVariety(varietyName), size) -
+          getQuantityBySize(bookedByVariety.get(varietyName) ?? emptyVariety(varietyName), size),
       ),
     }));
 

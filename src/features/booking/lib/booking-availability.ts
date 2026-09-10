@@ -7,18 +7,21 @@ import {
   mapApiSummaryToVarietySummary,
 } from '@/features/booking/lib/booking-summary-utils';
 import type { BookingQuantityRow } from '@/features/booking/schemas/booking-form-schema';
+import type { BookingVarietySummary } from '@/features/booking/types/booking-summary';
 
 export function availabilityLineKey(variety: string, size: string): string {
-  return `${variety}\0${size}`;
+  return `${variety.trim()}\0${size.trim()}`;
 }
 
+/** Available bags = storage currentQuantity + shed quantity, per variety and size. */
 export function buildNetAvailabilityMap(
   storage: SummaryVariety[],
   booked: SummaryVariety[],
+  shed: BookingVarietySummary[] = [],
 ): Map<string, number> {
   const mappedStorage = mapApiSummaryToVarietySummary(storage, 'current');
   const mappedBooked = mapApiSummaryToVarietySummary(booked, 'current');
-  const netAvailable = computeNetAvailable(mappedStorage, mappedBooked);
+  const netAvailable = computeNetAvailable(mappedStorage, mappedBooked, shed);
 
   const map = new Map<string, number>();
 

@@ -38,6 +38,7 @@ import { useBookingSummary } from '@/features/booking/api/use-booking-summary';
 import { useBookings } from '@/features/booking/api/use-bookings';
 import { useSearchBooking } from '@/features/booking/api/use-search-booking';
 import type { BookingListParams } from '@/features/booking/api/types';
+import { useShedSummary } from '@/features/outgoing/api/use-shed-summary';
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50, 100] as const;
 const DEFAULT_PAGE_SIZE = PAGE_SIZE_OPTIONS[0];
@@ -142,6 +143,7 @@ const DaybookBookingTab = () => {
   });
   const bookingSummaryQuery = useBookingSummary();
   const bookingStorageSummaryQuery = useBookingStorageSummary();
+  const shedSummaryQuery = useShedSummary();
 
   const activeQuery = isSearchMode ? searchQuery : listQuery;
   const { data, isLoading, isError, error, isFetching, refetch } = activeQuery;
@@ -208,6 +210,7 @@ const DaybookBookingTab = () => {
     void refetch();
     void bookingSummaryQuery.refetch();
     void bookingStorageSummaryQuery.refetch();
+    void shedSummaryQuery.refetch();
   };
 
   if (showListLoading) {
@@ -285,6 +288,7 @@ const DaybookBookingTab = () => {
       <BookingSummary
         bookingQuery={bookingSummaryQuery}
         storageQuery={bookingStorageSummaryQuery}
+        shedQuery={shedSummaryQuery}
       />
 
       {showSearchLoading ? (

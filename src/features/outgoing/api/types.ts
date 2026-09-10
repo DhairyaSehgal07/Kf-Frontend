@@ -81,6 +81,23 @@ export type UpdateOutgoingGatePassResponse = {
   data: Record<string, unknown> | null;
 };
 
+export type ShedSummarySize = {
+  size: string;
+  quantity: number;
+};
+
+export type ShedSummaryVariety = {
+  variety: string;
+  quantity: number;
+  sizes: ShedSummarySize[];
+};
+
+export type ShedSummaryResponse = {
+  success: boolean;
+  data: ShedSummaryVariety[];
+  message?: string;
+};
+
 export type UpdateOutgoingGatePassInput = {
   id: string;
   form: {

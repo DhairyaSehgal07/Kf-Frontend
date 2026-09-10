@@ -14,11 +14,14 @@ import {
   formatBookingBagCount,
   mapApiSummaryToVarietySummary,
 } from '@/features/booking/lib/booking-summary-utils';
+import type { BookingVarietySummary } from '@/features/booking/types/booking-summary';
+import { mapShedSummaryToVarietySummary } from '@/features/outgoing/utils/map-shed-summary';
 import { cn } from '@/lib/utils';
 
 type BookingSummaryProps = {
   bookingQuery: UseQueryResult<SummaryVariety[], Error>;
   storageQuery: UseQueryResult<SummaryVariety[], Error>;
+  shedQuery: UseQueryResult<BookingVarietySummary[], Error>;
 };
 
 type BookingSummaryCollapsibleSectionProps = {
@@ -80,11 +83,12 @@ function BookingSummarySkeleton() {
       </Card>
       <Skeleton className="h-14 w-full rounded-lg" />
       <Skeleton className="h-14 w-full rounded-lg" />
+      <Skeleton className="h-14 w-full rounded-lg" />
     </div>
   );
 }
 
-export function BookingSummary({ bookingQuery, storageQuery }: BookingSummaryProps) {
+export function BookingSummary({ bookingQuery, storageQuery, shedQuery }: BookingSummaryProps) {
   const {
     data: bookingData,
     error: bookingError,
@@ -103,32 +107,50 @@ export function BookingSummary({ bookingQuery, storageQuery }: BookingSummaryPro
     refetch: refetchStorage,
   } = storageQuery;
 
+  const {
+    data: shedData,
+    error: shedError,
+    isError: isShedError,
+    isLoading: isShedLoading,
+    isFetching: isShedFetching,
+    refetch: refetchShed,
+  } = shedQuery;
+
   const isLoading =
     (isBookingLoading && bookingData === undefined) ||
-    (isStorageLoading && storageData === undefined);
+    (isStorageLoading && storageData === undefined) ||
+    (isShedLoading && shedData === undefined);
   const isError =
-    (isBookingError && bookingData === undefined) || (isStorageError && storageData === undefined);
-  const isFetching = isBookingFetching || isStorageFetching;
+    (isBookingError && bookingData === undefined) ||
+    (isStorageError && storageData === undefined) ||
+    (isShedError && shedData === undefined);
+  const isFetching = isBookingFetching || isStorageFetching || isShedFetching;
 
   const mappedStorage = useMemo(
-    () => mapApiSummaryToVarietySummary(storageData ?? [], 'initial'),
+    () => mapApiSummaryToVarietySummary(storageData ?? [], 'current'),
     [storageData],
   );
   const mappedBooked = useMemo(
     () => mapApiSummaryToVarietySummary(bookingData ?? [], 'initial'),
     [bookingData],
   );
+  const mappedShed = useMemo(
+    () => mapShedSummaryToVarietySummary(shedData ?? []),
+    [shedData],
+  );
 
   const totalTable = useMemo(() => buildBookingSummaryTable(mappedStorage), [mappedStorage]);
+  const shedTable = useMemo(() => buildBookingSummaryTable(mappedShed), [mappedShed]);
   const bookedTable = useMemo(() => buildBookingSummaryTable(mappedBooked), [mappedBooked]);
   const netTable = useMemo(() => {
-    const netData = computeNetAvailable(mappedStorage, mappedBooked);
+    const netData = computeNetAvailable(mappedStorage, mappedBooked, mappedShed);
     return buildBookingSummaryTable(netData);
-  }, [mappedStorage, mappedBooked]);
+  }, [mappedStorage, mappedBooked, mappedShed]);
 
   const handleRetry = () => {
     void refetchBooking();
     void refetchStorage();
+    void refetchShed();
   };
 
   if (isLoading) {
@@ -139,6 +161,7 @@ export function BookingSummary({ bookingQuery, storageQuery }: BookingSummaryPro
     const errorMessage =
       bookingError?.message ??
       storageError?.message ??
+      shedError?.message ??
       'Something went wrong while fetching booking summary data.';
 
     return (
@@ -178,7 +201,8 @@ export function BookingSummary({ bookingQuery, storageQuery }: BookingSummaryPro
                 Net available for booking
               </CardTitle>
               <CardDescription>
-                Remaining stock after booked quantities are subtracted from total inventory.
+                Remaining stock after booked quantities are subtracted from total inventory plus
+                shed stock.
               </CardDescription>
             </div>
             <div className="rounded-lg border border-border bg-primary/10 px-4 py-2.5 text-right">
@@ -211,6 +235,14 @@ export function BookingSummary({ bookingQuery, storageQuery }: BookingSummaryPro
         grandTotal={totalTable.grandTotal}
       >
         <BookingSummaryTable table={totalTable} emptyMessage="No total stock data available." />
+      </BookingSummaryCollapsibleSection>
+
+      <BookingSummaryCollapsibleSection
+        title="Shed stock"
+        description="Bags currently held in the shed, included in net available for booking."
+        grandTotal={shedTable.grandTotal}
+      >
+        <BookingSummaryTable table={shedTable} emptyMessage="No shed stock data available." />
       </BookingSummaryCollapsibleSection>
 
       <BookingSummaryCollapsibleSection
