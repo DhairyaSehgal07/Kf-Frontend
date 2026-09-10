@@ -6,9 +6,11 @@ import { useAuthStore } from '@/features/auth/store/use-auth-store';
 import { useCreateOutgoingGatePass } from '@/features/outgoing/api/use-create-outgoing-gate-pass';
 import {
   outgoingFormSchema,
+  outgoingFormSubmitSchema,
   type OutgoingFormValues,
 } from '@/features/outgoing/schemas/outgoing-form-schema';
 import { defaultSubmitMeta, type OutgoingSubmitMeta } from '@/features/outgoing/types';
+import { lookupOutgoingWeight } from '@/features/outgoing/utils/group-outgoing-items';
 import { storageGatePassesByFarmerQueryOptions } from '@/features/storage/api/use-storage-gate-passes-by-farmer';
 import { buildTransferItems } from '@/features/transfer-stock/utils/gate-pass-matrix-utils';
 import { toTransferStorageGatePass } from '@/features/transfer-stock/utils/to-transfer-storage-gate-pass';
@@ -21,6 +23,29 @@ type UseCreateOutgoingFormOptions = {
   onCloseReview?: () => void;
   onResetComboboxState?: () => void;
 };
+
+export function createOutgoingFormDefaultValues(coldStorageName: string, dateIso: string) {
+  return {
+    step1: {
+      farmerStorageLinkId: '',
+      date: dateIso,
+      manualGatePassNumber: undefined as number | undefined,
+      from: coldStorageName,
+      to: '',
+      truckNumber: '',
+      category: '',
+      billNumber: '',
+      biltiNumber: '',
+      billBook: '',
+      biltiBook: '',
+      allocations: {} as Record<string, number>,
+    },
+    step2: {
+      remarks: '',
+      weightsBySize: {} as Record<string, number | undefined>,
+    },
+  } satisfies OutgoingFormValues;
+}
 
 export function useCreateOutgoingForm(options: UseCreateOutgoingFormOptions = {}) {
   const queryClient = useQueryClient();
@@ -36,31 +61,17 @@ export function useCreateOutgoingForm(options: UseCreateOutgoingFormOptions = {}
   const isGatePassNumberReady =
     !isLoadingVoucherNumber && !isVoucherNumberError && nextVoucherNumber != null;
 
-  const defaultValues: OutgoingFormValues = {
-    farmerStorageLinkId: '',
-    date: todayIso,
-    manualGatePassNumber: undefined as number | undefined,
-    from: coldStorageName,
-    to: '',
-    truckNumber: '',
-    category: '',
-    billNumber: '',
-    biltiNumber: '',
-    billBook: '',
-    biltiBook: '',
-    remarks: '',
-    allocations: {},
-  };
+  const defaultValues = createOutgoingFormDefaultValues(coldStorageName, todayIso);
 
   const form = useForm({
     defaultValues,
     validators: {
       onChange: outgoingFormSchema,
-      onSubmit: outgoingFormSchema,
+      onSubmit: outgoingFormSubmitSchema,
     },
     onSubmitMeta: defaultSubmitMeta,
     onSubmit: async ({ value, meta }) => {
-      const parsed = outgoingFormSchema.parse(value);
+      const parsed = outgoingFormSubmitSchema.parse(value);
 
       if ((meta as OutgoingSubmitMeta).submitAction === 'review') {
         options.onOpenReview?.();
@@ -89,10 +100,18 @@ export function useCreateOutgoingForm(options: UseCreateOutgoingFormOptions = {}
       }
 
       const result = await queryClient.fetchQuery(
-        storageGatePassesByFarmerQueryOptions(parsed.farmerStorageLinkId),
+        storageGatePassesByFarmerQueryOptions(parsed.step1.farmerStorageLinkId),
       );
       const passes = result.storageGatePasses.map(toTransferStorageGatePass);
-      const items = buildTransferItems(parsed.allocations, passes);
+      const items = buildTransferItems(parsed.step1.allocations, passes);
+
+      const missingWeight = items.some(
+        (item) => lookupOutgoingWeight(parsed.step2.weightsBySize, item.variety, item.bagSize) == null,
+      );
+      if (missingWeight) {
+        toast.error('Enter average weight in kg for each size.', { position: 'bottom-right' });
+        return;
+      }
 
       try {
         const { message } = await createOutgoingGatePass({
@@ -105,11 +124,7 @@ export function useCreateOutgoingForm(options: UseCreateOutgoingFormOptions = {}
           position: 'bottom-right',
         });
         options.onCloseReview?.();
-        form.reset({
-          ...defaultValues,
-          from: coldStorageName,
-          date: new Date().toISOString(),
-        });
+        form.reset(createOutgoingFormDefaultValues(coldStorageName, new Date().toISOString()));
         options.onResetComboboxState?.();
       } catch (error) {
         toast.error(

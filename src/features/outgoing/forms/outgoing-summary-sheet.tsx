@@ -23,12 +23,10 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
-import type { OutgoingFormValues } from '@/features/outgoing/types';
+import type { OutgoingSummaryValues } from '@/features/outgoing/schemas/outgoing-form-schema';
 import { AllocationReviewByVariety } from '@/features/transfer-stock/forms/allocation-review-by-variety';
 import type { TransferStockItem } from '@/features/transfer-stock/types/storage-gate-pass';
 import { cn } from '@/lib/utils';
-
-export type OutgoingSummaryValues = OutgoingFormValues;
 
 type OutgoingSummarySheetProps = {
   open: boolean;
@@ -189,7 +187,7 @@ function OutgoingReviewSummary({
 
       <div className="space-y-2">
         <SectionLabel icon={Scale}>Allocations</SectionLabel>
-        <AllocationReviewByVariety items={outgoingItems} />
+        <AllocationReviewByVariety items={outgoingItems} weightsBySize={values.weightsBySize} />
         <SummaryCard className="mt-3">
           <DetailRow
             label="Total bags"

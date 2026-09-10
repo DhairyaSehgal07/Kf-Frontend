@@ -16,6 +16,7 @@ export type OutgoingBreakdownRow = {
   avail: number;
   issued: number;
   rem: number;
+  weightInKg?: number;
 };
 
 export type OutgoingBreakdownTotals = {
@@ -75,6 +76,7 @@ export function buildOutgoingBreakdownRows(entry: DaybookOutgoingEntry): Outgoin
       avail,
       issued,
       rem,
+      weightInKg: detail.weightInKg,
     };
   });
 }
@@ -100,6 +102,31 @@ export function totalCurrentStorageBags(entry: DaybookStorageEntry): number {
 
 export function totalIssuedBags(entry: DaybookOutgoingEntry): number {
   return entry.orderDetails.reduce((sum, detail) => sum + detail.quantityIssued, 0);
+}
+
+const weightKgFormatter = new Intl.NumberFormat('en-IN', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 3,
+});
+
+export function formatWeightKg(value: number | undefined): string {
+  if (value == null || Number.isNaN(value)) return '—';
+  return weightKgFormatter.format(value);
+}
+
+/** Distinct average bag weights recorded on the outgoing pass. */
+export function uniqueOutgoingWeightsKg(entry: DaybookOutgoingEntry): number[] {
+  const seen = new Set<number>();
+  const weights: number[] = [];
+
+  for (const detail of entry.orderDetails) {
+    if (detail.weightInKg == null || Number.isNaN(detail.weightInKg)) continue;
+    if (seen.has(detail.weightInKg)) continue;
+    seen.add(detail.weightInKg);
+    weights.push(detail.weightInKg);
+  }
+
+  return weights;
 }
 
 export function formatDaybookDate(value: string): string {

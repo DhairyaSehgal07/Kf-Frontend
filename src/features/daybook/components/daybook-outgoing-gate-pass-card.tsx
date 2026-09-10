@@ -8,6 +8,7 @@ import {
   Pencil,
   Printer,
   Receipt,
+  Scale,
   Sprout,
   Truck,
   User,
@@ -44,8 +45,10 @@ import { nikasiAccent } from '@/features/dispatch-pre-storage/constants/nikasi-a
 import {
   buildOutgoingBreakdownRows,
   formatDaybookDateTime,
+  formatWeightKg,
   sumOutgoingBreakdownTotals,
   totalIssuedBags,
+  uniqueOutgoingWeightsKg,
 } from '@/features/daybook/utils/daybook-display';
 import { cn } from '@/lib/utils';
 
@@ -88,13 +91,14 @@ function OutgoingDetailedBreakdown({ gatePass }: { gatePass: DaybookOutgoingEntr
         Detailed breakdown
       </h4>
       <div className="overflow-x-auto rounded-xl border border-border/50">
-        <table className="w-full min-w-[640px] caption-bottom text-sm">
+        <table className="w-full min-w-180 caption-bottom text-sm">
           <thead className="border-b border-border/50 bg-muted/50">
             <tr>
               <th className="h-10 px-3 text-left font-medium text-muted-foreground">Type</th>
               <th className="h-10 px-3 text-left font-medium text-muted-foreground">Variety</th>
               <th className="h-10 px-3 text-left font-medium text-muted-foreground">Location</th>
               <th className="h-10 px-3 text-left font-medium text-muted-foreground">Ref</th>
+              <th className="h-10 px-3 text-right font-medium text-muted-foreground">Weight</th>
               <th className="h-10 px-3 text-right font-medium text-muted-foreground">Avail</th>
               <th className="h-10 px-3 text-right font-medium text-muted-foreground">Issued</th>
               <th className="h-10 px-3 text-right font-medium text-muted-foreground">Rem</th>
@@ -120,6 +124,14 @@ function OutgoingDetailedBreakdown({ gatePass }: { gatePass: DaybookOutgoingEntr
                   )}
                 </td>
                 <td className="px-3 py-2.5 text-right font-medium tabular-nums text-foreground">
+                  {formatWeightKg(row.weightInKg)}
+                  {row.weightInKg != null ? (
+                    <span className="ml-1 font-sans text-sm font-normal text-muted-foreground">
+                      kg
+                    </span>
+                  ) : null}
+                </td>
+                <td className="px-3 py-2.5 text-right font-medium tabular-nums text-foreground">
                   {row.avail.toLocaleString('en-IN')}
                 </td>
                 <td className="px-3 py-2.5 text-right font-medium tabular-nums text-destructive">
@@ -136,6 +148,7 @@ function OutgoingDetailedBreakdown({ gatePass }: { gatePass: DaybookOutgoingEntr
               <td colSpan={4} className="px-3 py-2.5 text-sm font-semibold text-destructive">
                 Total
               </td>
+              <td className="px-3 py-2.5 text-right text-sm text-muted-foreground">—</td>
               <td className="px-3 py-2.5 text-right text-sm font-semibold tabular-nums text-destructive">
                 {totals.avail.toLocaleString('en-IN')}
               </td>
@@ -170,6 +183,7 @@ export function DaybookOutgoingGatePassCard({ data: gatePass }: DaybookOutgoingG
   const farmer = gatePass.farmerStorageLinkId.farmerId;
   const farmerStorageLink = gatePass.farmerStorageLinkId;
   const issuedBags = totalIssuedBags(gatePass);
+  const uniqueWeightsKg = uniqueOutgoingWeightsKg(gatePass);
   const createdBy = gatePass.createdBy?.name ?? '—';
 
   const handleCancelOpenChange = (open: boolean) => {
@@ -248,6 +262,19 @@ export function DaybookOutgoingGatePassCard({ data: gatePass }: DaybookOutgoingG
           <Badge variant="outline" className="bg-background text-xs tabular-nums">
             {issuedBags.toLocaleString('en-IN')} Bags issued
           </Badge>
+          {uniqueWeightsKg.length === 1 ? (
+            <Badge
+              variant="outline"
+              className="bg-background text-xs tabular-nums"
+              title="Average bag weight"
+            >
+              {formatWeightKg(uniqueWeightsKg[0])} kg avg
+            </Badge>
+          ) : uniqueWeightsKg.length > 1 ? (
+            <Badge variant="outline" className="bg-background text-xs" title="Average bag weight">
+              Multiple weights
+            </Badge>
+          ) : null}
           <Badge variant="outline" className={cn('text-xs', nikasiAccent.booked)}>
             Active
           </Badge>
@@ -325,6 +352,18 @@ export function DaybookOutgoingGatePassCard({ data: gatePass }: DaybookOutgoingG
                       valueClassName="font-mono uppercase"
                     />
                     <InfoBlock label="Variety" value={gatePass.variety} icon={Sprout} />
+                    <InfoBlock
+                      label="Avg. weight"
+                      value={
+                        uniqueWeightsKg.length === 1
+                          ? `${formatWeightKg(uniqueWeightsKg[0])} kg`
+                          : uniqueWeightsKg.length > 1
+                            ? 'Multiple'
+                            : '—'
+                      }
+                      icon={Scale}
+                      valueClassName="tabular-nums"
+                    />
                   </div>
                 </div>
               </div>

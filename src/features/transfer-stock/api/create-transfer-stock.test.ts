@@ -29,6 +29,7 @@ function makeItem(storageGatePassId: string): TransferStockItem {
     bagSize: 'Ration',
     bagIndex: 0,
     quantity: 10,
+    bagType: 'JUTE',
     location: { chamber: 'C1', floor: 'F2', row: 'R3' },
   };
 }

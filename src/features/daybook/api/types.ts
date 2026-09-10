@@ -55,6 +55,7 @@ export type DaybookOrderDetail = {
   bagType: BagType | string;
   quantityIssued: number;
   quantityAvailable: number;
+  weightInKg?: number;
   chamber: string;
   floor: string;
   row: string;

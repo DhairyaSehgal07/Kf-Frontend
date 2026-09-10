@@ -1,6 +1,7 @@
 import apiClient, { getApiErrorMessage } from '@/lib/api-client';
 
 import type { TransferStockItem } from '@/features/transfer-stock/types/storage-gate-pass';
+import { lookupOutgoingWeight } from '@/features/outgoing/utils/group-outgoing-items';
 
 import type {
   CreateOutgoingAllocation,
@@ -28,16 +29,23 @@ function deriveVarietyFromItems(items: TransferStockItem[]): string {
   return [...varieties][0]!;
 }
 
-function buildStorageGatePassesPayload(
+export function buildStorageGatePassesPayload(
   items: TransferStockItem[],
+  weightsBySize: Record<string, number | undefined>,
 ): CreateOutgoingStorageGatePass[] {
   const byPassId = new Map<string, CreateOutgoingAllocation[]>();
 
   for (const item of items) {
+    const weightInKg = lookupOutgoingWeight(weightsBySize, item.variety, item.bagSize);
+    if (weightInKg == null) {
+      throw new Error(`Enter average weight in kg for ${item.variety} ${item.bagSize}.`);
+    }
+
     const allocations = byPassId.get(item.storageGatePassId) ?? [];
     allocations.push({
       size: item.bagSize,
       quantityToAllocate: item.quantity,
+      weightInKg,
       chamber: item.location.chamber,
       floor: item.location.floor,
       row: item.location.row,
@@ -60,32 +68,34 @@ export function toCreateOutgoingGatePassBody({
     throw new Error('Select at least one allocation in the gate passes table.');
   }
 
+  const { step1, step2 } = form;
+
   const body: CreateOutgoingGatePassBody = {
-    farmerStorageLinkId: form.farmerStorageLinkId,
+    farmerStorageLinkId: step1.farmerStorageLinkId,
     gatePassNo,
-    date: form.date,
+    date: step1.date,
     variety: deriveVarietyFromItems(items),
-    from: form.from.trim(),
-    to: form.to.trim(),
-    category: form.category.trim(),
-    billNumber: Number(form.billNumber),
-    biltiNumber: Number(form.biltiNumber),
-    billBook: form.billBook.trim(),
-    biltiBook: form.biltiBook.trim(),
-    storageGatePasses: buildStorageGatePassesPayload(items),
+    from: step1.from.trim(),
+    to: step1.to.trim(),
+    category: step1.category.trim(),
+    billNumber: Number(step1.billNumber),
+    biltiNumber: Number(step1.biltiNumber),
+    billBook: step1.billBook.trim(),
+    biltiBook: step1.biltiBook.trim(),
+    storageGatePasses: buildStorageGatePassesPayload(items, step2.weightsBySize),
     idempotencyKey: crypto.randomUUID(),
   };
 
-  const truckNumber = form.truckNumber.trim();
+  const truckNumber = step1.truckNumber.trim();
   if (truckNumber) {
     body.truckNumber = truckNumber;
   }
 
-  if (form.manualGatePassNumber != null) {
-    body.manualGatePassNumber = form.manualGatePassNumber;
+  if (step1.manualGatePassNumber != null) {
+    body.manualGatePassNumber = step1.manualGatePassNumber;
   }
 
-  const remarks = form.remarks.trim();
+  const remarks = step2.remarks.trim();
   if (remarks) {
     body.remarks = remarks;
   }

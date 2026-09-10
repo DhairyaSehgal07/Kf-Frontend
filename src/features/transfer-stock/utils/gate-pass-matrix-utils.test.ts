@@ -100,6 +100,7 @@ describe('buildTransferItems', () => {
         bagSize: 'Ration',
         bagIndex: 0,
         quantity: 25,
+        bagType: 'LENO',
         location: { chamber: '4', floor: '1', row: 'D' },
       },
     ]);

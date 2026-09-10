@@ -31,6 +31,7 @@ export type TransferStockItem = {
   bagSize: string;
   bagIndex: number;
   quantity: number;
+  bagType: string;
   location: {
     chamber: string;
     floor: string;

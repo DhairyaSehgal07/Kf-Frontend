@@ -1,14 +1,29 @@
 import { Package } from 'lucide-react';
+import { lookupOutgoingWeight } from '@/features/outgoing/utils/group-outgoing-items';
 import type { TransferStockItem } from '@/features/transfer-stock/types/storage-gate-pass';
 import { groupItemsByVariety } from '@/features/transfer-stock/utils/gate-pass-matrix-utils';
 import { cn } from '@/lib/utils';
 
+const weightFormatter = new Intl.NumberFormat('en-IN', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 3,
+});
+
 type AllocationReviewByVarietyProps = {
   items: TransferStockItem[];
   className?: string;
+  weightsBySize?: Record<string, number | undefined>;
 };
 
-function AllocationTable({ items }: { items: TransferStockItem[] }) {
+function AllocationTable({
+  items,
+  weightsBySize,
+}: {
+  items: TransferStockItem[];
+  weightsBySize?: Record<string, number | undefined>;
+}) {
+  const showWeight = weightsBySize != null;
+
   return (
     <table className="w-full caption-bottom text-sm">
       <thead className="border-b border-border/40 bg-muted/20">
@@ -17,30 +32,48 @@ function AllocationTable({ items }: { items: TransferStockItem[] }) {
           <th className="h-9 px-3 font-medium text-muted-foreground">Size</th>
           <th className="h-9 px-3 font-medium text-muted-foreground">Location</th>
           <th className="h-9 px-3 text-right font-medium text-muted-foreground">Qty</th>
+          {showWeight ? (
+            <th className="h-9 px-3 text-right font-medium text-muted-foreground">Weight (kg)</th>
+          ) : null}
         </tr>
       </thead>
       <tbody>
-        {items.map((item, index) => (
-          <tr
-            key={`${item.storageGatePassId}-${item.bagSize}-${item.bagIndex}-${index}`}
-            className="border-b border-border/40 last:border-0"
-          >
-            <td className="px-3 py-2.5 font-mono text-sm tabular-nums">#{item.gatePassNo}</td>
-            <td className="px-3 py-2.5 font-medium">{item.bagSize}</td>
-            <td className="px-3 py-2.5 text-xs text-muted-foreground">
-              Ch {item.location.chamber} · F {item.location.floor} · R {item.location.row}
-            </td>
-            <td className="px-3 py-2.5 text-right font-medium tabular-nums">
-              {item.quantity.toLocaleString('en-IN')}
-            </td>
-          </tr>
-        ))}
+        {items.map((item, index) => {
+          const weight = showWeight
+            ? lookupOutgoingWeight(weightsBySize ?? {}, item.variety, item.bagSize)
+            : undefined;
+
+          return (
+            <tr
+              key={`${item.storageGatePassId}-${item.bagSize}-${item.bagIndex}-${index}`}
+              className="border-b border-border/40 last:border-0"
+            >
+              <td className="px-3 py-2.5 font-mono text-sm tabular-nums">#{item.gatePassNo}</td>
+              <td className="px-3 py-2.5 font-medium">{item.bagSize}</td>
+              <td className="px-3 py-2.5 text-sm text-muted-foreground">
+                Ch {item.location.chamber} · F {item.location.floor} · R {item.location.row}
+              </td>
+              <td className="px-3 py-2.5 text-right font-medium tabular-nums">
+                {item.quantity.toLocaleString('en-IN')}
+              </td>
+              {showWeight ? (
+                <td className="px-3 py-2.5 text-right font-medium tabular-nums">
+                  {weight != null ? weightFormatter.format(weight) : '—'}
+                </td>
+              ) : null}
+            </tr>
+          );
+        })}
       </tbody>
     </table>
   );
 }
 
-export function AllocationReviewByVariety({ items, className }: AllocationReviewByVarietyProps) {
+export function AllocationReviewByVariety({
+  items,
+  className,
+  weightsBySize,
+}: AllocationReviewByVarietyProps) {
   const groups = groupItemsByVariety(items);
 
   if (groups.length === 0) {
@@ -78,7 +111,7 @@ export function AllocationReviewByVariety({ items, className }: AllocationReview
               </span>
             </div>
             <div className="overflow-x-auto">
-              <AllocationTable items={group.items} />
+              <AllocationTable items={group.items} weightsBySize={weightsBySize} />
             </div>
           </div>
         );

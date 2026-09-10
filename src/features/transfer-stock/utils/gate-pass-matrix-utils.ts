@@ -221,6 +221,7 @@ export function buildTransferItems(
       bagSize: parsed.sizeName,
       bagIndex: parsed.bagIndex,
       quantity,
+      bagType: found.slot.bagType,
       location: {
         chamber: found.slot.chamber,
         floor: found.slot.floor,

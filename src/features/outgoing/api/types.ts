@@ -1,9 +1,10 @@
-import type { OutgoingFormValues } from '@/features/outgoing/types';
+import type { OutgoingFormSubmitValues } from '@/features/outgoing/schemas/outgoing-form-schema';
 import type { TransferStockItem } from '@/features/transfer-stock/types/storage-gate-pass';
 
 export type CreateOutgoingAllocation = {
   size: string;
   quantityToAllocate: number;
+  weightInKg: number;
   chamber: string;
   floor: string;
   row: string;
@@ -40,7 +41,7 @@ export type CreateOutgoingGatePassResponse = {
 };
 
 export type CreateOutgoingGatePassInput = {
-  form: OutgoingFormValues;
+  form: OutgoingFormSubmitValues;
   gatePassNo: number;
   items: TransferStockItem[];
 };
