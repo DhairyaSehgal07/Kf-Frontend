@@ -131,7 +131,7 @@ export function BookingSummary({ bookingQuery, storageQuery, shedQuery }: Bookin
     [storageData],
   );
   const mappedBooked = useMemo(
-    () => mapApiSummaryToVarietySummary(bookingData ?? [], 'initial'),
+    () => mapApiSummaryToVarietySummary(bookingData ?? [], 'current'),
     [bookingData],
   );
   const mappedShed = useMemo(
