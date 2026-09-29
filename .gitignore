@@ -27,4 +27,5 @@ dist-ssr
 
 # Local docs
 src/features/incoming-report/Incoming-report-table-guide.md
+finance-data-model.md
 

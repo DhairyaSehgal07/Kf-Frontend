@@ -90,6 +90,7 @@ export const DISPATCH_PRE_STORAGE_CATEGORIES = [
 
 export const POTATO_VARIETIES = [
   'Atlantic',
+  'ATL',
   'Cardinal',
   'Chipsona 1',
   'Chipsona 2',
